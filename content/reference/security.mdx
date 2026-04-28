@@ -1,0 +1,71 @@
+---
+title: Security
+description: Gateway authentication, request limits, CORS, and header policies.
+---
+
+## Authentication
+
+Model endpoints require a Stogas API key passed as a Bearer token:
+
+```http
+Authorization: Bearer <stogas_api_key>
+Content-Type: application/json
+```
+
+For SDK compatibility, the gateway also accepts the same key in `api-key`, `x-api-key`, and `x-goog-api-key`.
+These are header aliases only; query parameters and cookies are not supported for API key authentication.
+
+The `/health` endpoint is unauthenticated. The gateway generates a UUID v4 per request for internal tracking and auditing.
+
+## Request Limits
+
+| Condition                            | Response                |
+| ------------------------------------ | ----------------------- |
+| Compressed body, parse failure       | `400 Bad Request`       |
+| Decompressed body exceeds size limit | `413 Content Too Large` |
+
+Request bodies are parsed in-memory. Compressed payloads are decompressed before JSON parsing and checked against the gateway size limit.
+
+## CORS
+
+The public gateway is intentionally browser-embeddable:
+
+```http
+Access-Control-Allow-Origin: *
+```
+
+The gateway does not use cookies for public API authentication, making it safe to call directly from browser clients.
+
+## Header Policy
+
+- Inbound client headers are preserved internally for policy decisions.
+- Arbitrary headers are **not** forwarded upstream to providers.
+- Provider response headers are **not** exposed unless the catalog explicitly allows specific ones.
+- Internal gateway metadata is omitted from default responses.
+
+To include metadata in the response, request it explicitly:
+
+```http
+X-Stogas-Return-Extra-Fields: provider,model_requested,latency
+```
+
+For debugging transformed provider payloads:
+
+```http
+X-Stogas-Return-Raw-Request: true
+X-Stogas-Return-Raw-Response: true
+```
+
+Raw request capture is returned under `stogas.raw_request`. Raw response mode returns the captured upstream JSON body.
+
+## Test Coverage
+
+The gateway security model is validated against a comprehensive test suite covering:
+
+- Authentication enforcement and token validation
+- JSON schema validation and request method/route enforcement
+- Model and provider access control
+- Compressed-body parser integrity and decompression-bomb protection
+- CORS preflight behavior
+- Metadata leakage prevention
+- Stream SSE framing and metadata placement

@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+@import 'fumadocs-openapi/css/preset.css';
 
 html {
   scrollbar-gutter: stable;
@@ -9,4 +10,15 @@ html {
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Hide Fumadocs OpenAPI Filter Properties component */
+div:has(> input[data-object-search-input]) {
+  display: none !important;
+}
+
+/* Remove the leftover divider (top border) from the first property that follows the hidden filter */
+div:has(> input[data-object-search-input]) ~ div.border-t:nth-of-type(2) {
+  border-top: none !important;
+  border-top-width: 0px !important;
 }

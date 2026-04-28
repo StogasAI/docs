@@ -1,0 +1,135 @@
+name = "stogas-docs"
+main = ".open-next/worker.js"
+compatibility_date = "2025-11-16"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+minify = true
+keep_names = false
+upload_source_maps = false
+
+[dev]
+port = 5174
+inspector_port = 9230
+local_protocol = "http"
+
+[observability]
+enabled = true
+
+[assets]
+binding = "ASSETS"
+directory = ".open-next/assets"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "stogas-docs"
+
+[env.local]
+name = "stogas-docs-local"
+
+[[env.local.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "stogas-docs-local"
+
+[env.staging]
+name = "stogas-docs-staging"
+
+[[env.staging.routes]]
+pattern = "staging.stogas.ai/docs*"
+zone_name = "stogas.ai"
+
+[[env.staging.routes]]
+pattern = "staging.stogas.ai/_next/*"
+zone_name = "stogas.ai"
+
+[[env.staging.routes]]
+pattern = "staging.stogas.ai/api/search"
+zone_name = "stogas.ai"
+
+[[env.staging.routes]]
+pattern = "staging.stogas.ai/og/docs/*"
+zone_name = "stogas.ai"
+
+[[env.staging.routes]]
+pattern = "staging.stogas.ai/llms.txt"
+zone_name = "stogas.ai"
+
+[[env.staging.routes]]
+pattern = "staging.stogas.ai/llms-full.txt"
+zone_name = "stogas.ai"
+
+[[env.staging.routes]]
+pattern = "staging.stogas.ai/llms.mdx/docs/*"
+zone_name = "stogas.ai"
+
+[[env.staging.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "stogas-docs-staging"
+
+[env.staging.observability]
+enabled = true
+
+[env.production]
+name = "stogas-docs-production"
+
+[[env.production.routes]]
+pattern = "stogas.ai/docs*"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "stogas.ai/_next/*"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "stogas.ai/api/search"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "stogas.ai/og/docs/*"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "stogas.ai/llms.txt"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "stogas.ai/llms-full.txt"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "stogas.ai/llms.mdx/docs/*"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "www.stogas.ai/docs*"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "www.stogas.ai/_next/*"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "www.stogas.ai/api/search"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "www.stogas.ai/og/docs/*"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "www.stogas.ai/llms.txt"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "www.stogas.ai/llms-full.txt"
+zone_name = "stogas.ai"
+
+[[env.production.routes]]
+pattern = "www.stogas.ai/llms.mdx/docs/*"
+zone_name = "stogas.ai"
+
+[[env.production.services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "stogas-docs-production"
+
+[env.production.observability]
+enabled = true

@@ -1,0 +1,1565 @@
+{
+	"openapi": "3.1.0",
+	"info": {
+		"title": "Stogas Gateway API",
+		"summary": "OpenAI-compatible public API gateway.",
+		"description": "The Stogas Gateway exposes an OpenAI-compatible surface. Authenticate requests with your Stogas API key, and the gateway will relay the request to the configured upstream provider.",
+		"version": "1.0.0"
+	},
+	"jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+	"servers": [
+		{
+			"url": "{serverUrl}",
+			"description": "Gateway origin. Endpoint paths include their API version.",
+			"variables": {
+				"serverUrl": {
+					"default": "https://api.stogas.ai"
+				}
+			}
+		}
+	],
+	"tags": [
+		{
+			"name": "Health",
+			"description": "Operational readiness."
+		},
+		{
+			"name": "OpenAI-compatible",
+			"description": "Model inference endpoints."
+		}
+	],
+	"security": [
+		{
+			"bearerAuth": []
+		},
+		{
+			"authorizationHeader": []
+		},
+		{
+			"apiKeyHeader": []
+		},
+		{
+			"xApiKeyHeader": []
+		},
+		{
+			"xGoogApiKeyHeader": []
+		}
+	],
+	"paths": {
+		"/health": {
+			"get": {
+				"operationId": "getHealth",
+				"tags": ["Health"],
+				"summary": "Health Check",
+				"description": "Returns a minimal health response.",
+				"security": [],
+				"responses": {
+					"200": {
+						"description": "Gateway is reachable.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HealthResponse"
+								},
+								"examples": {
+									"ok": {
+										"value": {
+											"ok": true
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/v1/chat/completions": {
+			"post": {
+				"operationId": "createChatCompletion",
+				"tags": ["OpenAI-compatible"],
+				"summary": "Chat Completions",
+				"description": "Creates an OpenAI-compatible Chat Completion API response.",
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ReturnRawRequest"
+					},
+					{
+						"$ref": "#/components/parameters/ReturnRawResponse"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ChatCompletionRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful completion. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ChatCompletionResponse"
+								}
+							},
+							"text/event-stream": {
+								"schema": {
+									"type": "string",
+									"description": "Server-Sent Events stream. Each `data:` frame contains a chat completion chunk; the stream ends with `data: [DONE]`."
+								},
+								"example": "data: {\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"chat.completion.chunk\",\"created\":1714343120,\"model\":\"gpt-4o-2024-05-13\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Hello\"},\"finish_reason\":null}]}\n\ndata: [DONE]\n\n"
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"402": {
+						"$ref": "#/components/responses/PaymentRequired"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"413": {
+						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					}
+				}
+			}
+		},
+		"/v1/responses": {
+			"post": {
+				"operationId": "createResponse",
+				"tags": ["OpenAI-compatible"],
+				"summary": "Responses API",
+				"description": "Creates an OpenAI-compatible Responses API response.",
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ReturnRawRequest"
+					},
+					{
+						"$ref": "#/components/parameters/ReturnRawResponse"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ResponsesRequest"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful response. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseObject"
+								}
+							},
+							"text/event-stream": {
+								"schema": {
+									"type": "string",
+									"description": "Server-Sent Events stream. Each `data:` frame contains a Responses API event; the stream ends with `data: [DONE]`."
+								},
+								"example": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"response\",\"created_at\":1714343120,\"status\":\"in_progress\",\"model\":\"gpt-4o-2024-05-13\",\"output\":[]}}\n\ndata: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_0192f217-35b0-7e2c-9be7-f4cc24f2a4b0\",\"output_index\":0,\"content_index\":0,\"delta\":\"Hello\"}\n\ndata: [DONE]\n\n"
+							}
+						}
+					},
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"402": {
+						"$ref": "#/components/responses/PaymentRequired"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"413": {
+						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					}
+				}
+			}
+		}
+	},
+	"components": {
+		"securitySchemes": {
+			"bearerAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "Stogas API key",
+				"description": "Pass the Stogas API key as `Authorization: Bearer <token>`. This is the standard OpenAI-compatible header."
+			},
+			"authorizationHeader": {
+				"type": "apiKey",
+				"in": "header",
+				"name": "Authorization",
+				"description": "Pass the Stogas API key directly as `Authorization: <token>`. This is a compatibility alias for clients that manage the auth scheme themselves."
+			},
+			"apiKeyHeader": {
+				"type": "apiKey",
+				"in": "header",
+				"name": "api-key",
+				"description": "Pass the Stogas API key as `api-key: <token>`. This is a compatibility alias for API-key style clients."
+			},
+			"xApiKeyHeader": {
+				"type": "apiKey",
+				"in": "header",
+				"name": "x-api-key",
+				"description": "Pass the Stogas API key as `x-api-key: <token>`. This is a compatibility alias for Anthropic-style clients."
+			},
+			"xGoogApiKeyHeader": {
+				"type": "apiKey",
+				"in": "header",
+				"name": "x-goog-api-key",
+				"description": "Pass the Stogas API key as `x-goog-api-key: <token>`. This is a compatibility alias for Google-style clients."
+			}
+		},
+		"parameters": {
+			"ReturnRawRequest": {
+				"name": "X-Stogas-Return-Raw-Request",
+				"in": "header",
+				"schema": {
+					"type": "boolean"
+				},
+				"description": "Return the translated upstream JSON request in `stogas.raw_request`."
+			},
+			"ReturnRawResponse": {
+				"name": "X-Stogas-Return-Raw-Response",
+				"in": "header",
+				"schema": {
+					"type": "boolean"
+				},
+				"description": "Return the raw upstream provider JSON body."
+			}
+		},
+		"responses": {
+			"BadRequest": {
+				"description": "<span className=\"text-red-500 font-bold\">Bad Request:</span> The request was malformed, missing required fields, or specifying an unavailable model.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Invalid text completion request: the 'messages' array cannot be empty.",
+								"type": "invalid_request_error"
+							}
+						}
+					}
+				}
+			},
+			"Unauthorized": {
+				"description": "<span className=\"text-red-500 font-bold\">Unauthorized:</span> The API key provided was missing or invalid.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Invalid API Key provided: sk-sto-***************************",
+								"type": "invalid_request_error"
+							}
+						}
+					}
+				}
+			},
+			"PaymentRequired": {
+				"description": "<span className=\"text-red-500 font-bold\">Payment Required:</span> Returned when your account balance is zero or the API key spend limit is exhausted.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Insufficient balance. Please add funds to your Stogas account to continue making requests.",
+								"type": "payment_required_error"
+							}
+						}
+					}
+				}
+			},
+			"NotFound": {
+				"description": "<span className=\"text-red-500 font-bold\">Not Found:</span> The requested endpoint route does not exist.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Not Found: The requested endpoint '/v1/chat/compl' does not exist.",
+								"type": "invalid_request_error"
+							}
+						}
+					}
+				}
+			},
+			"PayloadTooLarge": {
+				"description": "<span className=\"text-red-500 font-bold\">Payload Too Large:</span> The request body exceeds the gateway's maximum allowed size.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Payload Too Large: The request body exceeds the maximum allowed size of 100MB.",
+								"type": "invalid_request_error"
+							}
+						}
+					}
+				}
+			},
+			"InternalError": {
+				"description": "<span className=\"text-red-500 font-bold\">Internal Server Error:</span> An unexpected error occurred within the gateway or upstream provider.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Upstream provider 'Anthropic' responded with status code 500.",
+								"type": "api_error"
+							}
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"HealthResponse": {
+				"type": "object",
+				"properties": {
+					"ok": {
+						"type": "boolean"
+					}
+				}
+			},
+			"ChatCompletionRequest": {
+				"type": "object",
+				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API.",
+				"required": ["model", "messages"],
+				"properties": {
+					"model": {
+						"type": "string",
+						"description": "The model to route to (e.g., `openai/gpt-4o`)."
+					},
+					"messages": {
+						"type": "array",
+						"description": "Conversation messages. Stogas accepts text-only messages and OpenAI-style multimodal content blocks.",
+						"items": {
+							"$ref": "#/components/schemas/ChatMessage"
+						}
+					},
+					"audio": {
+						"type": "object",
+						"description": "Audio output settings for models that can return audio.",
+						"properties": {
+							"format": {
+								"type": "string"
+							},
+							"voice": {
+								"type": "string"
+							}
+						}
+					},
+					"fallbacks": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Fallback model identifiers to try if the primary model cannot complete the request."
+					},
+					"stream": {
+						"type": "boolean",
+						"default": false
+					},
+					"frequency_penalty": {
+						"type": "number",
+						"minimum": -2,
+						"maximum": 2
+					},
+					"logit_bias": {
+						"type": "object"
+					},
+					"logprobs": {
+						"type": "boolean"
+					},
+					"max_tokens": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "Legacy maximum completion token field."
+					},
+					"max_completion_tokens": {
+						"type": "integer",
+						"minimum": 1
+					},
+					"metadata": {
+						"type": "object",
+						"description": "Application metadata to attach to the upstream request."
+					},
+					"modalities": {
+						"type": "array",
+						"description": "Requested output modalities for models that support multimodal output.",
+						"items": {
+							"type": "string",
+							"enum": ["text", "image", "audio"]
+						}
+					},
+					"parallel_tool_calls": {
+						"type": "boolean",
+						"description": "Whether the model may call multiple tools in parallel."
+					},
+					"prediction": {
+						"type": "object",
+						"description": "Predicted output content used by compatible OpenAI models to reduce latency."
+					},
+					"presence_penalty": {
+						"type": "number",
+						"minimum": -2,
+						"maximum": 2
+					},
+					"prompt_cache_key": {
+						"type": "string",
+						"description": "Stable cache key used by providers that support prompt caching."
+					},
+					"prompt_cache_retention": {
+						"type": "string",
+						"description": "Provider-specific prompt cache retention policy.",
+						"enum": ["in-memory", "24h"]
+					},
+					"reasoning": {
+						"type": "object",
+						"description": "Reasoning configuration for models that expose reasoning controls.",
+						"properties": {
+							"enabled": {
+								"type": "boolean"
+							},
+							"effort": {
+								"type": "string",
+								"enum": ["none", "minimal", "low", "medium", "high"]
+							},
+							"max_tokens": {
+								"type": "integer",
+								"minimum": 1
+							}
+						}
+					},
+					"reasoning_effort": {
+						"type": "string",
+						"enum": ["none", "minimal", "low", "medium", "high"],
+						"description": "Compatibility shortcut for `reasoning.effort`."
+					},
+					"reasoning_max_tokens": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "Compatibility shortcut for `reasoning.max_tokens`."
+					},
+					"response_format": {
+						"type": "object",
+						"description": "Output format constraint, such as JSON object or JSON schema.",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": ["text", "json_object", "json_schema", "grammar", "python"]
+							}
+						}
+					},
+					"safety_identifier": {
+						"type": "string",
+						"description": "Provider-visible stable identifier for safety monitoring."
+					},
+					"seed": {
+						"type": "integer",
+						"description": "Best-effort deterministic sampling seed for providers that support it."
+					},
+					"service_tier": {
+						"type": "string",
+						"description": "Provider service tier selection.",
+						"enum": ["auto", "default", "flex", "priority", "scale"]
+					},
+					"stream_options": {
+						"type": "object",
+						"description": "Additional options for streaming responses.",
+						"properties": {
+							"include_usage": {
+								"type": "boolean"
+							},
+							"include_obfuscation": {
+								"type": "boolean"
+							}
+						}
+					},
+					"stop": {
+						"type": "array",
+						"description": "Stop sequences. The Stogas gateway currently accepts the array form.",
+						"items": {
+							"type": "string"
+						}
+					},
+					"store": {
+						"type": "boolean",
+						"description": "Whether the provider may store the request or response where supported."
+					},
+					"temperature": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 2,
+						"default": 1
+					},
+					"tool_choice": {
+						"type": ["string", "object"],
+						"description": "Tool choice, such as `auto`, `none`, `required`, `any`, or a named tool object."
+					},
+					"tools": {
+						"type": "array",
+						"description": "Function or custom tool definitions supported by compatible providers.",
+						"items": {
+							"type": "object"
+						}
+					},
+					"top_logprobs": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"top_p": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1
+					},
+					"user": {
+						"type": "string",
+						"description": "End-user identifier forwarded to providers that support abuse monitoring."
+					},
+					"verbosity": {
+						"type": "string",
+						"enum": ["low", "medium", "high"],
+						"description": "Text verbosity preference for models that support it."
+					},
+					"web_search_options": {
+						"type": "object",
+						"description": "Web search controls for OpenAI models that support integrated web search.",
+						"properties": {
+							"search_context_size": {
+								"type": "string",
+								"enum": ["low", "medium", "high"]
+							},
+							"user_location": {
+								"type": "object"
+							}
+						}
+					}
+				},
+				"example": {
+					"model": "openai/gpt-4o",
+					"messages": [
+						{
+							"role": "user",
+							"content": "Write a concise API gateway health check strategy."
+						}
+					],
+					"temperature": 0.7
+				}
+			},
+			"ChatMessage": {
+				"type": "object",
+				"required": ["role"],
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Optional participant name."
+					},
+					"role": {
+						"type": "string",
+						"enum": ["system", "user", "assistant", "tool", "developer"]
+					},
+					"content": {
+						"$ref": "#/components/schemas/ChatMessageContent"
+					},
+					"tool_call_id": {
+						"type": "string",
+						"description": "Tool call ID for tool response messages."
+					},
+					"refusal": {
+						"type": "string",
+						"description": "Assistant refusal text when provided by the model."
+					},
+					"audio": {
+						"type": "object",
+						"description": "Assistant audio output reference."
+					},
+					"reasoning": {
+						"type": "string",
+						"description": "Reasoning output when returned by the provider."
+					},
+					"reasoning_details": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"annotations": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"tool_calls": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ChatToolCall"
+						}
+					}
+				}
+			},
+			"ChatMessageContent": {
+				"description": "Message content as either a string or an array of content blocks.",
+				"oneOf": [
+					{
+						"type": "string"
+					},
+					{
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ChatContentBlock"
+						}
+					}
+				]
+			},
+			"ChatContentBlock": {
+				"type": "object",
+				"description": "OpenAI-style multimodal chat content block accepted by stogas-http.",
+				"required": ["type"],
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["text", "image_url", "input_audio", "file", "refusal"]
+					},
+					"text": {
+						"type": "string"
+					},
+					"refusal": {
+						"type": "string"
+					},
+					"image_url": {
+						"type": "object",
+						"properties": {
+							"url": {
+								"type": "string"
+							},
+							"detail": {
+								"type": "string",
+								"enum": ["auto", "low", "high"]
+							}
+						},
+						"required": ["url"]
+					},
+					"input_audio": {
+						"type": "object",
+						"properties": {
+							"data": {
+								"type": "string"
+							},
+							"format": {
+								"type": "string"
+							}
+						},
+						"required": ["data"]
+					},
+					"file": {
+						"type": "object",
+						"properties": {
+							"file_data": {
+								"type": "string"
+							},
+							"file_url": {
+								"type": "string"
+							},
+							"file_id": {
+								"type": "string"
+							},
+							"filename": {
+								"type": "string"
+							},
+							"file_type": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			},
+			"ChatToolCall": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": ["function"]
+					},
+					"function": {
+						"type": "object",
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"arguments": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			},
+			"ChatCompletionResponse": {
+				"type": "object",
+				"description": "Chat completion response",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Unique completion identifier"
+					},
+					"object": {
+						"type": "string",
+						"description": "The object type, which is always \"chat.completion\""
+					},
+					"created": {
+						"type": "integer",
+						"description": "Unix timestamp of creation"
+					},
+					"model": {
+						"type": "string",
+						"description": "Model used for completion"
+					},
+					"choices": {
+						"type": "array",
+						"description": "List of completion choices",
+						"items": {
+							"$ref": "#/components/schemas/ChatChoice"
+						}
+					},
+					"usage": {
+						"$ref": "#/components/schemas/ChatUsage"
+					},
+					"stogas": {
+						"type": "object",
+						"title": "Gateway Metadata",
+						"description": "Optional Stogas metadata returned when requested with Stogas debug headers.",
+						"properties": {
+							"provider": {
+								"type": "string",
+								"description": "The upstream AI provider that served the request"
+							},
+							"latency": {
+								"type": "integer",
+								"description": "Total round-trip latency in milliseconds"
+							},
+							"model_requested": {
+								"type": "string",
+								"description": "The exact model alias or name requested"
+							},
+							"model_deployment": {
+								"type": "string",
+								"description": "The upstream model deployment selected by the gateway"
+							},
+							"provider_response_headers": {
+								"type": "object",
+								"additionalProperties": {
+									"type": "string"
+								},
+								"description": "Catalog-approved response headers from the upstream provider"
+							},
+							"raw_request": {
+								"type": ["object", "array", "string", "number", "boolean", "null"],
+								"description": "The translated upstream provider request, returned when requested."
+							},
+							"raw_response": {
+								"type": ["object", "array", "string", "number", "boolean", "null"],
+								"description": "The raw upstream provider JSON body, returned when requested."
+							}
+						}
+					}
+				},
+				"required": ["id", "object", "created", "model", "choices"],
+				"example": {
+					"id": "8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7",
+					"object": "chat.completion",
+					"created": 1714343120,
+					"model": "gpt-4o-2024-05-13",
+					"choices": [
+						{
+							"index": 0,
+							"message": {
+								"role": "assistant",
+								"content": "You can't trust code that you did not totally create yourself"
+							},
+							"finish_reason": "stop"
+						}
+					],
+					"usage": {
+						"prompt_tokens": 16,
+						"completion_tokens": 112,
+						"total_tokens": 128
+					},
+					"stogas": {
+						"provider": "OpenAI",
+						"latency": 842,
+						"model_requested": "openai/gpt-4o"
+					}
+				}
+			},
+			"ResponsesRequest": {
+				"type": "object",
+				"description": "OpenAI-compatible Responses API request fields parsed by the Stogas HTTP API.",
+				"required": ["model", "input"],
+				"properties": {
+					"model": {
+						"type": "string"
+					},
+					"input": {
+						"description": "Input for the Responses API. Stogas accepts a plain string or an array of Responses input/output items.",
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "array",
+								"items": {
+									"$ref": "#/components/schemas/ResponsesInputItem"
+								}
+							}
+						]
+					},
+					"fallbacks": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Fallback model identifiers to try if the primary model cannot complete the request."
+					},
+					"stream": {
+						"type": "boolean",
+						"default": false
+					},
+					"background": {
+						"type": "boolean"
+					},
+					"conversation": {
+						"type": "string",
+						"description": "Conversation ID for providers that support persisted Responses API conversations."
+					},
+					"include": {
+						"type": "array",
+						"description": "Additional response fields to request from providers that support them.",
+						"items": {
+							"type": "string",
+							"enum": [
+								"web_search_call.action.sources",
+								"code_interpreter_call.outputs",
+								"computer_call_output.output.image_url",
+								"file_search_call.results",
+								"message.input_image.image_url",
+								"message.output_text.logprobs",
+								"reasoning.encrypted_content"
+							]
+						}
+					},
+					"instructions": {
+						"type": "string"
+					},
+					"max_output_tokens": {
+						"type": "integer",
+						"minimum": 1
+					},
+					"max_tool_calls": {
+						"type": "integer",
+						"minimum": 1
+					},
+					"metadata": {
+						"type": "object",
+						"description": "Application metadata to attach to the upstream request."
+					},
+					"parallel_tool_calls": {
+						"type": "boolean",
+						"description": "Whether the model may call multiple tools in parallel."
+					},
+					"previous_response_id": {
+						"type": "string",
+						"description": "Previous response ID for continuing a Responses API conversation."
+					},
+					"prompt_cache_key": {
+						"type": "string",
+						"description": "Stable cache key used by providers that support prompt caching."
+					},
+					"reasoning": {
+						"type": "object",
+						"description": "Reasoning configuration for models that expose reasoning controls.",
+						"properties": {
+							"effort": {
+								"type": "string",
+								"enum": ["none", "minimal", "low", "medium", "high"]
+							},
+							"summary": {
+								"type": "string",
+								"enum": ["auto", "concise", "detailed"]
+							},
+							"generate_summary": {
+								"type": "string",
+								"description": "Deprecated upstream alias for `summary`."
+							},
+							"max_tokens": {
+								"type": "integer",
+								"minimum": 1
+							}
+						}
+					},
+					"safety_identifier": {
+						"type": "string",
+						"description": "Provider-visible stable identifier for safety monitoring."
+					},
+					"service_tier": {
+						"type": "string",
+						"description": "Provider service tier selection.",
+						"enum": ["auto", "default", "flex", "priority", "scale"]
+					},
+					"stream_options": {
+						"type": "object",
+						"description": "Additional options for streaming responses.",
+						"properties": {
+							"include_obfuscation": {
+								"type": "boolean"
+							}
+						}
+					},
+					"store": {
+						"type": "boolean",
+						"description": "Whether the provider may store the request or response where supported."
+					},
+					"temperature": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 2,
+						"default": 1
+					},
+					"text": {
+						"type": "object",
+						"description": "Text output configuration, including structured output format and verbosity.",
+						"properties": {
+							"format": {
+								"type": "object",
+								"properties": {
+									"type": {
+										"type": "string",
+										"enum": ["text", "json_object", "json_schema"]
+									},
+									"name": {
+										"type": "string"
+									},
+									"schema": {
+										"type": "object"
+									},
+									"strict": {
+										"type": "boolean"
+									}
+								}
+							},
+							"verbosity": {
+								"type": "string",
+								"enum": ["low", "medium", "high"]
+							}
+						}
+					},
+					"top_logprobs": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"top_p": {
+						"type": "number",
+						"minimum": 0,
+						"maximum": 1
+					},
+					"tool_choice": {
+						"type": ["string", "object"],
+						"description": "Tool choice, such as `auto`, `none`, `required`, or a named tool object."
+					},
+					"tools": {
+						"type": "array",
+						"description": "Responses API tool definitions accepted by compatible providers.",
+						"items": {
+							"type": "object"
+						}
+					},
+					"truncation": {
+						"type": "string",
+						"enum": ["auto", "disabled"]
+					},
+					"user": {
+						"type": "string",
+						"description": "End-user identifier forwarded to providers that support abuse monitoring."
+					}
+				},
+				"example": {
+					"model": "openai/gpt-4o",
+					"input": "Write a concise API gateway health check strategy.",
+					"temperature": 0.7
+				}
+			},
+			"ResponsesInputItem": {
+				"type": "object",
+				"description": "Responses API input or previous output item. Supported item types include messages, function calls and outputs, tool calls, reasoning, and item references.",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"message",
+							"file_search_call",
+							"computer_call",
+							"computer_call_output",
+							"web_search_call",
+							"function_call",
+							"function_call_output",
+							"code_interpreter_call",
+							"local_shell_call",
+							"local_shell_call_output",
+							"mcp_call",
+							"custom_tool_call",
+							"custom_tool_call_output",
+							"image_generation_call",
+							"mcp_list_tools",
+							"mcp_approval_request",
+							"mcp_approval_responses",
+							"reasoning",
+							"item_reference",
+							"refusal"
+						]
+					},
+					"status": {
+						"type": "string"
+					},
+					"role": {
+						"type": "string",
+						"enum": ["assistant", "user", "system", "developer"]
+					},
+					"content": {
+						"$ref": "#/components/schemas/ResponsesMessageContent"
+					},
+					"call_id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"arguments": {
+						"type": "string"
+					},
+					"output": {
+						"description": "Tool output payload for function_call_output and related output items."
+					},
+					"summary": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"encrypted_content": {
+						"type": "string"
+					}
+				}
+			},
+			"ResponsesMessageContent": {
+				"description": "Responses message content as either a string or an array of content blocks.",
+				"oneOf": [
+					{
+						"type": "string"
+					},
+					{
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ResponsesContentBlock"
+						}
+					}
+				]
+			},
+			"ResponsesContentBlock": {
+				"type": "object",
+				"required": ["type"],
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"input_text",
+							"input_image",
+							"input_file",
+							"input_audio",
+							"output_text",
+							"refusal",
+							"reasoning_text",
+							"rendered_content",
+							"compaction"
+						]
+					},
+					"text": {
+						"type": "string"
+					},
+					"image_url": {
+						"type": "string"
+					},
+					"detail": {
+						"type": "string",
+						"enum": ["auto", "low", "high"]
+					},
+					"file_id": {
+						"type": "string"
+					},
+					"file_data": {
+						"type": "string"
+					},
+					"file_url": {
+						"type": "string"
+					},
+					"filename": {
+						"type": "string"
+					},
+					"file_type": {
+						"type": "string"
+					},
+					"input_audio": {
+						"type": "object",
+						"properties": {
+							"format": {
+								"type": "string",
+								"enum": ["mp3", "wav"]
+							},
+							"data": {
+								"type": "string"
+							}
+						},
+						"required": ["format", "data"]
+					},
+					"refusal": {
+						"type": "string"
+					},
+					"annotations": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"logprobs": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"signature": {
+						"type": "string"
+					},
+					"citations": {
+						"type": "object"
+					}
+				}
+			},
+			"ResponseObject": {
+				"type": "object",
+				"description": "Non-streaming OpenAI-compatible Responses API response.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"format": "uuid",
+						"description": "Unique response identifier generated by the gateway."
+					},
+					"object": {
+						"type": "string",
+						"enum": ["response"],
+						"description": "The object type, which is always `response`."
+					},
+					"created_at": {
+						"type": "integer",
+						"description": "Unix timestamp of response creation."
+					},
+					"completed_at": {
+						"type": ["integer", "null"],
+						"description": "Unix timestamp of response completion."
+					},
+					"status": {
+						"type": "string",
+						"enum": ["completed", "failed", "in_progress", "cancelled", "queued", "incomplete"]
+					},
+					"error": {
+						"type": ["object", "null"],
+						"properties": {
+							"code": {
+								"type": "string"
+							},
+							"message": {
+								"type": "string"
+							}
+						}
+					},
+					"incomplete_details": {
+						"type": ["object", "null"],
+						"properties": {
+							"reason": {
+								"type": "string"
+							}
+						}
+					},
+					"model": {
+						"type": "string",
+						"description": "Model used for the response."
+					},
+					"output": {
+						"type": "array",
+						"description": "Response output items.",
+						"items": {
+							"$ref": "#/components/schemas/ResponsesInputItem"
+						}
+					},
+					"output_text": {
+						"type": "string",
+						"description": "Convenience concatenation of output text content when available."
+					},
+					"background": {
+						"type": "boolean"
+					},
+					"conversation": {
+						"type": ["object", "null"],
+						"properties": {
+							"id": {
+								"type": "string"
+							}
+						}
+					},
+					"include": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"instructions": {
+						"type": ["string", "array", "null"]
+					},
+					"max_output_tokens": {
+						"type": ["integer", "null"]
+					},
+					"max_tool_calls": {
+						"type": ["integer", "null"]
+					},
+					"metadata": {
+						"type": "object"
+					},
+					"parallel_tool_calls": {
+						"type": "boolean"
+					},
+					"previous_response_id": {
+						"type": ["string", "null"]
+					},
+					"prompt_cache_key": {
+						"type": ["string", "null"]
+					},
+					"reasoning": {
+						"type": "object"
+					},
+					"safety_identifier": {
+						"type": ["string", "null"]
+					},
+					"service_tier": {
+						"type": ["string", "null"]
+					},
+					"store": {
+						"type": "boolean"
+					},
+					"temperature": {
+						"type": "number"
+					},
+					"text": {
+						"type": "object"
+					},
+					"tool_choice": {
+						"type": ["string", "object"]
+					},
+					"tools": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"top_logprobs": {
+						"type": "integer"
+					},
+					"top_p": {
+						"type": "number"
+					},
+					"truncation": {
+						"type": "string"
+					},
+					"usage": {
+						"$ref": "#/components/schemas/ResponsesUsage"
+					},
+					"stogas": {
+						"type": "object",
+						"title": "Gateway Metadata",
+						"description": "Optional Stogas metadata returned when requested with Stogas debug headers.",
+						"properties": {
+							"provider": {
+								"type": "string",
+								"description": "The upstream AI provider that served the request"
+							},
+							"latency": {
+								"type": "integer",
+								"description": "Total round-trip latency in milliseconds"
+							},
+							"model_requested": {
+								"type": "string",
+								"description": "The exact model alias or name requested"
+							},
+							"model_deployment": {
+								"type": "string",
+								"description": "The upstream model deployment selected by the gateway"
+							},
+							"provider_response_headers": {
+								"type": "object",
+								"additionalProperties": {
+									"type": "string"
+								},
+								"description": "Catalog-approved response headers from the upstream provider"
+							},
+							"raw_request": {
+								"type": ["object", "array", "string", "number", "boolean", "null"],
+								"description": "The translated upstream provider request, returned when requested."
+							},
+							"raw_response": {
+								"type": ["object", "array", "string", "number", "boolean", "null"],
+								"description": "The raw upstream provider JSON body, returned when requested."
+							}
+						}
+					}
+				},
+				"required": ["id", "object", "created_at", "model", "output", "status"],
+				"example": {
+					"id": "8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7",
+					"object": "response",
+					"created_at": 1714343120,
+					"completed_at": 1714343121,
+					"status": "completed",
+					"error": null,
+					"incomplete_details": null,
+					"model": "gpt-4o-2024-05-13",
+					"output": [
+						{
+							"id": "msg_0192f217-35b0-7e2c-9be7-f4cc24f2a4b0",
+							"type": "message",
+							"status": "completed",
+							"role": "assistant",
+							"content": [
+								{
+									"type": "output_text",
+									"text": "A good API gateway health check should verify the process is reachable, dependencies are available, and degraded dependencies are reported without leaking provider details.",
+									"annotations": [],
+									"logprobs": []
+								}
+							]
+						}
+					],
+					"output_text": "A good API gateway health check should verify the process is reachable, dependencies are available, and degraded dependencies are reported without leaking provider details.",
+					"parallel_tool_calls": true,
+					"temperature": 0.7,
+					"tool_choice": "auto",
+					"tools": [],
+					"top_p": 1,
+					"truncation": "disabled",
+					"usage": {
+						"input_tokens": 16,
+						"output_tokens": 32,
+						"total_tokens": 48,
+						"input_tokens_details": {
+							"cached_tokens": 0,
+							"cached_read_tokens": 0,
+							"cached_write_tokens": 0
+						},
+						"output_tokens_details": {
+							"reasoning_tokens": 0
+						}
+					},
+					"stogas": {
+						"provider": "OpenAI",
+						"latency": 842,
+						"model_requested": "openai/gpt-4o"
+					}
+				}
+			},
+			"ResponsesUsage": {
+				"type": "object",
+				"description": "Responses API token usage statistics.",
+				"properties": {
+					"input_tokens": {
+						"type": "integer",
+						"description": "Number of input tokens."
+					},
+					"output_tokens": {
+						"type": "integer",
+						"description": "Number of output tokens."
+					},
+					"total_tokens": {
+						"type": "integer",
+						"description": "Total number of tokens."
+					},
+					"input_tokens_details": {
+						"type": "object",
+						"properties": {
+							"text_tokens": {
+								"type": "integer"
+							},
+							"audio_tokens": {
+								"type": "integer"
+							},
+							"image_tokens": {
+								"type": "integer"
+							},
+							"cached_tokens": {
+								"type": "integer"
+							},
+							"cached_read_tokens": {
+								"type": "integer"
+							},
+							"cached_write_tokens": {
+								"type": "integer"
+							}
+						}
+					},
+					"output_tokens_details": {
+						"type": "object",
+						"properties": {
+							"text_tokens": {
+								"type": "integer"
+							},
+							"audio_tokens": {
+								"type": "integer"
+							},
+							"image_tokens": {
+								"type": "integer"
+							},
+							"reasoning_tokens": {
+								"type": "integer"
+							},
+							"accepted_prediction_tokens": {
+								"type": "integer"
+							},
+							"rejected_prediction_tokens": {
+								"type": "integer"
+							}
+						}
+					},
+					"cost": {
+						"type": ["number", "null"],
+						"description": "Upstream inference cost when available."
+					}
+				},
+				"required": ["input_tokens", "output_tokens", "total_tokens"]
+			},
+			"ChatChoice": {
+				"type": "object",
+				"description": "Chat completion choice",
+				"properties": {
+					"index": {
+						"type": "integer",
+						"description": "Choice index"
+					},
+					"message": {
+						"$ref": "#/components/schemas/ChatAssistantMessage"
+					},
+					"finish_reason": {
+						"type": "string",
+						"description": "Reason why the model stopped generating",
+						"enum": ["stop", "length", "tool_calls", "content_filter", "error"]
+					}
+				},
+				"required": ["index", "message", "finish_reason"]
+			},
+			"ChatAssistantMessage": {
+				"type": "object",
+				"description": "Assistant message",
+				"properties": {
+					"role": {
+						"type": "string",
+						"enum": ["assistant"]
+					},
+					"content": {
+						"$ref": "#/components/schemas/ChatMessageContent",
+						"description": "Assistant message content"
+					},
+					"tool_calls": {
+						"type": "array",
+						"description": "Tool calls made by the assistant",
+						"items": {
+							"$ref": "#/components/schemas/ChatToolCall"
+						}
+					}
+				},
+				"required": ["role"]
+			},
+			"ChatUsage": {
+				"type": "object",
+				"description": "Token usage statistics",
+				"properties": {
+					"prompt_tokens": {
+						"type": "integer",
+						"description": "Number of tokens in the prompt"
+					},
+					"completion_tokens": {
+						"type": "integer",
+						"description": "Number of tokens in the completion"
+					},
+					"total_tokens": {
+						"type": "integer",
+						"description": "Total number of tokens used"
+					}
+				},
+				"required": ["prompt_tokens", "completion_tokens", "total_tokens"]
+			},
+			"ErrorResponse": {
+				"type": "object",
+				"properties": {
+					"error": {
+						"type": "object",
+						"properties": {
+							"message": {
+								"type": "string"
+							},
+							"type": {
+								"type": "string"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
