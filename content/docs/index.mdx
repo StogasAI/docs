@@ -1,13 +1,72 @@
 ---
-title: Hello World
-description: Your first document
+title: Stogas Gateway
+description: OpenAI-compatible AI gateway for anonymous, zero-trust AI API access.
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+Stogas provides a public OpenAI-compatible API gateway that proxies requests to upstream AI providers. You authenticate once with a Stogas API key — no need to manage individual provider keys.
 
-## What is Next?
+## Base URL
 
-<Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
-</Cards>
+```
+https://api.stogas.ai
+```
+
+Endpoint paths include their API version.
+
+## Endpoints
+
+| Method | Path                   | Auth Required | Description                        |
+| ------ | ---------------------- | :-----------: | ---------------------------------- |
+| `GET`  | `/health`              |      No       | Gateway readiness check            |
+| `POST` | `/v1/chat/completions` |      Yes      | OpenAI-compatible chat completions |
+| `POST` | `/v1/responses`        |      Yes      | OpenAI-compatible Responses API    |
+
+## Authentication
+
+All model endpoints require a Stogas API key:
+
+```http
+Authorization: Bearer <stogas_api_key>
+Content-Type: application/json
+```
+
+For SDK compatibility, the gateway also accepts the same key in `api-key`, `x-api-key`, and `x-goog-api-key`.
+These are header aliases only; query parameters and cookies are not supported for API key authentication.
+
+Get your key from the [Stogas Dashboard](https://app.stogas.ai).
+
+## CORS
+
+The gateway is intentionally browser-embeddable:
+
+```http
+Access-Control-Allow-Origin: *
+```
+
+No cookies are used for public API authentication.
+
+## Debug Headers
+
+<Callout type="info" title="Raw request mode">
+	Set `X-Stogas-Return-Raw-Request: true` to receive the translated upstream provider request at
+	`stogas.raw_request`.
+</Callout>
+
+<Callout type="info" title="Raw response mode">
+	Set `X-Stogas-Return-Raw-Response: true` to receive the raw upstream provider JSON body.
+</Callout>
+
+Request additional metadata fields with:
+
+```http
+X-Stogas-Return-Extra-Fields: provider,model_requested,latency
+```
+
+Available field names: `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, `raw_response`.
+
+For streaming responses, metadata is emitted as a single SSE event before `[DONE]`:
+
+```
+event: stogas.meta
+data: { ... }
+```

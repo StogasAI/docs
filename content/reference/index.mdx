@@ -1,0 +1,54 @@
+---
+title: API Reference
+description: Interactive endpoint playground for the Stogas Gateway API.
+---
+
+Explore and test all Stogas Gateway endpoints. Each operation page includes an interactive playground for live requests.
+
+Use `https://api.stogas.ai` as the base URL. Endpoint paths include their API version.
+
+## Endpoints
+
+<Cards>
+	<Card
+		title="Health"
+		description="Check gateway operational readiness."
+		href="/docs/reference/health/getHealth"
+	/>
+	<Card
+		title="Chat Completions"
+		description="Create OpenAI-compatible chat completions."
+		href="/docs/reference/openai-compatible/createChatCompletion"
+	/>
+	<Card
+		title="Responses"
+		description="Create OpenAI-compatible Responses API results."
+		href="/docs/reference/openai-compatible/createResponse"
+	/>
+</Cards>
+
+## Guides
+
+<Cards>
+	<Card
+		title="Provider Behavior"
+		description="Provider differences, compatibility notes, and Stogas-specific edge cases."
+		href="/docs/reference/provider-behavior"
+	/>
+	<Card
+		title="Security"
+		description="Authentication, request limits, CORS, and header policies."
+		href="/docs/reference/security"
+	/>
+</Cards>
+
+## Authentication
+
+All model endpoints require a Stogas API key:
+
+```http
+Authorization: Bearer <stogas_api_key>
+Content-Type: application/json
+```
+
+`/health` is unauthenticated. Get your key from the [Stogas Dashboard](https://app.stogas.ai).

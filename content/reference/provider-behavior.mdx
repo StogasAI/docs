@@ -1,0 +1,50 @@
+---
+title: Provider Behavior
+description: Provider-specific differences, compatibility notes, and Stogas gateway behavior.
+---
+
+## Current Provider Surface
+
+The Stogas runtime currently configures the OpenAI provider. Requests are accepted when the parsed `provider/model` pair resolves through the catalog, which defines:
+
+- Provider and model availability
+- Allowed extra parameters and upstream headers
+- Allowed provider response headers to expose
+- Request-size limits and pricing behavior
+
+## Shared Gateway Behavior
+
+- Request bodies are parsed as canonical objects — unknown top-level parameters are **not** passed through generically.
+- Provider-specific extras are forwarded only when the catalog entry explicitly permits them.
+- Arbitrary client headers are not forwarded upstream.
+- Provider response headers are not exposed unless catalog policy allows specific ones.
+- Internal tracing and governance headers are not part of the public API.
+
+## Chat Completions (`/v1/chat/completions`)
+
+| Scenario | Behavior |
+|----------|----------|
+| `stream: false` | Returns a JSON chat completion object |
+| `stream: true` | Returns Server-Sent Events, ending with `data: [DONE]` |
+| `max_tokens` (legacy) | Accepted and mapped to `max_completion_tokens` before dispatch |
+| `X-Stogas-Return-Raw-Response: true` | Returns the raw captured upstream JSON instead of the normalized response |
+
+## Responses API (`/v1/responses`)
+
+| Scenario | Behavior |
+|----------|----------|
+| `stream: false` | Returns a JSON response object |
+| `stream: true` | Returns named Responses API SSE events |
+| Raw response mode | Returns the captured upstream JSON when available |
+
+## Raw Response Mode
+
+Raw response mode does not short-circuit the Stogas pipeline — the request is fully processed. It only changes the output: if the gateway captured the raw provider body, Stogas writes that body to the client.
+
+<Callout type="info">
+  Raw mode exposes the upstream JSON payload as received. It does not reproduce exact TCP chunk boundaries or provider compression framing.
+</Callout>
+
+## Cancellation
+
+The catalog defines whether a provider supports bill-safe cancellation. Currently, clients should assume non-streaming requests complete normally once the gateway has received them.
