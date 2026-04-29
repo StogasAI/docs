@@ -1,7 +1,5 @@
 name = "stogas-docs"
-main = ".open-next/worker.js"
 compatibility_date = "2025-11-16"
-compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
 minify = true
 keep_names = false
@@ -16,19 +14,12 @@ local_protocol = "http"
 enabled = true
 
 [assets]
-binding = "ASSETS"
-directory = ".open-next/assets"
-
-[[services]]
-binding = "WORKER_SELF_REFERENCE"
-service = "stogas-docs"
+directory = "out"
+html_handling = "drop-trailing-slash"
+not_found_handling = "404-page"
 
 [env.local]
 name = "stogas-docs-local"
-
-[[env.local.services]]
-binding = "WORKER_SELF_REFERENCE"
-service = "stogas-docs-local"
 
 [env.staging]
 name = "stogas-docs-staging"
@@ -60,10 +51,6 @@ zone_name = "stogas.ai"
 [[env.staging.routes]]
 pattern = "staging.stogas.ai/llms.mdx/docs/*"
 zone_name = "stogas.ai"
-
-[[env.staging.services]]
-binding = "WORKER_SELF_REFERENCE"
-service = "stogas-docs-staging"
 
 [env.staging.observability]
 enabled = true
@@ -126,10 +113,6 @@ zone_name = "stogas.ai"
 [[env.production.routes]]
 pattern = "www.stogas.ai/llms.mdx/docs/*"
 zone_name = "stogas.ai"
-
-[[env.production.services]]
-binding = "WORKER_SELF_REFERENCE"
-service = "stogas-docs-production"
 
 [env.production.observability]
 enabled = true

@@ -12,6 +12,7 @@ import { getMDXComponents } from '@/components/mdx';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { gitConfig, referenceRoute } from '@/lib/shared';
+export const dynamic = 'force-static';
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 	const params = await props.params;
