@@ -8,7 +8,7 @@ export const referenceImageRoute = '/og/reference';
 export const referenceContentRoute = '/llms.mdx/reference';
 
 export const gitConfig = {
-  user: 'StogasAI',
-  repo: 'docs',
-  branch: 'main',
+	user: 'StogasAI',
+	repo: 'docs',
+	branch: 'main'
 };

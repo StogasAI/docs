@@ -5,19 +5,19 @@ import { createAPIPage } from 'fumadocs-openapi/ui';
 import { StyleInjector } from './style-injector';
 
 const BaseAPIPage = createAPIPage(openapi, {
-  client,
-  codeUsages,
-  generateTypeScriptDefinitions: false,
-  playground: {
-    enabled: true,
-  },
+	client,
+	codeUsages,
+	generateTypeScriptDefinitions: false,
+	playground: {
+		enabled: true
+	}
 });
 
 export function APIPage(props: any) {
-  return (
-    <>
-      <StyleInjector />
-      <BaseAPIPage {...props} />
-    </>
-  );
+	return (
+		<>
+			<StyleInjector />
+			<BaseAPIPage {...props} />
+		</>
+	);
 }
