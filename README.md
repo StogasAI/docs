@@ -15,13 +15,13 @@ Open [http://localhost:3000/docs](http://localhost:3000/docs).
 
 ## Structure
 
-| Path | Description |
-| --- | --- |
-| `content/docs/` | MDX documentation source files |
-| `app/docs/` | Docs layout and catch-all page route |
-| `app/(home)/` | Landing page |
-| `lib/source.ts` | Fumadocs source adapter |
-| `lib/shared.ts` | Shared config (app name, GitHub info) |
+| Path               | Description                            |
+| ------------------ | -------------------------------------- |
+| `content/docs/`    | MDX documentation source files         |
+| `app/docs/`        | Docs layout and catch-all page route   |
+| `app/(home)/`      | Landing page                           |
+| `lib/source.ts`    | Fumadocs source adapter                |
+| `lib/shared.ts`    | Shared config (app name, GitHub info)  |
 | `source.config.ts` | Fumadocs MDX content collection config |
 
 ## Adding Docs
