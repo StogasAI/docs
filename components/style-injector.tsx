@@ -34,15 +34,23 @@ export function StyleInjector() {
 				}
 
 				dialog.querySelectorAll('label').forEach((label) => {
-					if (label.textContent?.trim() === 'serverUrl') {
-						label.textContent = 'URL';
+					const labelText = label.textContent?.trim();
+					if (labelText === 'serverUrl' || labelText === 'URL') {
+						(label as HTMLElement).style.display = 'none';
 					}
 				});
 			});
 		};
 
+		const syncPlaygroundNumberInputs = () => {
+			document.querySelectorAll('input[type="number"]:not([step])').forEach((input) => {
+				input.setAttribute('step', '0.01');
+			});
+		};
+
 		const observer = new MutationObserver(() => {
 			simplifyServerUrlDialog();
+			syncPlaygroundNumberInputs();
 
 			// 1. Style the left-side Accordion triggers
 			document.querySelectorAll('button[aria-expanded]:not([role="tab"])').forEach((el) => {
@@ -175,6 +183,8 @@ export function StyleInjector() {
 		});
 
 		observer.observe(document.body, { childList: true, subtree: true });
+		simplifyServerUrlDialog();
+		syncPlaygroundNumberInputs();
 		return () => observer.disconnect();
 	}, []);
 

@@ -3,7 +3,8 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"build": "next build",
+		"generate:openapi": "bun scripts/generate-openapi.ts",
+		"build": "bun run generate:openapi && next build",
 		"build:worker": "opennextjs-cloudflare build",
 		"cf-typegen": "wrangler types",
 		"clean": "rm -rf .next .open-next .wrangler .source next-env.d.ts tsconfig.tsbuildinfo",
@@ -12,7 +13,7 @@
 		"dev": "bun ../../scripts/stogas.ts dev docs",
 		"preview": "bun ../../scripts/stogas.ts preview docs",
 		"start": "next start",
-		"typecheck": "fumadocs-mdx && next typegen && tsc --noEmit",
+		"typecheck": "bun run generate:openapi && fumadocs-mdx && next typegen && tsc --noEmit",
 		"types:check": "bun run typecheck",
 		"postinstall": "fumadocs-mdx"
 	},

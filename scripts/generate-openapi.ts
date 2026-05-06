@@ -21,16 +21,43 @@ async function main() {
 		output: path.resolve(__dirname, '../content/reference'),
 		per: 'operation',
 		groupBy: 'tag',
-		meta: true,
+		meta: {
+			folderStyle: 'separator'
+		},
 		beforeWrite: (files) => {
 			for (const file of files) {
 				if (file.path.endsWith('meta.json')) {
 					try {
-						const content = JSON.parse(file.content);
-						if (content.title === 'Open A I compatible') {
-							content.title = 'OpenAI-compatible';
-							file.content = JSON.stringify(content, null, 2);
+						let content = JSON.parse(file.content);
+						if (file.path === 'meta.json') {
+							content = {
+								title: 'API Reference',
+								root: true,
+								pages: [
+									'index',
+									'---Health---',
+									'...health',
+									'---Models---',
+									'...openai-compatible',
+									'---Other Endpoints---',
+									'...',
+									'---Gateway---',
+									'provider-behavior',
+									'security'
+								]
+							};
 						}
+						content.pages = content.pages?.map((page: string) =>
+							page === '---Open A I compatible---' ? '---Models---' : page
+						);
+						if (content.title === 'Open A I compatible') {
+							content.title = 'Models';
+							content.description = 'Model inference endpoints.';
+						}
+						if (file.path === path.join('health', 'meta.json')) {
+							content.description = 'Operational readiness endpoints.';
+						}
+						file.content = `${JSON.stringify(content, null, '\t')}\n`;
 					} catch {
 						continue;
 					}
@@ -46,9 +73,29 @@ async function main() {
 					if (!file.content.includes('full: true')) {
 						file.content = file.content.replace('---', '---\nfull: true');
 					}
+						if (file.path === path.join('health', 'getHealth.mdx')) {
+							file.content = file.content
+								.replace('title: Health Check', 'title: Check gateway health')
+								.replace(
+								'description: Returns a minimal health response.',
+								'description: Returns a minimal health response when the gateway process is alive.'
+							)
+							.replace(
+								'- content: Returns a minimal health response.',
+								'- content: Returns a minimal health response when the gateway process is alive.'
+								);
+						}
+						file.content = file.content
+							.replace(
+								/<APIPage document=\{"([^"]+)"\} operations=\{\[\{"path":"([^"]+)","method":"([^"]+)"\}\]\} \/>/g,
+								"<APIPage document={'$1'} operations={[{ path: '$2', method: '$3' }]} />"
+							)
+							.replace(/\n{3,}/g, '\n\n')
+							.trimEnd()
+							.concat('\n');
+					}
 				}
 			}
-		}
 	});
 	console.log('API documentation generated.');
 }
