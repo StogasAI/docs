@@ -43,7 +43,7 @@ export default function LayoutClient({ children, tree, baseOptions }: LayoutClie
 						{/* Landing page + dashboard links */}
 						<a
 							href="/"
-							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 						>
 							<Home className="text-fd-primary size-4 shrink-0" />
 							<span className="text-[13px]">Landing Page</span>
@@ -51,7 +51,7 @@ export default function LayoutClient({ children, tree, baseOptions }: LayoutClie
 						</a>
 						<a
 							href={dashboardUrl}
-							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors"
+							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 						>
 							<LayoutDashboard className="text-fd-primary size-4 shrink-0" />
 							<span className="text-[13px]">Dashboard</span>

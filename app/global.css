@@ -12,6 +12,154 @@ html > body[data-scroll-locked] {
 	--removed-body-scroll-bar-size: 0px !important;
 }
 
+#nd-docs-layout {
+	--fd-layout-width: 100vw;
+}
+
+#nd-page[data-full='true'] {
+	max-width: min(100%, 1400px);
+}
+
+.stogas-api-operation-layout {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem 2rem;
+}
+
+.stogas-api-operation-main,
+.stogas-api-operation-examples {
+	min-width: 0;
+}
+
+@container (min-width: 56rem) {
+	.stogas-api-operation-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(440px, min(48%, 640px));
+		align-items: start;
+	}
+
+	.stogas-api-operation-examples {
+		position: sticky;
+		top: calc(var(--fd-docs-row-1, 2rem) + 1rem);
+	}
+}
+
+@container (min-width: 72rem) {
+	.stogas-api-operation-layout {
+		grid-template-columns: minmax(0, 1fr) minmax(520px, min(50%, 720px));
+	}
+}
+
+.stogas-api-operation-layout :is(.fd-scroll-container, pre, [class*='overflow-auto'], [class*='overflow-x-auto']) {
+	scrollbar-width: auto;
+	scrollbar-color: color-mix(in oklch, var(--color-fd-muted-foreground) 45%, transparent)
+		transparent;
+}
+
+.stogas-api-operation-layout :is(.fd-scroll-container, pre, [class*='overflow-auto'], [class*='overflow-x-auto'])::-webkit-scrollbar {
+	height: 28px;
+	width: 28px;
+}
+
+.stogas-api-operation-layout :is(.fd-scroll-container, pre, [class*='overflow-auto'], [class*='overflow-x-auto'])::-webkit-scrollbar-thumb {
+	border: 7px solid transparent;
+	border-radius: 999px;
+	background-clip: content-box;
+	background-color: color-mix(in oklch, var(--color-fd-muted-foreground) 45%, transparent);
+	cursor: grab;
+}
+
+.stogas-api-operation-layout :is(.fd-scroll-container, pre, [class*='overflow-auto'], [class*='overflow-x-auto'])::-webkit-scrollbar-thumb:hover {
+	background-color: color-mix(in oklch, var(--color-fd-muted-foreground) 65%, transparent);
+	cursor: grab;
+}
+
+.stogas-api-operation-layout :is(.fd-scroll-container, pre, [class*='overflow-auto'], [class*='overflow-x-auto'])::-webkit-scrollbar-thumb:active {
+	cursor: grabbing;
+}
+
+.stogas-api-operation-layout :is(.fd-scroll-container, pre, [class*='overflow-auto'], [class*='overflow-x-auto'])::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.fd-scroll-container.fd-scroll-container {
+	scrollbar-width: auto !important;
+	scrollbar-color: color-mix(in oklch, var(--color-fd-muted-foreground) 55%, transparent)
+		transparent !important;
+}
+
+.fd-scroll-container.fd-scroll-container::-webkit-scrollbar {
+	height: 28px !important;
+	width: 28px !important;
+}
+
+.fd-scroll-container.fd-scroll-container::-webkit-scrollbar-thumb {
+	border: 7px solid transparent !important;
+	border-radius: 999px !important;
+	background-clip: content-box !important;
+	background-color: color-mix(
+		in oklch,
+		var(--color-fd-muted-foreground) 55%,
+		transparent
+	) !important;
+	cursor: grab !important;
+}
+
+.fd-scroll-container.fd-scroll-container::-webkit-scrollbar-thumb:hover {
+	background-color: color-mix(
+		in oklch,
+		var(--color-fd-muted-foreground) 75%,
+		transparent
+	) !important;
+	cursor: grab !important;
+}
+
+.fd-scroll-container.fd-scroll-container::-webkit-scrollbar-thumb:active {
+	cursor: grabbing !important;
+}
+
+:where(
+		a[href],
+		button:not(:disabled),
+		select:not(:disabled),
+		summary,
+		label[for],
+		[role='button']:not([aria-disabled='true']),
+		[role='tab']:not([aria-disabled='true']),
+		[role='switch']:not([aria-disabled='true']),
+		[role='combobox']:not([aria-disabled='true']),
+		[role='menuitem']:not([aria-disabled='true']),
+		[role='option']:not([aria-disabled='true'])
+	) {
+	cursor: pointer;
+}
+
+:where(button:disabled, [aria-disabled='true']) {
+	cursor: not-allowed;
+}
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+	cursor: pointer;
+}
+
+[data-radix-popper-content-wrapper] .fd-scroll-container > a[href] {
+	padding-block: 0.625rem;
+}
+
+:where(
+		[role='combobox'],
+		[role='listbox'],
+		[role='menu'],
+		[role='menuitem'],
+		[role='option'],
+		[data-radix-popper-content-wrapper],
+		[data-radix-popper-content-wrapper] *
+	):is(:focus, :focus-visible, [data-highlighted]) {
+	outline: none !important;
+	box-shadow: none !important;
+}
+
 /* Hide Fumadocs OpenAPI Filter Properties component */
 div:has(> input[data-object-search-input]) {
 	display: none !important;

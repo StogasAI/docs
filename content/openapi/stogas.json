@@ -79,7 +79,7 @@
 				"operationId": "createChatCompletion",
 				"tags": ["OpenAI-compatible"],
 				"summary": "Chat Completions",
-				"description": "Creates an OpenAI-compatible Chat Completion API response.",
+				"description": "Create an OpenAI-compatible chat completion",
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/ReturnRawRequest"
@@ -141,8 +141,8 @@
 			"post": {
 				"operationId": "createResponse",
 				"tags": ["OpenAI-compatible"],
-				"summary": "Responses API",
-				"description": "Creates an OpenAI-compatible Responses API response.",
+				"summary": "Responses",
+				"description": "Create an OpenAI-compatible response",
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/ReturnRawRequest"
@@ -400,6 +400,7 @@
 					},
 					"frequency_penalty": {
 						"type": "number",
+						"multipleOf": 0.01,
 						"minimum": -2,
 						"maximum": 2
 					},
@@ -440,6 +441,7 @@
 					},
 					"presence_penalty": {
 						"type": "number",
+						"multipleOf": 0.01,
 						"minimum": -2,
 						"maximum": 2
 					},
@@ -527,6 +529,7 @@
 					},
 					"temperature": {
 						"type": "number",
+						"multipleOf": 0.01,
 						"minimum": 0,
 						"maximum": 2,
 						"default": 1
@@ -548,6 +551,7 @@
 					},
 					"top_p": {
 						"type": "number",
+						"multipleOf": 0.01,
 						"minimum": 0,
 						"maximum": 1
 					},
@@ -579,7 +583,7 @@
 					"messages": [
 						{
 							"role": "user",
-							"content": "Write a concise API gateway health check strategy."
+							"content": "Reflect on the issue of trusting trust"
 						}
 					],
 					"temperature": 0.7
@@ -815,15 +819,15 @@
 							"index": 0,
 							"message": {
 								"role": "assistant",
-								"content": "You can't trust code that you did not totally create yourself"
+								"content": "You can never fully trust code you did not write yourself."
 							},
 							"finish_reason": "stop"
 						}
 					],
 					"usage": {
-						"prompt_tokens": 16,
-						"completion_tokens": 112,
-						"total_tokens": 128
+						"prompt_tokens": 9,
+						"completion_tokens": 11,
+						"total_tokens": 20
 					},
 					"stogas": {
 						"provider": "OpenAI",
@@ -961,6 +965,7 @@
 					},
 					"temperature": {
 						"type": "number",
+						"multipleOf": 0.01,
 						"minimum": 0,
 						"maximum": 2,
 						"default": 1
@@ -999,6 +1004,7 @@
 					},
 					"top_p": {
 						"type": "number",
+						"multipleOf": 0.01,
 						"minimum": 0,
 						"maximum": 1
 					},
@@ -1024,7 +1030,7 @@
 				},
 				"example": {
 					"model": "openai/gpt-4o",
-					"input": "Write a concise API gateway health check strategy.",
+					"input": "Reflect on the issue of trusting trust",
 					"temperature": 0.7
 				}
 			},
@@ -1381,37 +1387,16 @@
 							"content": [
 								{
 									"type": "output_text",
-									"text": "A good API gateway health check should verify the process is reachable, dependencies are available, and degraded dependencies are reported without leaking provider details.",
-									"annotations": [],
-									"logprobs": []
+									"text": "You can never fully trust code you did not write yourself."
 								}
 							]
 						}
 					],
-					"output_text": "A good API gateway health check should verify the process is reachable, dependencies are available, and degraded dependencies are reported without leaking provider details.",
-					"parallel_tool_calls": true,
-					"temperature": 0.7,
-					"tool_choice": "auto",
-					"tools": [],
-					"top_p": 1,
-					"truncation": "disabled",
+					"output_text": "You can never fully trust code you did not write yourself.",
 					"usage": {
-						"input_tokens": 16,
-						"output_tokens": 32,
-						"total_tokens": 48,
-						"input_tokens_details": {
-							"cached_tokens": 0,
-							"cached_read_tokens": 0,
-							"cached_write_tokens": 0
-						},
-						"output_tokens_details": {
-							"reasoning_tokens": 0
-						}
-					},
-					"stogas": {
-						"provider": "OpenAI",
-						"latency": 842,
-						"model_requested": "openai/gpt-4o"
+						"input_tokens": 9,
+						"output_tokens": 11,
+						"total_tokens": 20
 					}
 				}
 			},

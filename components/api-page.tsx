@@ -8,6 +8,23 @@ const BaseAPIPage = createAPIPage(openapi, {
 	client,
 	codeUsages,
 	generateTypeScriptDefinitions: false,
+	content: {
+		renderOperationLayout: (slots) => (
+			<div className="stogas-api-operation-layout">
+				<div className="stogas-api-operation-main">
+					{slots.header}
+					{slots.apiPlayground}
+					{slots.description}
+					{slots.authSchemes}
+					{slots.parameters}
+					{slots.body}
+					{slots.responses}
+					{slots.callbacks}
+				</div>
+				<div className="stogas-api-operation-examples">{slots.apiExample}</div>
+			</div>
+		)
+	},
 	playground: {
 		enabled: true
 	}
