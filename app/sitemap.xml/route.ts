@@ -1,4 +1,10 @@
-import { apiSource, getOpenApiJsonUrl, getPageMarkdownUrl, isOpenApiOperationPage, source } from '@/lib/source';
+import {
+	apiSource,
+	getOpenApiJsonUrl,
+	getPageMarkdownUrl,
+	isOpenApiOperationPage,
+	source
+} from '@/lib/source';
 
 export const revalidate = false;
 export const dynamic = 'force-static';
