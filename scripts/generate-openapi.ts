@@ -15,6 +15,19 @@ const openapi = createOpenAPI({
 	}
 });
 
+function formatMetaJson(content: Record<string, unknown>) {
+	let json = JSON.stringify(content, null, '\t');
+	const pages = content.pages;
+	if (Array.isArray(pages) && pages.every((page) => typeof page === 'string')) {
+		const inlineArray = `[${pages.map((page) => JSON.stringify(page)).join(', ')}]`;
+		const inlinePages = `"pages": ${inlineArray}`;
+		if (`\t${inlinePages}`.length <= 100) {
+			json = json.replace(/\t"pages": \[\n(?:\t\t"[^"]+",?\n)+\t\]/, `\t${inlinePages}`);
+		}
+	}
+	return `${json}\n`;
+}
+
 async function main() {
 	await generateFiles({
 		input: openapi,
@@ -57,7 +70,15 @@ async function main() {
 						if (file.path === path.join('health', 'meta.json')) {
 							content.description = 'Operational readiness endpoints.';
 						}
-						file.content = `${JSON.stringify(content, null, '\t')}\n`;
+						if (file.path === path.join('health', 'meta.json')) {
+							content.title = 'Health';
+							content.description = 'Operational readiness endpoints.';
+						}
+						if (file.path === path.join('openai-compatible', 'meta.json')) {
+							content.title = 'Models';
+							content.description = 'Model inference endpoints.';
+						}
+						file.content = formatMetaJson(content);
 					} catch {
 						continue;
 					}
@@ -73,29 +94,29 @@ async function main() {
 					if (!file.content.includes('full: true')) {
 						file.content = file.content.replace('---', '---\nfull: true');
 					}
-						if (file.path === path.join('health', 'getHealth.mdx')) {
-							file.content = file.content
-								.replace('title: Health Check', 'title: Check gateway health')
-								.replace(
+					if (file.path === path.join('health', 'getHealth.mdx')) {
+						file.content = file.content
+							.replace('title: Health Check', 'title: Check gateway health')
+							.replace(
 								'description: Returns a minimal health response.',
 								'description: Returns a minimal health response when the gateway process is alive.'
 							)
 							.replace(
 								'- content: Returns a minimal health response.',
 								'- content: Returns a minimal health response when the gateway process is alive.'
-								);
-						}
-						file.content = file.content
-							.replace(
-								/<APIPage document=\{"([^"]+)"\} operations=\{\[\{"path":"([^"]+)","method":"([^"]+)"\}\]\} \/>/g,
-								"<APIPage document={'$1'} operations={[{ path: '$2', method: '$3' }]} />"
-							)
-							.replace(/\n{3,}/g, '\n\n')
-							.trimEnd()
-							.concat('\n');
+							);
 					}
+					file.content = file.content
+						.replace(
+							/<APIPage document=\{"([^"]+)"\} operations=\{\[\{"path":"([^"]+)","method":"([^"]+)"\}\]\} \/>/g,
+							"<APIPage document={'$1'} operations={[{ path: '$2', method: '$3' }]} />"
+						)
+						.replace(/\n{3,}/g, '\n\n')
+						.trimEnd()
+						.concat('\n');
 				}
 			}
+		}
 	});
 	console.log('API documentation generated.');
 }

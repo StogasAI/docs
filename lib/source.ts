@@ -79,7 +79,10 @@ function getJsonPointer(root: JsonObject, ref: string) {
 	return ref
 		.slice(2)
 		.split('/')
-		.reduce<any>((current, segment) => current?.[segment.replaceAll('~1', '/').replaceAll('~0', '~')], root);
+		.reduce<any>(
+			(current, segment) => current?.[segment.replaceAll('~1', '/').replaceAll('~0', '~')],
+			root
+		);
 }
 
 function collectRefs(value: unknown, refs = new Set<string>()) {
@@ -146,7 +149,10 @@ function getScopedComponents(routeSpec: JsonObject, operation: JsonObject) {
 }
 
 function findOperationForPage(page: (typeof source)['$inferPage']) {
-	const operationId = page.path.split('/').pop()?.replace(/\.mdx$/, '');
+	const operationId = page.path
+		.split('/')
+		.pop()
+		?.replace(/\.mdx$/, '');
 	if (!operationId) return;
 
 	for (const [pathName, pathItemValue] of Object.entries(openApiSpec.paths ?? {})) {
@@ -181,7 +187,9 @@ export function getOpenApiOperationSpec(page: (typeof source)['$inferPage']) {
 	const components = getScopedComponents(routeSpec, operation);
 	if (components) routeSpec.components = components;
 	if (Array.isArray(operation.tags) && Array.isArray(openApiSpec.tags)) {
-		routeSpec.tags = openApiSpec.tags.filter((tag: JsonObject) => operation.tags.includes(tag.name));
+		routeSpec.tags = openApiSpec.tags.filter((tag: JsonObject) =>
+			operation.tags.includes(tag.name)
+		);
 	}
 
 	if (!operation.security && openApiSpec.security) routeSpec.security = openApiSpec.security;
