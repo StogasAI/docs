@@ -64,6 +64,12 @@ X-Stogas-Return-Extra-Fields: provider,model_requested,latency
 
 Available field names: `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, `raw_response`.
 
+## Admission Failures
+
+Before the gateway calls an upstream provider, it places a short-lived billing hold for the API key. Failed admission requests never create usage telemetry.
+
+Known API keys record only these latest dashboard failure reasons: `insufficient_balance`, `key_disabled`, `key_expired`, `spend_limit_exceeded`, and `rate_limit_exceeded`. Unknown keys, request-ID conflicts, invalid internal hold amounts, and billing database outages are not attached to any key.
+
 For streaming responses, metadata is emitted as a single SSE event before `[DONE]`:
 
 ```

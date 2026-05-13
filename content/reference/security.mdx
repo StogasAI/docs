@@ -26,6 +26,28 @@ The `/health` endpoint is unauthenticated. The gateway generates a UUID v4 per r
 
 Request bodies are parsed in-memory. Compressed payloads are decompressed before JSON parsing and checked against the gateway size limit.
 
+## API Key Admission Errors
+
+Gateway model requests first authorize a short-lived billing hold. Requests that fail admission do not call an upstream provider and do not create usage telemetry.
+
+| Gateway result | Condition | Response | Dashboard failure |
+| --- | --- | --- | --- |
+| `invalid_key` | Missing, malformed, or unknown API key | `401 Unauthorized` | Not recorded |
+| `key_disabled` | API key is disabled | `403 Forbidden` | `key_disabled` |
+| `key_expired` | API key expiration has passed | `403 Forbidden` | `key_expired` |
+| `insufficient_balance` | Account balance cannot cover the hold | `402 Payment Required` | `insufficient_balance` |
+| `key_spend_limit` | Lifetime or recurring key spend limit would be exceeded | `402 Payment Required` | `spend_limit_exceeded` |
+| `key_rate_limited` | Key request-rate token bucket has no capacity | `429 Too Many Requests` | `rate_limit_exceeded` |
+| `usage_exists` | Request ID was already finalized | `409 Conflict` | Not recorded |
+| `expired` | Existing hold for the request ID has expired | `409 Conflict` | Not recorded |
+| `params_mismatch` | Request ID was reused with different hold parameters | `409 Conflict` | Not recorded |
+| `invalid_amount` | Internal authorization amount validation failed | `400 Bad Request` | Not recorded |
+| Database call failure | Billing database unavailable while placing the hold | `503 Service Unavailable` | Not recorded |
+
+Only user/API-key setting declines are recorded on the dashboard key. Invalid keys, request-ID conflicts, internal validation failures, and database failures are not attached to any key and are not usage logs.
+
+Expired-key admission disables the key while recording `key_expired`; later attempts return `key_disabled` because disabled checks happen before expiration checks.
+
 ## CORS
 
 The public gateway is intentionally browser-embeddable:
