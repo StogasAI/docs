@@ -7,9 +7,13 @@ const STATUS_TITLES: Record<string, string> = {
 	'400': 'Bad Request Error',
 	'401': 'Unauthorized Error',
 	'402': 'Payment Required Error',
+	'403': 'Forbidden Error',
 	'404': 'Not Found Error',
+	'409': 'Conflict Error',
 	'413': 'Payload Too Large Error',
-	'500': 'Internal Server Error'
+	'429': 'Too Many Requests Error',
+	'500': 'Internal Server Error',
+	'503': 'Service Unavailable Error'
 };
 
 export function StyleInjector() {

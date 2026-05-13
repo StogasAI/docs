@@ -125,14 +125,26 @@
 					"402": {
 						"$ref": "#/components/responses/PaymentRequired"
 					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
 					"404": {
 						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"429": {
+						"$ref": "#/components/responses/RateLimited"
 					},
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
 					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				}
 			}
@@ -188,14 +200,26 @@
 					"402": {
 						"$ref": "#/components/responses/PaymentRequired"
 					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
 					"404": {
 						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"429": {
+						"$ref": "#/components/responses/RateLimited"
 					},
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
 					},
 					"500": {
 						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				}
 			}
@@ -286,7 +310,7 @@
 				}
 			},
 			"PaymentRequired": {
-				"description": "<span className=\"text-red-500 font-bold\">Payment Required:</span> Returned when your account balance is zero or the API key spend limit is exhausted.",
+				"description": "<span className=\"text-red-500 font-bold\">Payment Required:</span> Returned when your account balance is insufficient or the API key lifetime or recurring spend limit is exhausted.",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -296,6 +320,78 @@
 							"error": {
 								"message": "Insufficient balance. Please add funds to your Stogas account to continue making requests.",
 								"type": "payment_required_error"
+							}
+						}
+					}
+				}
+			},
+			"Forbidden": {
+				"description": "<span className=\"text-red-500 font-bold\">Forbidden:</span> The API key is disabled or expired. Expired keys are disabled automatically before the error is returned.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"examples": {
+							"disabled": {
+								"value": {
+									"error": {
+										"message": "API key is disabled",
+										"type": "permission_denied"
+									}
+								}
+							},
+							"expired": {
+								"value": {
+									"error": {
+										"message": "API key is expired",
+										"type": "permission_denied"
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"Conflict": {
+				"description": "<span className=\"text-red-500 font-bold\">Conflict:</span> The gateway request ID was already finalized, expired, or reused with different hold parameters. Generate a new request ID and retry.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"examples": {
+							"already_finalized": {
+								"value": {
+									"error": {
+										"message": "Request already finalized; generate a new requestId",
+										"type": "conflict_error"
+									}
+								}
+							},
+							"hold_params_mismatch": {
+								"value": {
+									"error": {
+										"message": "Hold already exists with different parameters",
+										"type": "conflict_error"
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			"RateLimited": {
+				"description": "<span className=\"text-red-500 font-bold\">Rate Limited:</span> The API key token bucket does not currently have capacity for another request.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "API key rate limit exceeded",
+								"type": "rate_limit_error"
 							}
 						}
 					}
@@ -343,6 +439,22 @@
 						"example": {
 							"error": {
 								"message": "Upstream provider 'Anthropic' responded with status code 500.",
+								"type": "api_error"
+							}
+						}
+					}
+				}
+			},
+			"ServiceUnavailable": {
+				"description": "<span className=\"text-red-500 font-bold\">Service Unavailable:</span> The gateway could not reach the billing database while placing the authorization hold. The provider is not called and no usage telemetry is written.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Gateway billing database unavailable",
 								"type": "api_error"
 							}
 						}
