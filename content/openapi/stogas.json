@@ -332,22 +332,10 @@
 						"schema": {
 							"$ref": "#/components/schemas/ErrorResponse"
 						},
-						"examples": {
-							"disabled": {
-								"value": {
-									"error": {
-										"message": "API key is disabled",
-										"type": "permission_denied"
-									}
-								}
-							},
-							"expired": {
-								"value": {
-									"error": {
-										"message": "API key is expired",
-										"type": "permission_denied"
-									}
-								}
+						"example": {
+							"error": {
+								"message": "API key is disabled",
+								"type": "permission_denied"
 							}
 						}
 					}
@@ -360,22 +348,10 @@
 						"schema": {
 							"$ref": "#/components/schemas/ErrorResponse"
 						},
-						"examples": {
-							"already_finalized": {
-								"value": {
-									"error": {
-										"message": "Request already finalized; generate a new requestId",
-										"type": "conflict_error"
-									}
-								}
-							},
-							"hold_params_mismatch": {
-								"value": {
-									"error": {
-										"message": "Hold already exists with different parameters",
-										"type": "conflict_error"
-									}
-								}
+						"example": {
+							"error": {
+								"message": "Request already finalized; generate a new requestId",
+								"type": "conflict_error"
 							}
 						}
 					}

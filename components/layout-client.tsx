@@ -2,6 +2,10 @@
 
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import { ExternalLink, LayoutDashboard, Home } from 'lucide-react';
+import type { ReactNode } from 'react';
+import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
+import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
+import { StogasLink } from './stogas-link';
 
 // Inline GitHub mark SVG (brand icon, not in lucide-react)
 function GithubIcon({ className }: { className?: string }) {
@@ -11,11 +15,6 @@ function GithubIcon({ className }: { className?: string }) {
 		</svg>
 	);
 }
-import type { ReactNode } from 'react';
-import { useState, useEffect } from 'react';
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
-import { getRuntimeConfig } from '@stogas/shared/runtime/config';
 
 interface LayoutClientProps {
 	children: ReactNode;
@@ -24,13 +23,6 @@ interface LayoutClientProps {
 }
 
 export default function LayoutClient({ children, tree, baseOptions }: LayoutClientProps) {
-	const [dashboardUrl, setDashboardUrl] = useState('https://app.stogas.ai');
-
-	useEffect(() => {
-		const config = getRuntimeConfig({ url: window.location.href });
-		setDashboardUrl(config.urls.dashboard);
-	}, []);
-
 	return (
 		<DocsLayout
 			tree={tree}
@@ -41,22 +33,22 @@ export default function LayoutClient({ children, tree, baseOptions }: LayoutClie
 				footer: (
 					<div className="border-fd-border/50 mt-1 flex w-full flex-col gap-1 border-t pt-2">
 						{/* Landing page + dashboard links */}
-						<a
-							href="/"
+						<StogasLink
+							href="https://stogas.ai/"
 							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 						>
 							<Home className="text-fd-primary size-4 shrink-0" />
 							<span className="text-[13px]">Landing Page</span>
 							<ExternalLink className="ml-auto size-3 opacity-30 transition-opacity group-hover:opacity-100" />
-						</a>
-						<a
-							href={dashboardUrl}
+						</StogasLink>
+						<StogasLink
+							href="https://app.stogas.ai/overview"
 							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 						>
 							<LayoutDashboard className="text-fd-primary size-4 shrink-0" />
 							<span className="text-[13px]">Dashboard</span>
 							<ExternalLink className="ml-auto size-3 opacity-30 transition-opacity group-hover:opacity-100" />
-						</a>
+						</StogasLink>
 
 						{/* GitHub + theme toggle row */}
 						<div className="border-fd-border/60 bg-fd-secondary/50 mt-1 flex items-center rounded-lg border p-0.5">
