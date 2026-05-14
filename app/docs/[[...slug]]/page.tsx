@@ -6,17 +6,12 @@ import {
 	source,
 	apiSource
 } from '@/lib/source';
-import {
-	DocsBody,
-	DocsDescription,
-	DocsPage,
-	DocsTitle,
-	ViewOptionsPopover
-} from 'fumadocs-ui/layouts/docs/page';
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
 import { MarkdownCopyButton } from '@/components/markdown-copy-button';
 import { OpenApiViewOptionsPopover } from '@/components/openapi-view-options-popover';
 import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/components/mdx';
+import { StogasLink } from '@/components/stogas-link';
 import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { gitConfig } from '@/lib/shared';
@@ -46,21 +41,17 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 				<MarkdownCopyButton markdownUrl={markdownUrl}>
 					{isOpenApiOperation ? 'Copy OpenAPI specification' : 'Copy Markdown'}
 				</MarkdownCopyButton>
-				{isOpenApiOperation ? (
-					<OpenApiViewOptionsPopover
-						markdownUrl={markdownUrl}
-						jsonUrl={jsonUrl!}
-						githubUrl={githubUrl}
-					/>
-				) : (
-					<ViewOptionsPopover markdownUrl={markdownUrl} githubUrl={githubUrl} />
-				)}
+				<OpenApiViewOptionsPopover
+					markdownUrl={markdownUrl}
+					jsonUrl={jsonUrl}
+					githubUrl={githubUrl}
+				/>
 			</div>
 			<DocsBody>
 				<MDX
 					components={getMDXComponents({
 						// this allows you to link to other pages with relative file paths
-						a: createRelativeLink(loader, page)
+						a: createRelativeLink(loader, page, StogasLink)
 					})}
 				/>
 			</DocsBody>
