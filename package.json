@@ -3,7 +3,8 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"generate:openapi": "bun scripts/generate-openapi.ts",
+		"generate:openapi": "bun scripts/sync-openapi-from-catalog.ts && bun scripts/generate-openapi.ts",
+		"sync:openapi": "bun scripts/sync-openapi-from-catalog.ts",
 		"build": "bun run generate:openapi && next build",
 		"build:worker": "opennextjs-cloudflare build",
 		"cf-typegen": "wrangler types",
@@ -37,6 +38,7 @@
 		"@types/node": "25.6.0",
 		"@types/react": "19.2.14",
 		"@types/react-dom": "19.2.3",
+		"prettier": "3.8.3",
 		"postcss": "8.5.10",
 		"tailwindcss": "4.2.4",
 		"typescript": "6.0.3",
