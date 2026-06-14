@@ -16,6 +16,7 @@ import type { Metadata } from 'next';
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 import { gitConfig } from '@/lib/shared';
 export const dynamic = 'force-static';
+export const dynamicParams = false;
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 	const params = await props.params;

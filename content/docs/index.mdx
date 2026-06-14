@@ -30,8 +30,8 @@ Authorization: Bearer <stogas_api_key>
 Content-Type: application/json
 ```
 
-For SDK compatibility, the gateway also accepts the same key in `api-key`, `x-api-key`, and `x-goog-api-key`.
-These are header aliases only; query parameters and cookies are not supported for API key authentication.
+The catalog also defines `api-key`, `x-api-key`, and `x-goog-api-key` as authentication aliases.
+The gateway canonicalizes these aliases to `Authorization: Bearer <stogas_api_key>` internally. Query parameters and cookies are not supported for API key authentication.
 
 Get your key from the [Stogas Dashboard](https://app.stogas.ai).
 
@@ -45,21 +45,12 @@ Access-Control-Allow-Origin: *
 
 No cookies are used for public API authentication.
 
-## Debug Headers
+## Metadata Fields
 
-<Callout type="info" title="Raw request mode">
-	Set `X-Stogas-Return-Raw-Request: true` to receive the translated upstream provider request at
-	`stogas.raw_request`.
-</Callout>
-
-<Callout type="info" title="Raw response mode">
-	Set `X-Stogas-Return-Raw-Response: true` to receive the raw upstream provider JSON body.
-</Callout>
-
-Request additional metadata fields with:
+Request catalog-defined metadata fields with:
 
 ```http
-X-Stogas-Return-Extra-Fields: provider,model_requested,latency
+X-Stogas-Return-Extra-Fields: provider,model_requested,latency,raw_request,raw_response
 ```
 
 Available field names: `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, `raw_response`.

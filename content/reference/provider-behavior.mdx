@@ -8,7 +8,7 @@ description: Provider-specific differences, compatibility notes, and Stogas gate
 The Stogas runtime currently configures the OpenAI provider. Requests are accepted when the parsed `provider/model` pair resolves through the catalog, which defines:
 
 - Provider and model availability
-- Allowed extra parameters and upstream headers
+- Allowed extra parameters and client-boundary request headers
 - Allowed provider response headers to expose
 - Request-size limits and pricing behavior
 
@@ -16,6 +16,7 @@ The Stogas runtime currently configures the OpenAI provider. Requests are accept
 
 - Request bodies are parsed as canonical objects — unknown top-level parameters are **not** passed through generically.
 - Provider-specific extras are forwarded only when the catalog entry explicitly permits them.
+- Catalog request-header aliases are normalized at the gateway boundary; they are not provider-upstream headers.
 - Arbitrary client headers are not forwarded upstream.
 - Provider response headers are not exposed unless catalog policy allows specific ones.
 - Internal tracing and governance headers are not part of the public API.
@@ -27,7 +28,7 @@ The Stogas runtime currently configures the OpenAI provider. Requests are accept
 | `stream: false` | Returns a JSON chat completion object |
 | `stream: true` | Returns Server-Sent Events, ending with `data: [DONE]` |
 | `max_tokens` (legacy) | Accepted and mapped to `max_completion_tokens` before dispatch |
-| `X-Stogas-Return-Raw-Response: true` | Returns the raw captured upstream JSON instead of the normalized response |
+| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the raw captured upstream JSON in `stogas.raw_response` |
 
 ## Responses API (`/v1/responses`)
 
@@ -35,16 +36,33 @@ The Stogas runtime currently configures the OpenAI provider. Requests are accept
 |----------|----------|
 | `stream: false` | Returns a JSON response object |
 | `stream: true` | Returns named Responses API SSE events |
-| Raw response mode | Returns the captured upstream JSON when available |
+| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the captured upstream JSON when available |
 
-## Raw Response Mode
+## Built-In Tools
 
-Raw response mode does not short-circuit the Stogas pipeline — the request is fully processed. It only changes the output: if the gateway captured the raw provider body, Stogas writes that body to the client.
+OpenAI web search tool pricing is cataloged on the endpoint that owns the behavior:
+
+| Tool tier | Availability | Billing |
+| --- | --- | --- |
+| `web_search` | Responses API | $10.00 / 1k calls plus search content tokens at model rates |
+| `web_search_preview` on reasoning models | Responses API | $10.00 / 1k calls plus search content tokens at model rates |
+| `web_search_preview` on non-reasoning models | Responses API | $25.00 / 1k calls; search content tokens are free |
+| Search models with `web_search_options` | Chat Completions API | The model always performs one web retrieval; Stogas reserves the guaranteed search call plus model tokens |
+
+Versioned Responses tool names with the same prefixes are treated as the same pricing families. Chat Completions web search is only available through `gpt-5-search-api`, `gpt-4o-search-preview`, or `gpt-4o-mini-search-preview`; `web_search_options` is rejected for other Chat models and is not a Responses API parameter.
+
+Stogas uses a denylist policy for OpenAI built-in tools so user-defined local/function tools can pass through. Hosted OpenAI shell containers are rejected until container billing is modeled; only `{"type":"shell","environment":{"type":"local"}}` is accepted for the `shell` tool. `local_shell` and `apply_patch` are allowed. `image_generation`, `computer-use-preview`, `file_search`, and `code_interpreter` are rejected because they can incur unmodeled provider-side costs.
+
+## Raw Response Capture
+
+Raw response capture does not short-circuit the Stogas pipeline; the request is fully processed. If the gateway captured the raw provider body, Stogas includes it under `stogas.raw_response`.
 
 <Callout type="info">
-  Raw mode exposes the upstream JSON payload as received. It does not reproduce exact TCP chunk boundaries or provider compression framing.
+  Raw capture exposes the upstream JSON payload as received. It does not reproduce exact TCP chunk boundaries or provider compression framing.
 </Callout>
 
 ## Cancellation
 
-The catalog defines whether a provider supports bill-safe cancellation. Currently, clients should assume non-streaming requests complete normally once the gateway has received them.
+The catalog marks cancellation as supported only when a provider returns final usage after cancellation, including mid-stream client disconnects. Stogas needs that usage object to settle accurately.
+
+OpenAI is currently not advertised as bill-safe cancellable in the Stogas catalog. Clients should assume accepted non-streaming requests complete normally and streaming disconnects may still be billed up to provider-reported usage when available.
