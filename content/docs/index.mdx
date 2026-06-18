@@ -1,9 +1,9 @@
 ---
-title: Stogas Gateway
+title: Gateway
 description: OpenAI-compatible AI gateway for anonymous, zero-trust AI API access.
 ---
 
-Stogas provides a public OpenAI-compatible API gateway that proxies requests to upstream AI providers. You authenticate once with a Stogas API key — no need to manage individual provider keys.
+The public OpenAI-compatible gateway proxies requests to upstream AI providers. You authenticate once with a gateway API key instead of managing individual provider keys.
 
 ## Base URL
 
@@ -21,19 +21,34 @@ Endpoint paths include their API version.
 | `POST` | `/v1/chat/completions` |      Yes      | OpenAI-compatible chat completions |
 | `POST` | `/v1/responses`        |      Yes      | OpenAI-compatible Responses API    |
 
+## Platform
+
+<Cards>
+	<Card
+		title="Catalog Structure"
+		description="How endpoints, providers, models, deployments, policy, and prices fit together."
+		href="/docs/catalog-structure"
+	/>
+	<Card
+		title="Catalog Verification"
+		description="How to hash the compiled catalog, verify the signed manifest, and verify GitHub/Sigstore provenance."
+		href="/docs/catalog-verification"
+	/>
+</Cards>
+
 ## Authentication
 
-All model endpoints require a Stogas API key:
+All model endpoints require a gateway API key:
 
 ```http
-Authorization: Bearer <stogas_api_key>
+Authorization: Bearer <api_key>
 Content-Type: application/json
 ```
 
 The catalog also defines `api-key`, `x-api-key`, and `x-goog-api-key` as authentication aliases.
-The gateway canonicalizes these aliases to `Authorization: Bearer <stogas_api_key>` internally. Query parameters and cookies are not supported for API key authentication.
+The gateway canonicalizes these aliases to `Authorization: Bearer <api_key>` internally. Query parameters and cookies are not supported for API key authentication.
 
-Get your key from the [Stogas Dashboard](https://app.stogas.ai).
+Get your key from the [dashboard](https://app.stogas.ai).
 
 ## CORS
 
