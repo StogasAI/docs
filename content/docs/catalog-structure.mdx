@@ -1,0 +1,179 @@
+---
+title: Catalog Structure
+description: Learn how the model catalog represents endpoints, providers, models, deployments, request policy, and prices.
+---
+
+The catalog is the public routing data used by the gateway. It answers four questions before a request is sent upstream:
+
+- Which public model slug did the caller request?
+- Which provider and upstream endpoint can serve it?
+- Which request fields are allowed for that model and endpoint?
+- Which pricing meters apply?
+
+The catalog is data, not executable code. Clients and gateways can inspect the same compiled JSON and reach the same routing answer.
+
+<Cards>
+	<Card
+		title="Graph-shaped"
+		description="Shared facts live on shared nodes instead of being copied into every model row."
+	/>
+	<Card
+		title="Canonical"
+		description="A release compiles to stable JSON bytes, so the same catalog always has the same hash."
+	/>
+	<Card
+		title="Policy-bearing"
+		description="Request aliases, rejects, pricing meters, and deployment overrides are explicit catalog facts."
+	/>
+</Cards>
+
+## The Graph
+
+A flat model list hides where facts come from. The catalog keeps those facts in a graph:
+
+```text
+API endpoint -> Provider -> Provider endpoint -> Deployment
+Author ------> Model ----------------------------^
+```
+
+The important node types are:
+
+| Node                      | Owns                                                                 |
+| ------------------------- | -------------------------------------------------------------------- |
+| `graph.stogasEndpoints`   | Public API paths, methods, headers, parameters, and request aliases  |
+| `graph.providers`         | Provider identity, privacy claims, capabilities, and default prices  |
+| `graph.providerEndpoints` | Concrete upstream URLs, region claims, and endpoint-specific policy  |
+| `graph.models`            | Canonical model slugs, aliases, context windows, modalities, authors |
+| `graph.deployments`       | Provider/model pairings, service tiers, overrides, and prices        |
+
+This structure prevents drift. For example, a model context window is stored on the model node; every deployment of that model inherits the same fact unless a real override exists.
+
+## A Small Example
+
+This is a tiny catalog fragment, not a complete release:
+
+```json
+{
+	"graph": {
+		"stogasEndpoints": {
+			"stogas-chat-completions": {
+				"schema": {
+					"method": "POST",
+					"path": "/v1/chat/completions",
+					"parameters": {
+						"model": { "required": true, "type": "string" },
+						"messages": { "required": true, "type": "array" }
+					}
+				}
+			}
+		},
+		"providers": {
+			"openai": {
+				"name": "OpenAI",
+				"streamingSupported": true
+			}
+		},
+		"models": {
+			"gpt-5.5-2026-04-23": {
+				"canonicalSlug": "gpt-5.5-2026-04-23",
+				"contextWindowTokens": 1050000,
+				"modelSlugs": ["gpt-5.5-2026-04-23", "gpt-5.5", "gpt-5.5-latest"],
+				"reasoning": true
+			}
+		},
+		"deployments": {
+			"gpt-5.5": {
+				"providerId": "openai",
+				"modelId": "gpt-5.5-2026-04-23",
+				"serviceTier": "default"
+			}
+		}
+	}
+}
+```
+
+## Request Policy
+
+Endpoint and deployment nodes can carry request policy. For example, a field may be accepted only when the resolved model supports reasoning:
+
+```json
+{
+	"reasoning_effort": {
+		"alias": "schema.parameters.reasoning.effort",
+		"required": false,
+		"rejectUnsupported": "model.reasoning",
+		"type": "string",
+		"values": ["none", "minimal", "low", "medium", "high"]
+	}
+}
+```
+
+Authentication aliases are modeled the same way. A caller may send `x-api-key`, but the gateway canonicalizes it to the standard authorization header:
+
+```json
+{
+	"x-api-key": {
+		"alias": "schema.headers.authorization",
+		"required": false,
+		"type": "string"
+	}
+}
+```
+
+## Pricing
+
+Pricing stays on the node that owns it. Provider-wide prices belong to `graph.providers`; deployment-specific prices belong to `graph.deployments`.
+
+```json
+{
+	"pricing": {
+		"input_tokens": {
+			"per_mill_tokens": "5000000000000000000"
+		},
+		"output_tokens": {
+			"per_mill_tokens": "30000000000000000000"
+		}
+	}
+}
+```
+
+Amounts are integer USD atoms. The catalog stores rate facts only; billing algorithms, reserves, and settlement logic live in the gateway.
+
+## Compiled Form
+
+Catalog source files are YAML, validated by CUE, then compiled to stable JSON. Stable JSON means:
+
+- object keys are sorted
+- insignificant whitespace is removed
+- one trailing newline is included
+- the same logical catalog always produces the same bytes
+
+A tiny canonical catalog might be exactly these bytes:
+
+```json
+{
+	"graph": {
+		"models": {
+			"gpt-5.5-2026-04-23": {
+				"canonicalSlug": "gpt-5.5-2026-04-23",
+				"contextWindowTokens": 1050000,
+				"modelSlugs": ["gpt-5.5-2026-04-23", "gpt-5.5", "gpt-5.5-latest"]
+			}
+		}
+	}
+}
+```
+
+The trailing newline is part of the byte stream. The SHA-256 of that exact example is:
+
+```text
+4c26e81dbb70f54dabbbca70532d757d50751b6ba10f8c8eb840bb0b1d5f199d
+```
+
+That compiled catalog hash is the value verified by the release process.
+
+<Callout type="info">
+	The catalog page in the app fetches the compiled catalog after the first paint. The HTML shell is
+	prerendered, but the catalog data is intentionally loaded separately so future large catalogs do
+	not bloat the initial page.
+</Callout>
