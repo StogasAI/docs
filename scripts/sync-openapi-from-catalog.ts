@@ -7,7 +7,10 @@ const __dirname = path.dirname(__filename);
 const docsRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(docsRoot, '../..');
 const openApiPath = path.join(docsRoot, 'content/openapi/stogas.json');
-const catalogPath = path.join(repoRoot, 'apps/catalog/compiled/catalog.json');
+const catalogPath = path.join(
+	repoRoot,
+	'apps/api/transports/stogas/catalog/generated/catalog.json'
+);
 
 type JsonObject = Record<string, any>;
 
