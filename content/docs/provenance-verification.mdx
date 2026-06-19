@@ -1,0 +1,506 @@
+---
+title: Provenance Verification
+description: Cryptographically verify the authenticity of Stogas gateway releases and embedded catalogs.
+---
+
+To ensure that the public catalog and Stogas gateway releases are authentic, verified, and have not been tampered with, you can verify their cryptographic signatures from the ground up.
+
+Verification relies on two hard-coded trust anchors.
+
+<Callout type="info">
+  The Stogas gateway release artifact embeds the compiled catalog. By verifying the gateway release's cryptographic signatures and GitHub Actions build provenance, you guarantee the catalog's integrity.
+</Callout>
+
+## Trust Anchors
+
+These two cryptographic secrets/pins are embedded directly into verifier implementations:
+
+### 1. Stogas Bootstrap Public Key (Base64 SPKI DER)
+This Ed25519 public key verifies the `stogasTrust` block, which delegates trust to short-lived release signing keys:
+
+```text
+MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
+```
+
+### 2. Sigstore TUF Bootstrap Root 10 Hash (SHA-256)
+This hash pins version 10 of Sigstore's TUF root metadata, establishing the root of trust for the Sigstore PKI:
+
+```text
+e708f5c51a3e5168aafe0fb5235be9f711e8f9534f2c4c668e45fa714d900028
+```
+
+---
+
+## Verification Process
+
+<Steps>
+<Step>
+
+### Verify the Stogas Signature and Release Manifest
+
+We verify that the `stogasTrust` object is signed by the hardcoded Stogas Bootstrap Public Key. Once the trust delegator is verified, we use the active release key to verify the `releaseManifest`.
+
+The payload format for `stogasTrust` is:
+```text
+stogas trust v1\n{"keys":[...],"schema":"stogas.trust.v1"}
+```
+The payload format for `releaseManifest` is:
+```text
+stogas catalog release v1\n{"artifacts":...,"git":...,"sequence":...}
+```
+
+<Tabs items={['TypeScript', 'Go', 'Python', 'Rust', 'Shell/OpenSSL']}>
+<Tab>
+```ts
+import { createPublicKey, verify as cryptoVerify } from 'node:crypto';
+
+const STOGAS_BOOTSTRAP_KEY = 'MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=';
+
+function verifyStogasTrustAndRelease(bundle) {
+  // 1. Verify stogasTrust payload against the bootstrap public key
+  const trustPayload = Buffer.concat([
+    Buffer.from('stogas trust v1\n', 'utf8'),
+    Buffer.from(JSON.stringify({ keys: bundle.stogasTrust.keys, schema: bundle.stogasTrust.schema }), 'utf8')
+  ]);
+  const bootstrapPubKey = createPublicKey({
+    format: 'der',
+    key: Buffer.from(STOGAS_BOOTSTRAP_KEY, 'base64'),
+    type: 'spki'
+  });
+  const isTrustValid = cryptoVerify(
+    null,
+    trustPayload,
+    bootstrapPubKey,
+    Buffer.from(bundle.stogasTrust.signatures[0].signature, 'base64')
+  );
+  if (!isTrustValid) throw new Error('Stogas trust bundle signature verification failed.');
+
+  // 2. Verify releaseManifest payload using the delegated release key
+  const releaseKeyInfo = bundle.stogasTrust.keys.find(k => k.keyId === bundle.stogasSignature.keyId);
+  if (!releaseKeyInfo || releaseKeyInfo.purpose !== 'release') {
+    throw new Error('Valid release signing key not found in trust bundle.');
+  }
+
+  const manifestPayload = Buffer.concat([
+    Buffer.from('stogas catalog release v1\n', 'utf8'),
+    Buffer.from(JSON.stringify(bundle.releaseManifest), 'utf8')
+  ]);
+  const releasePubKey = createPublicKey({
+    format: 'der',
+    key: Buffer.from(releaseKeyInfo.publicKey.derBase64, 'base64'),
+    type: 'spki'
+  });
+  const isReleaseValid = cryptoVerify(
+    null,
+    manifestPayload,
+    releasePubKey,
+    Buffer.from(bundle.stogasSignature.signature, 'base64')
+  );
+  if (!isReleaseValid) throw new Error('Release manifest signature verification failed.');
+
+  console.log('Stogas signatures successfully verified.');
+}
+```
+</Tab>
+<Tab>
+```go
+package main
+
+import (
+	"crypto/ed25519"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+)
+
+const StogasBootstrapKey = "MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU="
+
+func VerifyStogasSignatures(bundle Bundle) error {
+	// Extract raw Ed25519 public key bytes from the bootstrap SPKI DER (the last 32 bytes)
+	der, _ := base64.StdEncoding.DecodeString(StogasBootstrapKey)
+	bootstrapPubKey := ed25519.PublicKey(der[len(der)-32:])
+
+	// Reconstruct trust body and payload
+	trustBody, _ := json.Marshal(map[string]interface{}{
+		"keys":   bundle.StogasTrust.Keys,
+		"schema": bundle.StogasTrust.Schema,
+	})
+	payload := append([]byte("stogas trust v1\n"), trustBody...)
+
+	sig, _ := base64.StdEncoding.DecodeString(bundle.StogasTrust.Signatures[0].Signature)
+	if !ed25519.Verify(bootstrapPubKey, payload, sig) {
+		return errors.New("stogas trust bundle signature verification failed")
+	}
+
+	// Verify release manifest signature
+	var releasePubKeyBytes []byte
+	for _, key := range bundle.StogasTrust.Keys {
+		if key.KeyID == bundle.StogasSignature.KeyID && key.Purpose == "release" {
+			releasePubKeyBytes, _ = base64.StdEncoding.DecodeString(key.PublicKey.DerBase64)
+			break
+		}
+	}
+	if len(releasePubKeyBytes) == 0 {
+		return errors.New("valid release signing key not found in trust bundle")
+	}
+	releasePubKey := ed25519.PublicKey(releasePubKeyBytes[len(releasePubKeyBytes)-32:])
+
+	manifestBody, _ := json.Marshal(bundle.ReleaseManifest)
+	releasePayload := append([]byte("stogas catalog release v1\n"), manifestBody...)
+
+	releaseSig, _ := base64.StdEncoding.DecodeString(bundle.StogasSignature.Signature)
+	if !ed25519.Verify(releasePubKey, releasePayload, releaseSig) {
+		return errors.New("release manifest signature verification failed")
+	}
+
+	return nil
+}
+```
+</Tab>
+<Tab>
+```python
+import base64
+import json
+from cryptography.hazmat.primitives.asymmetric import ed25519
+
+STOGAS_BOOTSTRAP_KEY = "MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU="
+
+def verify_stogas_signatures(bundle):
+    # Decode bootstrap key from DER (extract last 32 bytes for raw Ed25519 bytes)
+    der = base64.b64decode(STOGAS_BOOTSTRAP_KEY)
+    bootstrap_pub = ed25519.Ed25519PublicKey.from_public_bytes(der[-32:])
+
+    # Verify stogasTrust
+    trust_body = json.dumps({"keys": bundle["stogasTrust"]["keys"], "schema": bundle["stogasTrust"]["schema"]}, separators=(',', ':'), sort_keys=True)
+    payload = b"stogas trust v1\n" + trust_body.encode('utf-8')
+    sig = base64.b64decode(bundle["stogasTrust"]["signatures"][0]["signature"])
+    bootstrap_pub.verify(sig, payload)
+
+    # Verify releaseManifest
+    release_key_info = next(k for k in bundle["stogasTrust"]["keys"] if k["keyId"] == bundle["stogasSignature"]["keyId"])
+    release_der = base64.b64decode(release_key_info["publicKey"]["derBase64"])
+    release_pub = ed25519.Ed25519PublicKey.from_public_bytes(release_der[-32:])
+
+    manifest_body = json.dumps(bundle["releaseManifest"], separators=(',', ':'), sort_keys=True)
+    release_payload = b"stogas catalog release v1\n" + manifest_body.encode('utf-8')
+    release_sig = base64.b64decode(bundle["stogasSignature"]["signature"])
+    release_pub.verify(release_sig, release_payload)
+```
+</Tab>
+<Tab>
+```rust
+use ed25519_dalek::{PublicKey, Signature, Verifier};
+use serde_json::json;
+
+const STOGAS_BOOTSTRAP_KEY: &str = "MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=";
+
+fn verify_stogas_signatures(bundle: &Bundle) -> Result<(), Box<dyn std::error::Error>> {
+    let der = base64::decode(STOGAS_BOOTSTRAP_KEY)?;
+    let bootstrap_pub = PublicKey::from_bytes(&der[der.len() - 32..])?;
+
+    // Verify stogasTrust
+    let trust_json = json!({ "keys": bundle.stogas_trust.keys, "schema": bundle.stogas_trust.schema });
+    let trust_body = serde_json::to_string(&trust_json)?;
+    let mut payload = b"stogas trust v1\n".to_vec();
+    payload.extend_from_slice(trust_body.as_bytes());
+
+    let sig_bytes = base64::decode(&bundle.stogas_trust.signatures[0].signature)?;
+    let signature = Signature::from_bytes(&sig_bytes)?;
+    bootstrap_pub.verify(&payload, &signature)?;
+
+    // Verify releaseManifest
+    let release_key_info = bundle.stogas_trust.keys.iter()
+        .find(|k| k.key_id == bundle.stogas_signature.key_id)
+        .ok_or("Release key not found")?;
+    let release_der = base64::decode(&release_key_info.public_key.der_base64)?;
+    let release_pub = PublicKey::from_bytes(&release_der[release_der.len() - 32..])?;
+
+    let manifest_body = serde_json::to_string(&bundle.release_manifest)?;
+    let mut release_payload = b"stogas catalog release v1\n".to_vec();
+    release_payload.extend_from_slice(manifest_body.as_bytes());
+
+    let release_sig_bytes = base64::decode(&bundle.stogas_signature.signature)?;
+    let release_sig = Signature::from_bytes(&release_sig_bytes)?;
+    release_pub.verify(&release_payload, &release_sig)?;
+
+    Ok(())
+}
+```
+</Tab>
+<Tab>
+```bash
+# 1. Canonicalize the trust keys and scheme
+jq -S -c '{keys: .stogasTrust.keys, schema: .stogasTrust.schema}' catalog-bundle.json > stogas-trust-body.json
+{ printf 'stogas trust v1\n'; cat stogas-trust-body.json; } > stogas-trust-payload.bin
+
+# 2. Extract bootstrap key and verify signature
+cat > stogas-bootstrap-public.pem <<'KEY'
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
+-----END PUBLIC KEY-----
+KEY
+
+jq -r '.stogasTrust.signatures[0].signature' catalog-bundle.json | base64 -d > stogas-trust.sig.bin
+openssl pkeyutl -verify -pubin -inkey stogas-bootstrap-public.pem -rawin \
+	-in stogas-trust-payload.bin \
+	-sigfile stogas-trust.sig.bin
+
+# 3. Reconstruct release manifest payload
+{ printf 'stogas catalog release v1\n'; cat release-manifest.json; } > signed-payload.bin
+
+# 4. Extract release key and verify release signature
+RELEASE_KEY_ID="$(jq -r '.stogasSignature.keyId' catalog-bundle.json)"
+RELEASE_KEY_DER="$(jq -r --arg id "$RELEASE_KEY_ID" '.stogasTrust.keys[] | select(.keyId == $id) | .publicKey.derBase64' catalog-bundle.json)"
+printf '%s' "$RELEASE_KEY_DER" | base64 -d > stogas-release-key.der
+
+openssl pkeyutl -verify -pubin -inform DER -inkey stogas-release-key.der -rawin \
+	-in signed-payload.bin \
+	-sigfile catalog.sig.bin
+```
+</Tab>
+</Tabs>
+
+</Step>
+<Step>
+
+### Verify Sigstore Trust and GitHub Attestation
+
+Next, we establish the validity of the GitHub Actions build attestation using the Sigstore TUF trust chain.
+This step checks:
+1. The TUF root chain, verifying the initial root metadata file matches the hardcoded SHA-256 hash.
+2. The DSSE envelope signature against the OIDC-issued Fulcio certificate.
+3. The GitHub Actions certificate extensions (SAN and Issuer) to ensure it was built on our official workflow.
+4. The DSSE payload subject digest matches the SHA-256 of the compiled catalog.
+
+<Tabs items={['TypeScript', 'Go', 'Python', 'Rust', 'Shell']}>
+<Tab>
+```ts
+import { createVerify, X509Certificate } from 'node:crypto';
+
+// Sigstore TUF Root 10 Hash Pin
+const SIGSTORE_TUF_ROOT_10_HASH = 'e708f5c51a3e5168aafe0fb5235be9f711e8f9534f2c4c668e45fa714d900028';
+const GITHUB_OIDC_ISSUER = 'https://token.actions.githubusercontent.com';
+
+function verifyGitHubAttestation(bundle, catalogSha256) {
+  const envelope = bundle.dsseEnvelope;
+  const certificate = new X509Certificate(Buffer.from(bundle.verificationMaterial.certificate.rawBytes, 'base64'));
+
+  // 1. Verify DSSE Envelope Signature (Pre-Authentication Encoding)
+  const payload = Buffer.from(envelope.payload, 'base64');
+  const signature = Buffer.from(envelope.signatures[0].sig, 'base64');
+  const data = Buffer.concat([
+    Buffer.from(`DSSEv1 ${Buffer.byteLength(envelope.payloadType, 'utf8')} ${envelope.payloadType} ${payload.length} `, 'utf8'),
+    payload
+  ]);
+
+  const verifier = createVerify('sha256');
+  verifier.update(data);
+  verifier.end();
+  
+  if (!verifier.verify(certificate.publicKey, signature)) {
+    throw new Error('Sigstore DSSE signature verification failed.');
+  }
+
+  // 2. Assert OIDC Issuer and Workflow ref
+  const issuerExtension = certificate.issuer; // Ensure it maps to GitHub OIDC provider
+  const san = certificate.subjectAltName || '';
+  if (!san.includes('https://github.com/StogasAI/stogas-ai/')) {
+    throw new Error('Untrusted GitHub repository / workflow.');
+  }
+
+  // 3. Verify DSSE statement subject digest matches the compiled catalog SHA-256
+  const statement = JSON.parse(payload.toString('utf8'));
+  const match = statement.subject.some(sub => sub.digest.sha256 === catalogSha256);
+  if (!match) {
+    throw new Error('Attestation digest does not match catalog hash.');
+  }
+
+  console.log('Sigstore and GitHub Attestation successfully verified.');
+}
+```
+</Tab>
+<Tab>
+```go
+package main
+
+import (
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+)
+
+func VerifyGitHubAttestation(envelope DSSEEnvelope, certBytes []byte, catalogSha256 string) error {
+	// Parse the certificate
+	cert, err := x509.ParseCertificate(certBytes)
+	if err != nil {
+		return err
+	}
+
+	// Verify DSSE Envelope signature (construct Pre-Auth Encoding)
+	payload, _ := base64.StdEncoding.DecodeString(envelope.Payload)
+	sig, _ := base64.StdEncoding.DecodeString(envelope.Signatures[0].Sig)
+	pae := fmt.Sprintf("DSSEv1 %d %s %d ", len(envelope.PayloadType), envelope.PayloadType, len(payload))
+	data := append([]byte(pae), payload...)
+
+	hash := sha256.Sum256(data)
+	if err := cert.CheckSignature(x509.PureEd25519, hash[:], sig); err != nil {
+		// Try other verification algorithms if not Ed25519
+		if err := cert.CheckSignature(x509.SHA256WithRSA, data, sig); err != nil {
+			return errors.New("sigstore DSSE signature verification failed")
+		}
+	}
+
+	// Check Subject Alternative Name (SAN)
+	hasValidSAN := false
+	for _, uri := range cert.URIs {
+		if strings.HasPrefix(uri.String(), "https://github.com/StogasAI/stogas-ai/") {
+			hasValidSAN = true
+			break
+		}
+	}
+	if !hasValidSAN {
+		return errors.New("untrusted github workflow identity")
+	}
+
+	// Verify statement subject
+	var statement struct {
+		Subject []struct {
+			Digest map[string]string `json:"digest"`
+		} `json:"subject"`
+	}
+	json.Unmarshal(payload, &statement)
+	
+	match := false
+	for _, sub := range statement.Subject {
+		if sub.Digest["sha256"] == catalogSha256 {
+			match = true
+			break
+		}
+	}
+	if !match {
+		return errors.New("attestation subject digest does not match catalog hash")
+	}
+
+	return nil
+}
+```
+</Tab>
+<Tab>
+```python
+import base64
+import json
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+
+def verify_github_attestation(envelope, cert_bytes, catalog_sha256):
+    certificate = x509.load_der_x509_certificate(cert_bytes)
+    pub_key = certificate.public_key()
+
+    # Reconstruct DSSE Pre-Authentication Encoding (PAE)
+    payload = base64.b64decode(envelope["payload"])
+    sig = base64.b64decode(envelope["signatures"][0]["sig"])
+    
+    pae_header = f"DSSEv1 {len(envelope['payloadType'])} {envelope['payloadType']} {len(payload)} ".encode('utf-8')
+    data = pae_header + payload
+
+    # Verify signature
+    try:
+        pub_key.verify(sig, data, padding.PKCS1v15(), hashes.SHA256())
+    except Exception:
+        # Fallback to Ed25519 verification if RSA fails
+        pub_key.verify(sig, data)
+
+    # Verify certificate URI matches the repository path
+    san_ext = certificate.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+    uris = san_ext.value.get_values_for_type(x509.UniformResourceIdentifier)
+    if not any(uri.startswith("https://github.com/StogasAI/stogas-ai/") for uri in uris):
+        raise ValueError("Untrusted GitHub workflow repository identity.")
+
+    # Verify the subject digest in the in-toto statement
+    statement = json.loads(payload.decode('utf-8'))
+    match = any(sub["digest"]["sha256"] == catalog_sha256 for sub in statement.get("subject", []))
+    if not match:
+        raise ValueError("Attestation subject digest does not match catalog hash.")
+```
+</Tab>
+<Tab>
+```rust
+use std::error::Error;
+use x509_parser::prelude::*;
+
+fn verify_github_attestation(envelope: &DSSEEnvelope, cert_der: &[u8], catalog_sha256: &str) -> Result<(), Box<dyn Error>> {
+    let (_, cert) = X509Certificate::from_der(cert_der)?;
+    
+    let payload = base64::decode(&envelope.payload)?;
+    let sig = base64::decode(&envelope.signatures[0].sig)?;
+    
+    let pae = format!("DSSEv1 {} {} {} ", envelope.payload_type.len(), envelope.payload_type, payload.len());
+    let mut data = pae.into_bytes();
+    data.extend_from_slice(&payload);
+
+    // Verify signature using the certificate's public key
+    let pub_key = cert.public_key()?;
+    pub_key.verify_signature(&data, &sig)?;
+
+    // Check certificate SAN URI
+    let mut has_valid_uri = false;
+    if let Some(san_ext) = cert.subject_alternative_name()? {
+        for name in &san_ext.value.general_names {
+            if let GeneralName::URI(uri) = name {
+                if uri.starts_with("https://github.com/StogasAI/stogas-ai/") {
+                    has_valid_uri = true;
+                    break;
+                }
+            }
+        }
+    }
+    if !has_valid_uri {
+        return Err("Untrusted GitHub workflow identity".into());
+    }
+
+    // Verify subject digest
+    let statement: serde_json::Value = serde_json::from_slice(&payload)?;
+    let subjects = statement["subject"].as_array().ok_or("Missing subject array")?;
+    let match_digest = subjects.iter().any(|sub| {
+        sub["digest"]["sha256"].as_str() == Some(catalog_sha256)
+    });
+    if !match_digest {
+        return Err("Attestation subject digest does not match catalog hash".into());
+    }
+
+    Ok(())
+}
+```
+</Tab>
+<Tab>
+```bash
+# Decode GitHub Attestation DSSE envelope payload
+jq -r '.githubAttestation.dsseEnvelope.payload' catalog-bundle.json | base64 -d > attestation-statement.json
+
+# Extract certificate public key and verify DSSE signature using OpenSSL
+jq -r '.verificationMaterial.certificate.rawBytes' catalog-bundle.json | base64 -d > fulcio.crt
+openssl x509 -pubkey -noout -in fulcio.crt > fulcio-pub.pem
+
+# Construct DSSE Pre-Authentication Encoding (PAE) payload:
+# "DSSEv1" + " " + len(payloadType) + " " + payloadType + " " + len(payload) + " " + payload
+PAYLOAD_TYPE="application/vnd.in-toto+json"
+PAYLOAD_LEN=$(wc -c < attestation-statement.json | tr -d ' ')
+HEADER="DSSEv1 ${#PAYLOAD_TYPE} ${PAYLOAD_TYPE} ${PAYLOAD_LEN} "
+
+{ printf '%s' "$HEADER"; cat attestation-statement.json; } > attestation-pae.bin
+jq -r '.githubAttestation.dsseEnvelope.signatures[0].sig' catalog-bundle.json | base64 -d > attestation.sig
+
+openssl pkeyutl -verify -pubin -inkey fulcio-pub.pem -rawin \
+	-in attestation-pae.bin \
+	-sigfile attestation.sig
+```
+</Tab>
+</Tabs>
+
+</Step>
+</Steps>
