@@ -50,6 +50,8 @@ async function main() {
 									'index',
 									'---Health---',
 									'...health',
+									'---Catalog---',
+									'...catalog',
 									'---Models---',
 									'...openai-compatible',
 									'---Other Endpoints---',
@@ -77,6 +79,10 @@ async function main() {
 						if (file.path === path.join('openai-compatible', 'meta.json')) {
 							content.title = 'Models';
 							content.description = 'Model inference endpoints.';
+						}
+						if (file.path === path.join('catalog', 'meta.json')) {
+							content.title = 'Catalog';
+							content.description = 'Public model and routing discovery endpoints.';
 						}
 						file.content = formatMetaJson(content);
 					} catch {
