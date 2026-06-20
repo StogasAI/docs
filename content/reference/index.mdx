@@ -16,6 +16,16 @@ Use `https://api.stogas.ai` as the base URL. Endpoint paths include their API ve
 		href="/docs/reference/health/getHealth"
 	/>
 	<Card
+		title="Catalog"
+		description="Inspect public model aliases, routes, providers, and prices."
+		href="/docs/reference/catalog/getCatalog"
+	/>
+	<Card
+		title="Models"
+		description="List OpenAI-compatible model IDs accepted by the gateway."
+		href="/docs/reference/catalog/listModels"
+	/>
+	<Card
 		title="Chat Completions"
 		description="Create an OpenAI-compatible chat completion"
 		href="/docs/reference/openai-compatible/createChatCompletion"
@@ -44,11 +54,11 @@ Use `https://api.stogas.ai` as the base URL. Endpoint paths include their API ve
 
 ## Authentication
 
-All model endpoints require a gateway API key:
+Inference endpoints require a gateway API key:
 
 ```http
 Authorization: Bearer <api_key>
 Content-Type: application/json
 ```
 
-`/health` is unauthenticated. Get your key from the [dashboard](https://app.stogas.ai).
+`/health`, `/v1/catalog`, and `/v1/models` are public. Get your key from the [dashboard](https://app.stogas.ai).

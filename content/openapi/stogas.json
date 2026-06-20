@@ -16,6 +16,7 @@
 	],
 	"tags": [
 		{ "name": "Health", "description": "Operational readiness." },
+		{ "name": "Catalog", "description": "Public model and routing discovery." },
 		{ "name": "OpenAI-compatible", "description": "Model inference endpoints." }
 	],
 	"security": [
@@ -39,10 +40,90 @@
 						"content": {
 							"application/json": {
 								"schema": { "$ref": "#/components/schemas/HealthResponse" },
-								"examples": { "ok": { "value": { "ok": true } } }
+								"examples": {
+									"ok": {
+										"value": {
+											"ok": true,
+											"catalogVersion": "stogas.gateway.catalog.v1"
+										}
+									}
+								}
 							}
 						}
-					}
+					},
+					"500": { "$ref": "#/components/responses/InternalError" }
+				}
+			}
+		},
+		"/v1/catalog": {
+			"get": {
+				"operationId": "getCatalog",
+				"tags": ["Catalog"],
+				"summary": "Catalog",
+				"description": "Returns the active public gateway catalog used for model discovery, aliases, routing, prices, and policy profile descriptions.",
+				"security": [],
+				"responses": {
+					"200": {
+						"description": "Active public catalog.",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/CatalogResponse" },
+								"examples": {
+									"catalog": {
+										"value": {
+											"version": "stogas.gateway.catalog.v1",
+											"generatedAt": "1970-01-01T00:00:01Z",
+											"graph": {
+												"models": {},
+												"deployments": {},
+												"providers": {},
+												"providerEndpoints": {},
+												"stogasEndpoints": {}
+											},
+											"indexes": { "provider_native_model_slugs": {} },
+											"policyProfiles": []
+										}
+									}
+								}
+							}
+						}
+					},
+					"500": { "$ref": "#/components/responses/CatalogUnavailable" }
+				}
+			}
+		},
+		"/v1/models": {
+			"get": {
+				"operationId": "listModels",
+				"tags": ["Catalog"],
+				"summary": "List Models",
+				"description": "Returns an OpenAI-compatible list of catalog model IDs accepted by the gateway.",
+				"security": [],
+				"responses": {
+					"200": {
+						"description": "OpenAI-compatible model list.",
+						"content": {
+							"application/json": {
+								"schema": { "$ref": "#/components/schemas/ModelListResponse" },
+								"examples": {
+									"models": {
+										"value": {
+											"object": "list",
+											"data": [
+												{
+													"id": "gpt-5.5-latest",
+													"object": "model",
+													"created": 1,
+													"owned_by": "stogas"
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"500": { "$ref": "#/components/responses/CatalogUnavailable" }
 				}
 			}
 		},
@@ -293,6 +374,17 @@
 					}
 				}
 			},
+			"CatalogUnavailable": {
+				"description": "<span className=\"text-red-500 font-bold\">Internal Server Error:</span> The gateway catalog is not available.",
+				"content": {
+					"application/json": {
+						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"example": {
+							"error": { "message": "Catalog unavailable", "type": "internal_error" }
+						}
+					}
+				}
+			},
 			"ServiceUnavailable": {
 				"description": "<span className=\"text-red-500 font-bold\">Service Unavailable:</span> The gateway could not reach the billing database while placing the authorization hold. The provider is not called and no usage telemetry is written.",
 				"content": {
@@ -306,6 +398,57 @@
 			}
 		},
 		"schemas": {
+			"CatalogResponse": {
+				"type": "object",
+				"required": ["version", "generatedAt", "graph", "indexes", "policyProfiles"],
+				"properties": {
+					"version": { "type": "string", "example": "stogas.gateway.catalog.v1" },
+					"generatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Timestamp assigned to the generated catalog payload."
+					},
+					"graph": {
+						"type": "object",
+						"description": "Resolved catalog graph: authors, models, deployments, providers, routes, and gateway endpoints.",
+						"additionalProperties": true
+					},
+					"indexes": {
+						"type": "object",
+						"description": "Public lookup indexes, including accepted provider-native model slugs.",
+						"additionalProperties": true
+					},
+					"policyProfiles": {
+						"type": "array",
+						"description": "Human-readable descriptions of policy profiles enforced by the gateway.",
+						"items": { "type": "object", "additionalProperties": true }
+					}
+				}
+			},
+			"ModelListResponse": {
+				"type": "object",
+				"required": ["object", "data"],
+				"properties": {
+					"object": { "type": "string", "const": "list" },
+					"data": { "type": "array", "items": { "$ref": "#/components/schemas/ModelObject" } }
+				}
+			},
+			"ModelObject": {
+				"type": "object",
+				"required": ["id", "object", "created", "owned_by"],
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Model ID or alias accepted by the gateway."
+					},
+					"object": { "type": "string", "const": "model" },
+					"created": {
+						"type": "integer",
+						"description": "Stable OpenAI-compatible creation timestamp."
+					},
+					"owned_by": { "type": "string", "example": "stogas" }
+				}
+			},
 			"ErrorResponse": {
 				"type": "object",
 				"properties": {
@@ -315,7 +458,14 @@
 					}
 				}
 			},
-			"HealthResponse": { "type": "object", "properties": { "ok": { "type": "boolean" } } },
+			"HealthResponse": {
+				"type": "object",
+				"required": ["ok", "catalogVersion"],
+				"properties": {
+					"ok": { "type": "boolean" },
+					"catalogVersion": { "type": "string", "example": "stogas.gateway.catalog.v1" }
+				}
+			},
 			"ChatCompletionRequest": {
 				"type": "object",
 				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API.",

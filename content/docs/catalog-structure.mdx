@@ -10,7 +10,7 @@ The catalog is the public routing data used by the gateway. It answers four ques
 - Which request fields are allowed for that model and endpoint?
 - Which pricing meters apply?
 
-The catalog is data, not executable code. Clients and gateways can inspect the same compiled JSON and reach the same routing answer.
+The catalog is data, not executable code. It declares facts and attaches named policy profiles. The Go gateway owns the runtime semantics for those profiles.
 
 <Cards>
 	<Card
@@ -19,11 +19,11 @@ The catalog is data, not executable code. Clients and gateways can inspect the s
 	/>
 	<Card
 		title="Canonical"
-		description="A release compiles to stable JSON bytes, so the same catalog always has the same hash."
+		description="The public catalog carries a versioned response shape and is embedded in the verified gateway release."
 	/>
 	<Card
-		title="Policy-bearing"
-		description="Request aliases, rejects, pricing meters, and deployment overrides are explicit catalog facts."
+		title="Profile-driven"
+		description="Nodes attach named policy profile IDs; the measured Go gateway enforces the behavior."
 	/>
 </Cards>
 
@@ -40,11 +40,11 @@ The important node types are:
 
 | Node                      | Owns                                                                 |
 | ------------------------- | -------------------------------------------------------------------- |
-| `graph.stogasEndpoints`   | Public API paths, methods, headers, parameters, and request aliases  |
+| `graph.stogasEndpoints`   | Public API paths, methods, accepted client headers, and profile IDs  |
 | `graph.providers`         | Provider identity, privacy claims, capabilities, and default prices  |
-| `graph.providerEndpoints` | Concrete upstream URLs, region claims, and endpoint-specific policy  |
+| `graph.providerEndpoints` | Concrete upstream URLs, region claims, and endpoint profile IDs      |
 | `graph.models`            | Canonical model slugs, aliases, context windows, modalities, authors |
-| `graph.deployments`       | Provider/model pairings, service tiers, overrides, and prices        |
+| `graph.deployments`       | Provider/model pairings, service tiers, profile IDs, and prices      |
 
 This structure prevents drift. For example, a model context window is stored on the model node; every deployment of that model inherits the same fact unless a real override exists.
 
@@ -92,31 +92,23 @@ This is a tiny catalog fragment, not a complete release:
 }
 ```
 
-## Request Policy
+## Request Policy Profiles
 
-Endpoint and deployment nodes can carry request policy. For example, a field may be accepted only when the resolved model supports reasoning:
+Endpoint and deployment nodes attach named policy profile IDs. The public JSON describes those profiles for inspection, but executable behavior lives in the measured Go gateway.
 
 ```json
 {
-	"reasoning_effort": {
-		"alias": "schema.parameters.reasoning.effort",
-		"required": false,
-		"rejectUnsupported": "model.reasoning",
-		"type": "string",
-		"values": ["none", "minimal", "low", "medium", "high"]
-	}
+	"policyProfiles": ["openai.responses.text_only_mvp", "openai.responses.no_unbilled_hosted_tools"]
 }
 ```
 
-Authentication aliases are modeled the same way. A caller may send `x-api-key`, but the gateway canonicalizes it to the standard authorization header:
+Simple facts stay on the nodes themselves. For example, a deployment can declare the provider model, public slug variants, service tier, prices, and region. Runtime edge cases such as tool rejection, input-shape validation, and service-tier application are enforced by Go policy profiles.
+
+Authentication aliases are also gateway behavior. A caller may send `x-api-key`, but the measured gateway canonicalizes it to the standard authorization header according to the compiled catalog and Go resolver:
 
 ```json
 {
-	"x-api-key": {
-		"alias": "schema.headers.authorization",
-		"required": false,
-		"type": "string"
-	}
+	"acceptedAuthHeaders": ["authorization", "api-key", "x-api-key", "x-goog-api-key"]
 }
 ```
 
@@ -164,13 +156,7 @@ A tiny canonical catalog might be exactly these bytes:
 }
 ```
 
-The trailing newline is part of the byte stream. The SHA-256 of that exact example is:
-
-```text
-4c26e81dbb70f54dabbbca70532d757d50751b6ba10f8c8eb840bb0b1d5f199d
-```
-
-That compiled catalog hash is the value verified by the release process.
+The public catalog output includes a catalog version so clients can detect the response shape. Release verification is centered on the `gateway.igvm` hash; because the catalog is embedded into that measured artifact, catalog integrity follows the verified gateway release.
 
 <Callout type="info">
 	The catalog page in the app fetches the compiled catalog after the first paint. The HTML shell is
