@@ -5,60 +5,100 @@ description: Provider-specific differences, compatibility notes, and Stogas gate
 
 ## Current Provider Surface
 
-The Stogas runtime currently configures the OpenAI provider. Requests are accepted when the parsed `provider/model` pair resolves through the catalog, which defines:
+The Stogas runtime currently configures OpenAI and Anthropic providers. Requests are accepted when the requested public model slug resolves through the catalog to exactly one provider endpoint and deployment. The catalog defines:
 
 - Provider and model availability
-- Allowed extra parameters and client-boundary request headers
-- Allowed provider response headers to expose
+- Client-boundary request headers and the coarse top-level request field surface
 - Request-size limits and pricing behavior
 
 ## Shared Gateway Behavior
 
 - Request bodies are parsed as canonical objects — unknown top-level parameters are **not** passed through generically.
-- Provider-specific extras are forwarded only when the catalog entry explicitly permits them.
+- Provider-specific extras are forwarded only when Go request policy accepts them for the resolved provider/deployment.
 - Catalog request-header aliases are normalized at the gateway boundary; they are not provider-upstream headers.
 - Arbitrary client headers are not forwarded upstream.
 - Provider response headers are not exposed unless catalog policy allows specific ones.
 - Internal tracing and governance headers are not part of the public API.
+- Billing holds are placed after Stogas has produced a provider request ready for Bifrost dispatch and before the upstream call begins.
+
+## Error Responses
+
+Errors use an OpenAI-compatible top-level shape:
+
+```json
+{
+	"error": {
+		"message": "Invalid request",
+		"type": "invalid_request_error",
+		"code": null,
+		"param": null
+	}
+}
+```
+
+Stogas validates unsupported request shapes before dispatch when possible. If Bifrost still rejects request conversion before an upstream call, Stogas returns `400 invalid_request_error` instead of exposing internal conversion details.
+
+| Condition                                                                                                     | Response                                       |
+| ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Invalid JSON, unsupported fields, unsupported tools, ambiguous models, or Bifrost request-conversion failures | `400 invalid_request_error`                    |
+| Invalid or missing Stogas API key                                                                             | `401 authentication_error`                     |
+| Stogas account/key permission or billing decline                                                              | `402 billing_error` or `403 permission_denied` |
+| Request body too large                                                                                        | `413 request_too_large`                        |
+| Stogas or provider rate limit                                                                                 | `429 rate_limit_error`                         |
+| Client closed the request                                                                                     | `499 request_cancelled`                        |
+| Upstream provider unavailable or network failure                                                              | `503 gateway_error`                            |
+| Upstream timeout                                                                                              | `504 request_timed_out`                        |
+| Provider overloaded                                                                                           | `529 overloaded_error`                         |
+| Unexpected gateway failure                                                                                    | `500 internal_error`                           |
+
+Provider 4xx validation messages may be forwarded when they are safe and useful. Provider 5xx, provider authentication, network, and internal gateway failures are intentionally generalized so backend credentials, topology, and stack details are not exposed.
 
 ## Chat Completions (`/v1/chat/completions`)
 
-| Scenario | Behavior |
-|----------|----------|
-| `stream: false` | Returns a JSON chat completion object |
-| `stream: true` | Returns Server-Sent Events, ending with `data: [DONE]` |
-| `max_tokens` (legacy) | Accepted and mapped to `max_completion_tokens` before dispatch |
-| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the raw captured upstream JSON in `stogas.raw_response` |
+| Scenario                                     | Behavior                                                                                                                                                       |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stream: false`                              | Returns a JSON chat completion object                                                                                                                          |
+| `stream: true`                               | Returns Server-Sent Events, ending with `data: [DONE]`                                                                                                         |
+| `max_tokens` (legacy)                        | Accepted and mapped to `max_completion_tokens` before dispatch                                                                                                 |
+| `messages`                                   | Required; text-only MVP rejects image, audio, file, and other non-text content blocks                                                                          |
+| `tools` / `tool_choice`                      | Only user-defined `function` and `custom` tools are accepted on Chat Completions                                                                               |
+| `metadata`                                   | Validated with OpenAI-style size limits, then removed before upstream dispatch                                                                                 |
+| Anthropic fields                             | `mcp_servers`, `cache_control`, `task_budget`, and `context_management` are accepted only for Anthropic deployments                                            |
+| Anthropic service tier                       | Public tier slugs select the requested upstream tier; `auto` may serve Priority or Standard, while `standard` / `standard-only` request Standard-only capacity |
+| Anthropic fast models                        | Fast variants are selected by model slug; Stogas sends Anthropic's provider-native fast-mode request internally                                                |
+| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the raw captured upstream JSON in `stogas.raw_response`                                                                                               |
 
 ## Responses API (`/v1/responses`)
 
-| Scenario | Behavior |
-|----------|----------|
-| `stream: false` | Returns a JSON response object |
-| `stream: true` | Returns named Responses API SSE events |
-| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the captured upstream JSON when available |
+| Scenario                                     | Behavior                                                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `stream: false`                              | Returns a JSON response object                                                                            |
+| `stream: true`                               | Returns named Responses API SSE events                                                                    |
+| Anthropic deployments                        | Anthropic models can resolve through the Anthropic Messages provider endpoint for Responses compatibility |
+| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the captured upstream JSON when available                                                        |
 
 ## Built-In Tools
 
 OpenAI web search tool pricing is cataloged on the endpoint that owns the behavior:
 
-| Tool tier | Availability | Billing |
-| --- | --- | --- |
-| `web_search` | Responses API | $10.00 / 1k calls plus search content tokens at model rates |
-| `web_search_preview` on reasoning models | Responses API | $10.00 / 1k calls plus search content tokens at model rates |
-| `web_search_preview` on non-reasoning models | Responses API | $25.00 / 1k calls; search content tokens are free |
-| Search models with `web_search_options` | Chat Completions API | The model always performs one web retrieval; Stogas reserves the guaranteed search call plus model tokens |
+| Tool tier                                    | Availability         | Billing                                                                                                   |
+| -------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------- |
+| `web_search`                                 | Responses API        | $10.00 / 1k calls plus search content tokens at model rates                                               |
+| `web_search_preview` on reasoning models     | Responses API        | $10.00 / 1k calls plus search content tokens at model rates                                               |
+| `web_search_preview` on non-reasoning models | Responses API        | $25.00 / 1k calls; search content tokens are free                                                         |
+| Search models with `web_search_options`      | Chat Completions API | The model always performs one web retrieval; Stogas reserves the guaranteed search call plus model tokens |
 
 Versioned Responses tool names with the same prefixes are treated as the same pricing families. Chat Completions web search is only available through `gpt-5-search-api`, `gpt-4o-search-preview`, or `gpt-4o-mini-search-preview`; `web_search_options` is rejected for other Chat models and is not a Responses API parameter.
 
-Stogas uses a denylist policy for OpenAI built-in tools so user-defined local/function tools can pass through. Hosted OpenAI shell containers are rejected until container billing is modeled; only `{"type":"shell","environment":{"type":"local"}}` is accepted for the `shell` tool. `local_shell` and `apply_patch` are allowed. `image_generation`, `computer-use-preview`, `file_search`, and `code_interpreter` are rejected because they can incur unmodeled provider-side costs.
+On Chat Completions, Stogas uses an allowlist policy for tools: only user-defined `function` and `custom` tools are accepted. Provider-hosted tools such as web search, file search, computer use, code execution, shell containers, MCP-hosted tools, and image generation are rejected on Chat Completions unless Stogas has a deployment-specific pricing rule for that behavior. OpenAI search-model deployments expose `web_search_options` separately because those models include a guaranteed priced retrieval.
 
 ## Raw Response Capture
 
 Raw response capture does not short-circuit the Stogas pipeline; the request is fully processed. If the gateway captured the raw provider body, Stogas includes it under `stogas.raw_response`.
 
 <Callout type="info">
-  Raw capture exposes the upstream JSON payload as received. It does not reproduce exact TCP chunk boundaries or provider compression framing.
+	Raw capture exposes the upstream JSON payload as received. It does not reproduce exact TCP chunk
+	boundaries or provider compression framing.
 </Callout>
 
 ## Cancellation

@@ -1,16 +1,15 @@
 ---
 title: Catalog Structure
-description: Learn how the model catalog represents endpoints, providers, models, deployments, request policy, and prices.
+description: Learn how the model catalog represents endpoints, providers, models, deployments, routing, and prices.
 ---
 
 The catalog is the public routing data used by the gateway. It answers four questions before a request is sent upstream:
 
 - Which public model slug did the caller request?
 - Which provider and upstream endpoint can serve it?
-- Which request fields are allowed for that model and endpoint?
 - Which pricing meters apply?
 
-The catalog is data, not executable code. It declares facts and attaches named policy profiles. The Go gateway owns the runtime semantics for those profiles.
+The catalog is data, not executable code. It declares graph facts, public slugs, upstream endpoint relationships, deployment limits, and prices. The measured Go gateway owns executable request policy.
 
 <Cards>
 	<Card
@@ -22,8 +21,8 @@ The catalog is data, not executable code. It declares facts and attaches named p
 		description="The public catalog carries a versioned response shape and is embedded in the verified gateway release."
 	/>
 	<Card
-		title="Profile-driven"
-		description="Nodes attach named policy profile IDs; the measured Go gateway enforces the behavior."
+		title="Policy in Go"
+		description="Catalog nodes stay factual; the measured Go gateway owns executable request policy."
 	/>
 </Cards>
 
@@ -38,13 +37,13 @@ Author ------> Model ----------------------------^
 
 The important node types are:
 
-| Node                      | Owns                                                                 |
-| ------------------------- | -------------------------------------------------------------------- |
-| `graph.stogasEndpoints`   | Public API paths, methods, accepted client headers, and profile IDs  |
-| `graph.providers`         | Provider identity, privacy claims, capabilities, and default prices  |
-| `graph.providerEndpoints` | Concrete upstream URLs, region claims, and endpoint profile IDs      |
-| `graph.models`            | Canonical model slugs, aliases, context windows, modalities, authors |
-| `graph.deployments`       | Provider/model pairings, service tiers, profile IDs, and prices      |
+| Node                      | Owns                                                                  |
+| ------------------------- | --------------------------------------------------------------------- |
+| `graph.stogasEndpoints`   | Public API paths, methods, and accepted client headers                |
+| `graph.providers`         | Provider identity, privacy claims, capabilities, and default prices   |
+| `graph.providerEndpoints` | Concrete upstream URLs, route links, region claims, and endpoint type |
+| `graph.models`            | Canonical model slugs, aliases, context windows, modalities, authors  |
+| `graph.deployments`       | Provider/model pairings, service tiers, upstream slugs, and prices    |
 
 This structure prevents drift. For example, a model context window is stored on the model node; every deployment of that model inherits the same fact unless a real override exists.
 
@@ -57,14 +56,12 @@ This is a tiny catalog fragment, not a complete release:
 	"graph": {
 		"stogasEndpoints": {
 			"stogas-chat-completions": {
-				"schema": {
-					"method": "POST",
-					"path": "/v1/chat/completions",
-					"parameters": {
-						"model": { "required": true, "type": "string" },
-						"messages": { "required": true, "type": "array" }
-					}
-				}
+				"method": "POST",
+				"path": "/v1/chat/completions"
+			},
+			"stogas-responses": {
+				"method": "POST",
+				"path": "/v1/responses"
 			}
 		},
 		"providers": {
@@ -85,6 +82,8 @@ This is a tiny catalog fragment, not a complete release:
 			"gpt-5.5": {
 				"providerId": "openai",
 				"modelId": "gpt-5.5-2026-04-23",
+				"parentProviderEndpointNodes": ["openai-chat-completions", "openai-responses"],
+				"upstreamModelSlug": "gpt-5.5",
 				"serviceTier": "default"
 			}
 		}
@@ -92,17 +91,9 @@ This is a tiny catalog fragment, not a complete release:
 }
 ```
 
-## Request Policy Profiles
+## Request Policy
 
-Endpoint and deployment nodes attach named policy profile IDs. The public JSON describes those profiles for inspection, but executable behavior lives in the measured Go gateway.
-
-```json
-{
-	"policyProfiles": ["openai.responses.text_only_mvp", "openai.responses.no_unbilled_hosted_tools"]
-}
-```
-
-Simple facts stay on the nodes themselves. For example, a deployment can declare the provider model, public slug variants, service tier, prices, and region. Runtime edge cases such as tool rejection, input-shape validation, and service-tier application are enforced by Go policy profiles.
+Simple facts stay on nodes. For example, a deployment can declare the upstream provider model, public slug variants, requested service tier, prices, and region. Runtime edge cases such as tool rejection, input-shape validation, service-tier conflict handling, metadata sanitization, provider fallback handling, and provider-specific request fields are enforced by Go code, not catalog YAML.
 
 Authentication aliases are also gateway behavior. A caller may send `x-api-key`, but the measured gateway canonicalizes it to the standard authorization header according to the compiled catalog and Go resolver:
 

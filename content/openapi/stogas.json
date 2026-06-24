@@ -60,7 +60,7 @@
 				"operationId": "getCatalog",
 				"tags": ["Catalog"],
 				"summary": "Catalog",
-				"description": "Returns the active public gateway catalog used for model discovery, aliases, routing, prices, and policy profile descriptions.",
+				"description": "Returns the active public gateway catalog used for model discovery, aliases, routing, and prices.",
 				"security": [],
 				"responses": {
 					"200": {
@@ -80,8 +80,7 @@
 												"providerEndpoints": {},
 												"stogasEndpoints": {}
 											},
-											"indexes": { "provider_native_model_slugs": {} },
-											"policyProfiles": []
+											"indexes": { "provider_native_model_slugs": {} }
 										}
 									}
 								}
@@ -400,7 +399,7 @@
 		"schemas": {
 			"CatalogResponse": {
 				"type": "object",
-				"required": ["version", "generatedAt", "graph", "indexes", "policyProfiles"],
+				"required": ["version", "generatedAt", "graph", "indexes"],
 				"properties": {
 					"version": { "type": "string", "example": "stogas.gateway.catalog.v1" },
 					"generatedAt": {
@@ -417,11 +416,6 @@
 						"type": "object",
 						"description": "Public lookup indexes, including accepted provider-native model slugs.",
 						"additionalProperties": true
-					},
-					"policyProfiles": {
-						"type": "array",
-						"description": "Human-readable descriptions of policy profiles enforced by the gateway.",
-						"items": { "type": "object", "additionalProperties": true }
 					}
 				}
 			},

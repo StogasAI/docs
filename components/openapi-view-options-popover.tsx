@@ -27,9 +27,26 @@ function SciraIcon() {
 	return (
 		<svg viewBox="0 0 910 934" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<title>Scira AI</title>
-			<path d="M647.664 197.775C569.13 189.049 525.5 145.419 516.774 66.8849C508.048 145.419 464.418 189.049 385.884 197.775C464.418 206.501 508.048 250.131 516.774 328.665C525.5 250.131 569.13 206.501 647.664 197.775Z" fill="currentColor" stroke="currentColor" strokeWidth="8" strokeLinejoin="round" />
-			<path d="M857.5 508.116C763.259 497.644 710.903 445.288 700.432 351.047C689.961 445.288 637.605 497.644 543.364 508.116C637.605 518.587 689.961 570.943 700.432 665.184C710.903 570.943 763.259 518.587 857.5 508.116Z" stroke="currentColor" strokeWidth="20" strokeLinejoin="round" />
-			<path d="M760.632 764.337C720.719 814.616 669.835 855.1 611.872 882.692C553.91 910.285 490.404 924.255 426.213 923.533C362.022 922.812 298.846 907.419 241.518 878.531C184.19 849.643 134.228 808.026 95.4548 756.863C56.6815 705.7 30.1238 646.346 17.8129 583.343C5.50207 520.339 7.76433 455.354 24.4266 393.359C41.089 331.364 71.7099 274.001 113.947 225.658C156.184 177.315 208.919 139.273 268.117 114.442" stroke="currentColor" strokeWidth="30" strokeLinecap="round" strokeLinejoin="round" />
+			<path
+				d="M647.664 197.775C569.13 189.049 525.5 145.419 516.774 66.8849C508.048 145.419 464.418 189.049 385.884 197.775C464.418 206.501 508.048 250.131 516.774 328.665C525.5 250.131 569.13 206.501 647.664 197.775Z"
+				fill="currentColor"
+				stroke="currentColor"
+				strokeWidth="8"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M857.5 508.116C763.259 497.644 710.903 445.288 700.432 351.047C689.961 445.288 637.605 497.644 543.364 508.116C637.605 518.587 689.961 570.943 700.432 665.184C710.903 570.943 763.259 518.587 857.5 508.116Z"
+				stroke="currentColor"
+				strokeWidth="20"
+				strokeLinejoin="round"
+			/>
+			<path
+				d="M760.632 764.337C720.719 814.616 669.835 855.1 611.872 882.692C553.91 910.285 490.404 924.255 426.213 923.533C362.022 922.812 298.846 907.419 241.518 878.531C184.19 849.643 134.228 808.026 95.4548 756.863C56.6815 705.7 30.1238 646.346 17.8129 583.343C5.50207 520.339 7.76433 455.354 24.4266 393.359C41.089 331.364 71.7099 274.001 113.947 225.658C156.184 177.315 208.919 139.273 268.117 114.442"
+				stroke="currentColor"
+				strokeWidth="30"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
 		</svg>
 	);
 }
@@ -137,12 +154,12 @@ export function OpenApiViewOptionsPopover({
 			<PopoverTrigger
 				className={cn(
 					buttonVariants({ color: 'secondary', size: 'sm' }),
-					'gap-2 data-[state=open]:bg-fd-accent data-[state=open]:text-fd-accent-foreground',
+					'data-[state=open]:bg-fd-accent data-[state=open]:text-fd-accent-foreground gap-2',
 					className
 				)}
 			>
 				Open
-				<ChevronDown className="size-3.5 text-fd-muted-foreground" />
+				<ChevronDown className="text-fd-muted-foreground size-3.5" />
 			</PopoverTrigger>
 			<PopoverContent className="flex flex-col">
 				{items.map((item) => (
@@ -151,11 +168,11 @@ export function OpenApiViewOptionsPopover({
 						href={item.href}
 						target="_blank"
 						rel="noreferrer noopener"
-						className="inline-flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-fd-accent hover:text-fd-accent-foreground [&_svg]:size-4"
+						className="hover:bg-fd-accent hover:text-fd-accent-foreground inline-flex items-center gap-2 rounded-lg p-2 text-sm [&_svg]:size-4"
 					>
 						{item.icon}
 						{item.title}
-						<ExternalLinkIcon className="ms-auto size-3.5 text-fd-muted-foreground" />
+						<ExternalLinkIcon className="text-fd-muted-foreground ms-auto size-3.5" />
 					</a>
 				))}
 			</PopoverContent>

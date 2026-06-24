@@ -5,12 +5,9 @@ import type { ReactNode } from 'react';
 export const dynamic = 'force-static';
 
 export default function Layout({ children }: { children: ReactNode }) {
-  return (
-    <LayoutClient
-      tree={unifiedTree}
-      baseOptions={baseOptions()}
-    >
-      {children}
-    </LayoutClient>
-  );
+	return (
+		<LayoutClient tree={unifiedTree} baseOptions={baseOptions()}>
+			{children}
+		</LayoutClient>
+	);
 }
