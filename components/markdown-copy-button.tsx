@@ -40,7 +40,7 @@ export function MarkdownCopyButton({
 				buttonVariants({
 					color: 'secondary',
 					size: 'sm',
-					className: 'gap-2 [&_svg]:size-3.5 [&_svg]:text-fd-muted-foreground'
+					className: '[&_svg]:text-fd-muted-foreground gap-2 [&_svg]:size-3.5'
 				}),
 				className
 			)}

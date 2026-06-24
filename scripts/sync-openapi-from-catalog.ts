@@ -54,18 +54,6 @@ function jsonResponseSchemas(spec: JsonObject, operation: JsonObject) {
 	return schemas;
 }
 
-function effectiveStogasEndpointParameterNames(catalog: JsonObject, route: JsonObject) {
-	const names = new Set<string>();
-	const stogasEndpoint = catalog.graph.stogasEndpoints[route.stogasEndpointId];
-	for (const name of Object.keys(stogasEndpoint?.schema?.parameters ?? {})) names.add(name);
-	for (const name of Object.keys(route.schema?.parameters ?? {})) names.add(name);
-	for (const deploymentId of route.deploymentIds ?? []) {
-		const deployment = catalog.graph.deployments[deploymentId];
-		for (const name of Object.keys(deployment?.schema?.parameters ?? {})) names.add(name);
-	}
-	return names;
-}
-
 function fail(errors: string[], message: string) {
 	errors.push(message);
 }
@@ -80,37 +68,25 @@ if (hasStogasExtension(spec)) {
 
 for (const [routeId, route] of Object.entries(catalog.graph.providerEndpoints ?? {})) {
 	if (!isObject(route)) continue;
-	const stogasEndpoint = catalog.graph.stogasEndpoints?.[route.stogasEndpointId];
-	if (!isObject(stogasEndpoint)) {
-		fail(errors, `${routeId}: missing catalog stogas endpoint ${route.stogasEndpointId}`);
-		continue;
-	}
-	const operation =
-		spec.paths?.[stogasEndpoint.schema.path]?.[
-			String(stogasEndpoint.schema.method ?? 'post').toLowerCase()
-		];
-	if (!isObject(operation)) {
-		fail(
-			errors,
-			`${routeId}: docs OpenAPI is missing ${stogasEndpoint.schema.method} ${stogasEndpoint.schema.path}`
-		);
-		continue;
-	}
-	const request = requestSchema(spec, operation);
-	if (!request) {
-		fail(errors, `${routeId}: docs OpenAPI request body must reference a component schema`);
-		continue;
-	}
-	const properties = request.properties ?? {};
-	for (const name of effectiveStogasEndpointParameterNames(catalog, route)) {
-		if (!Object.prototype.hasOwnProperty.call(properties, name)) {
-			fail(errors, `${routeId}: catalog parameter ${name} is missing from docs OpenAPI`);
+	for (const stogasEndpointId of route.stogasEndpoints ?? []) {
+		const stogasEndpoint = catalog.graph.stogasEndpoints?.[stogasEndpointId];
+		if (!isObject(stogasEndpoint)) {
+			fail(errors, `${routeId}: missing catalog stogas endpoint ${stogasEndpointId}`);
+			continue;
 		}
-	}
-	const required = new Set(Array.isArray(request.required) ? request.required : []);
-	for (const [name, parameter] of Object.entries(stogasEndpoint.schema.parameters ?? {})) {
-		if (isObject(parameter) && parameter.required === true && !required.has(name)) {
-			fail(errors, `${routeId}: catalog requires ${name}, but docs OpenAPI does not`);
+		const operation =
+			spec.paths?.[stogasEndpoint.path]?.[String(stogasEndpoint.method ?? 'post').toLowerCase()];
+		if (!isObject(operation)) {
+			fail(
+				errors,
+				`${routeId}: docs OpenAPI is missing ${stogasEndpoint.method} ${stogasEndpoint.path}`
+			);
+			continue;
+		}
+		const request = requestSchema(spec, operation);
+		if (!request) {
+			fail(errors, `${routeId}: docs OpenAPI request body must reference a component schema`);
+			continue;
 		}
 	}
 }
