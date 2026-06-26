@@ -14,12 +14,14 @@ The Stogas runtime currently configures OpenAI and Anthropic providers. Requests
 ## Shared Gateway Behavior
 
 - Request bodies are parsed as canonical objects — unknown top-level parameters are **not** passed through generically.
+- `provider` is a Stogas-owned routing hint for ambiguous public model slugs. It accepts a known provider ID or provider slug, or `{ "only": [...], "order": [...] }` routing rules. The field is stripped before upstream dispatch.
 - Provider-specific extras are forwarded only when Go request policy accepts them for the resolved provider/deployment.
 - Catalog request-header aliases are normalized at the gateway boundary; they are not provider-upstream headers.
 - Arbitrary client headers are not forwarded upstream.
 - Provider response headers are not exposed unless catalog policy allows specific ones.
 - Internal tracing and governance headers are not part of the public API.
 - Billing holds are placed after Stogas has produced a provider request ready for Bifrost dispatch and before the upstream call begins.
+- Chat requests have a 10-minute total lifecycle. Chat SSE streams also time out if no upstream chunks arrive for 2 minutes. Responses requests keep a 60-minute direct-stream lifecycle for long-running tool or reasoning work.
 
 ## Error Responses
 
@@ -55,27 +57,31 @@ Provider 4xx validation messages may be forwarded when they are safe and useful.
 
 ## Chat Completions (`/v1/chat/completions`)
 
-| Scenario                                     | Behavior                                                                                                                                                       |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stream: false`                              | Returns a JSON chat completion object                                                                                                                          |
-| `stream: true`                               | Returns Server-Sent Events, ending with `data: [DONE]`                                                                                                         |
-| `max_tokens` (legacy)                        | Accepted and mapped to `max_completion_tokens` before dispatch                                                                                                 |
-| `messages`                                   | Required; text-only MVP rejects image, audio, file, and other non-text content blocks                                                                          |
-| `tools` / `tool_choice`                      | Only user-defined `function` and `custom` tools are accepted on Chat Completions                                                                               |
-| `metadata`                                   | Validated with OpenAI-style size limits, then removed before upstream dispatch                                                                                 |
-| Anthropic fields                             | `mcp_servers`, `cache_control`, `task_budget`, and `context_management` are accepted only for Anthropic deployments                                            |
-| Anthropic service tier                       | Public tier slugs select the requested upstream tier; `auto` may serve Priority or Standard, while `standard` / `standard-only` request Standard-only capacity |
-| Anthropic fast models                        | Fast variants are selected by model slug; Stogas sends Anthropic's provider-native fast-mode request internally                                                |
-| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the raw captured upstream JSON in `stogas.raw_response`                                                                                               |
+| Scenario                                     | Behavior                                                                                                                                                             |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stream: false`                              | Returns a JSON chat completion object                                                                                                                                |
+| `stream: true`                               | Returns Server-Sent Events, ending with `data: [DONE]`                                                                                                               |
+| `max_tokens` (legacy)                        | Accepted and mapped to `max_completion_tokens` before dispatch                                                                                                       |
+| `messages`                                   | Required; text-only MVP rejects image, audio, file, and other non-text content blocks                                                                                |
+| `tools` / `tool_choice`                      | Only user-defined `function` and `custom` tools are accepted on Chat Completions                                                                                     |
+| `metadata`                                   | Validated with OpenAI-style size limits, then removed before upstream dispatch                                                                                       |
+| OpenAI service tier                          | `auto` / `default` use the selected deployment's project-default tier for holds; tiered model slugs such as `-flex` or `-priority` must be selected explicitly       |
+| OpenAI `scale` service tier                  | Not exposed by Stogas; requests with `service_tier: "scale"` are rejected before upstream dispatch                                                                   |
+| Anthropic cache control                      | `cache_control` is accepted only for Anthropic deployments, only in priced ephemeral `5m` / `1h` forms                                                               |
+| Anthropic service tier                       | Public tier slugs select the requested tier for holds; `auto` uses the selected auto deployment, while `standard` / `standard_only` select Standard-only deployments |
+| Anthropic fast models                        | Fast variants are selected by model slug; Stogas sends Anthropic's provider-native fast-mode request internally                                                      |
+| Anthropic US inference                       | `-us` model slugs select Anthropic US-only inference deployments; Stogas sends `inference_geo: "us"` internally and prices token meters at the US rate               |
+| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the raw captured upstream JSON in `stogas.raw_response`                                                                                                     |
 
 ## Responses API (`/v1/responses`)
 
-| Scenario                                     | Behavior                                                                                                  |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `stream: false`                              | Returns a JSON response object                                                                            |
-| `stream: true`                               | Returns named Responses API SSE events                                                                    |
-| Anthropic deployments                        | Anthropic models can resolve through the Anthropic Messages provider endpoint for Responses compatibility |
-| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the captured upstream JSON when available                                                        |
+| Scenario                                     | Behavior                                                                                                                                       |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stream: false`                              | Returns a JSON response object                                                                                                                 |
+| `stream: true`                               | Returns named Responses API SSE events                                                                                                         |
+| Anthropic deployments                        | Anthropic models can resolve through the Anthropic Messages provider endpoint for Responses compatibility                                      |
+| Anthropic cache control                      | Top-level automatic caching plus text content-block and tool-definition cache markers are supported in priced ephemeral `5m` / `1h` forms only |
+| `X-Stogas-Return-Extra-Fields: raw_response` | Includes the captured upstream JSON when available                                                                                             |
 
 ## Built-In Tools
 
@@ -88,9 +94,9 @@ OpenAI web search tool pricing is cataloged on the endpoint that owns the behavi
 | `web_search_preview` on non-reasoning models | Responses API        | $25.00 / 1k calls; search content tokens are free                                                         |
 | Search models with `web_search_options`      | Chat Completions API | The model always performs one web retrieval; Stogas reserves the guaranteed search call plus model tokens |
 
-Versioned Responses tool names with the same prefixes are treated as the same pricing families. Chat Completions web search is only available through `gpt-5-search-api`, `gpt-4o-search-preview`, or `gpt-4o-mini-search-preview`; `web_search_options` is rejected for other Chat models and is not a Responses API parameter.
+Priced Responses hosted tools require `max_tool_calls` so Stogas can place a bounded hold before dispatching upstream; the value is currently capped at 128. OpenAI versioned Responses tool names with the same prefixes are treated as the same pricing families. OpenAI Responses also admits no-extra-billing local tools (`local_shell`, `apply_patch`, and `shell` with `environment.type="local"`). Anthropic Responses web search currently admits only the basic `web_search_20250305` tool, because newer Anthropic dynamic filtering versions can invoke code execution and are not priced by Stogas yet. Chat Completions web search is only available through `gpt-5-search-api`, `gpt-4o-search-preview`, or `gpt-4o-mini-search-preview`; `web_search_options` is rejected for other Chat models and is not a Responses API parameter.
 
-On Chat Completions, Stogas uses an allowlist policy for tools: only user-defined `function` and `custom` tools are accepted. Provider-hosted tools such as web search, file search, computer use, code execution, shell containers, MCP-hosted tools, and image generation are rejected on Chat Completions unless Stogas has a deployment-specific pricing rule for that behavior. OpenAI search-model deployments expose `web_search_options` separately because those models include a guaranteed priced retrieval.
+On Chat Completions, Stogas uses an allowlist policy for tools: only user-defined `function` and `custom` tools are accepted. Provider-hosted tools such as web search, file search, computer use, code execution, shell/local shell, apply patch, MCP-hosted tools, and image generation are rejected on Chat Completions unless Stogas has a deployment-specific pricing rule for that behavior. OpenAI search-model deployments expose `web_search_options` separately because those models include a guaranteed priced retrieval.
 
 ## Raw Response Capture
 

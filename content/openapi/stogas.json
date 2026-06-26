@@ -80,7 +80,7 @@
 												"providerEndpoints": {},
 												"stogasEndpoints": {}
 											},
-											"indexes": { "provider_native_model_slugs": {} }
+											"indexes": { "provider_endpoint_request_slugs": {} }
 										}
 									}
 								}
@@ -414,7 +414,7 @@
 					},
 					"indexes": {
 						"type": "object",
-						"description": "Public lookup indexes, including accepted provider-native model slugs.",
+						"description": "Public lookup indexes, including provider-endpoint-scoped request slugs.",
 						"additionalProperties": true
 					}
 				}
@@ -460,6 +460,34 @@
 					"catalogVersion": { "type": "string", "example": "stogas.gateway.catalog.v1" }
 				}
 			},
+			"ProviderRoutingPreference": {
+				"oneOf": [
+					{
+						"type": "string",
+						"description": "Known provider ID or provider slug, such as `openai`, `open-ai`, or `anthropic`."
+					},
+					{
+						"type": "object",
+						"additionalProperties": false,
+						"properties": {
+							"only": {
+								"type": "array",
+								"items": { "type": "string" },
+								"minItems": 1,
+								"description": "Provider IDs or provider slugs allowed to serve this request."
+							},
+							"order": {
+								"type": "array",
+								"items": { "type": "string" },
+								"minItems": 1,
+								"description": "Preferred provider order after the optional `only` filter is applied."
+							}
+						},
+						"description": "Stogas-owned provider routing rules. At least one of `only` or `order` is required."
+					}
+				],
+				"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+			},
 			"ChatCompletionRequest": {
 				"type": "object",
 				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API.",
@@ -469,9 +497,13 @@
 						"type": "string",
 						"description": "Catalog model or deployment slug to route to, optionally provider-qualified, such as `gpt-5.5-latest`, `gpt-5.5-flex-latest`, or `openai/gpt-5.5-priority-latest`."
 					},
+					"provider": {
+						"$ref": "#/components/schemas/ProviderRoutingPreference",
+						"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+					},
 					"messages": {
 						"type": "array",
-						"description": "Conversation messages. Stogas accepts text-only messages and OpenAI-style multimodal content blocks.",
+						"description": "Conversation messages. Stogas currently accepts text-only content only.",
 						"items": { "$ref": "#/components/schemas/ChatMessage" }
 					},
 					"audio": {
@@ -560,8 +592,8 @@
 					},
 					"service_tier": {
 						"type": "string",
-						"description": "Provider service tier selection preserved by the gateway. Tiered catalog deployments such as `gpt-5.5-flex` imply this value and reject conflicting explicit tiers.",
-						"enum": ["auto", "default", "flex", "priority"]
+						"description": "Provider service tier selection preserved by the gateway. Default/auto requests use the selected deployment's project-default tier for holds; tiered catalog deployments such as `gpt-5.5-flex` imply this value and reject conflicting explicit tiers. OpenAI `scale` is not exposed by Stogas.",
+						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
 					},
 					"stream_options": {
 						"type": "object",
@@ -827,6 +859,10 @@
 				"required": ["model", "input"],
 				"properties": {
 					"model": { "type": "string" },
+					"provider": {
+						"$ref": "#/components/schemas/ProviderRoutingPreference",
+						"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+					},
 					"input": {
 						"description": "Input for the Responses API. Stogas accepts a plain string or an array of Responses input/output items.",
 						"oneOf": [
@@ -854,7 +890,11 @@
 					},
 					"instructions": { "type": "string" },
 					"max_output_tokens": { "type": "integer", "minimum": 1 },
-					"max_tool_calls": { "type": "integer", "minimum": 1 },
+					"max_tool_calls": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "Required when using priced hosted Responses tools so Stogas can place a bounded billing hold."
+					},
 					"metadata": {
 						"type": "object",
 						"description": "Application metadata to attach to the upstream request."
@@ -890,8 +930,8 @@
 					},
 					"service_tier": {
 						"type": "string",
-						"description": "Provider service tier selection preserved by the gateway. Tiered catalog deployments such as `gpt-5.5-flex` imply this value and reject conflicting explicit tiers.",
-						"enum": ["auto", "default", "flex", "priority"]
+						"description": "Provider service tier selection preserved by the gateway. Default/auto requests use the selected deployment's project-default tier for holds; tiered catalog deployments such as `gpt-5.5-flex` imply this value and reject conflicting explicit tiers. OpenAI `scale` is not exposed by Stogas.",
+						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
 					},
 					"stream_options": {
 						"type": "object",
@@ -933,7 +973,7 @@
 					},
 					"tools": {
 						"type": "array",
-						"description": "Responses API tool definitions accepted by compatible providers.",
+						"description": "Responses API tool definitions accepted by compatible providers. Stogas currently admits function/custom tools, OpenAI local_shell/apply_patch/local shell tools, and priced hosted web search tools when max_tool_calls is set.",
 						"items": { "type": "object" }
 					},
 					"truncation": { "type": "string", "enum": ["auto", "disabled"] },
@@ -1178,7 +1218,6 @@
 						"type": "string",
 						"enum": [
 							"input_text",
-							"input_file",
 							"output_text",
 							"refusal",
 							"reasoning_text",
@@ -1187,9 +1226,6 @@
 						]
 					},
 					"text": { "type": "string" },
-					"file_data": { "type": "string" },
-					"filename": { "type": "string" },
-					"file_type": { "type": "string" },
 					"refusal": { "type": "string" },
 					"annotations": { "type": "array", "items": { "type": "object" } },
 					"logprobs": { "type": "array", "items": { "type": "object" } },
