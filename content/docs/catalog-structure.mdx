@@ -3,7 +3,7 @@ title: Catalog Structure
 description: Learn how the model catalog represents endpoints, providers, models, deployments, routing, and prices.
 ---
 
-The catalog is the public routing data used by the gateway. It answers four questions before a request is sent upstream:
+The catalog is the public routing data used by the gateway. It answers three questions before a request is sent upstream:
 
 - Which public model slug did the caller request?
 - Which provider and upstream endpoint can serve it?
@@ -37,13 +37,13 @@ Author ------> Model ----------------------------^
 
 The important node types are:
 
-| Node                      | Owns                                                                  |
-| ------------------------- | --------------------------------------------------------------------- |
-| `graph.stogasEndpoints`   | Public API paths, methods, and accepted client headers                |
-| `graph.providers`         | Provider identity, privacy claims, capabilities, and default prices   |
-| `graph.providerEndpoints` | Concrete upstream URLs, route links, region claims, and endpoint type |
-| `graph.models`            | Canonical model slugs, aliases, context windows, modalities, authors  |
-| `graph.deployments`       | Provider/model pairings, service tiers, upstream slugs, and prices    |
+| Node                      | Owns                                                                               |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `graph.stogasEndpoints`   | Public API paths and methods                                                       |
+| `graph.providers`         | Provider identity, privacy claims, capabilities, and default prices                |
+| `graph.providerEndpoints` | Concrete upstream URLs, route links, region claims, and endpoint type              |
+| `graph.models`            | Author-owned model facts, context windows, modalities, and reasoning support       |
+| `graph.deployments`       | Provider/model pairings, public aliases, service tiers, upstream slugs, and prices |
 
 This structure prevents drift. For example, a model context window is stored on the model node; every deployment of that model inherits the same fact unless a real override exists.
 
@@ -72,9 +72,9 @@ This is a tiny catalog fragment, not a complete release:
 		},
 		"models": {
 			"gpt-5.5-2026-04-23": {
-				"canonicalSlug": "gpt-5.5-2026-04-23",
 				"contextWindowTokens": 1050000,
-				"modelSlugs": ["gpt-5.5-2026-04-23", "gpt-5.5", "gpt-5.5-latest"],
+				"inputModalities": ["text", "image"],
+				"outputModalities": ["text"],
 				"reasoning": true
 			}
 		},
@@ -82,8 +82,9 @@ This is a tiny catalog fragment, not a complete release:
 			"gpt-5.5": {
 				"providerId": "openai",
 				"modelId": "gpt-5.5-2026-04-23",
-				"parentProviderEndpointNodes": ["openai-chat-completions", "openai-responses"],
+				"parentProviderEndpointNodes": ["openai-chat-completions"],
 				"upstreamModelSlug": "gpt-5.5",
+				"aliasSlugs": ["gpt-5.5-2026-04-23", "gpt-5.5", "gpt-5.5-latest"],
 				"serviceTier": "default"
 			}
 		}
@@ -95,7 +96,7 @@ This is a tiny catalog fragment, not a complete release:
 
 Simple facts stay on nodes. For example, a deployment can declare the upstream provider model, public slug variants, requested service tier, prices, and region. Runtime edge cases such as tool rejection, input-shape validation, service-tier conflict handling, metadata sanitization, provider fallback handling, and provider-specific request fields are enforced by Go code, not catalog YAML.
 
-Authentication aliases are also gateway behavior. A caller may send `x-api-key`, but the measured gateway canonicalizes it to the standard authorization header according to the compiled catalog and Go resolver:
+Authentication aliases are also gateway behavior. A caller may send `x-api-key`, but the measured gateway canonicalizes it to the standard authorization header in the Go resolver:
 
 ```json
 {
@@ -138,9 +139,10 @@ A tiny canonical catalog might be exactly these bytes:
 	"graph": {
 		"models": {
 			"gpt-5.5-2026-04-23": {
-				"canonicalSlug": "gpt-5.5-2026-04-23",
 				"contextWindowTokens": 1050000,
-				"modelSlugs": ["gpt-5.5-2026-04-23", "gpt-5.5", "gpt-5.5-latest"]
+				"inputModalities": ["text", "image"],
+				"outputModalities": ["text"],
+				"reasoning": true
 			}
 		}
 	}

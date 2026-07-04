@@ -25,8 +25,13 @@ Endpoint paths include their API version.
 
 <Cards>
 	<Card
+		title="Internal Tools"
+		description="Supported client tools, provider-hosted tools, and tool billing behavior."
+		href="/docs/internal-tools"
+	/>
+	<Card
 		title="Catalog Structure"
-		description="How endpoints, providers, models, deployments, policy, and prices fit together."
+		description="How endpoints, providers, models, deployments, routing, and prices fit together."
 		href="/docs/catalog-structure"
 	/>
 	<Card
@@ -68,7 +73,7 @@ Request catalog-defined metadata fields with:
 X-Stogas-Return-Extra-Fields: provider,model_requested,latency,raw_request,raw_response
 ```
 
-Available field names: `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, `raw_response`.
+Available field names: `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, `raw_response`. Provider response headers are limited to diagnostic request identifiers and provider processing/version headers; account, rate-limit, cookie, CORS, and infrastructure headers are never returned.
 
 ## Admission Failures
 
