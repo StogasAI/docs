@@ -11,20 +11,43 @@
 		{
 			"url": "{serverUrl}",
 			"description": "Gateway origin. Endpoint paths include their API version.",
-			"variables": { "serverUrl": { "default": "https://api.stogas.ai" } }
+			"variables": {
+				"serverUrl": {
+					"default": "https://api.stogas.ai"
+				}
+			}
 		}
 	],
 	"tags": [
-		{ "name": "Health", "description": "Operational readiness." },
-		{ "name": "Catalog", "description": "Public model and routing discovery." },
-		{ "name": "OpenAI-compatible", "description": "Model inference endpoints." }
+		{
+			"name": "Health",
+			"description": "Operational readiness."
+		},
+		{
+			"name": "Catalog",
+			"description": "Public model and routing discovery."
+		},
+		{
+			"name": "OpenAI-compatible",
+			"description": "Model inference endpoints."
+		}
 	],
 	"security": [
-		{ "bearerAuth": [] },
-		{ "authorizationHeader": [] },
-		{ "apiKeyHeader": [] },
-		{ "xApiKeyHeader": [] },
-		{ "xGoogApiKeyHeader": [] }
+		{
+			"bearerAuth": []
+		},
+		{
+			"authorizationHeader": []
+		},
+		{
+			"apiKeyHeader": []
+		},
+		{
+			"xApiKeyHeader": []
+		},
+		{
+			"xGoogApiKeyHeader": []
+		}
 	],
 	"paths": {
 		"/health": {
@@ -39,7 +62,9 @@
 						"description": "Gateway is reachable.",
 						"content": {
 							"application/json": {
-								"schema": { "$ref": "#/components/schemas/HealthResponse" },
+								"schema": {
+									"$ref": "#/components/schemas/HealthResponse"
+								},
 								"examples": {
 									"ok": {
 										"value": {
@@ -51,7 +76,9 @@
 							}
 						}
 					},
-					"500": { "$ref": "#/components/responses/InternalError" }
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					}
 				}
 			}
 		},
@@ -67,7 +94,9 @@
 						"description": "Active public catalog.",
 						"content": {
 							"application/json": {
-								"schema": { "$ref": "#/components/schemas/CatalogResponse" },
+								"schema": {
+									"$ref": "#/components/schemas/CatalogResponse"
+								},
 								"examples": {
 									"catalog": {
 										"value": {
@@ -80,14 +109,18 @@
 												"providerEndpoints": {},
 												"stogasEndpoints": {}
 											},
-											"indexes": { "provider_endpoint_request_slugs": {} }
+											"indexes": {
+												"provider_endpoint_request_slugs": {}
+											}
 										}
 									}
 								}
 							}
 						}
 					},
-					"500": { "$ref": "#/components/responses/CatalogUnavailable" }
+					"500": {
+						"$ref": "#/components/responses/CatalogUnavailable"
+					}
 				}
 			}
 		},
@@ -103,7 +136,9 @@
 						"description": "OpenAI-compatible model list.",
 						"content": {
 							"application/json": {
-								"schema": { "$ref": "#/components/schemas/ModelListResponse" },
+								"schema": {
+									"$ref": "#/components/schemas/ModelListResponse"
+								},
 								"examples": {
 									"models": {
 										"value": {
@@ -122,7 +157,9 @@
 							}
 						}
 					},
-					"500": { "$ref": "#/components/responses/CatalogUnavailable" }
+					"500": {
+						"$ref": "#/components/responses/CatalogUnavailable"
+					}
 				}
 			}
 		},
@@ -131,13 +168,19 @@
 				"operationId": "createChatCompletion",
 				"tags": ["OpenAI-compatible"],
 				"summary": "Chat Completions",
-				"description": "Create an OpenAI-compatible chat completion. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment policy such as implied service tier, prunes unsupported extra parameters, and then relays the request to the configured provider.",
-				"parameters": [{ "$ref": "#/components/parameters/ReturnExtraFields" }],
+				"description": "Create an OpenAI-compatible chat completion. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ReturnExtraFields"
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
 						"application/json": {
-							"schema": { "$ref": "#/components/schemas/ChatCompletionRequest" }
+							"schema": {
+								"$ref": "#/components/schemas/ChatCompletionRequest"
+							}
 						}
 					}
 				},
@@ -146,7 +189,9 @@
 						"description": "Successful completion. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
 						"content": {
 							"application/json": {
-								"schema": { "$ref": "#/components/schemas/ChatCompletionResponse" }
+								"schema": {
+									"$ref": "#/components/schemas/ChatCompletionResponse"
+								}
 							},
 							"text/event-stream": {
 								"schema": {
@@ -157,16 +202,36 @@
 							}
 						}
 					},
-					"400": { "$ref": "#/components/responses/BadRequest" },
-					"401": { "$ref": "#/components/responses/Unauthorized" },
-					"402": { "$ref": "#/components/responses/PaymentRequired" },
-					"403": { "$ref": "#/components/responses/Forbidden" },
-					"404": { "$ref": "#/components/responses/NotFound" },
-					"409": { "$ref": "#/components/responses/Conflict" },
-					"413": { "$ref": "#/components/responses/PayloadTooLarge" },
-					"429": { "$ref": "#/components/responses/RateLimited" },
-					"500": { "$ref": "#/components/responses/InternalError" },
-					"503": { "$ref": "#/components/responses/ServiceUnavailable" }
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"402": {
+						"$ref": "#/components/responses/PaymentRequired"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"413": {
+						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"429": {
+						"$ref": "#/components/responses/RateLimited"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
 				}
 			}
 		},
@@ -175,19 +240,31 @@
 				"operationId": "createResponse",
 				"tags": ["OpenAI-compatible"],
 				"summary": "Responses",
-				"description": "Create an OpenAI-compatible Responses API response. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment policy such as implied service tier, prunes unsupported extra parameters, and then relays the request to the configured provider.",
-				"parameters": [{ "$ref": "#/components/parameters/ReturnExtraFields" }],
+				"description": "Create an OpenAI-compatible Responses API response. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ReturnExtraFields"
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
-						"application/json": { "schema": { "$ref": "#/components/schemas/ResponsesRequest" } }
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ResponsesRequest"
+							}
+						}
 					}
 				},
 				"responses": {
 					"200": {
 						"description": "Successful response. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
 						"content": {
-							"application/json": { "schema": { "$ref": "#/components/schemas/ResponseObject" } },
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ResponseObject"
+								}
+							},
 							"text/event-stream": {
 								"schema": {
 									"type": "string",
@@ -197,16 +274,36 @@
 							}
 						}
 					},
-					"400": { "$ref": "#/components/responses/BadRequest" },
-					"401": { "$ref": "#/components/responses/Unauthorized" },
-					"402": { "$ref": "#/components/responses/PaymentRequired" },
-					"403": { "$ref": "#/components/responses/Forbidden" },
-					"404": { "$ref": "#/components/responses/NotFound" },
-					"409": { "$ref": "#/components/responses/Conflict" },
-					"413": { "$ref": "#/components/responses/PayloadTooLarge" },
-					"429": { "$ref": "#/components/responses/RateLimited" },
-					"500": { "$ref": "#/components/responses/InternalError" },
-					"503": { "$ref": "#/components/responses/ServiceUnavailable" }
+					"400": {
+						"$ref": "#/components/responses/BadRequest"
+					},
+					"401": {
+						"$ref": "#/components/responses/Unauthorized"
+					},
+					"402": {
+						"$ref": "#/components/responses/PaymentRequired"
+					},
+					"403": {
+						"$ref": "#/components/responses/Forbidden"
+					},
+					"404": {
+						"$ref": "#/components/responses/NotFound"
+					},
+					"409": {
+						"$ref": "#/components/responses/Conflict"
+					},
+					"413": {
+						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"429": {
+						"$ref": "#/components/responses/RateLimited"
+					},
+					"500": {
+						"$ref": "#/components/responses/InternalError"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
 				}
 			}
 		}
@@ -248,7 +345,9 @@
 			"ReturnExtraFields": {
 				"name": "X-Stogas-Return-Extra-Fields",
 				"in": "header",
-				"schema": { "type": "string" },
+				"schema": {
+					"type": "string"
+				},
 				"description": "Comma-separated catalog-defined Stogas metadata fields to include under `stogas`, such as `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, and `raw_response`."
 			}
 		},
@@ -257,7 +356,9 @@
 				"description": "<span className=\"text-red-500 font-bold\">Bad Request:</span> The request was malformed, missing required fields, or specifying an unavailable model.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
 							"error": {
 								"message": "Invalid text completion request: the 'messages' array cannot be empty.",
@@ -271,11 +372,13 @@
 				"description": "<span className=\"text-red-500 font-bold\">Unauthorized:</span> The API key provided was missing or invalid.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
 							"error": {
-								"message": "Invalid API Key provided: sk-sto-***************************",
-								"type": "invalid_request_error"
+								"message": "Invalid API key",
+								"type": "authentication_error"
 							}
 						}
 					}
@@ -285,11 +388,13 @@
 				"description": "<span className=\"text-red-500 font-bold\">Payment Required:</span> Returned when your account balance is insufficient or the API key lifetime or recurring spend limit is exhausted.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
 							"error": {
 								"message": "Insufficient balance. Please add funds to your Stogas account to continue making requests.",
-								"type": "payment_required_error"
+								"type": "billing_error"
 							}
 						}
 					}
@@ -299,9 +404,14 @@
 				"description": "<span className=\"text-red-500 font-bold\">Forbidden:</span> The API key is disabled or expired. Expired keys are disabled automatically before the error is returned.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
-							"error": { "message": "API key is disabled", "type": "permission_denied" }
+							"error": {
+								"message": "API key is disabled",
+								"type": "permission_denied"
+							}
 						}
 					}
 				}
@@ -310,7 +420,9 @@
 				"description": "<span className=\"text-red-500 font-bold\">Not Found:</span> The requested endpoint route does not exist.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
 							"error": {
 								"message": "Not Found: The requested endpoint '/v1/chat/compl' does not exist.",
@@ -324,11 +436,13 @@
 				"description": "<span className=\"text-red-500 font-bold\">Conflict:</span> The gateway request ID was already finalized, expired, or reused with different hold parameters. Generate a new request ID and retry.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
 							"error": {
 								"message": "Request already finalized; generate a new requestId",
-								"type": "conflict_error"
+								"type": "invalid_request_error"
 							}
 						}
 					}
@@ -338,7 +452,9 @@
 				"description": "<span className=\"text-red-500 font-bold\">Payload Too Large:</span> The request body exceeds the gateway's maximum allowed size.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
 							"error": {
 								"message": "Payload Too Large: The request body exceeds the maximum allowed size of 100MB.",
@@ -352,9 +468,14 @@
 				"description": "<span className=\"text-red-500 font-bold\">Rate Limited:</span> The API key token bucket does not currently have capacity for another request.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
-							"error": { "message": "API key rate limit exceeded", "type": "rate_limit_error" }
+							"error": {
+								"message": "API key rate limit exceeded",
+								"type": "rate_limit_error"
+							}
 						}
 					}
 				}
@@ -363,11 +484,13 @@
 				"description": "<span className=\"text-red-500 font-bold\">Internal Server Error:</span> An unexpected error occurred within the gateway or upstream provider.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
 							"error": {
-								"message": "Upstream provider 'Anthropic' responded with status code 500.",
-								"type": "api_error"
+								"message": "Upstream provider error",
+								"type": "gateway_error"
 							}
 						}
 					}
@@ -377,9 +500,14 @@
 				"description": "<span className=\"text-red-500 font-bold\">Internal Server Error:</span> The gateway catalog is not available.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
-							"error": { "message": "Catalog unavailable", "type": "internal_error" }
+							"error": {
+								"message": "Catalog unavailable",
+								"type": "internal_error"
+							}
 						}
 					}
 				}
@@ -388,9 +516,14 @@
 				"description": "<span className=\"text-red-500 font-bold\">Service Unavailable:</span> The gateway could not reach the billing database while placing the authorization hold. The provider is not called and no usage telemetry is written.",
 				"content": {
 					"application/json": {
-						"schema": { "$ref": "#/components/schemas/ErrorResponse" },
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
 						"example": {
-							"error": { "message": "Gateway billing database unavailable", "type": "api_error" }
+							"error": {
+								"message": "Gateway billing database unavailable",
+								"type": "gateway_error"
+							}
 						}
 					}
 				}
@@ -401,7 +534,10 @@
 				"type": "object",
 				"required": ["version", "generatedAt", "graph", "indexes"],
 				"properties": {
-					"version": { "type": "string", "example": "stogas.gateway.catalog.v1" },
+					"version": {
+						"type": "string",
+						"example": "stogas.gateway.catalog.v1"
+					},
 					"generatedAt": {
 						"type": "string",
 						"format": "date-time",
@@ -423,8 +559,16 @@
 				"type": "object",
 				"required": ["object", "data"],
 				"properties": {
-					"object": { "type": "string", "const": "list" },
-					"data": { "type": "array", "items": { "$ref": "#/components/schemas/ModelObject" } }
+					"object": {
+						"type": "string",
+						"const": "list"
+					},
+					"data": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ModelObject"
+						}
+					}
 				}
 			},
 			"ModelObject": {
@@ -435,12 +579,18 @@
 						"type": "string",
 						"description": "Model ID or alias accepted by the gateway."
 					},
-					"object": { "type": "string", "const": "model" },
+					"object": {
+						"type": "string",
+						"const": "model"
+					},
 					"created": {
 						"type": "integer",
 						"description": "Stable OpenAI-compatible creation timestamp."
 					},
-					"owned_by": { "type": "string", "example": "stogas" }
+					"owned_by": {
+						"type": "string",
+						"example": "stogas"
+					}
 				}
 			},
 			"ErrorResponse": {
@@ -448,7 +598,14 @@
 				"properties": {
 					"error": {
 						"type": "object",
-						"properties": { "message": { "type": "string" }, "type": { "type": "string" } }
+						"properties": {
+							"message": {
+								"type": "string"
+							},
+							"type": {
+								"type": "string"
+							}
+						}
 					}
 				}
 			},
@@ -456,8 +613,13 @@
 				"type": "object",
 				"required": ["ok", "catalogVersion"],
 				"properties": {
-					"ok": { "type": "boolean" },
-					"catalogVersion": { "type": "string", "example": "stogas.gateway.catalog.v1" }
+					"ok": {
+						"type": "boolean"
+					},
+					"catalogVersion": {
+						"type": "string",
+						"example": "stogas.gateway.catalog.v1"
+					}
 				}
 			},
 			"ProviderRoutingPreference": {
@@ -469,16 +631,28 @@
 					{
 						"type": "object",
 						"additionalProperties": false,
+						"anyOf": [
+							{
+								"required": ["only"]
+							},
+							{
+								"required": ["order"]
+							}
+						],
 						"properties": {
 							"only": {
 								"type": "array",
-								"items": { "type": "string" },
+								"items": {
+									"type": "string"
+								},
 								"minItems": 1,
 								"description": "Provider IDs or provider slugs allowed to serve this request."
 							},
 							"order": {
 								"type": "array",
-								"items": { "type": "string" },
+								"items": {
+									"type": "string"
+								},
 								"minItems": 1,
 								"description": "Preferred provider order after the optional `only` filter is applied."
 							}
@@ -491,6 +665,7 @@
 			"ChatCompletionRequest": {
 				"type": "object",
 				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API.",
+				"additionalProperties": false,
 				"required": ["model", "messages"],
 				"properties": {
 					"model": {
@@ -501,39 +676,121 @@
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
 						"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
 					},
+					"rules": {
+						"$ref": "#/components/schemas/ProviderRoutingPreference",
+						"description": "Alias for `provider`. Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+					},
 					"messages": {
 						"type": "array",
 						"description": "Conversation messages. Stogas currently accepts text-only content only.",
-						"items": { "$ref": "#/components/schemas/ChatMessage" }
+						"items": {
+							"$ref": "#/components/schemas/ChatMessage"
+						}
 					},
 					"audio": {
 						"type": "object",
-						"description": "Audio output settings for models that can return audio.",
-						"properties": { "format": { "type": "string" }, "voice": { "type": "string" } }
+						"description": "Not supported by the text-only Stogas MVP. Requests that set audio are rejected before upstream dispatch.",
+						"properties": {
+							"format": {
+								"type": "string"
+							},
+							"voice": {
+								"type": "string"
+							}
+						}
 					},
-					"stream": { "type": "boolean", "default": false },
+					"fallbacks": {
+						"type": "array",
+						"description": "Not supported. Stogas fallback policy is server-owned and client-supplied fallbacks are rejected.",
+						"items": {
+							"type": "string"
+						}
+					},
+					"function_call": {
+						"description": "Not supported. Deprecated Chat Completions function-calling fields are rejected; use `tools` and `tool_choice`.",
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "object"
+							}
+						]
+					},
+					"functions": {
+						"type": "array",
+						"description": "Not supported. Deprecated Chat Completions function definitions are rejected; use `tools`.",
+						"items": {
+							"type": "object"
+						}
+					},
+					"container": {
+						"description": "Not supported. Stateful provider containers require separate lifecycle, isolation, and pricing controls.",
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "object"
+							}
+						]
+					},
+					"stream": {
+						"type": "boolean",
+						"default": false
+					},
 					"frequency_penalty": {
 						"type": "number",
-						"multipleOf": 0.01,
-						"minimum": -2,
-						"maximum": 2
+						"description": "OpenAI-only Chat Completions frequency penalty. Anthropic deployments reject this field."
 					},
-					"logit_bias": { "type": "object" },
-					"logprobs": { "type": "boolean" },
+					"logit_bias": {
+						"type": "object",
+						"description": "OpenAI-only token bias map. Values must be numbers because the gateway decodes the request into the OpenAI-compatible schema; provider-owned key semantics are left upstream. Anthropic deployments reject this field.",
+						"additionalProperties": {
+							"type": "number"
+						}
+					},
+					"logprobs": {
+						"type": "boolean",
+						"description": "OpenAI-only Chat Completions log probability output. Anthropic deployments reject this field."
+					},
 					"max_tokens": {
 						"type": "integer",
-						"minimum": 1,
-						"description": "Legacy maximum completion token field."
+						"minimum": 0,
+						"description": "Legacy maximum completion token field. Zero is only accepted for Anthropic cache prewarm requests that include an allowed cache_control marker."
 					},
-					"max_completion_tokens": { "type": "integer", "minimum": 1 },
+					"max_completion_tokens": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Maximum completion token cap. Zero is only accepted for Anthropic cache prewarm requests that include an allowed cache_control marker."
+					},
 					"metadata": {
 						"type": "object",
-						"description": "Application metadata to attach to the upstream request."
+						"description": "Application metadata for Stogas telemetry only. Stogas validates this object, logs it internally, and removes it before upstream dispatch.",
+						"maxProperties": 16,
+						"propertyNames": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 64
+						},
+						"additionalProperties": {
+							"type": "string",
+							"maxLength": 512
+						}
 					},
 					"modalities": {
 						"type": "array",
-						"description": "Requested output modalities for models that support multimodal output.",
-						"items": { "type": "string", "enum": ["text", "image", "audio"] }
+						"description": "Text-only MVP: when present, this must be exactly [\"text\"]. Image and audio modalities are rejected before upstream dispatch.",
+						"items": {
+							"type": "string",
+							"enum": ["text"]
+						}
+					},
+					"n": {
+						"type": "integer",
+						"description": "Number of choices to generate. Stogas currently accepts only omitted or `1`; larger values are rejected before upstream dispatch.",
+						"minimum": 1,
+						"maximum": 1
 					},
 					"parallel_tool_calls": {
 						"type": "boolean",
@@ -543,28 +800,62 @@
 						"type": "object",
 						"description": "Predicted output content used by compatible OpenAI models to reduce latency."
 					},
-					"presence_penalty": { "type": "number", "multipleOf": 0.01, "minimum": -2, "maximum": 2 },
+					"presence_penalty": {
+						"type": "number",
+						"description": "OpenAI-only Chat Completions presence penalty. Anthropic deployments reject this field."
+					},
 					"prompt_cache_key": {
 						"type": "string",
-						"description": "Stable cache key used by providers that support prompt caching."
+						"description": "OpenAI-only prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
+						"minLength": 1,
+						"maxLength": 256
 					},
 					"prompt_cache_retention": {
 						"type": "string",
-						"description": "Provider-specific prompt cache retention policy.",
-						"enum": ["in-memory", "24h"]
+						"description": "OpenAI-only prompt cache retention policy. Stogas validates that this is a string, normalizes known aliases before dispatch, and rejects this field on Anthropic deployments."
+					},
+					"prompt_cache_isolation_key": {
+						"type": "string",
+						"description": "Not supported. This provider-specific cache isolation field is outside the current OpenAI/Anthropic public Stogas surface."
+					},
+					"cache_control": {
+						"type": "object",
+						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on text content/tool blocks, prices cache writes conservatively for holds, and rejects this field on OpenAI deployments.",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": ["ephemeral"]
+							},
+							"ttl": {
+								"type": "string",
+								"enum": ["5m", "1h"]
+							}
+						},
+						"required": ["type"],
+						"additionalProperties": false
 					},
 					"reasoning": {
 						"type": "object",
 						"description": "Reasoning configuration for models that expose reasoning controls.",
 						"properties": {
-							"enabled": { "type": "boolean" },
-							"effort": { "type": "string", "enum": ["none", "minimal", "low", "medium", "high"] },
-							"max_tokens": { "type": "integer", "minimum": 1 }
-						}
+							"enabled": {
+								"type": "boolean"
+							},
+							"effort": {
+								"type": "string"
+							},
+							"display": {
+								"type": "string"
+							},
+							"max_tokens": {
+								"type": "integer",
+								"minimum": 1
+							}
+						},
+						"additionalProperties": false
 					},
 					"reasoning_effort": {
 						"type": "string",
-						"enum": ["none", "minimal", "low", "medium", "high"],
 						"description": "Compatibility shortcut for `reasoning.effort`."
 					},
 					"reasoning_max_tokens": {
@@ -574,17 +865,47 @@
 					},
 					"response_format": {
 						"type": "object",
-						"description": "Output format constraint, such as JSON object or JSON schema.",
+						"description": "Provider-owned output format constraint. Stogas forwards supported OpenAI-compatible fields and leaves provider-specific format details to the selected upstream provider.",
 						"properties": {
 							"type": {
-								"type": "string",
-								"enum": ["text", "json_object", "json_schema", "grammar", "python"]
+								"type": "string"
+							},
+							"json_schema": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"type": "string"
+									},
+									"schema": {
+										"type": "object"
+									},
+									"strict": {
+										"type": "boolean"
+									}
+								},
+								"additionalProperties": true
 							}
-						}
+						},
+						"additionalProperties": true
+					},
+					"task_budget": {
+						"type": "object",
+						"description": "Anthropic-only advisory token budget object for agentic loops. Provider-owned details are forwarded and do not reduce Stogas billing holds.",
+						"additionalProperties": true
+					},
+					"context_management": {
+						"type": "object",
+						"description": "Anthropic-only context management object. Provider-owned edit details are forwarded and do not reduce Stogas billing holds.",
+						"additionalProperties": true
+					},
+					"inference_geo": {
+						"type": "string",
+						"description": "Anthropic-only deployment routing hint. `global` selects standard multi-region pricing, while `us` selects US-only inference pricing. Stogas sends the selected Anthropic `inference_geo` upstream.",
+						"enum": ["global", "us"]
 					},
 					"safety_identifier": {
 						"type": "string",
-						"description": "Provider-visible stable identifier for safety monitoring."
+						"description": "Client-supplied safety identifiers are not supported. Stogas sets provider-visible safety/user identifiers from the authenticated API key."
 					},
 					"seed": {
 						"type": "integer",
@@ -592,70 +913,143 @@
 					},
 					"service_tier": {
 						"type": "string",
-						"description": "Provider service tier selection preserved by the gateway. Default/auto requests use the selected deployment's project-default tier for holds; tiered catalog deployments such as `gpt-5.5-flex` imply this value and reject conflicting explicit tiers. OpenAI `scale` is not exposed by Stogas.",
+						"description": "Provider service tier selection preserved by the gateway. OpenAI accepts `auto`, `default`, `flex`, and `priority`; `scale` and `provisioned` are not available. Anthropic accepts `auto`, `priority`, `default`, `flex`, `standard`, and `standard_only`; all currently use standard-tier Stogas deployment rates. Anthropic `auto` / `priority` are sent upstream as `auto`, while `default` / `flex` / `standard` / `standard_only` are sent as `standard_only`.",
 						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
+					},
+					"speed": {
+						"type": "string",
+						"description": "Anthropic-only deployment routing hint. `fast` selects cataloged fast-mode deployments where available; `standard` selects normal-speed deployments.",
+						"enum": ["fast", "standard"]
 					},
 					"stream_options": {
 						"type": "object",
-						"description": "Additional options for streaming responses.",
+						"description": "Additional options for streamed Chat Completions. Requires `stream:true`. Stogas accepts `include_usage` and always forces it to `true`; `include_obfuscation` is not supported on Chat Completions.",
 						"properties": {
-							"include_usage": { "type": "boolean" },
-							"include_obfuscation": { "type": "boolean" }
-						}
+							"include_usage": {
+								"type": "boolean"
+							}
+						},
+						"additionalProperties": false
 					},
 					"stop": {
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							}
+						],
+						"description": "OpenAI-compatible stop sequence or stop sequence array. Stogas validates JSON shape and normalizes the string shorthand to an array before upstream dispatch; provider-owned value limits are left to the selected provider."
+					},
+					"stop_sequences": {
 						"type": "array",
-						"description": "Stop sequences. The Stogas gateway currently accepts the array form.",
-						"items": { "type": "string" }
+						"description": "Anthropic-only stop sequence alias. Stogas rejects this field on OpenAI deployments and rejects requests that set both `stop` and `stop_sequences`.",
+						"items": {
+							"type": "string"
+						}
 					},
 					"store": {
 						"type": "boolean",
-						"description": "Whether the provider may store the request or response where supported."
+						"description": "Not supported. Provider retention behavior is server-owned; requests that set store are rejected before upstream dispatch, and OpenAI-bound requests are forced to store:false."
 					},
 					"temperature": {
 						"type": "number",
-						"multipleOf": 0.01,
-						"minimum": 0,
-						"maximum": 2,
-						"default": 1
+						"default": 1,
+						"description": "Sampling temperature. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
 					},
 					"tool_choice": {
 						"type": ["string", "object"],
-						"description": "Tool choice, such as `auto`, `none`, `required`, `any`, or a named tool object."
+						"description": "Tool choice. Chat Completions accepts `auto`, `none`, `required`, declared function choices, and custom tool choices where supported."
 					},
 					"tools": {
 						"type": "array",
-						"description": "Function or custom tool definitions supported by compatible providers.",
-						"items": { "type": "object" }
+						"description": "Tool definitions. Chat Completions accepts function tools for OpenAI and Anthropic, custom tools where supported, and Anthropic-only `mcp_toolset` entries paired one-to-one with `mcp_servers`.",
+						"items": {
+							"type": "object"
+						}
 					},
-					"top_logprobs": { "type": "integer", "minimum": 0 },
-					"top_p": { "type": "number", "multipleOf": 0.01, "minimum": 0, "maximum": 1 },
+					"mcp_servers": {
+						"type": "array",
+						"description": "Anthropic Chat only. Remote MCP server definitions paired one-to-one with `tools[].type=\"mcp_toolset\"`; each server must be `type:\"url\"` with an HTTPS URL and unique name.",
+						"items": {
+							"type": "object",
+							"additionalProperties": false,
+							"properties": {
+								"type": {
+									"type": "string",
+									"enum": ["url"]
+								},
+								"url": {
+									"type": "string",
+									"format": "uri"
+								},
+								"name": {
+									"type": "string"
+								},
+								"authorization_token": {
+									"type": "string",
+									"description": "Forwarded upstream and redacted from Stogas raw request metadata."
+								}
+							},
+							"required": ["type", "url", "name"]
+						}
+					},
+					"top_logprobs": {
+						"type": "integer",
+						"description": "Provider-owned OpenAI Chat Completions log probability detail."
+					},
+					"top_k": {
+						"type": "integer",
+						"description": "Anthropic-only sampling control. Rejected for OpenAI deployments."
+					},
+					"top_p": {
+						"type": "number",
+						"description": "Nucleus sampling control. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
+					},
 					"user": {
 						"type": "string",
-						"description": "End-user identifier forwarded to providers that support abuse monitoring."
+						"description": "Client-supplied user identifiers are not supported. Stogas sets upstream user identity from the authenticated API key."
 					},
 					"verbosity": {
 						"type": "string",
-						"enum": ["low", "medium", "high"],
 						"description": "Text verbosity preference for models that support it."
 					},
-					"reasoning_display": { "type": "string", "enum": ["summarized", "omitted"] },
+					"reasoning_display": {
+						"type": "string"
+					},
 					"web_search_options": {
 						"type": "object",
 						"properties": {
-							"search_context_size": { "type": "string", "enum": ["low", "medium", "high"] },
+							"search_context_size": {
+								"type": "string",
+								"enum": ["low", "medium", "high"]
+							},
 							"user_location": {
 								"type": "object",
 								"required": ["type"],
 								"properties": {
-									"type": { "const": "approximate" },
+									"type": {
+										"const": "approximate"
+									},
 									"approximate": {
 										"type": "object",
 										"properties": {
-											"city": { "type": "string" },
-											"country": { "type": "string" },
-											"region": { "type": "string" },
-											"timezone": { "type": "string" }
+											"city": {
+												"type": "string"
+											},
+											"country": {
+												"type": "string"
+											},
+											"region": {
+												"type": "string"
+											},
+											"timezone": {
+												"type": "string"
+											}
 										},
 										"additionalProperties": false
 									}
@@ -664,12 +1058,16 @@
 							}
 						},
 						"additionalProperties": false
-					},
-					"deprecated": true
+					}
 				},
 				"example": {
 					"model": "gpt-5.5-latest",
-					"messages": [{ "role": "user", "content": "Reflect on the issue of trusting trust" }],
+					"messages": [
+						{
+							"role": "user",
+							"content": "Reflect on the issue of trusting trust"
+						}
+					],
 					"temperature": 0.7
 				}
 			},
@@ -677,19 +1075,32 @@
 				"type": "object",
 				"description": "Chat completion response",
 				"properties": {
-					"id": { "type": "string", "description": "Unique completion identifier" },
+					"id": {
+						"type": "string",
+						"description": "Unique completion identifier"
+					},
 					"object": {
 						"type": "string",
 						"description": "The object type, which is always \"chat.completion\""
 					},
-					"created": { "type": "integer", "description": "Unix timestamp of creation" },
-					"model": { "type": "string", "description": "Model used for completion" },
+					"created": {
+						"type": "integer",
+						"description": "Unix timestamp of creation"
+					},
+					"model": {
+						"type": "string",
+						"description": "Model used for completion"
+					},
 					"choices": {
 						"type": "array",
 						"description": "List of completion choices",
-						"items": { "$ref": "#/components/schemas/ChatChoice" }
+						"items": {
+							"$ref": "#/components/schemas/ChatChoice"
+						}
 					},
-					"usage": { "$ref": "#/components/schemas/ChatUsage" },
+					"usage": {
+						"$ref": "#/components/schemas/ChatUsage"
+					},
 					"stogas": {
 						"type": "object",
 						"title": "Gateway Metadata",
@@ -713,7 +1124,9 @@
 							},
 							"provider_response_headers": {
 								"type": "object",
-								"additionalProperties": { "type": "string" },
+								"additionalProperties": {
+									"type": "string"
+								},
 								"description": "Catalog-approved response headers from the upstream provider"
 							},
 							"raw_request": {
@@ -743,20 +1156,33 @@
 							"finish_reason": "stop"
 						}
 					],
-					"usage": { "prompt_tokens": 9, "completion_tokens": 11, "total_tokens": 20 },
-					"stogas": { "provider": "OpenAI", "latency": 842, "model_requested": "gpt-5.5-latest" }
+					"usage": {
+						"prompt_tokens": 9,
+						"completion_tokens": 11,
+						"total_tokens": 20
+					},
+					"stogas": {
+						"provider": "OpenAI",
+						"latency": 842,
+						"model_requested": "gpt-5.5-latest"
+					}
 				}
 			},
 			"ChatMessage": {
 				"type": "object",
 				"required": ["role"],
 				"properties": {
-					"name": { "type": "string", "description": "Optional participant name." },
+					"name": {
+						"type": "string",
+						"description": "Optional participant name."
+					},
 					"role": {
 						"type": "string",
 						"enum": ["system", "user", "assistant", "tool", "developer"]
 					},
-					"content": { "$ref": "#/components/schemas/ChatMessageContent" },
+					"content": {
+						"$ref": "#/components/schemas/ChatMessageContent"
+					},
 					"tool_call_id": {
 						"type": "string",
 						"description": "Tool call ID for tool response messages."
@@ -765,16 +1191,31 @@
 						"type": "string",
 						"description": "Assistant refusal text when provided by the model."
 					},
-					"audio": { "type": "object", "description": "Assistant audio output reference." },
+					"audio": {
+						"type": "object",
+						"description": "Not supported in Chat Completions requests. Stogas is text-only for the MVP and rejects message-level audio before upstream dispatch."
+					},
 					"reasoning": {
 						"type": "string",
 						"description": "Reasoning output when returned by the provider."
 					},
-					"reasoning_details": { "type": "array", "items": { "type": "object" } },
-					"annotations": { "type": "array", "items": { "type": "object" } },
+					"reasoning_details": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"annotations": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
 					"tool_calls": {
 						"type": "array",
-						"items": { "$ref": "#/components/schemas/ChatToolCall" }
+						"items": {
+							"$ref": "#/components/schemas/ChatToolCall"
+						}
 					}
 				}
 			},
@@ -782,8 +1223,13 @@
 				"type": "object",
 				"description": "Chat completion choice",
 				"properties": {
-					"index": { "type": "integer", "description": "Choice index" },
-					"message": { "$ref": "#/components/schemas/ChatAssistantMessage" },
+					"index": {
+						"type": "integer",
+						"description": "Choice index"
+					},
+					"message": {
+						"$ref": "#/components/schemas/ChatAssistantMessage"
+					},
 					"finish_reason": {
 						"type": "string",
 						"description": "Reason why the model stopped generating",
@@ -796,30 +1242,55 @@
 				"type": "object",
 				"description": "Token usage statistics",
 				"properties": {
-					"prompt_tokens": { "type": "integer", "description": "Number of tokens in the prompt" },
+					"prompt_tokens": {
+						"type": "integer",
+						"description": "Number of tokens in the prompt"
+					},
 					"completion_tokens": {
 						"type": "integer",
 						"description": "Number of tokens in the completion"
 					},
-					"total_tokens": { "type": "integer", "description": "Total number of tokens used" }
+					"total_tokens": {
+						"type": "integer",
+						"description": "Total number of tokens used"
+					}
 				},
 				"required": ["prompt_tokens", "completion_tokens", "total_tokens"]
 			},
 			"ChatMessageContent": {
 				"description": "Message content as either a string or an array of content blocks.",
 				"oneOf": [
-					{ "type": "string" },
-					{ "type": "array", "items": { "$ref": "#/components/schemas/ChatContentBlock" } }
+					{
+						"type": "string"
+					},
+					{
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ChatContentBlock"
+						}
+					}
 				]
 			},
 			"ChatToolCall": {
 				"type": "object",
 				"properties": {
-					"id": { "type": "string" },
-					"type": { "type": "string", "enum": ["function"] },
+					"id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": ["function"]
+					},
 					"function": {
 						"type": "object",
-						"properties": { "name": { "type": "string" }, "arguments": { "type": "string" } }
+						"properties": {
+							"name": {
+								"type": "string"
+							},
+							"arguments": {
+								"type": "string"
+							}
+						}
 					}
 				}
 			},
@@ -827,7 +1298,10 @@
 				"type": "object",
 				"description": "Assistant message",
 				"properties": {
-					"role": { "type": "string", "enum": ["assistant"] },
+					"role": {
+						"type": "string",
+						"enum": ["assistant"]
+					},
 					"content": {
 						"$ref": "#/components/schemas/ChatMessageContent",
 						"description": "Assistant message content"
@@ -835,7 +1309,9 @@
 					"tool_calls": {
 						"type": "array",
 						"description": "Tool calls made by the assistant",
-						"items": { "$ref": "#/components/schemas/ChatToolCall" }
+						"items": {
+							"$ref": "#/components/schemas/ChatToolCall"
+						}
 					}
 				},
 				"required": ["role"]
@@ -847,57 +1323,107 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": ["text", "refusal"]
+						"enum": ["text"]
 					},
-					"text": { "type": "string" },
-					"refusal": { "type": "string" }
+					"text": {
+						"type": "string"
+					}
 				}
 			},
 			"ResponsesRequest": {
 				"type": "object",
 				"description": "OpenAI-compatible Responses API request fields parsed by the Stogas HTTP API.",
+				"additionalProperties": false,
 				"required": ["model", "input"],
 				"properties": {
-					"model": { "type": "string" },
+					"model": {
+						"type": "string"
+					},
 					"provider": {
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
 						"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
 					},
+					"rules": {
+						"$ref": "#/components/schemas/ProviderRoutingPreference",
+						"description": "Alias for `provider`. Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+					},
 					"input": {
 						"description": "Input for the Responses API. Stogas accepts a plain string or an array of Responses input/output items.",
 						"oneOf": [
-							{ "type": "string" },
-							{ "type": "array", "items": { "$ref": "#/components/schemas/ResponsesInputItem" } }
+							{
+								"type": "string"
+							},
+							{
+								"type": "array",
+								"items": {
+									"$ref": "#/components/schemas/ResponsesRequestInputItem"
+								}
+							}
 						]
 					},
-					"stream": { "type": "boolean", "default": false },
-					"background": { "type": "boolean" },
+					"stream": {
+						"type": "boolean",
+						"default": false
+					},
+					"background": {
+						"type": "boolean",
+						"description": "Not supported. Background Responses require asynchronous lifecycle and reconciliation support, so Stogas rejects this field."
+					},
 					"conversation": {
 						"type": "string",
-						"description": "Conversation ID for providers that support persisted Responses API conversations."
+						"description": "Not supported. Provider-side conversation state hides prompt reconstruction before hold placement, so Stogas rejects this field."
+					},
+					"fallbacks": {
+						"type": "array",
+						"description": "Not supported. Stogas fallback policy is server-owned and client-supplied fallbacks are rejected.",
+						"items": {
+							"type": "string"
+						}
+					},
+					"container": {
+						"description": "Not supported. Stateful provider containers require separate lifecycle, isolation, and pricing controls.",
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "object"
+							}
+						]
 					},
 					"include": {
 						"type": "array",
-						"description": "Additional response fields to request from providers that support them.",
+						"description": "Additional OpenAI Responses fields to request. Values are provider-owned and not enum-mirrored by Stogas; Anthropic-backed deployments reject this OpenAI-only field.",
 						"items": {
-							"type": "string",
-							"enum": [
-								"web_search_call.action.sources",
-								"message.output_text.logprobs",
-								"reasoning.encrypted_content"
-							]
+							"type": "string"
 						}
 					},
-					"instructions": { "type": "string" },
-					"max_output_tokens": { "type": "integer", "minimum": 1 },
+					"instructions": {
+						"type": "string"
+					},
+					"max_output_tokens": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Maximum output token cap. Zero is only accepted for Anthropic cache prewarm requests that include an allowed cache_control marker."
+					},
 					"max_tool_calls": {
 						"type": "integer",
 						"minimum": 1,
-						"description": "Required when using priced hosted Responses tools so Stogas can place a bounded billing hold."
+						"description": "Optional cap for priced hosted Responses tools. If omitted for priced hosted tools, Stogas injects an effective cap of 50 before dispatch. On Anthropic Responses, this field is only accepted when Stogas can translate it to hosted-tool max_uses; token-priced function, custom, and MCP tools must omit it."
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Application metadata to attach to the upstream request."
+						"description": "Application metadata for Stogas telemetry only. Stogas validates this object, logs it internally, and removes it before upstream dispatch.",
+						"maxProperties": 16,
+						"propertyNames": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 64
+						},
+						"additionalProperties": {
+							"type": "string",
+							"maxLength": 512
+						}
 					},
 					"parallel_tool_calls": {
 						"type": "boolean",
@@ -905,49 +1431,90 @@
 					},
 					"previous_response_id": {
 						"type": "string",
-						"description": "Previous response ID for continuing a Responses API conversation."
+						"description": "Not supported. Provider-side continuation state hides prompt reconstruction before hold placement, so Stogas rejects this field."
+					},
+					"task_budget": {
+						"type": "object",
+						"description": "Anthropic-only advisory token budget object forwarded as output_config.task_budget. Provider-owned details do not reduce Stogas billing holds.",
+						"additionalProperties": true
+					},
+					"context_management": {
+						"type": "object",
+						"description": "Anthropic-only context management object forwarded as provider-owned runtime behavior. Stogas does not treat compaction as a hold reduction.",
+						"additionalProperties": true
+					},
+					"inference_geo": {
+						"type": "string",
+						"description": "Anthropic-only deployment routing hint. `global` selects standard multi-region pricing, while `us` selects US-only inference pricing. Stogas sends the selected Anthropic `inference_geo` upstream.",
+						"enum": ["global", "us"]
 					},
 					"prompt_cache_key": {
 						"type": "string",
-						"description": "Stable cache key used by providers that support prompt caching."
+						"description": "OpenAI-only prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
+						"minLength": 1,
+						"maxLength": 256
 					},
 					"reasoning": {
 						"type": "object",
 						"description": "Reasoning configuration for models that expose reasoning controls.",
 						"properties": {
-							"effort": { "type": "string", "enum": ["none", "minimal", "low", "medium", "high"] },
-							"summary": { "type": "string", "enum": ["auto", "concise", "detailed"] },
+							"effort": {
+								"type": "string"
+							},
+							"summary": {
+								"type": "string"
+							},
 							"generate_summary": {
 								"type": "string",
 								"description": "Deprecated upstream alias for `summary`."
 							},
-							"max_tokens": { "type": "integer", "minimum": 1 }
-						}
+							"max_tokens": {
+								"type": "integer",
+								"minimum": 1
+							}
+						},
+						"additionalProperties": false
 					},
 					"safety_identifier": {
 						"type": "string",
-						"description": "Provider-visible stable identifier for safety monitoring."
+						"description": "Client-supplied safety identifiers are not supported. Stogas sets provider-visible safety/user identifiers from the authenticated API key."
 					},
 					"service_tier": {
 						"type": "string",
-						"description": "Provider service tier selection preserved by the gateway. Default/auto requests use the selected deployment's project-default tier for holds; tiered catalog deployments such as `gpt-5.5-flex` imply this value and reject conflicting explicit tiers. OpenAI `scale` is not exposed by Stogas.",
+						"description": "Provider service tier selection preserved by the gateway. OpenAI accepts `auto`, `default`, `flex`, and `priority`; `scale` and `provisioned` are not available. Anthropic accepts `auto`, `priority`, `default`, `flex`, `standard`, and `standard_only`; all currently use standard-tier Stogas deployment rates. Anthropic `auto` / `priority` are sent upstream as `auto`, while `default` / `flex` / `standard` / `standard_only` are sent as `standard_only`.",
 						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
+					},
+					"speed": {
+						"type": "string",
+						"description": "Anthropic-only deployment routing hint. `fast` selects cataloged fast-mode deployments where available; `standard` selects normal-speed deployments.",
+						"enum": ["fast", "standard"]
 					},
 					"stream_options": {
 						"type": "object",
-						"description": "Additional options for streaming responses.",
-						"properties": { "include_obfuscation": { "type": "boolean" } }
+						"description": "Additional options for streamed Responses. Requires `stream:true`. Stogas accepts `include_obfuscation`; `include_usage` is server-owned and rejected on this route.",
+						"properties": {
+							"include_obfuscation": {
+								"type": "boolean"
+							}
+						},
+						"additionalProperties": false
 					},
 					"store": {
 						"type": "boolean",
-						"description": "Whether the provider may store the request or response where supported."
+						"description": "Not supported. Provider retention behavior is server-owned; requests that set store are rejected before upstream dispatch, and OpenAI-bound requests are forced to store:false."
 					},
 					"temperature": {
 						"type": "number",
-						"multipleOf": 0.01,
-						"minimum": 0,
-						"maximum": 2,
-						"default": 1
+						"default": 1,
+						"description": "Sampling temperature. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
+					},
+					"frequency_penalty": {
+						"type": "number",
+						"description": "OpenAI-only Responses frequency penalty. Anthropic deployments reject this field."
+					},
+					"presence_penalty": {
+						"type": "number",
+						"description": "OpenAI-only Responses presence penalty. Anthropic deployments reject this field."
 					},
 					"text": {
 						"type": "object",
@@ -955,38 +1522,88 @@
 						"properties": {
 							"format": {
 								"type": "object",
+								"description": "Provider-owned Responses text format. Stogas forwards supported OpenAI-compatible fields and leaves provider-specific format details to the selected upstream provider.",
 								"properties": {
-									"type": { "type": "string", "enum": ["text", "json_object", "json_schema"] },
-									"name": { "type": "string" },
-									"schema": { "type": "object" },
-									"strict": { "type": "boolean" }
-								}
+									"type": {
+										"type": "string"
+									},
+									"name": {
+										"type": "string"
+									},
+									"schema": {
+										"type": "object"
+									},
+									"strict": {
+										"type": "boolean"
+									}
+								},
+								"additionalProperties": true
 							},
-							"verbosity": { "type": "string", "enum": ["low", "medium", "high"] }
-						}
+							"verbosity": {
+								"type": "string"
+							}
+						},
+						"additionalProperties": true
 					},
-					"top_logprobs": { "type": "integer", "minimum": 0 },
-					"top_p": { "type": "number", "multipleOf": 0.01, "minimum": 0, "maximum": 1 },
+					"top_logprobs": {
+						"type": "integer",
+						"description": "Provider-owned Responses log probability detail. Anthropic deployments reject this OpenAI-only field."
+					},
+					"top_k": {
+						"type": "integer",
+						"description": "Anthropic-only sampling control passed through the explicit Stogas allowlist. Rejected for OpenAI deployments."
+					},
+					"top_p": {
+						"type": "number",
+						"description": "Nucleus sampling control. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
+					},
 					"tool_choice": {
 						"type": ["string", "object"],
 						"description": "Tool choice, such as `auto`, `none`, `required`, or a named tool object."
 					},
 					"tools": {
 						"type": "array",
-						"description": "Responses API tool definitions accepted by compatible providers. Stogas currently admits function/custom tools, OpenAI local_shell/apply_patch/local shell tools, and priced hosted web search tools when max_tool_calls is set.",
-						"items": { "type": "object" }
+						"description": "Responses API tool definitions accepted by compatible providers. Stogas admits function/custom tools, remote MCP tools with narrowed allowed_tools, priced provider-hosted web search tools, and Anthropic web_fetch tools. See the Internal Tools guide for the current provider matrix and billing behavior.",
+						"items": {
+							"type": "object"
+						}
 					},
-					"truncation": { "type": "string", "enum": ["auto", "disabled"] },
+					"truncation": {
+						"type": "string"
+					},
 					"user": {
 						"type": "string",
-						"description": "End-user identifier forwarded to providers that support abuse monitoring."
+						"description": "Client-supplied user identifiers are not supported. Stogas sets upstream user identity from the authenticated API key."
 					},
-					"frequency_penalty": { "type": "number", "minimum": -2, "maximum": 2 },
-					"presence_penalty": { "type": "number", "minimum": -2, "maximum": 2 },
-					"prompt_cache_retention": { "type": "string", "enum": ["in-memory", "24h"] },
-					"reasoning.effort": {
+					"prompt_cache_retention": {
 						"type": "string",
-						"enum": ["none", "minimal", "low", "medium", "high", "xhigh"]
+						"description": "OpenAI-only prompt cache retention policy. Stogas validates that this is a string, normalizes known aliases before dispatch, and rejects this field on Anthropic deployments."
+					},
+					"stop_sequences": {
+						"type": "array",
+						"description": "Anthropic-only stop sequence alias passed through the explicit Stogas allowlist. Stogas rejects this field on OpenAI deployments. Responses does not admit top-level `stop`; Chat rejects requests that set both `stop` and `stop_sequences`.",
+						"items": {
+							"type": "string"
+						}
+					},
+					"cache_control": {
+						"type": "object",
+						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on input content/tool blocks, prices cache writes conservatively for holds, and rejects this field on OpenAI deployments.",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": ["ephemeral"]
+							},
+							"ttl": {
+								"type": "string",
+								"enum": ["5m", "1h"]
+							}
+						},
+						"required": ["type"],
+						"additionalProperties": false
+					},
+					"reasoning.effort": {
+						"type": "string"
 					}
 				},
 				"example": {
@@ -1023,47 +1640,115 @@
 					},
 					"error": {
 						"type": ["object", "null"],
-						"properties": { "code": { "type": "string" }, "message": { "type": "string" } }
+						"properties": {
+							"code": {
+								"type": "string"
+							},
+							"message": {
+								"type": "string"
+							}
+						}
 					},
 					"incomplete_details": {
 						"type": ["object", "null"],
-						"properties": { "reason": { "type": "string" } }
+						"properties": {
+							"reason": {
+								"type": "string"
+							}
+						}
 					},
-					"model": { "type": "string", "description": "Model used for the response." },
+					"model": {
+						"type": "string",
+						"description": "Model used for the response."
+					},
 					"output": {
 						"type": "array",
 						"description": "Response output items.",
-						"items": { "$ref": "#/components/schemas/ResponsesInputItem" }
+						"items": {
+							"$ref": "#/components/schemas/ResponsesInputItem"
+						}
 					},
 					"output_text": {
 						"type": "string",
 						"description": "Convenience concatenation of output text content when available."
 					},
-					"background": { "type": "boolean" },
+					"background": {
+						"type": "boolean"
+					},
 					"conversation": {
 						"type": ["object", "null"],
-						"properties": { "id": { "type": "string" } }
+						"properties": {
+							"id": {
+								"type": "string"
+							}
+						}
 					},
-					"include": { "type": "array", "items": { "type": "string" } },
-					"instructions": { "type": ["string", "array", "null"] },
-					"max_output_tokens": { "type": ["integer", "null"] },
-					"max_tool_calls": { "type": ["integer", "null"] },
-					"metadata": { "type": "object" },
-					"parallel_tool_calls": { "type": "boolean" },
-					"previous_response_id": { "type": ["string", "null"] },
-					"prompt_cache_key": { "type": ["string", "null"] },
-					"reasoning": { "type": "object" },
-					"safety_identifier": { "type": ["string", "null"] },
-					"service_tier": { "type": ["string", "null"] },
-					"store": { "type": "boolean" },
-					"temperature": { "type": "number" },
-					"text": { "type": "object" },
-					"tool_choice": { "type": ["string", "object"] },
-					"tools": { "type": "array", "items": { "type": "object" } },
-					"top_logprobs": { "type": "integer" },
-					"top_p": { "type": "number" },
-					"truncation": { "type": "string" },
-					"usage": { "$ref": "#/components/schemas/ResponsesUsage" },
+					"include": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"instructions": {
+						"type": ["string", "array", "null"]
+					},
+					"max_output_tokens": {
+						"type": ["integer", "null"]
+					},
+					"max_tool_calls": {
+						"type": ["integer", "null"]
+					},
+					"metadata": {
+						"type": "object"
+					},
+					"parallel_tool_calls": {
+						"type": "boolean"
+					},
+					"previous_response_id": {
+						"type": ["string", "null"]
+					},
+					"prompt_cache_key": {
+						"type": ["string", "null"]
+					},
+					"reasoning": {
+						"type": "object"
+					},
+					"safety_identifier": {
+						"type": ["string", "null"]
+					},
+					"service_tier": {
+						"type": ["string", "null"]
+					},
+					"store": {
+						"type": "boolean"
+					},
+					"temperature": {
+						"type": "number"
+					},
+					"text": {
+						"type": "object"
+					},
+					"tool_choice": {
+						"type": ["string", "object"]
+					},
+					"tools": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"top_logprobs": {
+						"type": "integer"
+					},
+					"top_p": {
+						"type": "number"
+					},
+					"truncation": {
+						"type": "string"
+					},
+					"usage": {
+						"$ref": "#/components/schemas/ResponsesUsage"
+					},
 					"stogas": {
 						"type": "object",
 						"title": "Gateway Metadata",
@@ -1087,7 +1772,9 @@
 							},
 							"provider_response_headers": {
 								"type": "object",
-								"additionalProperties": { "type": "string" },
+								"additionalProperties": {
+									"type": "string"
+								},
 								"description": "Catalog-approved response headers from the upstream provider"
 							},
 							"raw_request": {
@@ -1126,14 +1813,20 @@
 						}
 					],
 					"output_text": "You can never fully trust code you did not write yourself.",
-					"usage": { "input_tokens": 9, "output_tokens": 11, "total_tokens": 20 }
+					"usage": {
+						"input_tokens": 9,
+						"output_tokens": 11,
+						"total_tokens": 20
+					}
 				}
 			},
 			"ResponsesInputItem": {
 				"type": "object",
 				"description": "Responses API input or previous output item. Supported item types include messages, function calls and outputs, tool calls, reasoning, and item references.",
 				"properties": {
-					"id": { "type": "string" },
+					"id": {
+						"type": "string"
+					},
 					"type": {
 						"type": "string",
 						"enum": [
@@ -1141,8 +1834,6 @@
 							"web_search_call",
 							"function_call",
 							"function_call_output",
-							"local_shell_call",
-							"local_shell_call_output",
 							"mcp_call",
 							"custom_tool_call",
 							"custom_tool_call_output",
@@ -1154,46 +1845,99 @@
 							"refusal"
 						]
 					},
-					"status": { "type": "string" },
-					"role": { "type": "string", "enum": ["assistant", "user", "system", "developer"] },
-					"content": { "$ref": "#/components/schemas/ResponsesMessageContent" },
-					"call_id": { "type": "string" },
-					"name": { "type": "string" },
-					"arguments": { "type": "string" },
+					"status": {
+						"type": "string"
+					},
+					"role": {
+						"type": "string",
+						"enum": ["assistant", "user", "system", "developer"]
+					},
+					"content": {
+						"$ref": "#/components/schemas/ResponsesMessageContent"
+					},
+					"call_id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"arguments": {
+						"type": "string"
+					},
 					"output": {
 						"description": "Tool output payload for function_call_output and related output items."
 					},
-					"summary": { "type": "array", "items": { "type": "object" } },
-					"encrypted_content": { "type": "string" }
+					"summary": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"encrypted_content": {
+						"type": "string"
+					}
 				}
 			},
 			"ResponsesUsage": {
 				"type": "object",
 				"description": "Responses API token usage statistics.",
 				"properties": {
-					"input_tokens": { "type": "integer", "description": "Number of input tokens." },
-					"output_tokens": { "type": "integer", "description": "Number of output tokens." },
-					"total_tokens": { "type": "integer", "description": "Total number of tokens." },
+					"input_tokens": {
+						"type": "integer",
+						"description": "Number of input tokens."
+					},
+					"output_tokens": {
+						"type": "integer",
+						"description": "Number of output tokens."
+					},
+					"total_tokens": {
+						"type": "integer",
+						"description": "Total number of tokens."
+					},
 					"input_tokens_details": {
 						"type": "object",
 						"properties": {
-							"text_tokens": { "type": "integer" },
-							"audio_tokens": { "type": "integer" },
-							"image_tokens": { "type": "integer" },
-							"cached_tokens": { "type": "integer" },
-							"cached_read_tokens": { "type": "integer" },
-							"cached_write_tokens": { "type": "integer" }
+							"text_tokens": {
+								"type": "integer"
+							},
+							"audio_tokens": {
+								"type": "integer"
+							},
+							"image_tokens": {
+								"type": "integer"
+							},
+							"cached_tokens": {
+								"type": "integer"
+							},
+							"cached_read_tokens": {
+								"type": "integer"
+							},
+							"cached_write_tokens": {
+								"type": "integer"
+							}
 						}
 					},
 					"output_tokens_details": {
 						"type": "object",
 						"properties": {
-							"text_tokens": { "type": "integer" },
-							"audio_tokens": { "type": "integer" },
-							"image_tokens": { "type": "integer" },
-							"reasoning_tokens": { "type": "integer" },
-							"accepted_prediction_tokens": { "type": "integer" },
-							"rejected_prediction_tokens": { "type": "integer" }
+							"text_tokens": {
+								"type": "integer"
+							},
+							"audio_tokens": {
+								"type": "integer"
+							},
+							"image_tokens": {
+								"type": "integer"
+							},
+							"reasoning_tokens": {
+								"type": "integer"
+							},
+							"accepted_prediction_tokens": {
+								"type": "integer"
+							},
+							"rejected_prediction_tokens": {
+								"type": "integer"
+							}
 						}
 					},
 					"cost": {
@@ -1206,8 +1950,15 @@
 			"ResponsesMessageContent": {
 				"description": "Responses message content as either a string or an array of content blocks.",
 				"oneOf": [
-					{ "type": "string" },
-					{ "type": "array", "items": { "$ref": "#/components/schemas/ResponsesContentBlock" } }
+					{
+						"type": "string"
+					},
+					{
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ResponsesContentBlock"
+						}
+					}
 				]
 			},
 			"ResponsesContentBlock": {
@@ -1225,12 +1976,90 @@
 							"compaction"
 						]
 					},
-					"text": { "type": "string" },
-					"refusal": { "type": "string" },
-					"annotations": { "type": "array", "items": { "type": "object" } },
-					"logprobs": { "type": "array", "items": { "type": "object" } },
-					"signature": { "type": "string" },
-					"citations": { "type": "object" }
+					"text": {
+						"type": "string"
+					},
+					"refusal": {
+						"type": "string"
+					},
+					"annotations": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"logprobs": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"signature": {
+						"type": "string"
+					},
+					"citations": {
+						"type": "object"
+					}
+				}
+			},
+			"ResponsesRequestInputItem": {
+				"type": "object",
+				"description": "Text-only Responses API input item accepted by Stogas. Function calls, tool outputs, reasoning items, files, images, and audio inputs are rejected before upstream dispatch.",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": ["message", "input_text", "output_text", "refusal"]
+					},
+					"status": {
+						"type": "string"
+					},
+					"role": {
+						"type": "string",
+						"enum": ["assistant", "user", "system", "developer"]
+					},
+					"content": {
+						"$ref": "#/components/schemas/ResponsesRequestMessageContent"
+					},
+					"text": {
+						"type": "string"
+					},
+					"refusal": {
+						"type": "string"
+					}
+				}
+			},
+			"ResponsesRequestMessageContent": {
+				"description": "Text-only Responses message content as either a string or an array of text content blocks.",
+				"oneOf": [
+					{
+						"type": "string"
+					},
+					{
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/ResponsesRequestContentBlock"
+						}
+					}
+				]
+			},
+			"ResponsesRequestContentBlock": {
+				"type": "object",
+				"description": "Text-only Responses content block accepted by Stogas.",
+				"required": ["type"],
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["input_text", "output_text", "refusal"]
+					},
+					"text": {
+						"type": "string"
+					},
+					"refusal": {
+						"type": "string"
+					}
 				}
 			}
 		}

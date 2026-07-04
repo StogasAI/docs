@@ -8,7 +8,14 @@ export const metadata: Metadata = {
 		default: 'Stogas.ai Docs',
 		template: '%s | Stogas.ai Docs'
 	},
-	description: 'Documentation for Stogas.ai zero-trust anonymous AI API access.'
+	description: 'Documentation for Stogas.ai zero-trust anonymous AI API access.',
+	icons: {
+		icon: [
+			{ url: '/app-icon.svg', type: 'image/svg+xml' },
+			{ url: '/favicon.png', type: 'image/png', sizes: '128x128' }
+		],
+		apple: [{ url: '/app-icon-192.png', sizes: '192x192', type: 'image/png' }]
+	}
 };
 
 export default function Layout({ children }: LayoutProps<'/'>) {

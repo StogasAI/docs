@@ -217,3 +217,48 @@ div:has(> input[data-object-search-input]) ~ div.border-t:nth-of-type(2) {
 	border-top: none !important;
 	border-top-width: 0px !important;
 }
+
+@property --holographic-hue {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 210deg;
+}
+
+@keyframes holographic-hue-shift {
+	from {
+		--holographic-hue: 210deg;
+	}
+	to {
+		--holographic-hue: 570deg;
+	}
+}
+
+.holographic-accent-text {
+	background: linear-gradient(
+		90deg in oklch shorter hue,
+		oklch(76% 0.18 var(--holographic-hue)),
+		oklch(68% 0.23 calc(var(--holographic-hue) + 42deg)),
+		oklch(62% 0.25 calc(var(--holographic-hue) + 90deg)),
+		oklch(70% 0.27 calc(var(--holographic-hue) + 135deg)),
+		oklch(76% 0.24 calc(var(--holographic-hue) + 175deg)),
+		oklch(86% 0.2 calc(var(--holographic-hue) + 230deg)),
+		oklch(76% 0.18 calc(var(--holographic-hue) + 360deg))
+	);
+	background-size: 200% 100%;
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	color: transparent;
+	animation: holographic-hue-shift 40s linear infinite;
+}
+
+/* Align the sidebar title and collapse icon vertically, and balance spacing */
+#nd-sidebar div.flex.flex-col > div.flex:first-child {
+	align-items: center !important;
+	margin-bottom: 0.25rem !important; /* Increases the gap to search trigger from 12px (gap-3) to 16px */
+}
+
+/* Ensure the collapse button aligns in the center instead of pushing to the top */
+#nd-sidebar div.flex.flex-col > div.flex:first-child button {
+	margin-bottom: 0 !important;
+}

@@ -1,0 +1,99 @@
+---
+title: Internal Tools
+description: Supported client tools, provider-hosted tools, and how tool usage is billed.
+---
+
+Tools let a model call something outside normal text generation. The gateway treats tools as either client tools or provider-hosted tools:
+
+- **Client tools** are run by your application or by an MCP server you provide. They do not have a separate tool charge from the gateway. You pay for the model tokens the provider reports.
+- **Provider-hosted tools** are run by OpenAI or Anthropic. These can have separate provider charges, so only the hosted tools listed below are available.
+
+<Callout type="info">
+	OpenAI search-model deployments such as `gpt-5-search-api` expose web retrieval through
+	`web_search_options`, not through `tools`. Those deployments perform one priced retrieval per
+	request.
+</Callout>
+
+## Chat Completions
+
+Chat Completions is intentionally conservative. It is best for normal function calling and simple tool routing.
+
+| Tool type                               | OpenAI | Anthropic | Billing                                                           |
+| --------------------------------------- | :----: | :-------: | ----------------------------------------------------------------- |
+| `function`                              |  Yes   |    Yes    | Token usage only                                                  |
+| `custom`                                |  Yes   |    No     | Token usage only                                                  |
+| Anthropic `mcp_toolset` + `mcp_servers` |   No   |    Yes    | Token usage only; MCP server costs are billed outside the gateway |
+| Provider-hosted web/search tools        |   No   |    No     | Use Responses API or OpenAI search-model deployments              |
+
+<Callout type="info">
+	Anthropic Chat custom tools are not available through the OpenAI-compatible Chat Completions
+	route. Use Anthropic Responses for `custom` tools, or use standard `function` tools on Chat
+	Completions.
+</Callout>
+
+## Responses API
+
+Responses supports the broader tool surface. Use it when you need hosted web tools, MCP, or custom tools.
+
+| Tool type             | OpenAI | Anthropic | Billing                                                                  |
+| --------------------- | :----: | :-------: | ------------------------------------------------------------------------ |
+| `function`            |  Yes   |    Yes    | Token usage only                                                         |
+| `custom`              |  Yes   |    Yes    | Token usage only                                                         |
+| `mcp`                 |  Yes   |    Yes    | Token usage only; MCP server costs are billed outside the gateway        |
+| `web_search*`         |  Yes   |    Yes    | Web-search call charge plus provider-reported token usage                |
+| `web_search_preview*` |  Yes   |    No     | OpenAI web-search-preview call charge plus provider-reported token usage |
+| `web_fetch*`          |   No   |    Yes    | Provider-reported token usage only                                       |
+
+Use `max_tool_calls` to bound provider-hosted tool calls. If you omit it for a priced hosted tool, the gateway applies a conservative default cap before the request is sent upstream.
+
+<Callout type="info">
+	`tool_choice: "none"` disables provider-hosted tool calls for that request, so no hosted-tool call
+	meter is applied.
+</Callout>
+
+## Provider-Hosted Billing
+
+OpenAI Responses web search has separate call meters:
+
+| Tool family                                   | Billing                                                                               |
+| --------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `web_search*`                                 | Web-search call price plus search content tokens at model rates                       |
+| `web_search_preview*` on reasoning models     | Web-search-preview call price plus search content tokens at model rates               |
+| `web_search_preview*` on non-reasoning models | Higher web-search-preview call price; search content tokens are not separately billed |
+
+Anthropic Responses web tools are billed as:
+
+| Tool family   | Billing                                                  |
+| ------------- | -------------------------------------------------------- |
+| `web_search*` | Web-search call price plus provider-reported token usage |
+| `web_fetch*`  | Provider-reported token usage only                       |
+
+Anthropic may use code execution internally as part of web search or web fetch. That bundled behavior is treated as part of the admitted web tool. Standalone code execution is not available.
+
+## MCP Tools
+
+MCP tools connect the model to a remote server. The gateway bills model tokens only; any cost from your MCP server is your responsibility.
+
+For Responses MCP tools:
+
+- use an HTTPS `server_url`
+- include `allowed_tools` with explicit tool names or a read-only filter
+- avoid approval workflows
+
+For OpenAI Responses, set `require_approval: "never"`.
+
+For Anthropic Chat, use Anthropic's native `mcp_servers` array with matching `tools[].type: "mcp_toolset"` entries.
+
+## Unavailable Provider Tools
+
+The public API is text-only and does not expose every provider-hosted tool.
+
+| Tool family                                                   | Availability  |
+| ------------------------------------------------------------- | ------------- |
+| File search and hosted retrieval                              | Not available |
+| Code interpreter, hosted shell, and standalone code execution | Not available |
+| Local shell and patch tools                                   | Not available |
+| Computer-use and image-generation tools                       | Not available |
+| Provider memory or tool-loading tools                         | Not available |
+
+Unavailable tools return `400 invalid_request_error` before a provider request is made.
