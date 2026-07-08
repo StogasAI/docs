@@ -1,0 +1,152 @@
+---
+title: Confidential Verification
+description: Verification options for Stogas confidential gateway releases, bundles, quotes, and response proofs.
+---
+
+Stogas supports layered verification. Clients can stop at the verifier JWT path for simplicity or verify raw quotes and collateral locally for stronger independence.
+
+## Recommended Flow
+
+<Steps>
+<Step>
+
+### Verify The Release
+
+For each `allowed_igvms[]` slot, verify the GitHub Actions provenance and the Stogas signature material for the IGVM hash, launch measurement, and launch policy values. See [Provenance Verification](/docs/provenance-verification).
+
+</Step>
+<Step>
+
+### Verify The Latest Bundle
+
+Fetch `bundles/latest.json`, check the bundle body hash, and verify the Control signature. For immutable-key confirmation, also verify `bundles/latest.pointer.json` and ensure it resolves to the same body checksum.
+
+</Step>
+<Step>
+
+### Verify Node Evidence
+
+For each node, either verify the bundled verifier JWT or verify the raw quote against the bundled AMD/Intel collateral. The resulting report-data hash must match the stated report-data values.
+
+</Step>
+<Step>
+
+### Build The Trust Set
+
+Accept only nodes whose measurement and launch policy values match an allowed IGVM slot, whose drand evidence is fresh enough, and whose TLS key, accepted cert hash, HPKE key, and Ed25519 key are bound by report data.
+
+</Step>
+<Step>
+
+### Verify Responses
+
+For normal responses, verify the signed hash of the processed request JSON, response JSON, and resolved catalog node IDs. The proof also carries the current quote and report-data values, which bind the signing key to a node whose release measurement was accepted from the verified bundle. For streaming responses, verify the final `stogas.proof` event after the stream completes.
+
+</Step>
+</Steps>
+
+## Quote Options
+
+| Option               | Cost    | Trust assumption                                                     |
+| -------------------- | ------- | -------------------------------------------------------------------- |
+| Verifier JWT         | Lowest  | Trust the AMD/Intel verifier service result.                         |
+| Raw quote            | Higher  | Verify quote signatures and collateral yourself.                     |
+| Own collateral fetch | Highest | Ignore bundled collateral and fetch vendor collateral independently. |
+
+Bundled collateral cannot make a forged quote valid. Bad collateral can only make verification fail.
+
+## Freshness
+
+The bundle is designed for clients polling every 5 minutes. A node quote must have enough forward validity when published so clients do not learn about a node that will immediately fail local freshness checks.
+
+Current public values:
+
+| Value                         | Window     |
+| ----------------------------- | ---------- |
+| Recommended bundle polling    | 5 minutes  |
+| Bundle validity               | 10 minutes |
+| Client quote freshness window | 20 minutes |
+| Bundle omission quote age     | 12 minutes |
+| Required forward validity     | 8 minutes  |
+
+Control verifies the drand Quicknet BLS signature on each heartbeat and rejects replayed rounds. Quicknet emits one round every 3 seconds; Control accepts at most 400 past rounds and 1 future round when comparing a heartbeat's beacon to the current Quicknet round. Clients doing raw quote verification should pin the Quicknet group key, verify the beacon signature, and apply an equal or stricter round window.
+
+Caching successful verification results by bundle sequence and IGVM hash is safe. Re-verify when the latest bundle or latest pointer sequence changes.
+
+## Implementation Notes
+
+The bundle signature covers the deterministic JSON bytes of the `body` object. The latest-pointer signature covers the deterministic JSON bytes of its `body` object. Clients should either use the official Stogas contract verifier or preserve the exact object field order shown in the bundle schema when recomputing those bytes.
+
+The shared bundle verifier checks the Control signature, latest pointer, bundle shape, `quote_verified_at` freshness policy, node membership policy, report-data hash parity, certificate expiry, trusted chip IDs, and trusted release measurements. It does not replace GitHub/Stogas release provenance verification for `allowed_igvms[]` or raw drand BLS verification; do those once per IGVM hash or node quote path and cache the result.
+
+### TypeScript
+
+Use the shared verifier when running in a JavaScript runtime:
+
+```ts
+import {
+	verifyLatestConfidentialBundleForClient
+} from '@stogas/contracts/confidential';
+
+const result = await verifyLatestConfidentialBundleForClient({
+	bundle,
+	pointer: latest,
+	policy,
+	signer
+});
+
+if (!result.ok) throw new Error(result.reason);
+
+for (const node of result.bundle.body.nodes) {
+	// Add node.report_data.tls_spki_sha256, accepted cert hashes,
+	// hpke_public_key, and ed25519_public_key to the local trust set.
+}
+```
+
+### Go
+
+In Go, avoid marshaling arbitrary maps for the signed payload because key ordering may differ from the bundle canonical bytes. Extract the raw `body` object bytes from the immutable bundle response, hash those bytes, and verify the Ed25519 signature over those same bytes.
+
+```go
+body := extractTopLevelRawObject(bundleBytes, "body")
+sum := sha256.Sum256(body)
+if hex.EncodeToString(sum[:]) != envelope.BodySHA256 {
+	return errors.New("bundle body checksum mismatch")
+}
+if !ed25519.Verify(stogasPublicKey, body, signatureBytes) {
+	return errors.New("bundle signature failed")
+}
+```
+
+After the signature passes, decode the body and verify each node's verifier JWT or raw SNP quote. The quote result must recover the same `report_data_sha512` stated in the node entry.
+
+### Python
+
+In Python, keep the decoded object order when recomputing deterministic JSON. Do not sort keys; the Stogas schema order is the signed order.
+
+```py
+payload = json.dumps(bundle["body"], separators=(",", ":"), ensure_ascii=False).encode()
+if hashlib.sha256(payload).hexdigest() != bundle["body_sha256"]:
+    raise ValueError("bundle body checksum mismatch")
+
+padding = "=" * (-len(signature) % 4)
+verify_key.verify(payload, base64.urlsafe_b64decode(signature + padding))
+```
+
+Then verify node evidence, recompute `report_data_sha512`, check the node measurement and launch policy values match one of the trusted IGVM slots, and, for raw quote verification, check the drand round and BLS signature against the pinned Quicknet parameters.
+
+## Response Proofs
+
+For non-streaming responses, the proof is returned in headers:
+
+| Header                                 | Meaning                                                    |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `X-Stogas-Quote`                       | Current quote as base64url.                                |
+| `X-Stogas-Report-Data`                 | Canonical report-data JSON as base64url.                   |
+| `X-Stogas-Resolved-Catalog-Node-Ids`   | Plaintext resolved catalog node IDs, comma-separated.      |
+| `X-Stogas-Processed-Hash`              | Hash over processed request, response, and catalog IDs.    |
+| `X-Stogas-Processed-Signature`         | Ed25519 signature by the report-data `ed25519_public_key`. |
+
+Verify the gateway Ed25519 signature over the processed hash, then verify the attached quote/report data to prove that signing key belongs to an accepted measured node.
+
+Streaming responses do not send an initial proof header. The gateway hashes the JSON chunks it actually sends and emits one final `event: stogas.proof` SSE object before `[DONE]`. If the client cancels the stream, it should treat the response as unproven.

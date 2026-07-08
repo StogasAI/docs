@@ -9,17 +9,18 @@ The active catalog is embedded into the gateway release. If the release verifies
 
 ## What Is Verified
 
-Every gateway release publishes a deterministic `gateway.igvm` file and a `release-manifest.json`.
-The manifest records:
+Every gateway release publishes a deterministic `gateway.igvm`, a deterministic `gateway-launch-policy.json`, and a `release-manifest.json`.
+The manifest and launch policy record:
 
 - the public repository URL
 - the immutable Git commit and tag
 - the Git tree hash
 - the `gateway.igvm` SHA-256 hash
 - the SEV-SNP launch measurement
+- the SEV-SNP launch policy comparison values clients must check in node quotes
 - the pinned build inputs used by the reproducible build
 
-Clients and auditors accept a release only when two independent parties bind the same IGVM hash and launch measurement.
+Clients and auditors accept a release only when two independent parties bind the same IGVM hash, launch measurement, and launch policy values.
 
 <Cards>
 	<Card
@@ -28,7 +29,7 @@ Clients and auditors accept a release only when two independent parties bind the
 	/>
 	<Card
 		title="GitHub Actions rebuild"
-		description="GitHub Actions independently builds the same tag and emits Sigstore/SLSA provenance for the same IGVM hash."
+		description="GitHub Actions independently builds the same tag and emits official GitHub artifact attestation for the IGVM and launch policy hashes."
 	/>
 </Cards>
 
@@ -36,10 +37,10 @@ Clients and auditors accept a release only when two independent parties bind the
 
 Verifier implementations pin two roots:
 
-| Anchor                           | Purpose                                                                                                     |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Stogas bootstrap public key      | Verifies `stogas-trust.json`, which delegates to active Stogas release signing keys.                        |
-| Sigstore TUF bootstrap root hash | Authenticates the release-carried Sigstore trust material used to verify GitHub Actions provenance offline. |
+| Anchor                      | Purpose                                                                             |
+| --------------------------- | ----------------------------------------------------------------------------------- |
+| Stogas bootstrap public key | Verifies Stogas release-key material used for the allowed IGVM signature.           |
+| GitHub/Sigstore roots       | Verifies the official GitHub artifact attestation bundle for the public repository. |
 
 The Stogas bootstrap public key is:
 
@@ -47,29 +48,21 @@ The Stogas bootstrap public key is:
 MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
 ```
 
-The pinned Sigstore TUF root 10 SHA-256 hash is:
+## GitHub Release Files
 
-```text
-e708f5c51a3e5168aafe0fb5235be9f711e8f9534f2c4c668e45fa714d900028
-```
+The public GitHub release contains only the files needed for normal client/auditor review:
 
-## Release Files
+| File                         | Role                                                                                         |
+| ---------------------------- | -------------------------------------------------------------------------------------------- |
+| `gateway.igvm`               | Hardware-measurable confidential VM launch artifact.                                         |
+| `gateway-launch-policy.json` | Deterministic claim file binding IGVM SHA-256, launch measurement, and launch policy values. |
+| `launch-measurement.txt`     | Expected SEV-SNP launch measurement.                                                         |
+| `release-manifest.json`      | Deterministic manifest binding source, build pins, artifact hashes, and launch measurement.  |
+| `SHA256SUMS`                 | Hashes for the top-level release files.                                                      |
+| `github-attestation.jsonl`   | Official GitHub artifact attestation for `gateway.igvm` and `gateway-launch-policy.json`.    |
+| `gateway-evidence.tar.zst`   | Advanced audit evidence: UKI, init, kernel, initramfs, pins, Guix, measurement, and hashes.  |
 
-The release artifact set contains:
-
-| File                         | Role                                                                                        |
-| ---------------------------- | ------------------------------------------------------------------------------------------- |
-| `gateway.igvm`               | Hardware-measurable confidential VM launch artifact.                                        |
-| `gateway.efi`                | Unified Kernel Image injected into the IGVM.                                                |
-| `launch-measurement.txt`     | Expected SEV-SNP launch measurement.                                                        |
-| `igvmmeasure-check-kvm.txt`  | Raw `igvmmeasure --check-kvm` measurement output for the QEMU/KVM SEV-SNP launch path.      |
-| `release-manifest.json`      | Deterministic manifest binding source, build pins, artifact hashes, and launch measurement. |
-| `SHA256SUMS`                 | Hashes for the release files.                                                               |
-| `github-attestation.jsonl`   | GitHub Actions/Sigstore provenance for the IGVM hash.                                       |
-| `sigstore-trust-bundle.json` | Release-time Sigstore trust material authenticated from the pinned TUF root.                |
-| `stogas-release-claim.json`  | Stogas claim over the same manifest, IGVM hash, and launch measurement.                     |
-| `gateway.sig`                | Stogas signature over `stogas-release-claim.json`.                                          |
-| `stogas-trust.json`          | Stogas release-key delegation verified from the bootstrap public key.                       |
+Stogas operator-side signing material is not uploaded as extra GitHub release assets. The Stogas release claim is generated from the verified release payload, signed by the Stogas release key, and then added to Control inside the `stogas_signature` field on the matching `allowed_igvms[]` bundle slot. That object carries both the signature metadata and the signed claim so clients do not need another Stogas-hosted file to check the Stogas side.
 
 ## Verification Flow
 
@@ -78,32 +71,35 @@ The release artifact set contains:
 
 ### Check Artifact Hashes
 
-Hash `gateway.igvm`, `gateway.efi`, `launch-measurement.txt`, and `release-manifest.json`.
+Hash `gateway.igvm`, `gateway-launch-policy.json`, `launch-measurement.txt`, `release-manifest.json`, `github-attestation.jsonl`, and `gateway-evidence.tar.zst`.
 The hashes must match both `SHA256SUMS` and the values recorded in `release-manifest.json`.
-
-</Step>
-<Step>
-
-### Verify The Stogas Claim
-
-Verify `stogas-trust.json` from the hard-coded Stogas bootstrap public key.
-Then use the delegated release key to verify `gateway.sig` over:
-
-```text
-stogas gateway release claim v1\n<stogas-release-claim.json>
-```
-
-The claim must bind the same `release-manifest.json` hash, `gateway.igvm` hash, repository, commit, tag, and SEV-SNP launch measurement.
+Advanced verifiers can unpack `gateway-evidence.tar.zst` and compare the contained UKI, init, kernel, initramfs, build pins, and measurement evidence against `release-manifest.json`.
 
 </Step>
 <Step>
 
 ### Verify The GitHub Actions Provenance
 
-Authenticate `sigstore-trust-bundle.json` from the pinned Sigstore TUF root hash.
-Then verify `github-attestation.jsonl` offline against that authenticated trust material.
+Verify `github-attestation.jsonl` with GitHub's official attestation verifier.
 
-The attestation must prove that GitHub Actions built the canonical `StogasAI/gateway` repository, on the expected release workflow, for the release tag, and that the attested subject digest is the same `gateway.igvm` SHA-256 hash from the manifest.
+The attestation must prove that GitHub Actions built the canonical `StogasAI/gateway` repository, on the expected release workflow, for the release tag, and that the attested subject digests are the same `gateway.igvm` and `gateway-launch-policy.json` SHA-256 hashes from the manifest.
+
+</Step>
+<Step>
+
+### Verify The Stogas Signature
+
+For each `allowed_igvms[]` slot in the confidential bundle, verify the Stogas signature material against the hard-coded Stogas trust root. The signed Stogas claim must bind the same `release-manifest.json` hash, `gateway-launch-policy.json` hash, `gateway.igvm` hash, repository, commit, tag, launch measurement, and launch policy values.
+
+JavaScript clients can use `verifyStogasTrustBundle` and `verifyStogasReleaseSignature` from `@stogas/shared/security/gh-provenance-verification` for the Stogas side, then compare the verified claim fields with the same `allowed_igvms[]` slot.
+
+When auditing an operator-side release directory, the Stogas signature payload is:
+
+```text
+stogas gateway release claim v1\n<stogas-release-claim.json>
+```
+
+Those operator-side claim/signature files are inputs to Control policy, not additional GitHub release files.
 
 </Step>
 <Step>
@@ -117,6 +113,7 @@ Accept the release only when Stogas and GitHub Actions independently agree on:
 - the Git tree hash
 - the `gateway.igvm` SHA-256 hash
 - the SEV-SNP launch measurement
+- the launch policy values in `gateway-launch-policy.json`
 
 If either side is missing or disagrees, reject the release.
 

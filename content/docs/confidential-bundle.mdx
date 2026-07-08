@@ -1,0 +1,156 @@
+---
+title: Confidential Bundle
+description: How the signed Stogas confidential gateway evidence bundle is structured.
+---
+
+The confidential bundle is the public trust set for gateway nodes. Clients poll it periodically, verify its signatures and evidence, then accept only nodes whose TLS keys, certificate hashes, report data, and quotes appear in the verified bundle.
+
+## Files
+
+Control publishes three object types:
+
+| Object           | Purpose                                                                       |
+| ---------------- | ----------------------------------------------------------------------------- |
+| Immutable bundle | Versioned evidence file, such as `bundles/v/42/bundle.json`.                  |
+| Latest bundle    | Stable full bundle copy at `bundles/latest.json` for efficient CDN serving.   |
+| Latest pointer   | Signed pointer at `bundles/latest.pointer.json` to one immutable bundle hash. |
+
+The latest bundle is copied from the immutable object after readback verification. The pointer lets clients additionally prove which immutable key and checksum the latest publication resolved to.
+
+## Bundle Body
+
+Each bundle contains:
+
+- schema, sequence, creation time, expiry time, and TTL
+- the active and rollback IGVM/release slots from Control policy, including launch measurement, IGVM SHA-256, launch policy values, Stogas signature, and GitHub in-toto evidence
+- one entry per currently trusted gateway node
+- AMD/Intel verifier evidence and active vendor collateral when available
+- Control body checksum and signature
+
+Node entries bind:
+
+- node ID derived from the in-guest boot identity
+- chip ID policy evidence
+- TLS public key hash
+- accepted certificate hash slot or slots
+- HPKE public key
+- Ed25519 response-proof public key
+- report-data values and report-data hash
+- full quote and quote verification timestamp
+
+The report-data values are the public preimage for the SEV-SNP `REPORT_DATA` hash. They include `schema`, `catalog_hash`, `tls_spki_sha256`, `active_cert_sha256`, `accepted_cert_sha256`, `hpke_public_key`, `ed25519_public_key`, and the current drand Quicknet beacon.
+
+Vendor collateral entries expose active KDS/verifier material by type, chip scope, source URL, fetch time, SHA-256, and payload. Clients that verify raw quotes can use the bundled collateral or fetch vendor collateral independently.
+
+The release stack has at most two slots. It is the active/rollback policy, not just a summary of the currently live nodes. Control refuses to publish a node whose quoted release measurement is outside this stack.
+
+The high-level shape is:
+
+```json
+{
+	"body": {
+		"schema": "stogas.confidential-bundle.v1",
+		"sequence": 42,
+		"created_at": "2026-07-06T12:00:00.000Z",
+		"expires_at": "2026-07-06T12:10:00.000Z",
+		"allowed_igvms": [
+			{
+				"measurement": "sha384...",
+				"igvm_sha256": "sha256...",
+				"launch": {
+					"policy": "0x0000000000030000",
+					"host_data": "0000...",
+					"vmpl": 0,
+					"family_id": "0000...",
+					"image_id": "0000...",
+					"id_key_digest": "0000...",
+					"author_key_digest": "0000..."
+				},
+				"github_in_toto": [],
+				"stogas_signature": {
+					"schema": "stogas.gateway.signature.v1",
+					"algorithm": "Ed25519",
+					"key_id": "stogas-release-key...",
+					"signed": "stogas-release-claim.json",
+					"signature": "base64url...",
+					"claim": {
+						"schema": "stogas.gateway.release-claim.v1",
+						"sequence": 42,
+						"manifestSha256": "sha256...",
+						"launchPolicySha256": "sha256...",
+						"artifacts": {
+							"gateway.igvm": { "sha256": "sha256...", "sizeBytes": 20300000 },
+							"gateway-launch-policy.json": { "sha256": "sha256...", "sizeBytes": 1000 }
+						},
+						"git": {
+							"repository": "StogasAI/gateway",
+							"tag": "vX.Y.Z",
+							"commit": "git-sha..."
+						},
+						"launchPolicy": {
+							"schema": "stogas.gateway.launch-policy.v1",
+							"sequence": 42,
+							"igvm_sha256": "sha256...",
+							"measurement": "sha384...",
+							"launch": {
+								"policy": "0x0000000000030000",
+								"host_data": "0000...",
+								"vmpl": 0,
+								"family_id": "0000...",
+								"image_id": "0000...",
+								"id_key_digest": "0000...",
+								"author_key_digest": "0000..."
+							}
+						},
+						"sevSnp": { "launchMeasurement": "sha384..." }
+					}
+				}
+			}
+		],
+		"nodes": [
+			{
+				"node_id": "node...",
+				"release_measurement": "sha384...",
+				"quote": "base64url...",
+				"report_data_sha512": "sha512...",
+				"report_data": {
+					"schema": "stogas.node-report.v1",
+					"catalog_hash": "sha256...",
+					"tls_spki_sha256": "sha256...",
+					"active_cert_sha256": "sha256...",
+					"accepted_cert_sha256": ["sha256..."],
+					"hpke_public_key": "base64url...",
+					"ed25519_public_key": "base64url...",
+					"drand": {
+						"network": "quicknet",
+						"chain_hash": "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971",
+						"round": 123456,
+						"randomness": "hex...",
+						"signature": "hex..."
+					}
+				}
+			}
+		],
+		"vendor_collateral": []
+	},
+	"body_sha256": "sha256...",
+	"signature": {}
+}
+```
+
+## Cert Hash Slots
+
+Most nodes have one accepted certificate hash. During ACME renewal a node temporarily publishes two:
+
+| Slot   | Meaning                                        |
+| ------ | ---------------------------------------------- |
+| Active | Certificate currently served by the gateway.   |
+| Next   | Renewed certificate allowed before switchover. |
+
+After clients have had time to refresh the bundle, the node switches to the renewed certificate and the old hash is pruned.
+
+## Refresh Policy
+
+Gateway quotes refresh every 10 seconds. Each quote refresh attempts a verified drand Quicknet fetch with a 4-second total budget and 2-second per-relay request deadlines. Nodes heartbeat every 60 seconds. Control checks the bundle every 3 minutes and republishes when evidence changes, collateral changes, the refresh interval elapses, or the latest bundle approaches expiry.
+
+Clients should poll every 5 minutes. Bundle validity is 10 minutes so routine refresh jitter does not cause avoidable outages.
