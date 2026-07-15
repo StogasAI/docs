@@ -48,8 +48,6 @@ async function main() {
 								root: true,
 								pages: [
 									'index',
-									'---Health---',
-									'...health',
 									'---Catalog---',
 									'...catalog',
 									'---Models---',
@@ -68,13 +66,6 @@ async function main() {
 						if (content.title === 'Open A I compatible') {
 							content.title = 'Models';
 							content.description = 'Model inference endpoints.';
-						}
-						if (file.path === path.join('health', 'meta.json')) {
-							content.description = 'Operational readiness endpoints.';
-						}
-						if (file.path === path.join('health', 'meta.json')) {
-							content.title = 'Health';
-							content.description = 'Operational readiness endpoints.';
 						}
 						if (file.path === path.join('openai-compatible', 'meta.json')) {
 							content.title = 'Models';
@@ -99,18 +90,6 @@ async function main() {
 					// Ensure full: true is in frontmatter
 					if (!file.content.includes('full: true')) {
 						file.content = file.content.replace('---', '---\nfull: true');
-					}
-					if (file.path === path.join('health', 'getHealth.mdx')) {
-						file.content = file.content
-							.replace('title: Health Check', 'title: Check gateway health')
-							.replace(
-								'description: Returns a minimal health response.',
-								'description: Returns a minimal health response when the gateway process is alive.'
-							)
-							.replace(
-								'- content: Returns a minimal health response.',
-								'- content: Returns a minimal health response when the gateway process is alive.'
-							);
 					}
 					file.content = file.content
 						.replace(

@@ -20,10 +20,6 @@
 	],
 	"tags": [
 		{
-			"name": "Health",
-			"description": "Operational readiness."
-		},
-		{
 			"name": "Catalog",
 			"description": "Public model and routing discovery."
 		},
@@ -50,38 +46,6 @@
 		}
 	],
 	"paths": {
-		"/health": {
-			"get": {
-				"operationId": "getHealth",
-				"tags": ["Health"],
-				"summary": "Health Check",
-				"description": "Returns a minimal health response.",
-				"security": [],
-				"responses": {
-					"200": {
-						"description": "Gateway is reachable.",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/HealthResponse"
-								},
-								"examples": {
-									"ok": {
-										"value": {
-											"ok": true,
-											"catalogVersion": "stogas.gateway.catalog.v1"
-										}
-									}
-								}
-							}
-						}
-					},
-					"500": {
-						"$ref": "#/components/responses/InternalError"
-					}
-				}
-			}
-		},
 		"/v1/catalog": {
 			"get": {
 				"operationId": "getCatalog",
@@ -606,19 +570,6 @@
 								"type": "string"
 							}
 						}
-					}
-				}
-			},
-			"HealthResponse": {
-				"type": "object",
-				"required": ["ok", "catalogVersion"],
-				"properties": {
-					"ok": {
-						"type": "boolean"
-					},
-					"catalogVersion": {
-						"type": "string",
-						"example": "stogas.gateway.catalog.v1"
 					}
 				}
 			},

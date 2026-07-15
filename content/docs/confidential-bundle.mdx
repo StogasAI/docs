@@ -7,30 +7,29 @@ The confidential bundle is the public trust set for gateway nodes. Clients poll 
 
 ## Files
 
-Control publishes three object types:
+Control publishes two object types:
 
-| Object           | Purpose                                                                       |
-| ---------------- | ----------------------------------------------------------------------------- |
-| Immutable bundle | Versioned evidence file, such as `bundles/v/42/bundle.json`.                  |
-| Latest bundle    | Stable full bundle copy at `bundles/latest.json` for efficient CDN serving.   |
-| Latest pointer   | Signed pointer at `bundles/latest.pointer.json` to one immutable bundle hash. |
+| Object           | Purpose                                                                     |
+| ---------------- | --------------------------------------------------------------------------- |
+| Immutable bundle | Versioned evidence file, such as `bundles/v/42/bundle.json`.                |
+| Latest bundle    | Stable full bundle copy at `bundles/latest.json` for efficient CDN serving. |
 
-The latest bundle is copied from the immutable object after readback verification. The pointer lets clients additionally prove which immutable key and checksum the latest publication resolved to.
+Control uploads and verifies the immutable object before conditionally replacing `bundles/latest.json` with the same signed envelope. An older publisher cannot regress the latest sequence.
 
 ## Bundle Body
 
 Each bundle contains:
 
 - schema, sequence, creation time, expiry time, and TTL
-- the active and rollback IGVM/release slots from Control policy, including launch measurement, IGVM SHA-256, launch policy values, Stogas signature, and GitHub in-toto evidence
+- the active and rollback IGVM/release slots from Control policy, including descriptive release metadata, launch measurement, IGVM SHA-256, launch policy values, Stogas signature, and GitHub in-toto evidence
 - one entry per currently trusted gateway node
-- AMD/Intel verifier evidence and active vendor collateral when available
+- AMD verifier evidence and exact chip/TCB collateral when available
 - Control body checksum and signature
 
 Node entries bind:
 
 - node ID derived from the in-guest boot identity
-- chip ID policy evidence
+- chip ID and exact reported TCB policy evidence
 - TLS public key hash
 - accepted certificate hash slot or slots
 - HPKE public key
@@ -42,7 +41,7 @@ The report-data values are the public preimage for the SEV-SNP `REPORT_DATA` has
 
 Vendor collateral entries expose active KDS/verifier material by type, chip scope, source URL, fetch time, SHA-256, and payload. Clients that verify raw quotes can use the bundled collateral or fetch vendor collateral independently.
 
-The release stack has at most two slots. It is the active/rollback policy, not just a summary of the currently live nodes. Control refuses to publish a node whose quoted release measurement is outside this stack.
+The release stack has at most two slots. It is the active/rollback policy, not just a summary of the currently live nodes. Control refuses to publish a node whose quoted release measurement is outside this stack. `launch_policy.vcpu_count` describes the number of measured virtual-processor states in the IGVM; it does not prove host CPU placement. Memory size and socket/core/thread topology are infrastructure configuration and are intentionally absent from attestation evidence.
 
 The high-level shape is:
 
@@ -52,64 +51,48 @@ The high-level shape is:
 		"schema": "stogas.confidential-bundle.v1",
 		"sequence": 42,
 		"created_at": "2026-07-06T12:00:00.000Z",
-		"expires_at": "2026-07-06T12:10:00.000Z",
+		"expires_at": "2026-07-06T12:20:00.000Z",
+		"ttl_ms": 1200000,
 		"allowed_igvms": [
 			{
-				"measurement": "sha384...",
-				"igvm_sha256": "sha256...",
-				"launch": {
-					"policy": "0x0000000000030000",
-					"host_data": "0000...",
-					"vmpl": 0,
-					"family_id": "0000...",
-					"image_id": "0000...",
-					"id_key_digest": "0000...",
-					"author_key_digest": "0000..."
+				"launch_policy": {
+					"schema": "stogas.gateway.launch-policy.v1",
+					"sequence": 42,
+					"igvm_sha256": "sha256...",
+					"measurement": "sha384...",
+					"name": "relay-4c",
+					"release_tag": "vX.Y.Z",
+					"source": {
+						"repository": "https://github.com/StogasAI/gateway",
+						"commit": "git-sha...",
+						"tree": "git-tree..."
+					},
+					"vcpu_count": 4,
+					"launch": {
+						"policy": "0x0000000000030000",
+						"host_data": "0000...",
+						"vmpl": 0,
+						"family_id": "0000...",
+						"image_id": "0000...",
+						"id_key_digest": "0000...",
+						"author_key_digest": "0000..."
+					}
 				},
 				"github_in_toto": [],
 				"stogas_signature": {
 					"schema": "stogas.gateway.signature.v1",
 					"algorithm": "Ed25519",
 					"key_id": "stogas-release-key...",
-					"signed": "stogas-release-claim.json",
-					"signature": "base64url...",
-					"claim": {
-						"schema": "stogas.gateway.release-claim.v1",
-						"sequence": 42,
-						"manifestSha256": "sha256...",
-						"launchPolicySha256": "sha256...",
-						"artifacts": {
-							"gateway.igvm": { "sha256": "sha256...", "sizeBytes": 20300000 },
-							"gateway-launch-policy.json": { "sha256": "sha256...", "sizeBytes": 1000 }
-						},
-						"git": {
-							"repository": "StogasAI/gateway",
-							"tag": "vX.Y.Z",
-							"commit": "git-sha..."
-						},
-						"launchPolicy": {
-							"schema": "stogas.gateway.launch-policy.v1",
-							"sequence": 42,
-							"igvm_sha256": "sha256...",
-							"measurement": "sha384...",
-							"launch": {
-								"policy": "0x0000000000030000",
-								"host_data": "0000...",
-								"vmpl": 0,
-								"family_id": "0000...",
-								"image_id": "0000...",
-								"id_key_digest": "0000...",
-								"author_key_digest": "0000..."
-							}
-						},
-						"sevSnp": { "launchMeasurement": "sha384..." }
-					}
+					"signed": "gateway-launch-policy.json",
+					"signature": "base64url..."
 				}
 			}
 		],
 		"nodes": [
 			{
 				"node_id": "node...",
+				"chip_id": "chip-id...",
+				"reported_tcb": "reported-tcb...",
 				"release_measurement": "sha384...",
 				"quote": "base64url...",
 				"report_data_sha512": "sha512...",
@@ -153,4 +136,4 @@ After clients have had time to refresh the bundle, the node switches to the rene
 
 Gateway quotes refresh every 10 seconds. Each quote refresh attempts a verified drand Quicknet fetch with a 4-second total budget and 2-second per-relay request deadlines. Nodes heartbeat every 60 seconds. Control checks the bundle every 3 minutes and republishes when evidence changes, collateral changes, the refresh interval elapses, or the latest bundle approaches expiry.
 
-Clients should poll every 5 minutes. Bundle validity is 10 minutes so routine refresh jitter does not cause avoidable outages.
+Clients should poll every 5 minutes. Bundle and client quote validity are 20 minutes. Control omits nodes after 16 minutes without a forward-safe quote or heartbeat, leaving 4 minutes of forward validity. A newly represented node waits 6 minutes for client/CDN propagation before Control grants a 10-minute traffic-admission lease.
