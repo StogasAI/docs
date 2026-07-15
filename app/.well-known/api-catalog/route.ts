@@ -27,12 +27,6 @@ export function GET() {
 						href: 'https://stogas.ai/llms.txt',
 						type: 'text/plain'
 					}
-				],
-				status: [
-					{
-						href: 'https://api.stogas.ai/health',
-						type: 'application/json'
-					}
 				]
 			}
 		]

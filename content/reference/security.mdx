@@ -15,7 +15,7 @@ Content-Type: application/json
 The catalog also defines `api-key`, `x-api-key`, and `x-goog-api-key` as authentication aliases.
 The gateway canonicalizes these aliases to `Authorization: Bearer <stogas_api_key>` internally. Query parameters and cookies are not supported for API key authentication.
 
-The `/health` endpoint is unauthenticated. The gateway generates a UUIDv7 per request for internal tracking and auditing.
+`/v1/catalog` and `/v1/models` are unauthenticated. The gateway generates its own UUIDv7 for each inference request; client request-ID headers are accepted as ignored SDK metadata, not trusted as gateway identity.
 
 ## Request Limits
 
@@ -60,8 +60,9 @@ The gateway does not use cookies for public API authentication, making it safe t
 
 ## Header Policy
 
-- Inbound client headers are preserved internally for policy decisions.
+- Common SDK/tracing compatibility headers are accepted and ignored; they are not copied into provider context.
 - Catalog authentication aliases (`api-key`, `x-api-key`, and `x-goog-api-key`) are accepted only as aliases for the canonical authorization header.
+- Client-supplied `x-bf-*` and private `x-stogas-*` control headers are rejected before billing.
 - Arbitrary headers are **not** forwarded upstream to providers.
 - Provider response headers are **not** exposed unless the gateway diagnostic allowlist permits specific safe headers.
 - Internal gateway metadata is omitted from default responses.

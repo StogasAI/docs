@@ -25,7 +25,7 @@ Clients and auditors accept a release only when two independent parties bind the
 <Cards>
 	<Card
 		title="Stogas rebuild"
-		description="A Stogas operator rebuilds the public source locally, compares the IGVM bytes, and signs the release claim."
+		description="A Stogas operator rebuilds the public source locally, compares the IGVM bytes, and signs the canonical launch policy."
 	/>
 	<Card
 		title="GitHub Actions rebuild"
@@ -55,14 +55,14 @@ The public GitHub release contains only the files needed for normal client/audit
 | File                         | Role                                                                                         |
 | ---------------------------- | -------------------------------------------------------------------------------------------- |
 | `gateway.igvm`               | Hardware-measurable confidential VM launch artifact.                                         |
-| `gateway-launch-policy.json` | Deterministic claim file binding IGVM SHA-256, launch measurement, and launch policy values. |
+| `gateway-launch-policy.json` | Canonical signed payload binding source, IGVM SHA-256, launch measurement, and launch policy. |
 | `launch-measurement.txt`     | Expected SEV-SNP launch measurement.                                                         |
 | `release-manifest.json`      | Deterministic manifest binding source, build pins, artifact hashes, and launch measurement.  |
 | `SHA256SUMS`                 | Hashes for the top-level release files.                                                      |
 | `github-attestation.jsonl`   | Official GitHub artifact attestation for `gateway.igvm` and `gateway-launch-policy.json`.    |
 | `gateway-evidence.tar.zst`   | Advanced audit evidence: UKI, init, kernel, initramfs, pins, Guix, measurement, and hashes.  |
 
-Stogas operator-side signing material is not uploaded as extra GitHub release assets. The Stogas release claim is generated from the verified release payload, signed by the Stogas release key, and then added to Control inside the `stogas_signature` field on the matching `allowed_igvms[]` bundle slot. That object carries both the signature metadata and the signed claim so clients do not need another Stogas-hosted file to check the Stogas side.
+Stogas operator-side signing material is not uploaded as extra GitHub release assets. After reproducing the release, the operator signs the exact canonical `gateway-launch-policy.json` bytes. Control stores that detached signature in `stogas_signature` beside the matching `launch_policy` and GitHub attestation in one `allowed_igvms[]` slot.
 
 ## Verification Flow
 
@@ -89,17 +89,17 @@ The attestation must prove that GitHub Actions built the canonical `StogasAI/gat
 
 ### Verify The Stogas Signature
 
-For each `allowed_igvms[]` slot in the confidential bundle, verify the Stogas signature material against the hard-coded Stogas trust root. The signed Stogas claim must bind the same `release-manifest.json` hash, `gateway-launch-policy.json` hash, `gateway.igvm` hash, repository, commit, tag, launch measurement, and launch policy values.
+For each `allowed_igvms[]` slot in the confidential bundle, verify `stogas_signature` against the hard-coded Stogas release public key. The signature must name `gateway-launch-policy.json`, and its canonical payload must equal the adjacent `launch_policy`. That policy binds the repository, commit, tree, tag, IGVM hash, launch measurement, launch values, release name, sequence, and measured vCPU count.
 
-JavaScript clients can use `verifyStogasTrustBundle` and `verifyStogasReleaseSignature` from `@stogas/shared/security/gh-provenance-verification` for the Stogas side, then compare the verified claim fields with the same `allowed_igvms[]` slot.
+JavaScript clients can use `verifyStogasReleaseSignature` from `@stogas/shared/security/gh-provenance-verification` for the Stogas side. The verifier uses the built-in release root and canonicalizes the supplied launch policy before checking the detached Ed25519 signature.
 
 When auditing an operator-side release directory, the Stogas signature payload is:
 
 ```text
-stogas gateway release claim v1\n<stogas-release-claim.json>
+stogas gateway launch policy v1\n<canonical gateway-launch-policy.json>
 ```
 
-Those operator-side claim/signature files are inputs to Control policy, not additional GitHub release files.
+The operator-side signature object is an input to Control policy, not an additional GitHub release file.
 
 </Step>
 <Step>

@@ -19,7 +19,7 @@ For each `allowed_igvms[]` slot, verify the GitHub Actions provenance and the St
 
 ### Verify The Latest Bundle
 
-Fetch `bundles/latest.json`, check the bundle body hash, and verify the Control signature. For immutable-key confirmation, also verify `bundles/latest.pointer.json` and ensure it resolves to the same body checksum.
+Fetch `bundles/latest.json`, check the bundle body hash, verify the Control signature, and reject sequence regressions. The same envelope is retained under its immutable sequence key for audit and cache-safe retrieval.
 
 </Step>
 <Step>
@@ -64,20 +64,22 @@ Current public values:
 | Value                         | Window     |
 | ----------------------------- | ---------- |
 | Recommended bundle polling    | 5 minutes  |
-| Bundle validity               | 10 minutes |
+| Bundle validity               | 20 minutes |
 | Client quote freshness window | 20 minutes |
-| Bundle omission quote age     | 12 minutes |
-| Required forward validity     | 8 minutes  |
+| Bundle omission/death age     | 16 minutes |
+| Required forward validity     | 4 minutes  |
+| New-node activation delay     | 6 minutes  |
+| Control admission lease       | 10 minutes |
 
 Control verifies the drand Quicknet BLS signature on each heartbeat and rejects replayed rounds. Quicknet emits one round every 3 seconds; Control accepts at most 400 past rounds and 1 future round when comparing a heartbeat's beacon to the current Quicknet round. Clients doing raw quote verification should pin the Quicknet group key, verify the beacon signature, and apply an equal or stricter round window.
 
-Caching successful verification results by bundle sequence and IGVM hash is safe. Re-verify when the latest bundle or latest pointer sequence changes.
+Caching successful verification results by bundle sequence and IGVM hash is safe. Re-verify when the latest bundle sequence changes.
 
 ## Implementation Notes
 
-The bundle signature covers the deterministic JSON bytes of the `body` object. The latest-pointer signature covers the deterministic JSON bytes of its `body` object. Clients should either use the official Stogas contract verifier or preserve the exact object field order shown in the bundle schema when recomputing those bytes.
+The bundle signature covers the deterministic JSON bytes of the `body` object. Clients should either use the official Stogas contract verifier or preserve the exact object field order shown in the bundle schema when recomputing those bytes.
 
-The shared bundle verifier checks the Control signature, latest pointer, bundle shape, `quote_verified_at` freshness policy, node membership policy, report-data hash parity, certificate expiry, trusted chip IDs, and trusted release measurements. It does not replace GitHub/Stogas release provenance verification for `allowed_igvms[]` or raw drand BLS verification; do those once per IGVM hash or node quote path and cache the result.
+The shared bundle verifier checks the Control signature, bundle shape, `quote_verified_at` freshness policy, node membership policy, report-data hash parity, certificate expiry, trusted chip/TCB pairs, and trusted release measurements. It does not replace GitHub/Stogas release provenance verification for `allowed_igvms[]` or raw drand BLS verification; do those once per IGVM hash or node quote path and cache the result.
 
 ### TypeScript
 
@@ -85,12 +87,11 @@ Use the shared verifier when running in a JavaScript runtime:
 
 ```ts
 import {
-	verifyLatestConfidentialBundleForClient
+	verifyConfidentialBundleForClient
 } from '@stogas/contracts/confidential';
 
-const result = await verifyLatestConfidentialBundleForClient({
+const result = await verifyConfidentialBundleForClient({
 	bundle,
-	pointer: latest,
 	policy,
 	signer
 });
