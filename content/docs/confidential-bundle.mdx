@@ -3,7 +3,7 @@ title: Confidential Bundle
 description: How the signed Stogas confidential gateway evidence bundle is structured.
 ---
 
-The confidential bundle is the public trust set for gateway nodes. Clients poll it periodically, verify its signatures and evidence, then accept only nodes whose TLS keys, certificate hashes, report data, and quotes appear in the verified bundle.
+The confidential bundle is the public trust set for gateway nodes. Clients verify it, begin fetching a replacement 60 to 75 seconds before its signed expiry, and keep using the current bundle until a newer one verifies. They accept only nodes whose TLS keys, certificate hashes, report data, and quotes appear in the verified bundle.
 
 ## Files
 
@@ -51,8 +51,8 @@ The high-level shape is:
 		"schema": "stogas.confidential-bundle.v1",
 		"sequence": 42,
 		"created_at": "2026-07-06T12:00:00.000Z",
-		"expires_at": "2026-07-06T12:20:00.000Z",
-		"ttl_ms": 1200000,
+		"expires_at": "2026-07-06T12:10:00.000Z",
+		"ttl_ms": 600000,
 		"allowed_igvms": [
 			{
 				"launch_policy": {
@@ -130,10 +130,10 @@ Most nodes have one accepted certificate hash. During ACME renewal a node tempor
 | Active | Certificate currently served by the gateway.   |
 | Next   | Renewed certificate allowed before switchover. |
 
-After clients have had time to refresh the bundle, the node switches to the renewed certificate and the old hash is pruned.
+Control begins renewal 30 days before expiry. The node switches only after every still-valid bundle containing it accepts the new hash. The old hash is pruned after the replacement is active and every still-valid bundle can authenticate it. The 48-hour window is an emergency readiness cutoff, not the normal renewal start.
 
 ## Refresh Policy
 
 Gateway quotes refresh every 10 seconds. Each quote refresh attempts a verified drand Quicknet fetch with a 4-second total budget and 2-second per-relay request deadlines. Nodes heartbeat every 60 seconds. Control checks the bundle every 3 minutes and republishes when evidence changes, collateral changes, the refresh interval elapses, or the latest bundle approaches expiry.
 
-Clients should poll every 5 minutes. Bundle and client quote validity are 20 minutes. Control omits nodes after 16 minutes without a forward-safe quote or heartbeat, leaving 4 minutes of forward validity. A newly represented node waits 6 minutes for client/CDN propagation before Control grants a 10-minute traffic-admission lease.
+Clients use signed `expires_at` as the deadline, start fetching a replacement 60 to 75 seconds beforehand, and fail closed at expiry if no replacement can be verified. This is deadline-driven and does not require fixed polling. Bundle validity is at most 10 minutes and is shortened to the earliest included identity, certificate, or AMD evidence deadline. A verified generation remains publishable through transient heartbeat loss for up to 24 hours and is omitted once less than 5 minutes of that identity window remains. Control does not use guest heartbeat health as a load-balancing signal. A new node receives a traffic-admission lease only after it is fully provisioned, appears in the latest bundle, and every older unexpired bundle that excludes it has expired.

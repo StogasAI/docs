@@ -57,96 +57,42 @@ Bundled collateral cannot make a forged quote valid. Bad collateral can only mak
 
 ## Freshness
 
-The bundle is designed for clients polling every 5 minutes. A node quote must have enough forward validity when published so clients do not learn about a node that will immediately fail local freshness checks.
+The bundle gives clients an exact signed refresh deadline through `expires_at`. Clients start fetching a replacement 60 to 75 seconds beforehand while retaining the current verified bundle. A node quote must have enough forward validity when published, and the bundle cannot outlive any included identity, certificate, or AMD evidence.
 
 Current public values:
 
-| Value                         | Window     |
-| ----------------------------- | ---------- |
-| Recommended bundle polling    | 5 minutes  |
-| Bundle validity               | 20 minutes |
-| Client quote freshness window | 20 minutes |
-| Bundle omission/death age     | 16 minutes |
-| Required forward validity     | 4 minutes  |
-| New-node activation delay     | 6 minutes  |
-| Control admission lease       | 10 minutes |
+| Value                       | Window                               |
+| --------------------------- | ------------------------------------ |
+| Client replacement fetch    | 60–75 seconds before `expires_at`    |
+| Maximum bundle validity     | 10 minutes                           |
+| Verified identity window    | 24 hours                             |
+| Bundle omission age         | 23 hours 55 minutes                  |
+| Generation database removal | 24 hours                             |
+| Required forward validity   | 5 minutes                            |
+| New-node activation         | After older excluding bundles expire |
+| Control admission lease     | 10 minutes                           |
 
-Control verifies the drand Quicknet BLS signature on each heartbeat and rejects replayed rounds. Quicknet emits one round every 3 seconds; Control accepts at most 400 past rounds and 1 future round when comparing a heartbeat's beacon to the current Quicknet round. Clients doing raw quote verification should pin the Quicknet group key, verify the beacon signature, and apply an equal or stricter round window.
+Control verifies the drand Quicknet BLS signature on each heartbeat and rejects older replayed rounds. Quicknet emits one round every 3 seconds; Control accepts at most 200 past rounds and 1 future round when receiving a heartbeat. A byte-for-byte heartbeat retry is idempotent and cannot advance its stored heartbeat or quote-verification times. Clients doing raw quote verification should pin the Quicknet group key, verify the beacon signature, and verify that the beacon was no more than 10 minutes old when Control's signed `quote_verified_at` was recorded. The generation may then remain authorized for at most 24 hours; drand establishes attestation time, not current load-balancer health.
 
-Caching successful verification results by bundle sequence and IGVM hash is safe. Re-verify when the latest bundle sequence changes.
+Caching successful verification results by bundle sequence and IGVM hash is safe. Fetch and verify a replacement 60 to 75 seconds before `expires_at`; do not continue with an expired bundle. A TLS pin mismatch may trigger an earlier refresh.
 
 ## Implementation Notes
 
-The bundle signature covers the deterministic JSON bytes of the `body` object. Clients should either use the official Stogas contract verifier or preserve the exact object field order shown in the bundle schema when recomputing those bytes.
+The bundle signature covers the deterministic JSON bytes of the `body` object. Use the official `stogas-verifier` packages or `stogas-verify` CLI rather than assembling these checks independently. One offline verification pass checks the fleet signature, GitHub/Sigstore and Stogas release authorization, AMD certificates and revocation data, SNP reports, REPORT_DATA, drand, certificate deadlines, and rollback state before returning any trusted node.
 
-The shared bundle verifier checks the Control signature, bundle shape, `quote_verified_at` freshness policy, node membership policy, report-data hash parity, certificate expiry, trusted chip/TCB pairs, and trusted release measurements. It does not replace GitHub/Stogas release provenance verification for `allowed_igvms[]` or raw drand BLS verification; do those once per IGVM hash or node quote path and cache the result.
-
-### TypeScript
-
-Use the shared verifier when running in a JavaScript runtime:
-
-```ts
-import {
-	verifyConfidentialBundleForClient
-} from '@stogas/contracts/confidential';
-
-const result = await verifyConfidentialBundleForClient({
-	bundle,
-	policy,
-	signer
-});
-
-if (!result.ok) throw new Error(result.reason);
-
-for (const node of result.bundle.body.nodes) {
-	// Add node.report_data.tls_spki_sha256, accepted cert hashes,
-	// hpke_public_key, and ed25519_public_key to the local trust set.
-}
-```
-
-### Go
-
-In Go, avoid marshaling arbitrary maps for the signed payload because key ordering may differ from the bundle canonical bytes. Extract the raw `body` object bytes from the immutable bundle response, hash those bytes, and verify the Ed25519 signature over those same bytes.
-
-```go
-body := extractTopLevelRawObject(bundleBytes, "body")
-sum := sha256.Sum256(body)
-if hex.EncodeToString(sum[:]) != envelope.BodySHA256 {
-	return errors.New("bundle body checksum mismatch")
-}
-if !ed25519.Verify(stogasPublicKey, body, signatureBytes) {
-	return errors.New("bundle signature failed")
-}
-```
-
-After the signature passes, decode the body and verify each node's verifier JWT or raw SNP quote. The quote result must recover the same `report_data_sha512` stated in the node entry.
-
-### Python
-
-In Python, keep the decoded object order when recomputing deterministic JSON. Do not sort keys; the Stogas schema order is the signed order.
-
-```py
-payload = json.dumps(bundle["body"], separators=(",", ":"), ensure_ascii=False).encode()
-if hashlib.sha256(payload).hexdigest() != bundle["body_sha256"]:
-    raise ValueError("bundle body checksum mismatch")
-
-padding = "=" * (-len(signature) % 4)
-verify_key.verify(payload, base64.urlsafe_b64decode(signature + padding))
-```
-
-Then verify node evidence, recompute `report_data_sha512`, check the node measurement and launch policy values match one of the trusted IGVM slots, and, for raw quote verification, check the drand round and BLS signature against the pinned Quicknet parameters.
+The TypeScript contracts package contains only schemas and canonical encoding helpers. It is not a client verifier and must not be used to establish a trust set.
 
 ## Response Proofs
 
 For non-streaming responses, the proof is returned in headers:
 
-| Header                                 | Meaning                                                    |
-| -------------------------------------- | ---------------------------------------------------------- |
-| `X-Stogas-Quote`                       | Current quote as base64url.                                |
-| `X-Stogas-Report-Data`                 | Canonical report-data JSON as base64url.                   |
-| `X-Stogas-Resolved-Catalog-Node-Ids`   | Plaintext resolved catalog node IDs, comma-separated.      |
-| `X-Stogas-Processed-Hash`              | Hash over processed request, response, and catalog IDs.    |
-| `X-Stogas-Processed-Signature`         | Ed25519 signature by the report-data `ed25519_public_key`. |
+| Header                               | Meaning                                                    |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `X-Stogas-Quote`                     | Current quote as base64url.                                |
+| `X-Stogas-Report-Data`               | Canonical report-data JSON as base64url.                   |
+| `X-Stogas-Resolved-Catalog-Node-Ids` | Plaintext resolved catalog node IDs, comma-separated.      |
+| `X-Stogas-Processed-Hash`            | Hash over processed request, response, and catalog IDs.    |
+| `X-Stogas-Processed-Signature`       | Ed25519 signature by the report-data `ed25519_public_key`. |
 
 Verify the gateway Ed25519 signature over the processed hash, then verify the attached quote/report data to prove that signing key belongs to an accepted measured node.
 
