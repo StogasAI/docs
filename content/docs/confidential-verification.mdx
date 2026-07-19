@@ -7,18 +7,21 @@ The verifier checks the gateway release, AMD SEV-SNP evidence, node keys, certif
 
 ## Pick an integration
 
-| Use case | Recommended option |
-| --- | --- |
-| Use any OpenAI-compatible app with automatic verification | `stogas-verify serve` |
-| Inspect a downloaded bundle or verify in CI | `stogas-verify verify` |
-| Manage a trust set inside your application | Rust, JavaScript, Python, Go, or C SDK |
-| Verify only GitHub/Sigstore evidence | `stogas-offline-sigstore` |
+| Use case                                                  | Recommended option                                       |
+| --------------------------------------------------------- | -------------------------------------------------------- |
+| Use any OpenAI-compatible app with automatic verification | `stogas-verify serve`                                    |
+| Inspect a downloaded bundle or verify in CI               | `stogas-verify verify`                                   |
+| Manage a trust set inside your application                | Rust, JavaScript, Python, Go, or C SDK                   |
+| Call the native verifier from another language            | [C ABI integrations](/docs/verifier-native-integrations) |
+| Verify only GitHub/Sigstore evidence                      | `stogas-offline-sigstore`                                |
 
 The native CLI is for existing tools and shell workflows. SDKs are for applications that already own bundle retrieval and connection handling; every SDK uses the same Rust verification core.
 
 ## Verified local endpoint
 
 `serve` maintains a verified bundle and exposes a loopback OpenAI-compatible endpoint:
+
+Download the archive for your operating system from [GitHub Releases](https://github.com/StogasAI/verifier/releases), verify it against the published `SHA256SUMS`, and place `stogas-verify` on your `PATH`.
 
 ```console
 stogas-verify serve
@@ -43,23 +46,29 @@ stogas-verify verify bundle.json
 
 ## JavaScript, Node, and Bun
 
+```console
+npm install @stogas/verifier
+```
+
 ```js
 import { Verifier } from '@stogas/verifier';
 
 const response = await fetch('https://evidence.stogas.ai/bundles/latest.json');
 const verifier = new Verifier();
-const result = verifier.verify_bundle(
-  new Uint8Array(await response.arrayBuffer()),
-);
+const result = verifier.verify_bundle(new Uint8Array(await response.arrayBuffer()));
 
 console.log(result.bundle.nodes);
 ```
 
-Browsers use `@stogas/verifier/browser` and call its default WebAssembly initializer once. Browser code can verify evidence, but browser networking APIs do not expose the peer certificate needed for TLS pinning.
+Browsers use `@stogas/verifier/browser` and call its default WebAssembly initializer once. Cloudflare Workers and other Worker runtimes use `@stogas/verifier/worker`. Browser code can verify evidence, but browser networking APIs do not expose the peer certificate needed for TLS pinning.
 
 ## Python
 
 Python uses a native PyO3 stable-ABI extension:
+
+```console
+pip install stogas-verifier
+```
 
 ```python
 import json
@@ -71,6 +80,10 @@ print(result["bundle"]["nodes"])
 
 ## Go
 
+```console
+go get github.com/StogasAI/verifier/go
+```
+
 ```go
 v, err := verifier.New()
 if err != nil { return err }
@@ -79,7 +92,21 @@ defer v.Close()
 verifiedJSON, err := v.VerifyBundle(bundleBytes)
 ```
 
-The Go package is a thin cgo binding to the same Rust implementation. Rust applications use the `stogas-verifier` crate directly; other native environments can use the bounded C ABI.
+The Go package is a thin cgo binding to the same Rust implementation.
+
+## Rust
+
+```console
+cargo add stogas-verifier
+```
+
+Rust applications use the crate directly. Other native environments can use the bounded C ABI.
+
+## Java, .NET, Swift, Kotlin, and other native languages
+
+Release archives include a C header and native library. Java 22+, C# and F#, Swift, Kotlin/Native, C++, Dart, Ruby, and other runtimes with C interoperability can call that same bounded ABI without another verifier implementation.
+
+See [C ABI integrations](/docs/verifier-native-integrations) for the supported binary targets, ownership rules, and the appropriate bridge for each language. These are self-managed native integrations; Rust, JavaScript, Python, and Go remain the first-class packaged SDKs.
 
 ## What the SDK returns
 

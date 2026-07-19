@@ -1,0 +1,73 @@
+---
+title: Native Verifier Integrations
+description: Call the Stogas verifier from JVM, .NET, Apple, mobile, and other native environments.
+---
+
+Stogas release archives contain the bounded `stogas_verifier.h` C interface and native libraries for:
+
+- Linux x86-64 and ARM64;
+- macOS x86-64 and ARM64;
+- Windows x86-64.
+
+Use a first-class Stogas package when one exists. The C ABI is the escape hatch for other native runtimes; it does not require a second implementation of verification policy.
+
+## Choose a bridge
+
+| Environment                             | Recommended integration                                             |
+| --------------------------------------- | ------------------------------------------------------------------- |
+| Java 22+, Scala, Clojure, or Kotlin/JVM | Java Foreign Function & Memory API                                  |
+| Older JVM applications                  | JNA or a small JNI adapter                                          |
+| C# or F#                                | .NET `LibraryImport` or `DllImport` / P/Invoke                      |
+| Swift or Objective-C                    | Native C interoperability with a module map or bridging header      |
+| Kotlin/Native                           | `cinterop` generated from `stogas_verifier.h`                       |
+| C or C++                                | Include `stogas_verifier.h`; it already provides C++ linkage guards |
+| Zig                                     | `@cImport`                                                          |
+| Dart or Flutter                         | `dart:ffi`                                                          |
+| Ruby                                    | `Fiddle` or the `ffi` gem                                           |
+| PHP                                     | PHP FFI where enabled                                               |
+| Julia                                   | `ccall`                                                             |
+| Haskell                                 | The standard Haskell FFI                                            |
+| OCaml                                   | `ctypes`                                                            |
+| LuaJIT                                  | LuaJIT FFI                                                          |
+| Elixir or Erlang                        | A supervised Port or carefully isolated NIF                         |
+
+JavaScript, browser, Worker, Node, and Bun applications should use `@stogas/verifier` instead of native FFI. Python should use the PyO3 wheel, Go should use the supplied cgo package, and Rust should use the crate directly.
+
+## ABI contract
+
+The interface is intentionally small:
+
+```c
+uint32_t stogas_verifier_abi_version(void);
+StogasVerifier *stogas_verifier_new(int64_t max_node_age_ms);
+char *stogas_verifier_verify_bundle(
+    const StogasVerifier *verifier,
+    const uint8_t *bundle,
+    size_t bundle_len,
+    int64_t now_unix_ms
+);
+void stogas_verifier_string_free(char *value);
+void stogas_verifier_free(StogasVerifier *verifier);
+```
+
+`max_node_age_ms` must be between 60,000 and 180,000 milliseconds. Capture the platform wall clock once immediately before verification and pass Unix time in milliseconds as `now_unix_ms`.
+
+Each verification returns an owned, NUL-terminated JSON envelope:
+
+```json
+{ "ok": true, "value": {} }
+```
+
+or:
+
+```json
+{ "ok": false, "error": "verification failed" }
+```
+
+Always release a non-null result with `stogas_verifier_string_free`, and release the verifier with `stogas_verifier_free`. Do not free a verifier while another thread is using it. Check `stogas_verifier_abi_version()` before loading a library version your integration has not tested.
+
+## What Stogas tests
+
+The release workflow tests the C boundary directly and uses the same library through the official Go package. Every native archive is built on its target operating system and published with checksums and a GitHub artifact attestation.
+
+Language-specific glue written outside the Stogas repository remains the integrator's responsibility. Treat native-library loading, search paths, process architecture, allocator ownership, and thread use as part of that integration's security boundary.
