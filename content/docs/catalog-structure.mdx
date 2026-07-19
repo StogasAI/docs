@@ -116,12 +116,17 @@ Pricing stays on the node that owns it. Provider-wide prices belong to `graph.pr
 		},
 		"output_tokens": {
 			"per_mill_tokens": "30000000000000000000"
+		},
+		"reasoning_tokens": {
+			"per_mill_tokens": "30000000000000000000"
 		}
 	}
 }
 ```
 
-Amounts are integer USD atoms. The catalog stores rate facts only; billing algorithms, reserves, and settlement logic live in the gateway.
+Amounts are integer USD atoms. `reasoning_tokens` is a separate usage meter when a provider reports an authoritative reasoning breakdown. It inherits the `output_tokens` rate when omitted, so catalogs only need an explicit reasoning rate when it differs. The gateway partitions aggregate completion usage between reasoning and non-reasoning output; it never bills reasoning on top of the same aggregate tokens.
+
+The catalog stores rate facts only; billing algorithms, reserves, and settlement logic live in the gateway.
 
 ## Compiled Form
 
@@ -153,6 +158,6 @@ The public catalog output includes a catalog version so clients can detect the r
 
 <Callout type="info">
 	The catalog page in the app fetches the compiled catalog after the first paint. The HTML shell is
-	prerendered, but the catalog data is intentionally loaded separately so future large catalogs do
-	not bloat the initial page.
+	prerendered, while catalog data is loaded separately to keep the initial page small and cache the
+	shared catalog response independently.
 </Callout>
