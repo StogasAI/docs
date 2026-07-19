@@ -1,9 +1,9 @@
 ---
 title: Confidential Bundle
-description: How the signed Stogas confidential gateway evidence bundle is structured.
+description: How the Stogas confidential gateway evidence bundle is structured.
 ---
 
-The confidential bundle is the public trust set for gateway nodes. Clients verify it, begin fetching a replacement 60 to 75 seconds before its signed expiry, and keep using the current bundle until a newer one verifies. They accept only nodes whose TLS keys, certificate hashes, report data, and quotes appear in the verified bundle.
+The confidential bundle is the public evidence set for gateway nodes. Clients verify each release and node, derive a fresh local trust set, and refresh against the earlier bundle or node-freshness deadline. They accept only fresh nodes whose TLS keys, certificate hashes, report data, and quotes pass the complete verifier policy.
 
 ## Files
 
@@ -14,7 +14,7 @@ Control publishes two object types:
 | Immutable bundle | Versioned evidence file, such as `bundles/v/42/bundle.json`.                |
 | Latest bundle    | Stable full bundle copy at `bundles/latest.json` for efficient CDN serving. |
 
-Control uploads and verifies the immutable object before conditionally replacing `bundles/latest.json` with the same signed envelope. An older publisher cannot regress the latest sequence.
+Control uploads and checks the immutable object before conditionally replacing `bundles/latest.json` with the same checksummed envelope. An older publisher cannot regress the latest sequence.
 
 ## Bundle Body
 
@@ -24,7 +24,9 @@ Each bundle contains:
 - the active and rollback IGVM/release slots from Control policy, including descriptive release metadata, launch measurement, IGVM SHA-256, launch policy values, Stogas signature, and GitHub in-toto evidence
 - one entry per currently trusted gateway node
 - AMD verifier evidence and exact chip/TCB collateral when available
-- Control body checksum and signature
+- a body checksum for transport and storage integrity
+
+The bundle has no fleet signing key. Release authorization is verified through the Stogas release signature and GitHub provenance, while every node key is bound into its AMD-signed SNP report. The checksum is not an authority: changing or omitting evidence can only remove trust because unverifiable additions are rejected.
 
 Node entries bind:
 
@@ -52,7 +54,7 @@ The high-level shape is:
 		"sequence": 42,
 		"created_at": "2026-07-06T12:00:00.000Z",
 		"expires_at": "2026-07-06T12:10:00.000Z",
-		"ttl_ms": 600000,
+		"ttl_ms": 180000,
 		"allowed_igvms": [
 			{
 				"launch_policy": {
@@ -116,8 +118,7 @@ The high-level shape is:
 		],
 		"vendor_collateral": []
 	},
-	"body_sha256": "sha256...",
-	"signature": {}
+	"body_sha256": "sha256..."
 }
 ```
 
@@ -134,6 +135,6 @@ Control begins renewal 30 days before expiry. The node switches only after every
 
 ## Refresh Policy
 
-Gateway quotes refresh every 10 seconds. Each quote refresh attempts a verified drand Quicknet fetch with a 4-second total budget and 2-second per-relay request deadlines. Nodes heartbeat every 60 seconds. Control checks the bundle every 3 minutes and republishes when evidence changes, collateral changes, the refresh interval elapses, or the latest bundle approaches expiry.
+Gateway quotes refresh every 10 seconds. Each quote refresh attempts a verified drand Quicknet fetch with a 4-second total budget and 2-second per-relay request deadlines. Nodes heartbeat every 30 seconds. Control checks and publishes the bundle every minute, or sooner when an operator explicitly publishes after a change.
 
-Clients use signed `expires_at` as the deadline, start fetching a replacement 60 to 75 seconds beforehand, and fail closed at expiry if no replacement can be verified. This is deadline-driven and does not require fixed polling. Bundle validity is at most 10 minutes and is shortened to the earliest included identity, certificate, or AMD evidence deadline. A verified generation remains publishable through transient heartbeat loss for up to 24 hours and is omitted once less than 5 minutes of that identity window remains. Control does not use guest heartbeat health as a load-balancing signal. A new node receives a traffic-admission lease only after it is fully provisioned, appears in the latest bundle, and every older unexpired bundle that excludes it has expired.
+Clients refresh against the earlier of `expires_at` and the verifier's returned node-trust deadline. Official clients choose a random 30-to-60-second bundle lead or 15-to-30-second node lead and add the 10-second shared-cache allowance. Bundle validity is at most three minutes and is shortened to the earliest included certificate or AMD-evidence deadline. Node trust ends no later than three minutes after its verified drand round, never three minutes plus the bundle lifetime; callers may tighten that policy to one minute. A verified generation remains publishable through transient heartbeat loss for up to 24 hours, but clients exclude stale node evidence locally. Control does not use guest heartbeat health as a load-balancing signal. A new node receives a traffic-admission lease only after it is fully provisioned, appears in the latest bundle, and every older unexpired bundle that excludes it has expired.

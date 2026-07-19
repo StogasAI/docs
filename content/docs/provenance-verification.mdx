@@ -37,10 +37,10 @@ Clients and auditors accept a release only when two independent parties bind the
 
 Verifier implementations pin two roots:
 
-| Anchor                      | Purpose                                                                             |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| Stogas bootstrap public key | Verifies Stogas release-key material used for the allowed IGVM signature.           |
-| GitHub/Sigstore roots       | Verifies the official GitHub artifact attestation bundle for the public repository. |
+| Anchor                    | Purpose                                                                             |
+| ------------------------- | ----------------------------------------------------------------------------------- |
+| Stogas release public key | Directly verifies each canonical allowed-IGVM launch-policy signature.              |
+| GitHub/Sigstore roots     | Verifies the official GitHub artifact attestation bundle for the public repository. |
 
 The Stogas bootstrap public key is:
 
@@ -52,15 +52,17 @@ MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
 
 The public GitHub release contains only the files needed for normal client/auditor review:
 
-| File                         | Role                                                                                         |
-| ---------------------------- | -------------------------------------------------------------------------------------------- |
-| `gateway.igvm`               | Hardware-measurable confidential VM launch artifact.                                         |
+| File                         | Role                                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------------------- |
+| `LICENSE`                    | Canonical Apache-2.0 terms for the distributed gateway.                                       |
+| `NOTICE`                     | Stogas LLC and upstream Bifrost attribution.                                                  |
+| `gateway.igvm`               | Hardware-measurable confidential VM launch artifact.                                          |
 | `gateway-launch-policy.json` | Canonical signed payload binding source, IGVM SHA-256, launch measurement, and launch policy. |
-| `launch-measurement.txt`     | Expected SEV-SNP launch measurement.                                                         |
-| `release-manifest.json`      | Deterministic manifest binding source, build pins, artifact hashes, and launch measurement.  |
-| `SHA256SUMS`                 | Hashes for the top-level release files.                                                      |
-| `github-attestation.jsonl`   | Official GitHub artifact attestation for `gateway.igvm` and `gateway-launch-policy.json`.    |
-| `gateway-evidence.tar.zst`   | Advanced audit evidence: UKI, init, kernel, initramfs, pins, Guix, measurement, and hashes.  |
+| `launch-measurement.txt`     | Expected SEV-SNP launch measurement.                                                          |
+| `release-manifest.json`      | Deterministic manifest binding source, build pins, artifact hashes, and launch measurement.   |
+| `SHA256SUMS`                 | Hashes for the top-level release files.                                                       |
+| `github-attestation.jsonl`   | Official GitHub artifact attestation for `gateway.igvm` and `gateway-launch-policy.json`.     |
+| `gateway-evidence.tar.zst`   | Advanced audit evidence: UKI, init, kernel, initramfs, pins, Guix, measurement, and hashes.   |
 
 Stogas operator-side signing material is not uploaded as extra GitHub release assets. After reproducing the release, the operator signs the exact canonical `gateway-launch-policy.json` bytes. Control stores that detached signature in `stogas_signature` beside the matching `launch_policy` and GitHub attestation in one `allowed_igvms[]` slot.
 
@@ -71,8 +73,8 @@ Stogas operator-side signing material is not uploaded as extra GitHub release as
 
 ### Check Artifact Hashes
 
-Hash `gateway.igvm`, `gateway-launch-policy.json`, `launch-measurement.txt`, `release-manifest.json`, `github-attestation.jsonl`, and `gateway-evidence.tar.zst`.
-The hashes must match both `SHA256SUMS` and the values recorded in `release-manifest.json`.
+Hash `LICENSE`, `NOTICE`, `gateway.igvm`, `gateway-launch-policy.json`, `launch-measurement.txt`, `release-manifest.json`, `github-attestation.jsonl`, and `gateway-evidence.tar.zst`.
+Their hashes must match `SHA256SUMS`; the manifest independently binds its recorded build and launch artifacts.
 Advanced verifiers can unpack `gateway-evidence.tar.zst` and compare the contained UKI, init, kernel, initramfs, build pins, and measurement evidence against `release-manifest.json`.
 
 </Step>
@@ -91,7 +93,7 @@ The attestation must prove that GitHub Actions built the canonical `StogasAI/gat
 
 For each `allowed_igvms[]` slot in the confidential bundle, verify `stogas_signature` against the hard-coded Stogas release public key. The signature must name `gateway-launch-policy.json`, and its canonical payload must equal the adjacent `launch_policy`. That policy binds the repository, commit, tree, tag, IGVM hash, launch measurement, launch values, release name, sequence, and measured vCPU count.
 
-JavaScript clients can use `verifyStogasReleaseSignature` from `@stogas/shared/security/gh-provenance-verification` for the Stogas side. The verifier uses the built-in release root and canonicalizes the supplied launch policy before checking the detached Ed25519 signature.
+Do not verify this signature with application helpers or a key supplied by the bundle. The official Stogas verifier pins the release root, reproduces the exact canonical launch-policy bytes, and requires the independently verified GitHub attestation to bind those same bytes and the IGVM digest.
 
 When auditing an operator-side release directory, the Stogas signature payload is:
 

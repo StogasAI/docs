@@ -29,7 +29,7 @@ External systems distribute evidence. Clients verify that evidence before trusti
 
 Gateway-node Control endpoints are private operational surfaces. In staging and production they are placed behind Cloudflare Access service auth and a strict source policy before Control performs quote verification. Admin endpoints use separate Access credentials.
 
-The public client surface is the signed bundle in R2/CDN and the gateway API itself. Heartbeat, CSR, and admin routes are not customer APIs; traffic readiness is exposed only on the guest-private listener.
+The public client surface is the evidence bundle in R2/CDN and the gateway API itself. Heartbeat, CSR, and admin routes are not customer APIs; traffic readiness is exposed only on the guest-private listener.
 
 ## Why It Is Stronger
 
@@ -51,8 +51,10 @@ The bundle and quote windows are chosen for high availability with at least two 
 
 - quote refresh is background and non-blocking
 - transient drand or Control issues keep serving the last valid quote while it remains inside policy
-- Control omits stale nodes from newly published bundles before clients would fail freshness checks
-- old immutable bundles remain available while clients refresh
+- Control retains previously verified node identity material for up to 24 hours so transient failure does not erase the generation or require reprovisioning when fresh evidence resumes
+- clients exclude node evidence at three minutes (or sooner under a stricter local policy); the load balancer, not bundle retention, owns current request-time liveness
+- immutable admission and release records permanently retain each admitted key's self-authenticating evidence
+- versioned bundles remain publicly available for 31 days while clients and independent mirrors consume them
 - guest-private readiness fails closed when the Control admission lease expires
 
 ## Performance Model
