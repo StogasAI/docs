@@ -14,6 +14,8 @@ The verifier checks the gateway release, AMD SEV-SNP evidence, node keys, certif
 | Manage a trust set inside your application | Rust, JavaScript, Python, Go, or C SDK |
 | Verify only GitHub/Sigstore evidence | `stogas-offline-sigstore` |
 
+The native CLI is for existing tools and shell workflows. SDKs are for applications that already own bundle retrieval and connection handling; every SDK uses the same Rust verification core.
+
 ## Verified local endpoint
 
 `serve` maintains a verified bundle and exposes a loopback OpenAI-compatible endpoint:
@@ -86,6 +88,6 @@ Every SDK returns:
 - verified gateway releases;
 - fresh trusted nodes and their attested TLS/key material;
 - cryptographically valid but locally stale nodes under `excluded_nodes`;
-- the signed bundle creation and expiry times.
+- the verified bundle creation and expiry times.
 
 SDKs intentionally do not fetch bundles, run background tasks, or replace a language's HTTP stack. Applications that need managed refresh and connection pinning should use `serve`. See [Evidence and freshness](/docs/confidential-bundle) for the refresh rules.
