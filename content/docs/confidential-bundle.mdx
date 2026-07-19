@@ -1,9 +1,11 @@
 ---
-title: Evidence and Freshness
-description: How the public evidence bundle, expiry, and node freshness work.
+title: Evidence Bundle
+description: Understand the public snapshot used to verify Stogas gateways.
 ---
 
-A bundle is a self-contained snapshot of releases and gateway nodes. Clients fetch one JSON file and verify it locally against roots shipped with the verifier.
+The Stogas evidence bundle is a public, continuously updated snapshot of the confidential gateway fleet. It tells a verifier which gateway releases and connection keys can currently be trusted.
+
+Verification happens locally. A client downloads one JSON file, checks its embedded evidence, and receives a trusted set of gateways without contacting GitHub, AMD, Sigstore, or drand.
 
 ## Endpoints
 
@@ -12,49 +14,29 @@ Production  https://evidence.stogas.ai/bundles/latest.json
 Staging     https://evidence-staging.stogas.ai/bundles/latest.json
 ```
 
-Both endpoints are public and allow browser `GET` and `HEAD` requests.
+Both endpoints support public browser `GET` and `HEAD` requests.
 
-## What is checked
+## What a verified bundle provides
 
-For each release, the verifier requires:
+- Gateway releases proven to come from the public Stogas gateway repository and authorized by Stogas.
+- Confidential gateway nodes running an approved release on AMD SEV-SNP hardware.
+- The attested certificate, TLS, response-signing, and encryption keys for each trusted gateway.
+- An `expires_at` deadline after which the snapshot must not be used.
 
-- GitHub/Sigstore provenance for the exact IGVM and launch-policy hashes;
-- a Stogas signature over that same launch policy;
-- exact agreement on repository, commit, tree, tag, measurement, and SNP launch values.
+The verifier returns fresh gateways under `nodes`. Cryptographically valid records that are too old for the selected freshness policy appear under `excluded_nodes` and are not trusted for connections.
 
-For each node, it verifies:
+## Refreshing
 
-- the AMD certificate chain, revocation material, SNP report, chip ID, and TCB;
-- an approved release measurement;
-- the report-data hash and its bound TLS, certificate, HPKE, and Ed25519 keys;
-- the pinned drand Quicknet chain, BLS signature, randomness, round time, and freshness.
+Use `expires_at` as the only refresh deadline. There is no fixed polling interval.
 
-The report-data schema is `stogas.node-report.v1`. Its public fields include `catalog_hash`, `tls_spki_sha256`, `active_cert_sha256`, `accepted_cert_sha256`, `hpke_public_key`, and `ed25519_public_key`. Quicknet is pinned to chain `52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971`.
+`stogas-verify serve` normally begins fetching a replacement 40–70 seconds before expiry. It retries transient failures every 4–8 seconds and activates a replacement only after complete verification. Application SDKs leave retrieval and scheduling to the application.
 
-## Timing
+Refreshing early does not shorten the current trust window: a verified replacement has its own later expiry. If no valid replacement is available by the current deadline, the client must stop opening new trusted connections.
 
-| Event | Normal cadence |
-| --- | ---: |
-| Guest refreshes quote and drand | about 10 seconds |
-| Guest sends a heartbeat | 30 seconds |
-| A new bundle is published | 60 seconds |
-| Maximum bundle lifetime | 3 minutes |
-| Default maximum node-evidence age | 3 minutes |
+## Freshness policy
 
-`expires_at` is the only refresh deadline. An actively heartbeating node is included in the trust set only when its drand evidence remains within the caller's freshness policy through that expiry. Publication shortens the bundle when necessary to preserve this invariant.
+The default verifier policy accepts node evidence that remains no more than three minutes old through bundle expiry. Applications that require a tighter window may select one to three minutes.
 
-The official background client starts fetching a replacement at a random point 30–60 seconds before `expires_at`, with an additional 10 seconds allowed for the shared CDN cache. Failed refreshes retry with jitter. A replacement becomes active only after complete verification. If no valid replacement is available when the current bundle expires, clients fail closed.
+Changing this policy affects which gateways enter the local trusted set. It does not change the validity of the bundle or other verified gateways.
 
-Callers may choose a stricter one-to-three-minute node policy. A stale node can remain in `excluded_nodes` for audit or transient-recovery purposes, but it never enters that caller's trusted set.
-
-## Why stale records can remain
-
-The fleet publisher retains the last verified record for a missing node for up to 24 hours. That avoids erasing identity during a temporary heartbeat or network failure. Current routing health is a separate concern: retaining evidence does not force a load balancer to send traffic to that node.
-
-## Certificates
-
-A node normally publishes one accepted certificate hash. During renewal it can publish the old and new hashes together. This two-slot transition lets clients authenticate either certificate until every unexpired bundle accepts the replacement.
-
-## Caching and history
-
-The mutable latest object uses `max-age=0, s-maxage=10, must-revalidate`. The ten-second shared cache reduces origin reads but does not extend signed trust. Immutable sequence objects remain available for 31 days for auditing and mirrors.
+For installation and code examples, continue with the [verification quickstart](/docs/confidential-verification). For the underlying guarantees, see the [security model](/docs/confidential-security-model).
