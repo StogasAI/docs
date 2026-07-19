@@ -34,7 +34,7 @@ It signs canonical `stogas.gateway.launch-policy.v1` bytes using the domain sepa
 
 Evidence publication favors retention over premature removal. A temporary heartbeat failure does not immediately erase a node from the bundle, while clients still apply their own freshness policy. A future load balancer is responsible for request-time reachability and health.
 
-The verifier always fails closed after signed expiry. High availability therefore requires multiple healthy gateways and reliable bundle distribution; attestation cannot prevent denial of service.
+The verifier always fails closed after verified bundle expiry. High availability therefore requires multiple healthy gateways and reliable bundle distribution; attestation cannot prevent denial of service.
 
 ## What is not proven
 
