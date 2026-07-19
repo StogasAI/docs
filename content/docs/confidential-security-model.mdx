@@ -1,74 +1,48 @@
 ---
-title: Confidential Security Model
-description: How Stogas uses confidential compute to reduce trust in the host, operator, and edge infrastructure.
+title: Security Model
+description: What Stogas confidential verification proves and where its boundary ends.
 ---
 
-The confidential gateway assumes the host is untrusted. The host may schedule the VM, drop packets, delay packets, or stop the VM. It must not learn plaintext customer requests, provider credentials, or in-guest private keys.
+Stogas runs its API gateway inside an AMD SEV-SNP confidential VM. The host can stop or delay the VM, but should not be able to read guest memory, private keys, provider credentials, or request plaintext.
 
-## Trust Boundary
+## The verification chain
 
-Inside the measured guest:
+1. **Release provenance:** GitHub Actions and Stogas independently authorize the same public source, IGVM hash, launch policy, and SNP measurement.
+2. **Hardware attestation:** AMD-signed SNP evidence proves an approved measurement booted on genuine hardware at an accepted security version.
+3. **Key binding:** SNP report data binds the node's TLS key, certificate hashes, and application keys to that measured guest.
+4. **Freshness:** a signed drand round and the verifier's captured wall clock bound how old the node evidence may be.
 
-- TLS private key
-- HPKE private key
-- Ed25519 response-proof key
-- Control-released provider/runtime secrets
-- request and response plaintext
+No root of trust is accepted from the downloaded bundle. The verifier ships the AMD, Sigstore, drand, and Stogas release roots it trusts.
 
-Outside the measured guest:
+## Request path
 
-- host kernel and hypervisor
-- object storage
-- CDN cache
-- network load balancing
-- Control Worker storage and publication path
+Verification and evidence publication happen outside the inference request path. Once a node is trusted, requests use the normal OpenAI-compatible HTTPS API. This avoids a live dependency on GitHub, Sigstore, Rekor, AMD KDS, drand, or the evidence service for each model request.
 
-External systems distribute evidence. Clients verify that evidence before trusting a node.
+`stogas-verify serve` additionally checks that the upstream TLS connection presents a certificate hash and public key belonging to the same verified node.
 
-## Control Plane Exposure
+## Release authorization
 
-Gateway-node Control endpoints are private operational surfaces. In staging and production they are placed behind Cloudflare Access service auth and a strict source policy before Control performs quote verification. Admin endpoints use separate Access credentials.
+The Stogas release public key is:
 
-The public client surface is the evidence bundle in R2/CDN and the gateway API itself. Heartbeat, CSR, and admin routes are not customer APIs; traffic readiness is exposed only on the guest-private listener.
+```text
+MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
+```
 
-## Why It Is Stronger
+It signs canonical `stogas.gateway.launch-policy.v1` bytes using the domain separator `stogas gateway launch policy v1\n`. GitHub's attestation must independently bind the exact same launch-policy digest and IGVM digest. A node is trusted only when its SNP measurement belongs to that verified release set.
 
-Traditional API gateways terminate TLS on infrastructure controlled by the operator or cloud provider. Stogas terminates customer TLS inside a measured guest whose keys are generated after boot and bound into SEV-SNP report data.
+## Availability
 
-This gives clients independent checks for:
+Evidence publication favors retention over premature removal. A temporary heartbeat failure does not immediately erase a node from the bundle, while clients still apply their own freshness policy. A future load balancer is responsible for request-time reachability and health.
 
-- which public source release built the guest
-- which IGVM hash launched
-- which TLS certificate hash is acceptable
-- which response-proof signing key processed the request
-- whether the node quote was recent enough
+The verifier always fails closed after signed expiry. High availability therefore requires multiple healthy gateways and reliable bundle distribution; attestation cannot prevent denial of service.
 
-The operator can remove a node or publish new evidence, but cannot silently substitute an unmeasured node that passes client verification.
+## What is not proven
 
-## Availability Model
+Confidential verification does not:
 
-The bundle and quote windows are chosen for high availability with at least two guest VMs:
-
-- quote refresh is background and non-blocking
-- transient drand or Control issues keep serving the last valid quote while it remains inside policy
-- Control retains previously verified node identity material for up to 24 hours so transient failure does not erase the generation or require reprovisioning when fresh evidence resumes
-- clients exclude node evidence at three minutes (or sooner under a stricter local policy); the load balancer, not bundle retention, owns current request-time liveness
-- immutable admission and release records permanently retain each admitted key's self-authenticating evidence
-- versioned bundles remain publicly available for 31 days while clients and independent mirrors consume them
-- guest-private readiness fails closed when the Control admission lease expires
-
-## Performance Model
-
-The confidential checks are kept off the request hot path:
-
-- gateway quotes refresh in the background and are served from memory
-- clients fetch one CDN-cached bundle instead of asking each node for fresh attestation
-- expensive release provenance verification can be cached by IGVM hash
-- response proofs are a small Ed25519 signature plus the current quote/report-data values
-- gateway request routing remains the normal OpenAI-compatible API path after the node is trusted
-
-The result is a conventional low-latency gateway request path with extra evidence attached, rather than a per-request remote-attestation handshake.
-
-## Remaining Assumptions
-
-Confidential compute does not hide traffic metadata, guarantee upstream provider privacy, prevent denial of service, or prove real hardware in local/native development. Real SEV-SNP staging is required to validate chip IDs, AMD collateral, launch measurements, and guest report device behavior.
+- prove that reviewed code has no vulnerabilities;
+- hide traffic timing or destination metadata;
+- make an upstream AI provider confidential unless that provider offers its own verified confidential execution;
+- prevent the host or operator from stopping service;
+- let browser JavaScript inspect the certificate used by `fetch`;
+- verify response proofs or provide end-to-end application encryption in the current protocol.

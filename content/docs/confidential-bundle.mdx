@@ -1,140 +1,60 @@
 ---
-title: Confidential Bundle
-description: How the Stogas confidential gateway evidence bundle is structured.
+title: Evidence and Freshness
+description: How the public evidence bundle, expiry, and node freshness work.
 ---
 
-The confidential bundle is the public evidence set for gateway nodes. Clients verify each release and node, derive a fresh local trust set, and refresh against the earlier bundle or node-freshness deadline. They accept only fresh nodes whose TLS keys, certificate hashes, report data, and quotes pass the complete verifier policy.
+A bundle is a self-contained snapshot of releases and gateway nodes. Clients fetch one JSON file and verify it locally against roots shipped with the verifier.
 
-## Files
+## Endpoints
 
-Control publishes two object types:
-
-| Object           | Purpose                                                                     |
-| ---------------- | --------------------------------------------------------------------------- |
-| Immutable bundle | Versioned evidence file, such as `bundles/v/42/bundle.json`.                |
-| Latest bundle    | Stable full bundle copy at `bundles/latest.json` for efficient CDN serving. |
-
-Control uploads and checks the immutable object before conditionally replacing `bundles/latest.json` with the same checksummed envelope. An older publisher cannot regress the latest sequence.
-
-## Bundle Body
-
-Each bundle contains:
-
-- schema, sequence, creation time, expiry time, and TTL
-- the active and rollback IGVM/release slots from Control policy, including descriptive release metadata, launch measurement, IGVM SHA-256, launch policy values, Stogas signature, and GitHub in-toto evidence
-- one entry per currently trusted gateway node
-- AMD verifier evidence and exact chip/TCB collateral when available
-- a body checksum for transport and storage integrity
-
-The bundle has no fleet signing key. Release authorization is verified through the Stogas release signature and GitHub provenance, while every node key is bound into its AMD-signed SNP report. The checksum is not an authority: changing or omitting evidence can only remove trust because unverifiable additions are rejected.
-
-Node entries bind:
-
-- node ID derived from the in-guest boot identity
-- chip ID and exact reported TCB policy evidence
-- TLS public key hash
-- accepted certificate hash slot or slots
-- HPKE public key
-- Ed25519 response-proof public key
-- report-data values and report-data hash
-- full quote and quote verification timestamp
-
-The report-data values are the public preimage for the SEV-SNP `REPORT_DATA` hash. They include `schema`, `catalog_hash`, `tls_spki_sha256`, `active_cert_sha256`, `accepted_cert_sha256`, `hpke_public_key`, `ed25519_public_key`, and the current drand Quicknet beacon.
-
-Vendor collateral entries expose active KDS/verifier material by type, chip scope, source URL, fetch time, SHA-256, and payload. Clients that verify raw quotes can use the bundled collateral or fetch vendor collateral independently.
-
-The release stack has at most two slots. It is the active/rollback policy, not just a summary of the currently live nodes. Control refuses to publish a node whose quoted release measurement is outside this stack. `launch_policy.vcpu_count` describes the number of measured virtual-processor states in the IGVM; it does not prove host CPU placement. Memory size and socket/core/thread topology are infrastructure configuration and are intentionally absent from attestation evidence.
-
-The high-level shape is:
-
-```json
-{
-	"body": {
-		"schema": "stogas.confidential-bundle.v1",
-		"sequence": 42,
-		"created_at": "2026-07-06T12:00:00.000Z",
-		"expires_at": "2026-07-06T12:10:00.000Z",
-		"ttl_ms": 180000,
-		"allowed_igvms": [
-			{
-				"launch_policy": {
-					"schema": "stogas.gateway.launch-policy.v1",
-					"sequence": 42,
-					"igvm_sha256": "sha256...",
-					"measurement": "sha384...",
-					"name": "relay-4c",
-					"release_tag": "vX.Y.Z",
-					"source": {
-						"repository": "https://github.com/StogasAI/gateway",
-						"commit": "git-sha...",
-						"tree": "git-tree..."
-					},
-					"vcpu_count": 4,
-					"launch": {
-						"policy": "0x0000000000030000",
-						"host_data": "0000...",
-						"vmpl": 0,
-						"family_id": "0000...",
-						"image_id": "0000...",
-						"id_key_digest": "0000...",
-						"author_key_digest": "0000..."
-					}
-				},
-				"github_in_toto": [],
-				"stogas_signature": {
-					"schema": "stogas.gateway.signature.v1",
-					"algorithm": "Ed25519",
-					"key_id": "stogas-release-key...",
-					"signed": "gateway-launch-policy.json",
-					"signature": "base64url..."
-				}
-			}
-		],
-		"nodes": [
-			{
-				"node_id": "node...",
-				"chip_id": "chip-id...",
-				"reported_tcb": "reported-tcb...",
-				"release_measurement": "sha384...",
-				"quote": "base64url...",
-				"report_data_sha512": "sha512...",
-				"report_data": {
-					"schema": "stogas.node-report.v1",
-					"catalog_hash": "sha256...",
-					"tls_spki_sha256": "sha256...",
-					"active_cert_sha256": "sha256...",
-					"accepted_cert_sha256": ["sha256..."],
-					"hpke_public_key": "base64url...",
-					"ed25519_public_key": "base64url...",
-					"drand": {
-						"network": "quicknet",
-						"chain_hash": "52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971",
-						"round": 123456,
-						"randomness": "hex...",
-						"signature": "hex..."
-					}
-				}
-			}
-		],
-		"vendor_collateral": []
-	},
-	"body_sha256": "sha256..."
-}
+```text
+Production  https://evidence.stogas.ai/bundles/latest.json
+Staging     https://evidence-staging.stogas.ai/bundles/latest.json
 ```
 
-## Cert Hash Slots
+Both endpoints are public and allow browser `GET` and `HEAD` requests.
 
-Most nodes have one accepted certificate hash. During ACME renewal a node temporarily publishes two:
+## What is checked
 
-| Slot   | Meaning                                        |
-| ------ | ---------------------------------------------- |
-| Active | Certificate currently served by the gateway.   |
-| Next   | Renewed certificate allowed before switchover. |
+For each release, the verifier requires:
 
-Control begins renewal 30 days before expiry. The node switches only after every still-valid bundle containing it accepts the new hash. The old hash is pruned after the replacement is active and every still-valid bundle can authenticate it. The 48-hour window is an emergency readiness cutoff, not the normal renewal start.
+- GitHub/Sigstore provenance for the exact IGVM and launch-policy hashes;
+- a Stogas signature over that same launch policy;
+- exact agreement on repository, commit, tree, tag, measurement, and SNP launch values.
 
-## Refresh Policy
+For each node, it verifies:
 
-Gateway quotes refresh every 10 seconds. Each quote refresh attempts a verified drand Quicknet fetch with a 4-second total budget and 2-second per-relay request deadlines. Nodes heartbeat every 30 seconds. Control checks and publishes the bundle every minute, or sooner when an operator explicitly publishes after a change.
+- the AMD certificate chain, revocation material, SNP report, chip ID, and TCB;
+- an approved release measurement;
+- the report-data hash and its bound TLS, certificate, HPKE, and Ed25519 keys;
+- the pinned drand Quicknet chain, BLS signature, randomness, round time, and freshness.
 
-Clients refresh against the earlier of `expires_at` and the verifier's returned node-trust deadline. Official clients choose a random 30-to-60-second bundle lead or 15-to-30-second node lead and add the 10-second shared-cache allowance. Bundle validity is at most three minutes and is shortened to the earliest included certificate or AMD-evidence deadline. Node trust ends no later than three minutes after its verified drand round, never three minutes plus the bundle lifetime; callers may tighten that policy to one minute. A verified generation remains publishable through transient heartbeat loss for up to 24 hours, but clients exclude stale node evidence locally. Control does not use guest heartbeat health as a load-balancing signal. A new node receives a traffic-admission lease only after it is fully provisioned, appears in the latest bundle, and every older unexpired bundle that excludes it has expired.
+The report-data schema is `stogas.node-report.v1`. Its public fields include `catalog_hash`, `tls_spki_sha256`, `active_cert_sha256`, `accepted_cert_sha256`, `hpke_public_key`, and `ed25519_public_key`. Quicknet is pinned to chain `52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971`.
+
+## Timing
+
+| Event | Normal cadence |
+| --- | ---: |
+| Guest refreshes quote and drand | about 10 seconds |
+| Guest sends a heartbeat | 30 seconds |
+| A new bundle is published | 60 seconds |
+| Maximum bundle lifetime | 3 minutes |
+| Default maximum node-evidence age | 3 minutes |
+
+`expires_at` is the only refresh deadline. An actively heartbeating node is included in the trust set only when its drand evidence remains within the caller's freshness policy through that expiry. Publication shortens the bundle when necessary to preserve this invariant.
+
+The official background client starts fetching a replacement at a random point 30–60 seconds before `expires_at`, with an additional 10 seconds allowed for the shared CDN cache. Failed refreshes retry with jitter. A replacement becomes active only after complete verification. If no valid replacement is available when the current bundle expires, clients fail closed.
+
+Callers may choose a stricter one-to-three-minute node policy. A stale node can remain in `excluded_nodes` for audit or transient-recovery purposes, but it never enters that caller's trusted set.
+
+## Why stale records can remain
+
+The fleet publisher retains the last verified record for a missing node for up to 24 hours. That avoids erasing identity during a temporary heartbeat or network failure. Current routing health is a separate concern: retaining evidence does not force a load balancer to send traffic to that node.
+
+## Certificates
+
+A node normally publishes one accepted certificate hash. During renewal it can publish the old and new hashes together. This two-slot transition lets clients authenticate either certificate until every unexpired bundle accepts the replacement.
+
+## Caching and history
+
+The mutable latest object uses `max-age=0, s-maxage=10, must-revalidate`. The ten-second shared cache reduces origin reads but does not extend signed trust. Immutable sequence objects remain available for 31 days for auditing and mirrors.

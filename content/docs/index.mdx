@@ -1,105 +1,62 @@
 ---
-title: Gateway
-description: OpenAI-compatible AI gateway for anonymous, zero-trust AI API access.
+title: Quickstart
+description: Send your first request through the Stogas OpenAI-compatible API.
 ---
 
-The public OpenAI-compatible gateway proxies requests to upstream AI providers. You authenticate once with a gateway API key instead of managing individual provider keys.
+Stogas provides one API for supported AI models. Existing OpenAI-compatible clients work by changing the base URL.
 
-## Base URL
+## 1. Create an API key
 
+Create a key in the [Stogas dashboard](https://app.stogas.ai), then export it:
+
+```console
+export STOGAS_API_KEY="your-key"
 ```
-https://api.stogas.ai
+
+## 2. Send a request
+
+```console
+curl https://api.stogas.ai/v1/chat/completions \
+  -H "Authorization: Bearer $STOGAS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-5-mini",
+    "messages": [{"role": "user", "content": "Say hello in one sentence."}]
+  }'
 ```
 
-Endpoint paths include their API version.
+Or use the OpenAI Python client:
 
-## Endpoints
+```python
+from openai import OpenAI
 
-| Method | Path                   | Auth Required | Description                        |
-| ------ | ---------------------- | :-----------: | ---------------------------------- |
-| `GET`  | `/v1/catalog`          |      No       | Public model and routing catalog   |
-| `GET`  | `/v1/models`           |      No       | OpenAI-compatible model list       |
-| `POST` | `/v1/chat/completions` |      Yes      | OpenAI-compatible chat completions |
-| `POST` | `/v1/responses`        |      Yes      | OpenAI-compatible Responses API    |
+client = OpenAI(
+    api_key="your-key",
+    base_url="https://api.stogas.ai/v1",
+)
 
-## Platform
+response = client.chat.completions.create(
+    model="openai/gpt-5-mini",
+    messages=[{"role": "user", "content": "Say hello in one sentence."}],
+)
+print(response.choices[0].message.content)
+```
+
+## 3. Choose a model
+
+Use the [model catalog](https://stogas.ai/catalog), or query it directly:
+
+```console
+curl https://api.stogas.ai/v1/models
+```
+
+## Verify the confidential gateway
+
+Normal OpenAI-compatible requests need no Stogas-specific inference SDK. If you want to verify the gateway and pin the attested TLS key, continue with the [verification quickstart](/docs/confidential-verification).
 
 <Cards>
-	<Card
-		title="Model Tools"
-		description="Supported client tools, provider-hosted tools, and tool billing behavior."
-		href="/docs/model-tools"
-	/>
-	<Card
-		title="Catalog Structure"
-		description="How endpoints, providers, models, deployments, routing, and prices fit together."
-		href="/docs/catalog-structure"
-	/>
-	<Card
-		title="Provenance Verification"
-		description="How to verify that Stogas and GitHub Actions independently built the same gateway IGVM hash."
-		href="/docs/provenance-verification"
-	/>
-	<Card
-		title="Confidential Bundle"
-		description="How the gateway evidence bundle represents verified releases and attested nodes."
-		href="/docs/confidential-bundle"
-	/>
-	<Card
-		title="Confidential Verification"
-		description="Client verification options for releases, quotes, report data, certificates, and trusted node keys."
-		href="/docs/confidential-verification"
-	/>
-	<Card
-		title="Security Model"
-		description="The confidential gateway trust boundary, availability model, and remaining assumptions."
-		href="/docs/confidential-security-model"
-	/>
+	<Card title="Verification quickstart" description="Use the CLI or embed a verifier SDK." href="/docs/confidential-verification" />
+	<Card title="Evidence and freshness" description="Understand bundles, expiry, and node freshness." href="/docs/confidential-bundle" />
+	<Card title="Security model" description="See what confidential verification proves and does not prove." href="/docs/confidential-security-model" />
+	<Card title="API reference" description="Browse request fields and live endpoint examples." href="/docs/reference" />
 </Cards>
-
-## Authentication
-
-All model endpoints require a gateway API key:
-
-```http
-Authorization: Bearer <api_key>
-Content-Type: application/json
-```
-
-The catalog also defines `api-key`, `x-api-key`, and `x-goog-api-key` as authentication aliases.
-The gateway canonicalizes these aliases to `Authorization: Bearer <api_key>` internally. Query parameters and cookies are not supported for API key authentication.
-
-Get your key from the [dashboard](https://app.stogas.ai).
-
-## CORS
-
-The gateway is intentionally browser-embeddable:
-
-```http
-Access-Control-Allow-Origin: *
-```
-
-No cookies are used for public API authentication.
-
-## Metadata Fields
-
-Request catalog-defined metadata fields with:
-
-```http
-X-Stogas-Return-Extra-Fields: provider,model_requested,latency,raw_request,raw_response
-```
-
-Available field names: `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, `raw_response`. Provider response headers are limited to diagnostic request identifiers and provider processing/version headers; account, rate-limit, cookie, CORS, and infrastructure headers are never returned.
-
-## Admission Failures
-
-Before the gateway calls an upstream provider, it places a short-lived billing hold for the API key. Failed admission requests never create usage telemetry.
-
-Known API keys record only these latest dashboard failure reasons: `insufficient_balance`, `key_disabled`, `key_expired`, `spend_limit_exceeded`, and `rate_limit_exceeded`. Unknown keys, request-ID conflicts, invalid internal hold amounts, and billing database outages are not attached to any key.
-
-For streaming responses, metadata is emitted as a single SSE event before `[DONE]`:
-
-```
-event: stogas.meta
-data: { ... }
-```

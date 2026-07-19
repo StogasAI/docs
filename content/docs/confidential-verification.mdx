@@ -1,96 +1,91 @@
 ---
-title: Confidential Verification
-description: Verify Stogas releases, confidential nodes, and live TLS connections with one offline trust bundle.
+title: Verification Quickstart
+description: Verify the Stogas gateway with the CLI or an SDK.
 ---
 
-Stogas verification has one supported path: fetch a bundle and pass its bytes to the official verifier. One atomic offline pass verifies the checksum, GitHub/Sigstore provenance, Stogas release authorization, AMD certificates and revocation data, SNP reports, report data, drand, freshness, and certificate deadlines before returning any trusted node.
+The verifier checks the gateway release, AMD SEV-SNP evidence, node keys, certificates, and freshness locally. Verification itself makes no network requests.
 
-The verifier never accepts a verifier JWT, a root carried by the bundle, a partially valid bundle, or a structurally parsed TypeScript object as trust. It makes no GitHub, Rekor, Fulcio, TUF, AMD KDS, or drand request during verification.
+## Pick an integration
 
-## Choose An Integration
+| Use case | Recommended option |
+| --- | --- |
+| Use any OpenAI-compatible app with automatic verification | `stogas-verify serve` |
+| Inspect a downloaded bundle or verify in CI | `stogas-verify verify` |
+| Manage a trust set inside your application | Rust, JavaScript, Python, Go, or C SDK |
+| Verify only GitHub/Sigstore evidence | `stogas-offline-sigstore` |
 
-| Integration                       | Use it when                                                                            | Network behavior                                |
-| --------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `stogas-verify verify`            | Audits, CI, and offline inspection                                                     | None                                            |
-| `stogas-verify serve`             | An application should use a verified loopback OpenAI endpoint without embedding an SDK | Fetches replacement bundles and proxies `/v1/*` |
-| `@stogas/verifier`                | Browser, Web Worker, Cloudflare Worker, Node, or Bun code owns its trust set           | Verification itself is offline                  |
-| `@stogas/offline-sigstore`        | A JavaScript project only needs generic GitHub/Sigstore in-toto verification           | Verification itself is offline                  |
-| Python `stogas-verifier`          | CPython 3.10+ services                                                                 | Verification itself is offline                  |
-| `github.com/StogasAI/verifier/go` | Native Go services                                                                     | Verification itself is offline                  |
-| Rust crates or C ABI              | Native and enterprise integrations                                                     | Verification itself is offline                  |
+## Verified local endpoint
 
-There is intentionally no Stogas inference SDK. Configure an existing OpenAI-compatible client with `https://api.stogas.ai/v1`, or point it at `stogas-verify serve` on loopback when connection pinning should be handled out of process.
-
-## CLI
+`serve` maintains a verified bundle and exposes a loopback OpenAI-compatible endpoint:
 
 ```console
+stogas-verify serve
+```
+
+Point an existing client at:
+
+```text
+http://127.0.0.1:8787/v1
+```
+
+The proxy verifies normal WebPKI and hostname rules, then requires the TLS certificate hash and SPKI to match the same attested node. It refreshes in the background before bundle expiry and never installs a local CA.
+
+## Verify a bundle file
+
+```console
+curl -o bundle.json https://evidence.stogas.ai/bundles/latest.json
 stogas-verify verify bundle.json
-stogas-verify verify - --json
 ```
 
-`verify` reads the platform clock once and writes no persistent verifier state. `serve` verifies a bundle before opening its loopback listener, performs normal WebPKI and hostname validation on the real upstream TLS connection, and then requires the certificate hash and SPKI to match the same verified node. It never installs a local CA or logs API keys and bodies.
+`verify` is a command-line interface over the same verification function exposed by every SDK. It reads a file or standard input and writes no verifier state to disk.
 
-For staging tests:
-
-```console
-stogas-verify serve \
-  --target staging \
-  --bundle-url https://evidence-staging.stogas.ai/bundles/latest.json \
-  --upstream https://api-staging.stogas.ai
-```
-
-## JavaScript
-
-Node and Bun initialize the packaged WASM automatically:
+## JavaScript, Node, and Bun
 
 ```js
 import { Verifier } from '@stogas/verifier';
 
+const response = await fetch('https://evidence.stogas.ai/bundles/latest.json');
 const verifier = new Verifier();
-const response = await fetch('https://evidence-staging.stogas.ai/bundles/latest.json');
-const verified = verifier.verify_bundle(new Uint8Array(await response.arrayBuffer()));
+const result = verifier.verify_bundle(
+  new Uint8Array(await response.arrayBuffer()),
+);
+
+console.log(result.bundle.nodes);
 ```
 
-Browsers import `@stogas/verifier/browser`, call its default initializer once, and then use the same `Verifier`. The verifier keeps only an in-memory cache of already verified immutable release evidence and writes nothing to browser storage. The evidence bucket uses wildcard read-only CORS so any independent browser application can verify the public bundle without registration; evidence requests never include credentials.
-
-The optional constructor argument is a node-evidence age in milliseconds from one through three minutes. The default and maximum are three minutes. A valid node outside that local policy appears under `excluded_nodes`; one stale node does not invalidate unrelated fleet members.
-
-`@stogas/offline-sigstore` exposes only the reusable GitHub/Sigstore verifier in a smaller WASM binary. It contains no Stogas, SNP, drand, or certificate-pinning policy. Applications verifying Stogas bundles should use `@stogas/verifier`, which composes that same Rust implementation.
+Browsers use `@stogas/verifier/browser` and call its default WebAssembly initializer once. Browser code can verify evidence, but browser networking APIs do not expose the peer certificate needed for TLS pinning.
 
 ## Python
 
-Python uses a native PyO3 stable-ABI wheel rather than a subprocess or Python cryptography rewrite:
+Python uses a native PyO3 stable-ABI extension:
 
 ```python
 import json
 from stogas_verifier import Verifier
 
-verifier = Verifier()
-verified = json.loads(verifier.verify_bundle(bundle_bytes))
+result = json.loads(Verifier().verify_bundle(bundle_bytes))
+print(result["bundle"]["nodes"])
 ```
 
 ## Go
 
-The Go module is a thin stateful cgo wrapper around the same packaged Rust library:
-
 ```go
-verifier, err := verifier.New()
-if err != nil { /* handle */ }
-defer verifier.Close()
+v, err := verifier.New()
+if err != nil { return err }
+defer v.Close()
 
-verifiedJSON, err := verifier.VerifyBundle(bundleBytes)
+verifiedJSON, err := v.VerifyBundle(bundleBytes)
 ```
 
-Release module tags bundle native libraries for Linux x86-64/ARM64, macOS x86-64/ARM64, and Windows x86-64. Disabling cgo fails explicitly rather than substituting weaker policy.
+The Go package is a thin cgo binding to the same Rust implementation. Rust applications use the `stogas-verifier` crate directly; other native environments can use the bounded C ABI.
 
-## Freshness And Refresh
+## What the SDK returns
 
-The verified `expires_at` is the hard bundle deadline. Each verification result also reports `trust_expires_at_unix_ms`, the earliest freshness deadline among the nodes returned in the local trust set. Official clients refresh at the earlier deadline with a random 30-to-60-second bundle lead or 15-to-30-second node lead, plus the 10-second shared-cache allowance. They atomically activate only a verified result and stop starting requests when the bundle expires or no fresh verified node remains.
+Every SDK returns:
 
-The mutable `bundles/latest.json` object uses `max-age=0, s-maxage=10, must-revalidate` without stale-while-revalidate. Cloudflare may reuse it for at most 10 seconds to absorb refresh stampedes and reduce R2 reads. HTTP metadata neither schedules refreshes nor extends verified trust.
+- verified gateway releases;
+- fresh trusted nodes and their attested TLS/key material;
+- cryptographically valid but locally stale nodes under `excluded_nodes`;
+- the signed bundle creation and expiry times.
 
-Control accepts a heartbeat only when its Quicknet beacon was within two minutes of verified `quote_verified_at` and has not regressed. The verifier checks the pinned Quicknet chain identity, BLS signature, randomness derivation, and derived round time. Clients use their captured clock to exclude evidence at three minutes, or sooner under a stricter caller policy down to one minute. The deadline is measured from the drand round and capped by bundle expiry; the bundle's remaining lifetime is not added. Control may retain that cryptographically valid but stale record in the bundle for 24 hours; retention never places it in the client's fresh trust set. Bundle membership is attestation history, while the load balancer and guest health endpoint own current routing liveness.
-
-## Verification Boundary
-
-The v1 verifier returns a trusted release and node-key set and the CLI pins upstream TLS. It does not implement response-proof verification, transparent HTTPS interception, E2EE, HPKE transport, arbitrary Sigstore signer profiles, or partial-bundle acceptance. Unsupported evidence fails closed.
+SDKs intentionally do not fetch bundles, run background tasks, or replace a language's HTTP stack. Applications that need managed refresh and connection pinning should use `serve`. See [Evidence and freshness](/docs/confidential-bundle) for the refresh rules.
