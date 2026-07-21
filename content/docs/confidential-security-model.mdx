@@ -32,7 +32,7 @@ It signs canonical `stogas.gateway.launch-policy.v1` bytes using the domain sepa
 
 ## Availability
 
-A verified bundle can contain records that are no longer fresh enough for a particular client. The verifier reports those records separately and never adds them to that client's trusted set.
+A verified bundle can contain older records kept for recovery. The verifier reports them separately and never adds them to the trusted set.
 
 The verifier fails closed after bundle expiry. Confidential verification can authenticate a reachable gateway, but it cannot prevent a network, host, or service outage.
 

@@ -33,7 +33,7 @@ One successful verification establishes a single trust set:
 - the gateway release matches GitHub build provenance and Stogas authorization;
 - the node runs that approved release on AMD SEV-SNP;
 - the node's certificate and transport keys belong to the attested guest;
-- the evidence and bundle satisfy the selected freshness policy.
+- the bundle is recent and each trusted gateway carries recent evidence.
 
 The cryptographic core is Rust. Native packages call it directly; JavaScript uses the same core compiled to WebAssembly.
 
