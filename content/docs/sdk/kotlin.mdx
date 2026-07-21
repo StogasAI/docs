@@ -1,0 +1,31 @@
+---
+title: Kotlin
+description: Use the JVM client or Kotlin native interoperability.
+---
+
+## Kotlin/JVM and Android
+
+Use the official OpenAI Java client through [`stogas-verify serve`](/docs/cli):
+
+```kotlin
+val client: OpenAIClient = OpenAIOkHttpClient.builder()
+    .apiKey(System.getenv("STOGAS_API_KEY"))
+    .baseUrl(
+        System.getenv("STOGAS_BASE_URL")
+            ?: "http://127.0.0.1:8787/v1"
+    )
+    .build()
+
+val response = client.responses().create(
+    ResponseCreateParams.builder()
+        .model("openai/gpt-5-mini")
+        .input("Say hello in one sentence.")
+        .build()
+)
+```
+
+Android apps cannot assume a desktop CLI is available. Use the native verifier through JNI/JNA when the app needs the trust set, then pair it with an application transport suitable for Android.
+
+## Kotlin/Native
+
+Run `cinterop` against `stogas_verifier.h` and link the native library from the matching release archive. The generated Kotlin declarations preserve the same bounded C ABI used by Go and other native runtimes.

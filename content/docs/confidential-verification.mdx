@@ -1,120 +1,44 @@
 ---
-title: Verification Quickstart
-description: Verify the Stogas gateway with the CLI or an SDK.
+title: Verification
+description: Choose the simplest way to verify a Stogas gateway.
 ---
 
-The verifier checks the gateway release, AMD SEV-SNP evidence, node keys, certificates, and freshness locally. Verification itself makes no network requests.
+Stogas publishes the evidence needed to verify gateway code, hardware, and connection keys. The verifier checks that evidence locally before a gateway is trusted.
 
-## Pick an integration
+## Choose your path
 
-| Use case                                                  | Recommended option                                       |
-| --------------------------------------------------------- | -------------------------------------------------------- |
-| Use any OpenAI-compatible app with automatic verification | `stogas-verify serve`                                    |
-| Inspect a downloaded bundle or verify in CI               | `stogas-verify verify`                                   |
-| Manage a trust set inside your application                | Rust, JavaScript, Python, Go, or C SDK                   |
-| Call the native verifier from another language            | [C ABI integrations](/docs/verifier-native-integrations) |
-| Verify only GitHub/Sigstore evidence                      | `stogas-offline-sigstore`                                |
+<Cards>
+	<Card
+		title="CLI"
+		description="Add verification to any OpenAI-compatible client."
+		href="/docs/cli"
+	/>
+	<Card title="SDKs" description="Verify evidence inside your application." href="/docs/sdk" />
+	<Card
+		title="Evidence bundles"
+		description="Understand freshness and trusted nodes."
+		href="/docs/confidential-bundle"
+	/>
+	<Card
+		title="Security model"
+		description="See what verification guarantees."
+		href="/docs/confidential-security-model"
+	/>
+</Cards>
 
-The native CLI is for existing tools and shell workflows. SDKs are for applications that already own bundle retrieval and connection handling; every SDK uses the same Rust verification core.
+## What gets checked
 
-## Verified local endpoint
+One successful verification establishes a single trust set:
 
-`serve` maintains a verified bundle and exposes a loopback OpenAI-compatible endpoint:
+- the gateway release matches GitHub build provenance and Stogas authorization;
+- the node runs that approved release on AMD SEV-SNP;
+- the node's certificate and transport keys belong to the attested guest;
+- the evidence and bundle satisfy the selected freshness policy.
 
-Download the archive for your operating system from [GitHub Releases](https://github.com/StogasAI/verifier/releases), verify it against the published `SHA256SUMS`, and place `stogas-verify` on your `PATH`.
+The cryptographic core is Rust. Native packages call it directly; JavaScript uses the same core compiled to WebAssembly.
 
-```console
-stogas-verify serve
-```
+## CLI or SDK?
 
-Point an existing client at:
+Use the [CLI](/docs/cli) when you want verification without changing application code. It maintains the bundle, pins the upstream TLS connection, and presents a local OpenAI-compatible URL.
 
-```text
-http://127.0.0.1:8787/v1
-```
-
-The proxy verifies normal WebPKI and hostname rules, then requires the TLS certificate hash and SPKI to match the same attested node. It refreshes in the background before bundle expiry and never installs a local CA.
-
-## Verify a bundle file
-
-```console
-curl -o bundle.json https://evidence.stogas.ai/bundles/latest.json
-stogas-verify verify bundle.json
-```
-
-`verify` is a command-line interface over the same verification function exposed by every SDK. It reads a file or standard input and writes no verifier state to disk.
-
-## JavaScript, Node, and Bun
-
-```console
-npm install @stogas/verifier
-```
-
-```js
-import { Verifier } from '@stogas/verifier';
-
-const response = await fetch('https://evidence.stogas.ai/bundles/latest.json');
-const verifier = new Verifier();
-const result = verifier.verify_bundle(new Uint8Array(await response.arrayBuffer()));
-
-console.log(result.bundle.nodes);
-```
-
-Browsers use `@stogas/verifier/browser` and call its default WebAssembly initializer once. Cloudflare Workers and other Worker runtimes use `@stogas/verifier/worker`. Browser code can verify evidence, but browser networking APIs do not expose the peer certificate needed for TLS pinning.
-
-## Python
-
-Python uses a native PyO3 stable-ABI extension:
-
-```console
-pip install stogas-verifier
-```
-
-```python
-import json
-from stogas_verifier import Verifier
-
-result = json.loads(Verifier().verify_bundle(bundle_bytes))
-print(result["bundle"]["nodes"])
-```
-
-## Go
-
-```console
-go get github.com/StogasAI/verifier/go
-```
-
-```go
-v, err := verifier.New()
-if err != nil { return err }
-defer v.Close()
-
-verifiedJSON, err := v.VerifyBundle(bundleBytes)
-```
-
-The Go package is a thin cgo binding to the same Rust implementation.
-
-## Rust
-
-```console
-cargo add stogas-verifier
-```
-
-Rust applications use the crate directly. Other native environments can use the bounded C ABI.
-
-## Java, .NET, Swift, Kotlin, and other native languages
-
-Release archives include a C header and native library. Java 22+, C# and F#, Swift, Kotlin/Native, C++, Dart, Ruby, and other runtimes with C interoperability can call that same bounded ABI without another verifier implementation.
-
-See [C ABI integrations](/docs/verifier-native-integrations) for the supported binary targets, ownership rules, and the appropriate bridge for each language. These are self-managed native integrations; Rust, JavaScript, Python, and Go remain the first-class packaged SDKs.
-
-## What the SDK returns
-
-Every SDK returns:
-
-- verified gateway releases;
-- fresh trusted nodes and their attested TLS/key material;
-- cryptographically valid but locally stale nodes under `excluded_nodes`;
-- the verified bundle creation and expiry times.
-
-SDKs intentionally do not fetch bundles, run background tasks, or replace a language's HTTP stack. Applications that need managed refresh and connection pinning should use `serve`. See [Evidence and freshness](/docs/confidential-bundle) for the refresh rules.
+Use an [SDK](/docs/sdk) when your application needs the verified releases, nodes, and keys directly. SDK verification is networkless; your application controls retrieval and transport.

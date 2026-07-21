@@ -26,16 +26,16 @@ The verifier returns fresh gateways under `nodes`. Cryptographically valid recor
 
 ## Refreshing
 
-Use `expires_at` as the only refresh deadline. There is no fixed polling interval.
+Refresh before `expires_at`. That signed deadline is the only bundle lifetime a client needs to schedule around.
 
-`stogas-verify serve` normally begins fetching a replacement 40–70 seconds before expiry. It retries transient failures every 4–8 seconds and activates a replacement only after complete verification. Application SDKs leave retrieval and scheduling to the application.
+[`stogas-verify serve`](/docs/cli) maintains a replacement in the background and keeps using the current verified bundle until a newer one passes. SDK users choose their own retrieval schedule.
 
-Refreshing early does not shorten the current trust window: a verified replacement has its own later expiry. If no valid replacement is available by the current deadline, the client must stop opening new trusted connections.
+If no valid replacement is available by the deadline, the expired bundle must not authorize a new connection.
 
 ## Freshness policy
 
-The default verifier policy accepts node evidence that remains no more than three minutes old through bundle expiry. Applications that require a tighter window may select one to three minutes.
+The default verifier policy accepts node evidence that was no more than two minutes old when the bundle was created. Applications may select one to 15 minutes.
 
-Changing this policy affects which gateways enter the local trusted set. It does not change the validity of the bundle or other verified gateways.
+Changing this policy affects which gateways enter the local trusted set. It does not change the signed bundle expiry or other verified gateways.
 
-For installation and code examples, continue with the [verification quickstart](/docs/confidential-verification). For the underlying guarantees, see the [security model](/docs/confidential-security-model).
+For installation and examples, choose the [CLI](/docs/cli) or an [SDK](/docs/sdk). For the underlying guarantees, see the [security model](/docs/confidential-security-model).

@@ -1,0 +1,32 @@
+---
+title: SDKs
+description: Use the same verifier core from your application stack.
+---
+
+The SDKs verify an evidence bundle and return trusted releases, trusted nodes, attested connection keys, and excluded stale nodes. Verification performs no network requests.
+
+## Pick your runtime
+
+| Runtime                                                    | Integration                            |
+| ---------------------------------------------------------- | -------------------------------------- |
+| JavaScript, TypeScript, Node, Bun                          | `@stogas/verifier`                     |
+| Browser                                                    | `@stogas/verifier/browser`             |
+| Cloudflare Workers and Web Workers                         | `@stogas/verifier/worker`              |
+| Python                                                     | `stogas-verifier` PyO3 wheel           |
+| Go                                                         | `github.com/StogasAI/verifier/go`      |
+| Rust                                                       | `stogas-verifier` crate                |
+| C and C++                                                  | `stogas_verifier.h` and native library |
+| JVM, .NET, Swift, Kotlin/Native, and other native runtimes | Bounded C ABI                          |
+
+All paths execute the same Rust policy. WebAssembly is the browser build of that core, not a separate verifier.
+
+## Verification or requests?
+
+Use an SDK when your application needs the trust set itself. Use the [CLI](/docs/cli) when an existing OpenAI-compatible client only needs a verified connection. The CLI handles retrieval, refresh, and TLS pinning without replacing the OpenAI SDK in each language.
+
+<Cards>
+	<Card title="JavaScript" description="Node, Bun, and TypeScript." href="/docs/sdk/javascript" />
+	<Card title="Python" description="Native PyO3 wheels." href="/docs/sdk/python" />
+	<Card title="Go" description="A thin cgo binding." href="/docs/sdk/go" />
+	<Card title="WebAssembly" description="Browsers and Worker runtimes." href="/docs/sdk/wasm" />
+</Cards>

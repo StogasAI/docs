@@ -1,0 +1,36 @@
+---
+title: C and C++
+description: Use the bounded native verifier ABI.
+---
+
+Release archives contain `stogas_verifier.h` and a native library for Linux, macOS, and Windows.
+
+## Verify a bundle
+
+```c
+#include "stogas_verifier.h"
+
+StogasVerifier *verifier = stogas_verifier_new(120000);
+char *result = stogas_verifier_verify_bundle(
+    verifier,
+    bundle_bytes,
+    bundle_length,
+    now_unix_ms
+);
+
+if (result == NULL) {
+    /* allocation or ABI failure */
+}
+
+/* Parse the {"ok":true,"value":...} JSON envelope. */
+stogas_verifier_string_free(result);
+stogas_verifier_free(verifier);
+```
+
+Check `stogas_verifier_abi_version()` before loading a library version your application has not tested. Every returned string is owned by the library and must be released with `stogas_verifier_string_free`. Do not free a verifier while another thread is using it.
+
+The header includes C++ linkage guards. C++ applications can wrap the two owned pointers with RAII without changing the ABI.
+
+## Send requests
+
+Start [`stogas-verify serve`](/docs/cli) and point libcurl or your existing OpenAI-compatible client at its printed base URL. This keeps certificate pinning in the CLI instead of duplicating it in application code.
