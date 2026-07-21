@@ -10,7 +10,7 @@ Release archives contain `stogas_verifier.h` and a native library for Linux, mac
 ```c
 #include "stogas_verifier.h"
 
-StogasVerifier *verifier = stogas_verifier_new(120000);
+StogasVerifier *verifier = stogas_verifier_new();
 char *result = stogas_verifier_verify_bundle(
     verifier,
     bundle_bytes,

@@ -1,11 +1,11 @@
 ---
 title: Evidence Bundle
-description: Understand the public snapshot used to verify Stogas gateways.
+description: How Stogas publishes fresh gateway evidence.
 ---
 
-The Stogas evidence bundle is a public, continuously updated snapshot of the confidential gateway fleet. It tells a verifier which gateway releases and connection keys can currently be trusted.
+The evidence bundle is a public snapshot of Stogas gateway releases, hardware evidence, and connection keys. A new snapshot is normally published every minute.
 
-Verification happens locally. A client downloads one JSON file, checks its embedded evidence, and receives a trusted set of gateways without contacting GitHub, AMD, Sigstore, or drand.
+Your verifier downloads one JSON file and checks it locally. It does not contact GitHub, AMD, Sigstore, or drand during verification.
 
 ## Endpoints
 
@@ -20,22 +20,26 @@ The endpoint supports public browser `GET` and `HEAD` requests.
 - Gateway releases proven to come from the public Stogas gateway repository and authorized by Stogas.
 - Confidential gateway nodes running an approved release on AMD SEV-SNP hardware.
 - The attested certificate, TLS, response-signing, and encryption keys for each trusted gateway.
-- An `expires_at` deadline after which the snapshot must not be used.
+- A deadline after which the verified snapshot must not be used.
 
-The verifier returns fresh gateways under `nodes`. Cryptographically valid records that are too old for the selected freshness policy appear under `excluded_nodes` and are not trusted for connections.
+The verifier returns trusted gateways under `nodes`. Older valid records may appear under `excluded_nodes`, but they are never trusted for connections.
+
+## Timing
+
+The verifier applies one timing policy:
+
+- The bundle must have been created within the last three minutes.
+- Each trusted gateway's evidence must be no more than two minutes older than the bundle.
+- The bundle may remain valid for at most 15 minutes from creation.
+
+With the normal one-minute publication cadence, a newly fetched bundle usually carries evidence less than three minutes old. Refreshing more often narrows that practical window further.
 
 ## Refreshing
 
-Refresh before `expires_at`. That signed deadline is the only bundle lifetime a client needs to schedule around.
+Refresh before `expires_at`. Refreshing regularly keeps the active trust set closer to the latest publication. The deadline limits how long an already verified trust set may be used; it does not promise that a gateway will stay online.
 
-[`stogas-verify serve`](/docs/cli) maintains a replacement in the background and keeps using the current verified bundle until a newer one passes. SDK users choose their own retrieval schedule.
+[`stogas-verify serve`](/docs/cli) checks for a replacement about once a minute and keeps using the current verified bundle until a newer one passes or the current one expires. SDK users choose their own retrieval schedule.
 
 If no valid replacement is available by the deadline, the expired bundle must not authorize a new connection.
-
-## Freshness policy
-
-The default verifier policy accepts node evidence that was no more than two minutes old when the bundle was created. Applications may select one to 15 minutes.
-
-Changing this policy affects which gateways enter the local trusted set. It does not change the signed bundle expiry or other verified gateways.
 
 For installation and examples, choose the [CLI](/docs/cli) or an [SDK](/docs/sdk). For the underlying guarantees, see the [security model](/docs/confidential-security-model).
