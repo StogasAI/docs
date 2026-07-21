@@ -1,0 +1,53 @@
+---
+title: WebAssembly
+description: Verify bundles in browsers and Worker runtimes.
+---
+
+## Browser
+
+```console
+npm install @stogas/verifier
+```
+
+```js
+import init, { Verifier } from '@stogas/verifier/browser';
+
+await init();
+
+const response = await fetch('https://evidence.stogas.ai/bundles/latest.json');
+const verifier = new Verifier();
+try {
+	const verified = verifier.verify_bundle(new Uint8Array(await response.arrayBuffer()));
+	console.log(verified.bundle.nodes);
+} finally {
+	verifier.free();
+}
+```
+
+The browser package is the Rust core compiled to WebAssembly. It uses no network during verification.
+
+## Cloudflare Workers and Web Workers
+
+```js
+import { Verifier } from '@stogas/verifier/worker';
+
+const verifier = new Verifier();
+const verified = verifier.verify_bundle(bundleBytes);
+verifier.free();
+```
+
+The Worker entry point initializes the bundled module for the runtime.
+
+## OpenAI client in a browser
+
+Browsers do not expose the peer TLS certificate to JavaScript. To get the same connection pinning as native clients, start the [CLI browser bridge](/docs/cli#browser-apps) on the user's machine and pass its printed URL to the OpenAI client:
+
+```js
+const client = new OpenAI({
+	apiKey: userProvidedStogasKey,
+	baseURL: pastedCliBaseUrl,
+	dangerouslyAllowBrowser: true
+});
+```
+
+The CLI must be launched with the page's exact origin. Do not ship a shared API key in browser code.

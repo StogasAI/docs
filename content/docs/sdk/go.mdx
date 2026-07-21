@@ -1,0 +1,48 @@
+---
+title: Go
+description: Verify bundles through the packaged Rust library.
+---
+
+## Install
+
+```console
+go get github.com/StogasAI/verifier/go
+go get github.com/openai/openai-go/v3
+```
+
+The Stogas package is a narrow cgo binding. Tagged releases include the Rust library for each supported target.
+
+## Verify a bundle
+
+```go
+bundle, err := os.ReadFile("bundle.json")
+if err != nil { return err }
+
+v, err := verifier.New()
+if err != nil { return err }
+defer v.Close()
+
+verifiedJSON, err := v.VerifyBundle(bundle)
+if err != nil { return err }
+fmt.Println(string(verifiedJSON))
+```
+
+## OpenAI client
+
+Start [`stogas-verify serve`](/docs/cli), then use the official Go client:
+
+```go
+client := openai.NewClient(
+    option.WithAPIKey(os.Getenv("STOGAS_API_KEY")),
+    option.WithBaseURL(envOr("STOGAS_BASE_URL", "http://127.0.0.1:8787/v1")),
+)
+
+response, err := client.Responses.New(context.Background(), responses.ResponseNewParams{
+    Model: "openai/gpt-5-mini",
+    Input: responses.ResponseNewParamsInputUnion{
+        OfString: openai.String("Say hello in one sentence."),
+    },
+})
+```
+
+`envOr` is any small helper that returns the environment value when set and the fallback otherwise.
