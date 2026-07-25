@@ -10,15 +10,21 @@ Stogas runs its API gateway inside an AMD SEV-SNP confidential VM. The host can 
 1. **Release provenance:** GitHub Actions and Stogas independently authorize the same public source, IGVM hash, launch policy, and SNP measurement.
 2. **Hardware attestation:** AMD-signed SNP evidence proves an approved measurement booted on genuine hardware at an accepted security version.
 3. **Key binding:** SNP report data binds the node's TLS key, certificate hashes, and application keys to that measured guest.
-4. **Freshness:** a signed drand round and the verifier's captured wall clock bound how old the node evidence may be.
+4. **Freshness:** every trusted node's signed drand round is at most two minutes older than the authenticated bundle creation time. The verifier clock separately rejects delayed, future-dated, or expired bundles.
 
 No root of trust is accepted from the downloaded bundle. The verifier ships the AMD, Sigstore, drand, and Stogas release roots it trusts.
 
 ## Request path
 
-Verification and evidence publication happen outside the inference request path. Once a node is trusted, requests use the normal OpenAI-compatible HTTPS API. This avoids a live dependency on GitHub, Sigstore, Rekor, AMD KDS, drand, or the evidence service for each model request.
+Verification and evidence publication happen outside the inference request path. Once a bundle is active, requests use the normal OpenAI-compatible endpoints. This avoids a live dependency on GitHub, Sigstore, Rekor, AMD KDS, drand, or the evidence service for each model request.
 
-`stogas-verify serve` additionally checks that the upstream TLS connection presents a certificate hash and public key belonging to the same verified node.
+The managed native SDK transport additionally checks that the upstream TLS connection presents a certificate hash and public key belonging to the same verified node.
+
+Browser and optional native E2EE encrypt the complete inner inference request once under a random content key, then wrap that key independently to every node in the verified bundle. Random L4 routing therefore requires no session affinity or plaintext-aware intermediary. The selected guest decrypts inside confidential memory and encrypts response metadata, body or SSE frames, errors, and an authenticated terminal frame.
+
+The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key IDs, ciphertext length, and network timing. The encrypted inner request contains the API key, OpenAI request body, relevant content negotiation, and optional extra-field preference. The encrypted response contains its status, safe response headers, body or SSE frames, and terminal state. This keeps routing and bounded parsing outside the ciphertext while keeping credentials and inference semantics inside it.
+
+The same signed response receipt travels inside the encrypted response, so E2EE does not introduce a second proof format. The receipt binds hashes of the exact plaintext request and response bytes, request ID, endpoint, resolved catalog route, current drand round, and the E2EE transcript when present. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
 
 ## Release authorization
 
@@ -42,7 +48,14 @@ Confidential verification does not:
 
 - prove that reviewed code has no vulnerabilities;
 - hide traffic timing or destination metadata;
+- hide ciphertext length;
 - make an upstream AI provider confidential unless that provider offers its own verified confidential execution;
 - prevent the host or operator from stopping service;
 - let browser JavaScript inspect the certificate used by `fetch`;
-- verify response proofs or provide end-to-end application encryption in the current protocol.
+- protect API keys from malicious same-origin browser script.
+
+The v1 E2EE recipient profile uses RFC 9180 HPKE with P-256, HKDF-SHA256, and AES-256-GCM. The envelope is versioned for algorithm migration. Stogas does not claim complete post-quantum security: AMD SNP, drand, WebPKI, Sigstore, and existing signing keys still depend on classical cryptography.
+
+The gateway uses Go 1.26's default TLS 1.3 curve policy, which offers hybrid ML-KEM key exchange to capable clients while retaining interoperable classical fallbacks. This reduces harvest-now-decrypt-later exposure for the TLS session; it does not make the complete attestation or E2EE trust chain post-quantum.
+
+The recipient key exists only in one guest generation and is destroyed when that guest stops. Because v1 uses a non-interactive static HPKE recipient key, compromise of that key while the generation is alive could expose requests recorded for that generation; v1 does not claim interactive forward secrecy.

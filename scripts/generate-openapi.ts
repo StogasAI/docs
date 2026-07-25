@@ -99,6 +99,21 @@ async function main() {
 						.replace(/\n{3,}/g, '\n\n')
 						.trimEnd()
 						.concat('\n');
+					if (
+						file.content.includes("path: '/v1/responses'") ||
+						file.content.includes("path: '/v1/chat/completions'")
+					) {
+						file.content = file.content.replace(
+							'<APIPage ',
+							`<Callout type="info" title="Application E2EE">
+	This endpoint accepts ordinary OpenAI-compatible JSON and Stogas E2EE framing on the same path.
+	Choose E2EE through the managed transport; applications should not construct the encrypted
+	envelope directly. Request and response types remain unchanged after transport decryption.
+</Callout>
+
+<APIPage `
+						);
+					}
 				}
 			}
 		}

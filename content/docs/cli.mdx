@@ -23,7 +23,7 @@ The command prints:
 OpenAI base URL: http://127.0.0.1:8787/v1
 ```
 
-Set your OpenAI-compatible client to that URL. The CLI maintains fresh evidence, applies normal WebPKI checks, pins the certificate and public key to the same attested node, and preserves streaming responses.
+Set your OpenAI-compatible client to that URL. Native mode maintains fresh evidence, applies normal WebPKI checks, pins the certificate and public key to the same attested node, and preserves streaming responses.
 
 ```console
 export OPENAI_API_KEY="$STOGAS_API_KEY"
@@ -31,6 +31,13 @@ export OPENAI_BASE_URL="http://127.0.0.1:8787/v1"
 ```
 
 The listener is loopback-only. It installs no certificate authority and writes no verifier state to disk.
+
+## Transport security
+
+Use `--security` to select one of the [SDK protection modes](/docs/sdk-overview#protection-modes).
+Native use defaults to `tls`; `--browser-origin` defaults to `e2ee`.
+
+Encrypted inference request IDs are single-use. Configure calling SDKs with automatic retries disabled; after an ambiguous network failure, decide whether to issue a new request rather than risking duplicate inference.
 
 ## Browser apps
 
@@ -46,7 +53,7 @@ The printed URL contains a new random capability:
 OpenAI base URL: http://127.0.0.1:8787/<random-capability>/v1
 ```
 
-Paste the complete URL into the browser app. The CLI accepts that capability only from the configured origin, handles CORS and local-network preflights itself, and never forwards those headers upstream. Other browser origins remain blocked.
+Paste the complete URL into the browser app. The CLI accepts that capability only from the configured origin, handles CORS and local-network preflights itself, encrypts inference by default, and never forwards those headers upstream. Other browser origins remain blocked.
 
 The browser may ask the user to allow local-network access for the page. That permission is expected: the page is connecting to the verifier on the user's own machine.
 
@@ -60,7 +67,8 @@ import OpenAI from 'openai';
 const client = new OpenAI({
 	apiKey: userProvidedStogasKey,
 	baseURL: pastedCliBaseUrl,
-	dangerouslyAllowBrowser: true
+	dangerouslyAllowBrowser: true,
+	maxRetries: 0
 });
 
 const response = await client.responses.create({
@@ -80,11 +88,48 @@ curl -sS https://evidence.stogas.ai/bundles/latest.json \
 
 Use `--json` for automation. A failed check exits non-zero and produces no trusted result.
 
-## Options
+## Refresh schedule
+
+The default interval is five minutes:
+
+```console
+stogas-verify serve
+```
+
+Choose any whole-second interval from 1 through 840:
+
+```console
+stogas-verify serve --bundle-refresh-seconds 30
+```
+
+`serve` retries failed refreshes while the current snapshot remains usable and makes an extra replacement attempt before expiry. It never activates a candidate that fails verification. Fetching the same publication does not repeat the expensive verification work.
+
+For a manual one-shot workflow, download a snapshot and run `verify` whenever your application chooses:
+
+```console
+curl -fsS https://evidence.stogas.ai/bundles/latest.json -o bundle.json
+stogas-verify verify bundle.json --json
+```
+
+Zero is not a refresh interval. Manual mode is the explicit `verify` operation rather than a hidden sentinel value.
+
+## Verify a response receipt
+
+Save the `X-Stogas-Proof` value or final `stogas.proof` SSE payload, plus the exact plaintext request and response bodies:
+
+```console
+stogas-verify proof proof.txt \
+  --request request.json \
+  --response response.json \
+  --bundle bundle.json
+```
+
+Use `--ledger node.json` instead of `--bundle` for historical evidence. For an encrypted exchange, save the locally computed `X-Stogas-E2EE-Transcript-SHA256` response header and pass it with `--e2ee-transcript-sha256`. Streaming response input is the exact SSE byte sequence excluding the final `stogas.proof` event itself.
+
+## All options
 
 ```console
 stogas-verify serve --help
 stogas-verify verify --help
+stogas-verify proof --help
 ```
-
-`serve` refreshes in the background and retries failed refreshes while the current bundle remains usable. It never switches to a candidate that fails verification.

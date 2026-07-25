@@ -1,0 +1,71 @@
+---
+title: Rust
+description: Use Stogas from Rust.
+---
+
+## Install
+
+```console
+cargo add stogas
+```
+
+## Verify a bundle
+
+```rust
+use std::time::{SystemTime, UNIX_EPOCH};
+use stogas::{Environment, Verifier};
+
+let bundle = std::fs::read("bundle.json")?;
+let now = i64::try_from(
+    SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis()
+)?;
+
+let mut verifier = Verifier::default();
+let verified = verifier.verify_bundle(
+    &bundle,
+    now,
+    &Environment::stogas(),
+)?;
+
+println!("{}", verified.bundle.nodes.len());
+```
+
+The core accepts one captured wall-clock value so tests and audits remain deterministic. Packaged language adapters capture that value automatically.
+
+## Send requests
+
+The same crate embeds the managed transport:
+
+```rust
+use std::time::Duration;
+use stogas::{SecurityMode, Transport, TransportOptions};
+
+let transport = Transport::start(TransportOptions {
+    security: SecurityMode::Both,
+    bundle_refresh_interval: Duration::from_secs(300),
+    base_url: "https://api.stogas.ai".to_owned(),
+    bundle_url: "https://evidence.stogas.ai/bundles/latest.json".to_owned(),
+})?;
+
+let changed = transport.refresh_bundle()?;
+let base_url = transport.base_url();
+// Pass base_url to the OpenAI-compatible Rust client you already use.
+```
+
+The struct above shows every transport option. Dropping `transport` stops its refresh runtime.
+
+## Verify a response receipt
+
+Reuse the verifier that accepted the current bundle:
+
+```rust
+let receipt = verifier.verify_response_proof(
+    &proof_json,
+    &request_body,
+    &response_body,
+    None,
+    now,
+)?;
+```
+
+Use `verify_historical_response_proof` with an immutable Trust Center ledger record when the signing gateway is no longer in the active bundle. Exact request and response bytes are required.

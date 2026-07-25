@@ -1,0 +1,70 @@
+---
+title: C and C++
+description: Use Stogas from C and C++.
+---
+
+Release archives contain `stogas_verifier.h` and a native library for Linux, macOS, and Windows.
+
+## Verify a bundle
+
+```c
+#include "stogas_verifier.h"
+
+StogasVerifier *verifier = stogas_verifier_new();
+char *result = stogas_verifier_verify_bundle(
+    verifier,
+    bundle_bytes,
+    bundle_length,
+    now_unix_ms
+);
+
+if (result == NULL) {
+    /* allocation or ABI failure */
+}
+
+/* Parse the {"ok":true,"value":...} JSON envelope. */
+stogas_verifier_string_free(result);
+stogas_verifier_free(verifier);
+```
+
+Check `stogas_verifier_abi_version()` before loading a library version your application has not tested. Every returned string is owned by the library and must be released with `stogas_verifier_string_free`. Do not free a verifier while another thread is using it.
+
+The header includes C++ linkage guards. C++ applications can wrap the two owned pointers with RAII without changing the ABI.
+
+## Send requests
+
+The same native library starts the managed Rust transport in-process:
+
+```c
+const char *options =
+    "{"
+    "\"security\":\"both\","
+    "\"bundle_refresh_interval_seconds\":300,"
+    "\"base_url\":\"https://api.stogas.ai\","
+    "\"bundle_url\":\"https://evidence.stogas.ai/bundles/latest.json\""
+    "}";
+StogasTransport *transport = NULL;
+char *started = stogas_transport_start(
+    (const uint8_t *) options,
+    strlen(options),
+    &transport
+);
+
+/* Parse value.base_url from the returned JSON and pass it to libcurl or your client. */
+stogas_verifier_string_free(started);
+
+/* Request an immediate bundle refresh when needed. */
+char *refreshed = stogas_transport_refresh(transport);
+stogas_verifier_string_free(refreshed);
+stogas_transport_free(transport);
+```
+
+The JSON above shows every transport option. Create one transport for the lifetime of your API
+client. Startup fails if the SDK cannot establish a current trusted gateway set. The returned
+local URL remains valid until the transport is freed.
+
+## Verify a response receipt
+
+After accepting a bundle with the same verifier, call `stogas_verifier_verify_response_proof` with the receipt JSON and exact request and response bytes. Historical verification uses `stogas_verifier_verify_historical_response_proof` and additionally accepts the immutable Trust Center ledger record.
+
+Both functions return owned JSON containing the request ID, node ID, request SHA-256, response SHA-256, and receipt SHA-256. Pass an empty E2EE transcript field for an ordinary TLS exchange.

@@ -1,9 +1,24 @@
 ---
 title: More Languages
-description: Use the CLI everywhere or bridge the native C ABI.
+description: Use Stogas from other runtimes.
 ---
 
-Any OpenAI-compatible client can use the URL printed by [`stogas-verify serve`](/docs/cli). Change the client's API key and base URL; its request types, streaming, and model calls stay the same.
+The native SDK exposes a bounded C ABI for runtimes without a dedicated binding. Start
+`StogasTransport`, keep its handle alive, and configure your OpenAI-compatible client with the
+returned base URL.
+
+```json
+{
+	"security": "both",
+	"bundle_refresh_interval_seconds": 300,
+	"base_url": "https://api.stogas.ai",
+	"bundle_url": "https://evidence.stogas.ai/bundles/latest.json"
+}
+```
+
+Encode this complete configuration as UTF-8 JSON and pass it to `stogas_transport_start`. Keep the
+returned handle, use `stogas_transport_refresh` for an immediate refresh, and release it with
+`stogas_transport_free`.
 
 Applications that need the raw trust set can bridge the packaged C ABI:
 
@@ -21,4 +36,4 @@ Applications that need the raw trust set can bridge the packaged C ABI:
 | LuaJIT            | LuaJIT FFI                                                             |
 | Elixir and Erlang | A supervised Port; use a NIF only when process isolation is acceptable |
 
-The ABI returns a bounded JSON envelope, so a bridge only owns allocation and type conversion. It must not reimplement cryptographic policy.
+The ABI returns bounded JSON envelopes, so a bridge owns only allocation and type conversion. It must not reimplement transport or cryptographic policy.

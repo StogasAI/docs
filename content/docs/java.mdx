@@ -1,0 +1,45 @@
+---
+title: Java
+description: Use Stogas from Java.
+---
+
+## Install
+
+```kotlin
+implementation("com.openai:openai-java:4.43.0")
+```
+
+Load the packaged Stogas native SDK with Java 22's Foreign Function & Memory API. Call `stogas_transport_start`, retain its handle, and pass the returned `value.base_url` to the official client:
+
+```java
+String configuration = """
+    {
+      "security": "both",
+      "bundle_refresh_interval_seconds": 300,
+      "base_url": "https://api.stogas.ai",
+      "bundle_url": "https://evidence.stogas.ai/bundles/latest.json"
+    }
+    """;
+
+try (StogasTransport stogasTransport =
+         StogasTransport.start(configuration.getBytes(StandardCharsets.UTF_8))) {
+    boolean changed = stogasTransport.refreshBundle();
+
+OpenAIClient client = OpenAIOkHttpClient.builder()
+    .apiKey(System.getenv("STOGAS_API_KEY"))
+    .baseUrl(stogasTransport.baseUrl())
+    .build();
+
+Response response = client.responses().create(
+    ResponseCreateParams.builder()
+        .model("openai/gpt-5-mini")
+        .input("Say hello in one sentence.")
+        .build()
+);
+}
+```
+
+`StogasTransport.start` is the thin application binding over Java FFM and
+`stogas_transport_start`; the JSON above contains every native transport option. Older JVM
+applications can use JNA or a small JNI adapter. Scala and Clojure use the same SDK ABI and
+lifecycle.

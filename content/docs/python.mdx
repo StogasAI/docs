@@ -1,0 +1,75 @@
+---
+title: Python
+description: Use Stogas from Python.
+---
+
+## Install
+
+```console
+pip install stogas-verifier openai
+```
+
+The verifier ships as a CPython 3.10+ stable-ABI extension built with PyO3.
+
+## Verify a bundle
+
+```python
+import json
+from urllib.request import urlopen
+from stogas_verifier import Verifier
+
+with urlopen("https://evidence.stogas.ai/bundles/latest.json") as response:
+    bundle = response.read()
+
+verifier = Verifier()
+verified = json.loads(verifier.verify_bundle(bundle))
+print(verified["bundle"]["nodes"])
+```
+
+## OpenAI client
+
+Create one transport with your application, reuse it across requests, and close it during graceful
+shutdown:
+
+```python
+import os
+from openai import OpenAI
+from stogas_verifier import Transport
+
+transport = Transport(
+    security="both",
+    bundle_refresh_interval_seconds=300,
+    base_url="https://api.stogas.ai",
+    bundle_url="https://evidence.stogas.ai/bundles/latest.json",
+)
+try:
+    changed = transport.refresh_bundle()
+    client = OpenAI(
+        api_key=os.environ["STOGAS_API_KEY"],
+        base_url=transport.base_url,
+        max_retries=0,
+    )
+    response = client.responses.create(
+        model="openai/gpt-5-mini",
+        input="Say hello in one sentence.",
+    )
+    print(response.output_text)
+finally:
+    transport.close()
+```
+
+The constructor above shows every transport option. Omit `base_url` and `bundle_url` for the
+public Stogas service.
+
+## Verify a response receipt
+
+Reuse the `Verifier` that accepted the bundle:
+
+```python
+receipt = json.loads(
+    verifier.verify_response_proof(proof_json, request_body, response_body)
+)
+print(receipt["request_sha256"], receipt["response_sha256"])
+```
+
+Use `verify_historical_response_proof(..., ledger_json)` for a gateway that is no longer in the active bundle. The body arguments must be the exact plaintext bytes sent and received.

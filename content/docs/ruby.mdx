@@ -1,0 +1,47 @@
+---
+title: Ruby
+description: Use Stogas from Ruby.
+---
+
+## Install
+
+```ruby
+gem "openai"
+```
+
+Load the packaged Stogas SDK with `Fiddle` or the `ffi` gem and call `stogas_transport_start`. Use the returned `value.base_url` with the OpenAI client:
+
+```ruby
+require "json"
+require "openai"
+
+configuration = JSON.generate(
+  security: "both",
+  bundle_refresh_interval_seconds: 300,
+  base_url: "https://api.stogas.ai",
+  bundle_url: "https://evidence.stogas.ai/bundles/latest.json"
+)
+
+stogas_transport = StogasTransport.start(configuration)
+begin
+  changed = stogas_transport.refresh_bundle
+
+  client = OpenAI::Client.new(
+    api_key: ENV.fetch("STOGAS_API_KEY"),
+    base_url: stogas_transport.base_url
+  )
+
+  response = client.responses.create(
+    model: "openai/gpt-5-mini",
+    input: "Say hello in one sentence."
+  )
+
+  puts response.output_text
+ensure
+  stogas_transport.close
+end
+```
+
+`StogasTransport` is the thin Fiddle or `ffi` binding over the packaged native library; the hash
+above contains every transport option. See [C and C++](/docs/c-cpp) for the ABI ownership
+contract.

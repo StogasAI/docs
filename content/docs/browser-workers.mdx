@@ -1,0 +1,89 @@
+---
+title: Browser and Workers
+description: Use Stogas in browsers and edge runtimes.
+---
+
+## Browser
+
+```console
+npm install @stogas/verifier
+```
+
+```js
+import init, { Verifier } from '@stogas/verifier/browser';
+
+await init();
+
+const response = await fetch('https://evidence.stogas.ai/bundles/latest.json');
+const verifier = new Verifier();
+try {
+	const verified = verifier.verify_bundle(new Uint8Array(await response.arrayBuffer()));
+	console.log(verified.bundle.nodes);
+} finally {
+	verifier.free();
+}
+```
+
+The browser package is the Rust core compiled to WebAssembly. It uses no network during verification.
+
+## OpenAI client in a browser
+
+`StogasTransport` verifies and refreshes bundles, encrypts inference to every currently trusted node, and decrypts authenticated buffered or streaming responses.
+
+```ts
+import OpenAI from 'openai';
+import init, { StogasTransport } from '@stogas/verifier/browser';
+
+await init();
+
+const transport = await StogasTransport.create({
+	baseURL: 'https://api.stogas.ai/v1',
+	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
+	bundleRefreshIntervalSeconds: 300,
+	fetch: window.fetch.bind(window)
+});
+const client = new OpenAI(transport.openAIOptions(userProvidedStogasKey));
+
+try {
+	await transport.refreshBundle();
+	const response = await client.responses.create({
+		model: 'openai/gpt-5-mini',
+		input: 'Say hello in one sentence.'
+	});
+	console.log(response.output_text);
+} finally {
+	transport.close();
+}
+```
+
+The default bundle refresh interval is five minutes. Set `bundleRefreshIntervalSeconds` to a whole number from 1 through 840, or call `await transport.refreshBundle()` for an immediate manual refresh. Identical bundle bytes are hash-deduplicated before cryptographic verification, and the transport always attempts another fetch before the active bundle expires.
+
+The transport uses the normal `/v1/responses` and `/v1/chat/completions` endpoints. It disables automatic SDK retries because retrying after an ambiguous connection failure could execute inference twice under a new request ID.
+
+For later receipt verification, the decrypted response exposes the locally computed E2EE transcript as `X-Stogas-E2EE-Transcript-SHA256`. OpenAI JavaScript callers can access response headers with the SDK's raw-response helper when they need to archive this value.
+
+<Callout type="warn">
+	Each user should provide their own API key. Never ship a shared key in browser assets; E2EE cannot
+	protect a key from compromised same-origin JavaScript.
+</Callout>
+
+## Cloudflare Workers and Web Workers
+
+```js
+import OpenAI from 'openai';
+import { StogasTransport, Verifier } from '@stogas/verifier/worker';
+
+const verifier = new Verifier();
+const verified = verifier.verify_bundle(bundleBytes);
+verifier.free();
+
+const transport = await StogasTransport.create({
+	baseURL: 'https://api.stogas.ai/v1',
+	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
+	bundleRefreshIntervalSeconds: 300,
+	fetch
+});
+const client = new OpenAI(transport.openAIOptions(stogasAPIKey));
+```
+
+The Worker entry point initializes the bundled module and uses the runtime's Fetch implementation.
