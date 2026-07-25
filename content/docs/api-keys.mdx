@@ -1,0 +1,50 @@
+---
+title: API key types
+description: Choose between service keys, provisioning keys, and assigned keys.
+---
+
+Stogas has three key types. Only service keys and assigned keys are credentials that can call the
+gateway.
+
+## Service key
+
+A service key belongs to the organization and is managed by an administrator. Use one for a server,
+automation, or another workload where the organization controls the credential.
+
+- The secret is issued when the key is created and can be rotated by an administrator.
+- The key has its own expiration, rate, and spend policy.
+- Organization administrators can view and change the key.
+
+## Provisioning key
+
+A provisioning key is a parent policy and assignment group. It is not an inference credential and
+has no secret to copy.
+
+- Administrators assign child keys to organization members from its **Provision** tab.
+- Assigned keys remain grouped beneath their parent in the dashboard.
+- Parent policy can be applied to its assigned keys. A sparse policy can leave selected limits for
+  each member to set.
+- Aggregate enforcement shares the parent's enabled state, rate, and spend limits across assigned
+  keys. Without aggregate enforcement, parent values are templates and usage is still summarized on
+  the parent.
+
+## Assigned key
+
+An assigned key is created for one member under a provisioning key.
+
+- The member generates and owns the secret; Stogas never shows that secret to an administrator.
+- The member can rename the key privately.
+- Administrators see the stable membership label, such as `Alex's key`, and can revoke the secret or
+  delete the assignment.
+- Policy inherited from the provisioning parent cannot be changed by the member. Fields deliberately
+  left open by a sparse parent remain editable.
+
+## Which should I use?
+
+| Use case | Key type |
+| --- | --- |
+| Backend service, CI job, or organization-owned integration | Service key |
+| Define policy and issue one key to each team member | Provisioning key |
+| Call the gateway as the member assigned by a provisioning key | Assigned key |
+
+Rotating or revoking one assigned key does not expose or rotate any other member's secret.
