@@ -1,0 +1,108 @@
+---
+title: Stogas SDK
+description: Protect OpenAI-compatible requests and verify confidential-compute evidence.
+---
+
+The Stogas SDK adds confidential transport to the OpenAI client you already use. It verifies the
+available gateways before sending a request, keeps trust material current, and fails closed when
+that material expires.
+
+<Cards>
+	<Card
+		title="Make a protected request"
+		description="Install the SDK for your language and connect an OpenAI client."
+		href="/docs/javascript-typescript"
+	/>
+	<Card
+		title="Inspect the evidence"
+		description="See what the SDK verifies before trusting a gateway."
+		href="/docs/trusted-gateways"
+	/>
+</Cards>
+
+## How it works
+
+<Steps>
+	<Step>
+
+### Verify
+
+The SDK verifies release provenance, AMD SEV-SNP evidence, drand freshness, and gateway keys on
+your device.
+
+    </Step>
+    <Step>
+
+### Connect
+
+It establishes a protected channel to a gateway that appears in the verified fleet snapshot.
+
+    </Step>
+    <Step>
+
+### Request
+
+Your existing OpenAI client sends normal Responses or Chat Completions requests through that
+channel.
+
+    </Step>
+
+</Steps>
+
+## Protection modes
+
+| Mode     | Available in    | Protection                                                            | Default           |
+| -------- | --------------- | --------------------------------------------------------------------- | ----------------- |
+| **TLS**  | Native runtimes | WebPKI plus a live certificate and public key from the verified fleet | Native SDKs       |
+| **E2EE** | All runtimes    | Application encryption directly to the currently verified gateway set | Browser and Fetch |
+| **Both** | Native runtimes | E2EE inside the verified TLS connection                               | Optional          |
+
+Browser networking APIs do not reveal the peer certificate, so browser and Fetch-only clients use
+E2EE. Native clients can select `tls`, `e2ee`, or `both`.
+
+## Configuration
+
+| Control                 | Default            | Notes                                                            |
+| ----------------------- | ------------------ | ---------------------------------------------------------------- |
+| Security mode           | Runtime-specific   | Selects one of the modes above                                   |
+| Bundle refresh interval | 300 seconds        | Any whole number from 1 through 840                              |
+| Manual refresh          | On demand          | Fetches immediately; unchanged bundle bytes reuse verified state |
+| API and evidence URLs   | Stogas public URLs | Override only for another deployment using the same Stogas trust |
+| Close                   | Explicit or scoped | Stops refresh work and releases the transport                    |
+
+The SDK also fetches shortly before an accepted bundle expires, regardless of the configured
+interval. A failed refresh can use the current bundle only until its authenticated expiry.
+
+## OpenAI client integration
+
+Native SDKs run the shared Rust connection engine inside your process. They give the official
+OpenAI client a private local base URL, keeping request types, streaming, and error handling in the
+official client while Rust owns verification, TLS pinning, E2EE, and bundle refresh.
+
+Browser, Worker, Node, Bun, and Deno integrations instead provide a managed `fetch` function. The
+same Rust core runs as WebAssembly and handles E2EE framing before the request reaches the network.
+
+## Choose your runtime
+
+| Runtime                                     | Start here                                               |
+| ------------------------------------------- | -------------------------------------------------------- |
+| JavaScript, TypeScript, Node, Bun, and Deno | [JavaScript and TypeScript](/docs/javascript-typescript) |
+| Browser and edge Worker                     | [Browser and Workers](/docs/browser-workers)             |
+| Python                                      | [Python](/docs/python)                                   |
+| Go                                          | [Go](/docs/go)                                           |
+| Rust                                        | [Rust](/docs/rust)                                       |
+| Ruby                                        | [Ruby](/docs/ruby)                                       |
+| Java and other JVM languages                | [Java](/docs/java)                                       |
+| C# and F#                                   | [.NET](/docs/dotnet)                                     |
+| Swift and Objective-C                       | [Swift](/docs/swift)                                     |
+| Kotlin/JVM and Kotlin/Native                | [Kotlin](/docs/kotlin)                                   |
+| C and C++                                   | [C and C++](/docs/c-cpp)                                 |
+| Other runtimes                              | [More languages](/docs/other-languages)                  |
+
+## Verify evidence directly
+
+Each package also includes a networkless `Verifier` for applications that need the verified
+gateway set or want to validate response receipts themselves:
+
+- `Transport` manages protected OpenAI-compatible requests.
+- `Verifier` checks caller-supplied snapshots, response receipts, and historical gateway records.

@@ -1,0 +1,45 @@
+---
+title: .NET
+description: Use Stogas from .NET.
+---
+
+## Install
+
+```console
+dotnet add package OpenAI
+```
+
+Load the packaged native Stogas SDK with `LibraryImport` or `DllImport`, call `stogas_transport_start`, and parse `value.base_url` from its bounded JSON result. Pass that value to the official client:
+
+```csharp
+using OpenAI.Chat;
+using System.ClientModel;
+using System.Text.Json;
+
+byte[] configuration = JsonSerializer.SerializeToUtf8Bytes(new
+{
+    security = "both",
+    bundle_refresh_interval_seconds = 300,
+    base_url = "https://api.stogas.ai",
+    bundle_url = "https://evidence.stogas.ai/bundles/latest.json"
+});
+
+using StogasTransport stogasTransport = StogasTransport.Start(configuration);
+bool changed = stogasTransport.RefreshBundle();
+
+ChatClient client = new(
+    model: "openai/gpt-5-mini",
+    credential: new ApiKeyCredential(
+        Environment.GetEnvironmentVariable("STOGAS_API_KEY")!
+    ),
+    options: new OpenAIClientOptions { Endpoint = new Uri(stogasTransport.BaseUrl) }
+);
+
+ChatCompletion response = await client.CompleteChatAsync(
+    "Say hello in one sentence."
+);
+```
+
+`StogasTransport.Start` is the thin application binding over `stogas_transport_start`; the
+configuration above contains every native transport option. C# and F# use the same native library
+for `Transport` and `Verifier`; the [C ABI page](/docs/c-cpp) defines ownership and lifecycle.

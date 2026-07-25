@@ -793,7 +793,9 @@
 								"type": "boolean"
 							},
 							"effort": {
-								"type": "string"
+								"type": "string",
+								"description": "Canonical Stogas effort. Each accepted value has an explicit model-specific provider-adapter mapping; undeclared values are rejected. `none` is rejected when reasoning cannot be disabled.",
+								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"display": {
 								"type": "string"
@@ -807,7 +809,8 @@
 					},
 					"reasoning_effort": {
 						"type": "string",
-						"description": "Compatibility shortcut for `reasoning.effort`."
+						"description": "Compatibility shortcut for `reasoning.effort`.",
+						"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 					},
 					"reasoning_max_tokens": {
 						"type": "integer",
@@ -1410,7 +1413,9 @@
 						"description": "Reasoning configuration for models that expose reasoning controls.",
 						"properties": {
 							"effort": {
-								"type": "string"
+								"type": "string",
+								"description": "Canonical Stogas effort. Each accepted value has an explicit model-specific provider-adapter mapping; undeclared values are rejected. `none` is rejected when reasoning cannot be disabled.",
+								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"summary": {
 								"type": "string"
@@ -1554,7 +1559,9 @@
 						"additionalProperties": false
 					},
 					"reasoning.effort": {
-						"type": "string"
+						"type": "string",
+						"description": "Compatibility shortcut for `reasoning.effort`.",
+						"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 					}
 				},
 				"example": {

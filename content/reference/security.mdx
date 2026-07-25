@@ -28,7 +28,8 @@ Do not expose a privileged API key in public browser code. Use a narrowly limite
 
 - Unknown top-level JSON fields are rejected.
 - Compressed bodies are checked after decompression; oversized bodies return `413`.
-- Arbitrary client headers are not forwarded to providers.
+- Unrecognized client headers are accepted and ignored for SDK and browser compatibility.
+- Client headers are never forwarded to providers.
 - Provider response headers are hidden unless they are on the safe diagnostics allowlist.
 - Client-supplied private Stogas and Bifrost control headers are rejected.
 

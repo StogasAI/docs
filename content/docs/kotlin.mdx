@@ -1,0 +1,43 @@
+---
+title: Kotlin
+description: Use Stogas from Kotlin.
+---
+
+## Kotlin/JVM and Android
+
+Start the packaged native SDK in-process through Java FFM, JNA, or JNI, then pass its returned base URL to the official OpenAI Java client:
+
+```kotlin
+val configuration = """
+    {
+      "security": "both",
+      "bundle_refresh_interval_seconds": 300,
+      "base_url": "https://api.stogas.ai",
+      "bundle_url": "https://evidence.stogas.ai/bundles/latest.json"
+    }
+""".trimIndent().encodeToByteArray()
+
+val stogasTransport = StogasTransport.start(configuration)
+stogasTransport.use {
+    val changed = it.refreshBundle()
+
+val client: OpenAIClient = OpenAIOkHttpClient.builder()
+    .apiKey(System.getenv("STOGAS_API_KEY"))
+    .baseUrl(it.baseUrl)
+    .build()
+
+val response = client.responses().create(
+    ResponseCreateParams.builder()
+        .model("openai/gpt-5-mini")
+        .input("Say hello in one sentence.")
+        .build()
+)
+}
+```
+
+The JSON above contains every native transport option. Android uses the same native SDK through
+JNI or JNA.
+
+## Kotlin/Native
+
+Run `cinterop` against `stogas_verifier.h` and link the native library from the matching release archive. The generated Kotlin declarations preserve the same bounded C ABI used by Go and other native runtimes.

@@ -2,7 +2,7 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
 function StogasDocsTitle() {
 	return (
-		<span className="holographic-accent-text font-semibold text-xl tracking-tight select-none">
+		<span className="holographic-accent-text text-xl font-semibold tracking-tight select-none">
 			stogas
 		</span>
 	);

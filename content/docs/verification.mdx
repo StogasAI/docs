@@ -1,0 +1,64 @@
+---
+title: Verification
+description: Verify the code, hardware, and keys behind every protected request.
+---
+
+Stogas verifies a fleet before requests arrive. Clients download one compact snapshot, check it locally, and accept only gateways proven to run approved open-source code inside AMD SEV-SNP.
+
+<Cards>
+	<Card
+		title="Quickstart"
+		description="Protect an existing OpenAI client."
+		href="/docs/sdk-overview"
+	/>
+	<Card
+		title="SDK overview"
+		description="Embed verification in your application."
+		href="/docs/sdk-overview"
+	/>
+	<Card
+		title="Trusted gateways"
+		description="Understand the public trust snapshot."
+		href="/docs/trusted-gateways"
+	/>
+	<Card
+		title="Security model"
+		description="Review guarantees and limits."
+		href="/docs/confidential-security-model"
+	/>
+</Cards>
+
+## What a successful check establishes
+
+<Steps>
+	<Step>
+
+### Approved code
+
+GitHub build provenance and an independent Stogas counterbuild authorize the same reproducible gateway image.
+
+    </Step>
+    <Step>
+
+### Genuine confidential hardware
+
+An AMD certificate chain and signed SEV-SNP report prove that an approved image booted with the required security policy.
+
+    </Step>
+    <Step>
+
+### Fresh guest keys
+
+The report binds each gateway's TLS, response-signing, and E2EE keys. A verified drand round proves the evidence was produced recently.
+
+    </Step>
+
+</Steps>
+
+This all happens before the normal request path. Inference does not synchronously call Stogas Control, GitHub, AMD, Sigstore, or drand.
+
+## Connection-time and after-the-fact checks
+
+Connection-time verification authorizes a live gateway through attested TLS, E2EE, or both. The compact response receipt then binds the exact request and response bodies to that gateway's attested signing key.
+
+Current receipts can be checked against the active snapshot. Historical receipts use the permanent node-admission record in the Trust Center, so a gateway can be verified after it has left the fleet.
