@@ -1,11 +1,11 @@
 ---
-title: Stogas SDK
-description: Protect OpenAI-compatible requests and verify confidential-compute evidence.
+title: Protect requests with the SDK
+description: Add gateway verification and encrypted transport to an OpenAI client.
 ---
 
-The Stogas SDK adds confidential transport to the OpenAI client you already use. It verifies the
-available gateways before sending a request, keeps trust material current, and fails closed when
-that material expires.
+The Stogas SDK works with the OpenAI client you already use. Before sending a request, it checks the
+available gateways and opens a protected connection. It keeps that check current and stops sending
+requests if the evidence expires.
 
 <Cards>
 	<Card
@@ -14,8 +14,8 @@ that material expires.
 		href="/docs/javascript-typescript"
 	/>
 	<Card
-		title="Inspect the evidence"
-		description="See what the SDK verifies before trusting a gateway."
+		title="Understand verification"
+		description="See what the SDK checks before using a gateway."
 		href="/docs/trusted-gateways"
 	/>
 </Cards>
@@ -25,9 +25,9 @@ that material expires.
 <Steps>
 	<Step>
 
-### Verify
+### Check the gateway
 
-The SDK verifies release provenance, AMD SEV-SNP evidence, drand freshness, and gateway keys on
+The SDK checks the gateway's software, confidential hardware, freshness, and connection keys on
 your device.
 
     </Step>
@@ -35,7 +35,7 @@ your device.
 
 ### Connect
 
-It establishes a protected channel to a gateway that appears in the verified fleet snapshot.
+It opens a protected connection to a gateway that passed those checks.
 
     </Step>
     <Step>
@@ -49,7 +49,7 @@ channel.
 
 </Steps>
 
-## Protection modes
+## Connection protection
 
 | Mode     | Available in    | Protection                                                            | Default           |
 | -------- | --------------- | --------------------------------------------------------------------- | ----------------- |

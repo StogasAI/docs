@@ -1,57 +1,66 @@
 ---
-title: Trusted Gateways
-description: How clients discover and verify the gateways they can trust.
+title: How gateway verification works
+description: How a Stogas client decides which gateways it can safely use.
 ---
 
-Stogas publishes one public JSON snapshot containing every proof a client needs to authorize the current gateway fleet. A new snapshot is normally published every minute.
+Before sending a protected request, a Stogas client downloads a public trust bundle. The client
+checks the bundle locally and accepts only gateways that prove they are running approved software
+inside genuine confidential-computing hardware.
 
 ```text
 https://evidence.stogas.ai/bundles/latest.json
 ```
 
-Verification is local and networkless after this fetch. The verifier does not contact GitHub, AMD, Sigstore, or drand.
+After the download, verification is local. The verifier does not contact GitHub, AMD, Sigstore, or
+drand while checking the bundle.
 
-## What the snapshot contains
+## What the trust bundle proves
 
-- Approved gateway releases and their independent build evidence.
-- AMD certificate chains and SEV-SNP reports for admitted gateways.
-- Fresh drand evidence.
-- TLS, response-signing, and E2EE public keys generated inside each guest.
-- One absolute expiration time.
+The bundle contains:
 
-The verified result separates usable `nodes` from older `excluded_nodes`. Excluded records may remain in the publication for recovery, but they never authorize a connection.
+- approved gateway releases and their build records;
+- AMD certificate chains and SEV-SNP reports for each gateway;
+- recent drand evidence;
+- TLS, response-signing, and E2EE public keys created by each gateway; and
+- an expiration time.
 
-## Three independent clocks
+The verifier returns the gateways that are safe to use as `nodes`. Older or unusable records may
+appear as `excluded_nodes`, but they never authorize a connection.
 
-| Clock                    | Fixed policy                                                             | Purpose                                                 |
-| ------------------------ | ------------------------------------------------------------------------ | ------------------------------------------------------- |
-| Snapshot anti-replay     | Creation is no more than three minutes behind the verifier's wall clock  | Rejects delayed or replayed publications                |
-| Gateway authorization    | The drand round is no more than two minutes older than snapshot creation | Keeps every trusted node's drand-backed quote fresh     |
-| Accepted snapshot expiry | Expiry is no more than 15 minutes after creation                         | Places a hard deadline on an already accepted trust set |
+## Freshness rules
 
-These are separate comparisons. Gateway eligibility never uses fetch time or verifier capture time: every verifier compares the authenticated drand round time directly with the authenticated snapshot creation time. The verifier clock is used only for snapshot anti-replay, future-skew, and expiry checks. Holding a snapshot longer does not weaken the node rule.
+The verifier applies three separate time limits:
 
-<Callout type="info">
-	The 15-minute lifetime supports safe fleet rollouts and temporary publication failures. It does
-	not mean clients should wait 15 minutes between normal refreshes.
-</Callout>
+| Check | Rule | Why it matters |
+| --- | --- | --- |
+| Bundle creation | No more than three minutes behind the client's clock | Rejects a delayed or replayed bundle |
+| Gateway evidence | The drand round is no more than two minutes older than bundle creation | Requires recent evidence from every accepted gateway |
+| Bundle expiry | No more than 15 minutes after creation | Sets a hard deadline for an accepted bundle |
 
-## Refresh behavior
+The 15-minute lifetime allows safe gateway updates and short publication failures. It does not mean
+clients should wait 15 minutes before checking for an update.
 
-Managed transports check every five minutes by default. The supported scheduled interval is any whole number from 1 through 840 seconds. An application may also request an immediate refresh at any time.
+## Keeping verification current
 
-When the fetched bytes are unchanged, the transport reuses the active verification instead of repeating cryptography. A failed fetch leaves the last accepted snapshot active only until its authenticated expiry, and the transport makes an additional replacement attempt before that deadline.
+Managed transports check every five minutes by default and make another attempt before the active
+bundle expires. Applications can choose an interval from 1 through 840 seconds or request an
+immediate refresh.
 
-## Verify a response later
+If the downloaded bytes have not changed, the transport reuses the existing verified result. A
+failed update can keep using the last accepted bundle only until that bundle expires.
 
-Every response can carry one compact receipt:
+## Verifying a response later
+
+Every response can include a compact receipt:
 
 - non-streaming responses use `X-Stogas-Proof`;
 - streaming responses end with a `stogas.proof` SSE event.
 
-The receipt signs hashes of the exact request and response bytes, request ID and endpoint, resolved catalog route, current drand round, and the E2EE transcript when used. It also identifies the attested signing key.
+The receipt identifies the gateway and signs hashes of the exact request and response, the API
+route, the selected model route, current freshness evidence, and the encrypted-connection transcript
+when E2EE is used.
 
-Reuse the SDK verifier that accepted the current snapshot:
+Reuse the verifier that accepted the active bundle:
 
 ```ts
 const receipt = verifier.verify_response_proof(
@@ -62,6 +71,7 @@ const receipt = verifier.verify_response_proof(
 );
 ```
 
-Successful verification returns only `request_id`, `node_id`, `request_sha256`, `response_sha256`, and `proof_hash`. The hashes are calculated again from the exact caller-supplied bytes; they are not trusted merely because the gateway placed them in the receipt.
-
-For an older response, download the matching node record from the Trust Center and call `verify_historical_response_proof`. For E2EE, preserve the locally computed `X-Stogas-E2EE-Transcript-SHA256` response header. The verifier checks the complete historical release, hardware, drand, and key-binding chain before accepting the receipt.
+The verifier calculates the request and response hashes again from the bytes you provide. For an
+older response, download its node record from the Trust Center and use
+`verify_historical_response_proof`. When E2EE is enabled, also keep the locally calculated
+`X-Stogas-E2EE-Transcript-SHA256` response header.
