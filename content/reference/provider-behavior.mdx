@@ -3,7 +3,7 @@ title: Compatibility Notes
 description: The small set of Stogas behaviors that differ from a direct provider API.
 ---
 
-Stogas supports OpenAI-compatible Chat Completions and Responses requests across cataloged OpenAI and Anthropic models. The operation pages are the source of truth for accepted fields.
+Stogas supports OpenAI-compatible Chat Completions and Responses requests across cataloged OpenAI and Anthropic models. Operation pages show accepted fields; rejected compatibility fields are collected here.
 
 ## Routing
 
@@ -17,7 +17,29 @@ Choose a public model ID from `/v1/models`. If a slug is available from more tha
 
 Do not send both fields. Routing hints are removed before upstream dispatch.
 
-## Important differences
+## Service tiers
+
+Service tiers are deployment capabilities, not portable promises across providers.
+
+| Provider | Accepted values | Behavior |
+| --- | --- | --- |
+| OpenAI | `auto`, `default`, `flex`, `priority` | `scale` and `provisioned` are unavailable. The catalog routes and prices the selected tier. |
+| Anthropic | `auto`, `priority`, `default`, `flex`, `standard`, `standard_only` | `auto` and `priority` are sent upstream as `auto`; the other values are sent as `standard_only`. All currently use standard-tier Stogas rates. |
+
+Only use a value declared by the selected catalog deployment. A tier can also be incompatible with another deployment feature, such as Anthropic fast mode.
+
+## Rejected fields
+
+These familiar provider fields are intentionally outside the current Stogas surface:
+
+| Endpoint | Rejected fields | Use instead |
+| --- | --- | --- |
+| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key`, `safety_identifier`, `store` | Text content; `tools` and `tool_choice`; server-owned routing, retention, and safety identity |
+| Responses | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`, `safety_identifier`, `store` | Synchronous requests with complete client-supplied conversation state; server-owned routing, retention, and safety identity |
+
+Unknown or rejected top-level fields return `400`; they are never forwarded opportunistically.
+
+## Other differences
 
 - Requests are strict: unknown top-level fields return `400` instead of being forwarded.
 - The current public surface accepts text content only.
@@ -25,7 +47,7 @@ Do not send both fields. Routing hints are removed before upstream dispatch.
 - OpenAI `max_tokens` is accepted as an alias for `max_completion_tokens` on Chat Completions.
 - Anthropic deployments reject requests that set both `temperature` and `top_p`.
 - `inference_geo: "global"` uses standard multi-region pricing; `inference_geo: "us"` selects eligible US-only deployments.
-- Provider-specific cache controls, service tiers, and hosted tools are accepted only where the catalog can route and bill them correctly.
+- Provider-specific cache controls and hosted tools are accepted only where the catalog can route and bill them correctly.
 
 See [Model Tools](/docs/model-tools) for supported function, MCP, and provider-hosted tools.
 
