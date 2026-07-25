@@ -638,54 +638,6 @@
 							"$ref": "#/components/schemas/ChatMessage"
 						}
 					},
-					"audio": {
-						"type": "object",
-						"description": "Not supported by the text-only Stogas MVP. Requests that set audio are rejected before upstream dispatch.",
-						"properties": {
-							"format": {
-								"type": "string"
-							},
-							"voice": {
-								"type": "string"
-							}
-						}
-					},
-					"fallbacks": {
-						"type": "array",
-						"description": "Not supported. Stogas fallback policy is server-owned and client-supplied fallbacks are rejected.",
-						"items": {
-							"type": "string"
-						}
-					},
-					"function_call": {
-						"description": "Not supported. Deprecated Chat Completions function-calling fields are rejected; use `tools` and `tool_choice`.",
-						"oneOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "object"
-							}
-						]
-					},
-					"functions": {
-						"type": "array",
-						"description": "Not supported. Deprecated Chat Completions function definitions are rejected; use `tools`.",
-						"items": {
-							"type": "object"
-						}
-					},
-					"container": {
-						"description": "Not supported. Stateful provider containers require separate lifecycle, isolation, and pricing controls.",
-						"oneOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "object"
-							}
-						]
-					},
 					"stream": {
 						"type": "boolean",
 						"default": false
@@ -764,10 +716,6 @@
 					"prompt_cache_retention": {
 						"type": "string",
 						"description": "OpenAI-only prompt cache retention policy. Stogas validates that this is a string, normalizes known aliases before dispatch, and rejects this field on Anthropic deployments."
-					},
-					"prompt_cache_isolation_key": {
-						"type": "string",
-						"description": "Not supported. This provider-specific cache isolation field is outside the current OpenAI/Anthropic public Stogas surface."
 					},
 					"cache_control": {
 						"type": "object",
@@ -857,17 +805,13 @@
 						"description": "Anthropic-only deployment routing hint. `global` selects standard multi-region pricing, while `us` selects US-only inference pricing. Stogas sends the selected Anthropic `inference_geo` upstream.",
 						"enum": ["global", "us"]
 					},
-					"safety_identifier": {
-						"type": "string",
-						"description": "Client-supplied safety identifiers are not supported. Stogas sets provider-visible safety/user identifiers from the authenticated API key."
-					},
 					"seed": {
 						"type": "integer",
 						"description": "Best-effort deterministic sampling seed for providers that support it."
 					},
 					"service_tier": {
 						"type": "string",
-						"description": "Provider service tier selection preserved by the gateway. OpenAI accepts `auto`, `default`, `flex`, and `priority`; `scale` and `provisioned` are not available. Anthropic accepts `auto`, `priority`, `default`, `flex`, `standard`, and `standard_only`; all currently use standard-tier Stogas deployment rates. Anthropic `auto` / `priority` are sent upstream as `auto`, while `default` / `flex` / `standard` / `standard_only` are sent as `standard_only`.",
+						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
 						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
 					},
 					"speed": {
@@ -905,10 +849,6 @@
 						"items": {
 							"type": "string"
 						}
-					},
-					"store": {
-						"type": "boolean",
-						"description": "Not supported. Provider retention behavior is server-owned; requests that set store are rejected before upstream dispatch, and OpenAI-bound requests are forced to store:false."
 					},
 					"temperature": {
 						"type": "number",
@@ -1145,10 +1085,6 @@
 						"type": "string",
 						"description": "Assistant refusal text when provided by the model."
 					},
-					"audio": {
-						"type": "object",
-						"description": "Not supported in Chat Completions requests. Stogas is text-only for the MVP and rejects message-level audio before upstream dispatch."
-					},
 					"reasoning": {
 						"type": "string",
 						"description": "Reasoning output when returned by the provider."
@@ -1319,32 +1255,6 @@
 						"type": "boolean",
 						"default": false
 					},
-					"background": {
-						"type": "boolean",
-						"description": "Not supported. Background Responses require asynchronous lifecycle and reconciliation support, so Stogas rejects this field."
-					},
-					"conversation": {
-						"type": "string",
-						"description": "Not supported. Provider-side conversation state hides prompt reconstruction before hold placement, so Stogas rejects this field."
-					},
-					"fallbacks": {
-						"type": "array",
-						"description": "Not supported. Stogas fallback policy is server-owned and client-supplied fallbacks are rejected.",
-						"items": {
-							"type": "string"
-						}
-					},
-					"container": {
-						"description": "Not supported. Stateful provider containers require separate lifecycle, isolation, and pricing controls.",
-						"oneOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "object"
-							}
-						]
-					},
 					"include": {
 						"type": "array",
 						"description": "Additional OpenAI Responses fields to request. Values are provider-owned and not enum-mirrored by Stogas; Anthropic-backed deployments reject this OpenAI-only field.",
@@ -1382,10 +1292,6 @@
 					"parallel_tool_calls": {
 						"type": "boolean",
 						"description": "Whether the model may call multiple tools in parallel."
-					},
-					"previous_response_id": {
-						"type": "string",
-						"description": "Not supported. Provider-side continuation state hides prompt reconstruction before hold placement, so Stogas rejects this field."
 					},
 					"task_budget": {
 						"type": "object",
@@ -1431,13 +1337,9 @@
 						},
 						"additionalProperties": false
 					},
-					"safety_identifier": {
-						"type": "string",
-						"description": "Client-supplied safety identifiers are not supported. Stogas sets provider-visible safety/user identifiers from the authenticated API key."
-					},
 					"service_tier": {
 						"type": "string",
-						"description": "Provider service tier selection preserved by the gateway. OpenAI accepts `auto`, `default`, `flex`, and `priority`; `scale` and `provisioned` are not available. Anthropic accepts `auto`, `priority`, `default`, `flex`, `standard`, and `standard_only`; all currently use standard-tier Stogas deployment rates. Anthropic `auto` / `priority` are sent upstream as `auto`, while `default` / `flex` / `standard` / `standard_only` are sent as `standard_only`.",
+						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
 						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
 					},
 					"speed": {
@@ -1454,10 +1356,6 @@
 							}
 						},
 						"additionalProperties": false
-					},
-					"store": {
-						"type": "boolean",
-						"description": "Not supported. Provider retention behavior is server-owned; requests that set store are rejected before upstream dispatch, and OpenAI-bound requests are forced to store:false."
 					},
 					"temperature": {
 						"type": "number",

@@ -108,7 +108,9 @@ async function main() {
 							`<Callout type="info" title="Application E2EE">
 	This endpoint accepts ordinary OpenAI-compatible JSON and Stogas E2EE framing on the same path.
 	Choose E2EE through the managed transport; applications should not construct the encrypted
-	envelope directly. Request and response types remain unchanged after transport decryption.
+	envelope directly. Request and response types remain unchanged after transport decryption. See
+	[Application E2EE](/docs/reference/security#application-e2ee) and
+	[Compatibility Notes](/docs/reference/provider-behavior).
 </Callout>
 
 <APIPage `
