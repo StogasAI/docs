@@ -1,9 +1,11 @@
 ---
-title: Security Model
-description: What Stogas confidential verification proves and where its boundary ends.
+title: Security and trust model
+description: The detailed guarantees and limits of Stogas gateway verification.
 ---
 
-Stogas runs its API gateway inside an AMD SEV-SNP confidential VM. The host can stop or delay the VM, but should not be able to read guest memory, private keys, provider credentials, or request plaintext.
+Stogas runs each API gateway inside an AMD SEV-SNP confidential virtual machine. The surrounding
+host can stop or delay the gateway, but the hardware is designed to prevent it from reading the
+gateway's memory, private keys, provider credentials, or plaintext requests.
 
 ## The verification chain
 
