@@ -42,7 +42,7 @@ use stogas::{SecurityMode, Transport, TransportOptions};
 
 let transport = Transport::start(TransportOptions {
     security: SecurityMode::Both,
-    bundle_refresh_interval: Duration::from_secs(300),
+    bundle_refresh_interval: Duration::from_secs(60),
     base_url: "https://api.stogas.ai".to_owned(),
     bundle_url: "https://evidence.stogas.ai/bundles/latest.json".to_owned(),
 })?;

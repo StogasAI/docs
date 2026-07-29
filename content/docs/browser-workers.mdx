@@ -39,7 +39,7 @@ await init();
 const transport = await StogasTransport.create({
 	baseURL: 'https://api.stogas.ai/v1',
 	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
-	bundleRefreshIntervalSeconds: 300,
+	bundleRefreshIntervalSeconds: 60,
 	fetch: window.fetch.bind(window)
 });
 const client = new OpenAI(transport.openAIOptions(userProvidedStogasKey));
@@ -56,7 +56,28 @@ try {
 }
 ```
 
-The default bundle refresh interval is five minutes. Set `bundleRefreshIntervalSeconds` to a whole number from 1 through 840, or call `await transport.refreshBundle()` for an immediate manual refresh. Identical bundle bytes are hash-deduplicated before cryptographic verification, and the transport always attempts another fetch before the active bundle expires.
+The default bundle refresh interval is one minute. Set `bundleRefreshIntervalSeconds` to a whole
+number from 1 through 840, or call `await transport.refreshBundle()` for an immediate manual
+refresh. Official defaults randomly choose between the Cloudflare/R2 and AWS CloudFront/S3
+evidence origins, then try the other after a fetch, HTTP, verification, or sequence-regression
+failure. Identical bundle bytes are hash-deduplicated before cryptographic verification, and the
+transport always attempts another fetch before the active bundle expires.
+
+The transport exposes delivery and local-verification metadata without weakening the trust
+boundary:
+
+```ts
+const snapshot = transport.bundleSnapshot;
+
+console.log(transport.bundleURLs); // configured independent origins
+console.log(snapshot.bundleURL); // origin used for the latest successful refresh
+console.log(snapshot.verificationDurationMs); // local cryptographic verification time
+console.log(snapshot.verifiedAtUnixMs);
+```
+
+`verificationDurationMs` measures the local WebAssembly verification, not network retrieval. When a
+refresh returns byte-identical evidence, the transport reuses the earlier verified result and keeps
+its original verification measurement.
 
 The transport uses the normal `/v1/responses` and `/v1/chat/completions` endpoints. It disables automatic SDK retries because retrying after an ambiguous connection failure could execute inference twice under a new request ID.
 
@@ -80,7 +101,7 @@ verifier.free();
 const transport = await StogasTransport.create({
 	baseURL: 'https://api.stogas.ai/v1',
 	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
-	bundleRefreshIntervalSeconds: 300,
+	bundleRefreshIntervalSeconds: 60,
 	fetch
 });
 const client = new OpenAI(transport.openAIOptions(stogasAPIKey));

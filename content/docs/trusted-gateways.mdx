@@ -3,16 +3,33 @@ title: How gateway verification works
 description: How a Stogas client decides which gateways it can safely use.
 ---
 
-Before sending a protected request, a Stogas client downloads a public trust bundle. The client
-checks the bundle locally and accepts only gateways that prove they are running approved software
-inside genuine confidential-computing hardware.
+Before sending a protected request, a Stogas client downloads a public trust bundle. It verifies
+the bundle locally and accepts only gateways that prove they are running approved software inside
+genuine confidential-computing hardware.
 
 ```text
 https://evidence.stogas.ai/bundles/latest.json
+https://evidence2.stogas.ai/bundles/latest.json
 ```
 
-After the download, verification is local. The verifier does not contact GitHub, AMD, Sigstore, or
-drand while checking the bundle.
+The first endpoint is delivered by Cloudflare from R2. The second is an independent AWS
+CloudFront distribution backed by a private S3 bucket. Official managed clients choose one at
+random for each refresh and try the other after a network, HTTP, verification, or sequence
+regression failure.
+
+Neither CDN is trusted. After retrieval, verification is entirely local: the verifier does not
+contact GitHub, AMD, Sigstore, drand, or Stogas while deciding whether to accept the bytes.
+
+## Independent delivery
+
+Each bundle is written to both object stores. A destination advances its `latest.json` alias only
+after accepting that bundle's immutable version. A transient failure at one store does not prevent
+the other from publishing, and the next one-minute cycle repairs freshness with a new bundle.
+
+The mutable alias normally remains at an edge for no more than five seconds. During an origin
+error, a CDN may serve its last response for at most the remainder of one publication interval.
+The verifier still applies the complete cryptographic policy and retains an earlier accepted bundle
+only until its authenticated expiry.
 
 ## What the trust bundle proves
 
@@ -31,20 +48,20 @@ appear as `excluded_nodes`, but they never authorize a connection.
 
 The verifier applies three separate time limits:
 
-| Check | Rule | Why it matters |
-| --- | --- | --- |
-| Bundle creation | No more than three minutes behind the client's clock | Rejects a delayed or replayed bundle |
+| Check            | Rule                                                                   | Why it matters                                       |
+| ---------------- | ---------------------------------------------------------------------- | ---------------------------------------------------- |
+| Bundle creation  | No more than three minutes behind the client's clock                   | Rejects a delayed or replayed bundle                 |
 | Gateway evidence | The drand round is no more than two minutes older than bundle creation | Requires recent evidence from every accepted gateway |
-| Bundle expiry | No more than 15 minutes after creation | Sets a hard deadline for an accepted bundle |
+| Bundle expiry    | No more than 15 minutes after creation                                 | Sets a hard deadline for an accepted bundle          |
 
 The 15-minute lifetime allows safe gateway updates and short publication failures. It does not mean
 clients should wait 15 minutes before checking for an update.
 
 ## Keeping verification current
 
-Managed transports check every five minutes by default and make another attempt before the active
-bundle expires. Applications can choose an interval from 1 through 840 seconds or request an
-immediate refresh.
+Managed transports check every minute by default and make another attempt before the active bundle
+expires. Applications can choose an interval from 1 through 840 seconds or request an immediate
+refresh.
 
 If the downloaded bytes have not changed, the transport reuses the existing verified result. A
 failed update can keep using the last accepted bundle only until that bundle expires.
