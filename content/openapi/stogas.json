@@ -64,18 +64,19 @@
 								"examples": {
 									"catalog": {
 										"value": {
-											"version": "stogas.gateway.catalog.v1",
-											"generatedAt": "1970-01-01T00:00:01Z",
+											"schema": "stogas.gateway.catalog.v2",
+											"sequence": 184,
+											"runtimeDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+											"publicDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
 											"graph": {
+												"authors": {},
 												"models": {},
 												"deployments": {},
 												"providers": {},
-												"providerEndpoints": {},
-												"stogasEndpoints": {}
+												"routes": {}
 											},
-											"indexes": {
-												"provider_endpoint_request_slugs": {}
-											}
+											"aliases": {},
+											"evidence": {}
 										}
 									}
 								}
@@ -496,25 +497,45 @@
 		"schemas": {
 			"CatalogResponse": {
 				"type": "object",
-				"required": ["version", "generatedAt", "graph", "indexes"],
+				"required": [
+					"schema",
+					"sequence",
+					"runtimeDigest",
+					"publicDigest",
+					"graph",
+					"aliases",
+					"evidence"
+				],
 				"properties": {
-					"version": {
+					"schema": {
 						"type": "string",
-						"example": "stogas.gateway.catalog.v1"
+						"const": "stogas.gateway.catalog.v2"
 					},
-					"generatedAt": {
+					"sequence": {
+						"type": "integer",
+						"minimum": 0
+					},
+					"runtimeDigest": {
 						"type": "string",
-						"format": "date-time",
-						"description": "Timestamp assigned to the generated catalog payload."
+						"pattern": "^sha256:[0-9a-f]{64}$"
+					},
+					"publicDigest": {
+						"type": "string",
+						"pattern": "^sha256:[0-9a-f]{64}$"
 					},
 					"graph": {
 						"type": "object",
-						"description": "Resolved catalog graph: authors, models, deployments, providers, routes, and gateway endpoints.",
+						"description": "Resolved five-node graph: authors, models, deployments, routes, and providers.",
 						"additionalProperties": true
 					},
-					"indexes": {
+					"aliases": {
 						"type": "object",
-						"description": "Public lookup indexes, including provider-endpoint-scoped request slugs.",
+						"description": "Explicit request slugs pointing to deployments.",
+						"additionalProperties": true
+					},
+					"evidence": {
+						"type": "object",
+						"description": "Sources for public data-handling and moderation claims.",
 						"additionalProperties": true
 					}
 				}
@@ -621,7 +642,7 @@
 				"properties": {
 					"model": {
 						"type": "string",
-						"description": "Catalog model or deployment slug to route to, optionally provider-qualified, such as `gpt-5.5-latest`, `gpt-5.5-flex-latest`, or `openai/gpt-5.5-priority-latest`."
+						"description": "Catalog model or deployment slug to route to, optionally provider-qualified, such as `gpt-5.5-latest`, `openai-gpt-5.5-2026-04-23-flex-latest`, or `openai/openai-gpt-5.5-2026-04-23-priority-latest`."
 					},
 					"provider": {
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
@@ -713,9 +734,21 @@
 						"minLength": 1,
 						"maxLength": 256
 					},
-					"prompt_cache_retention": {
-						"type": "string",
-						"description": "OpenAI-only prompt cache retention policy. Stogas validates that this is a string, normalizes known aliases before dispatch, and rejects this field on Anthropic deployments."
+					"prompt_cache_options": {
+						"type": "object",
+						"description": "GPT-5.6 prompt caching mode. `implicit` adds the provider-managed breakpoint; `explicit` writes only text blocks carrying `prompt_cache_breakpoint`. Up to four writes are accepted per request.",
+						"properties": {
+							"mode": {
+								"type": "string",
+								"enum": ["implicit", "explicit"]
+							},
+							"ttl": {
+								"type": "string",
+								"enum": ["30m"]
+							}
+						},
+						"required": ["mode"],
+						"additionalProperties": false
 					},
 					"cache_control": {
 						"type": "object",
@@ -742,7 +775,7 @@
 							},
 							"effort": {
 								"type": "string",
-								"description": "Canonical Stogas effort. Each accepted value has an explicit model-specific provider-adapter mapping; undeclared values are rejected. `none` is rejected when reasoning cannot be disabled.",
+								"description": "Canonical Stogas effort admitted by the selected deployment. Undeclared values are rejected; the provider transport performs the native wire conversion. `none` is rejected when reasoning cannot be disabled.",
 								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"display": {
@@ -800,11 +833,6 @@
 						"description": "Anthropic-only context management object. Provider-owned edit details are forwarded and do not reduce Stogas billing holds.",
 						"additionalProperties": true
 					},
-					"inference_geo": {
-						"type": "string",
-						"description": "Anthropic-only deployment routing hint. `global` selects standard multi-region pricing, while `us` selects US-only inference pricing. Stogas sends the selected Anthropic `inference_geo` upstream.",
-						"enum": ["global", "us"]
-					},
 					"seed": {
 						"type": "integer",
 						"description": "Best-effort deterministic sampling seed for providers that support it."
@@ -813,11 +841,6 @@
 						"type": "string",
 						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
 						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
-					},
-					"speed": {
-						"type": "string",
-						"description": "Anthropic-only deployment routing hint. `fast` selects cataloged fast-mode deployments where available; `standard` selects normal-speed deployments.",
-						"enum": ["fast", "standard"]
 					},
 					"stream_options": {
 						"type": "object",
@@ -1303,11 +1326,6 @@
 						"description": "Anthropic-only context management object forwarded as provider-owned runtime behavior. Stogas does not treat compaction as a hold reduction.",
 						"additionalProperties": true
 					},
-					"inference_geo": {
-						"type": "string",
-						"description": "Anthropic-only deployment routing hint. `global` selects standard multi-region pricing, while `us` selects US-only inference pricing. Stogas sends the selected Anthropic `inference_geo` upstream.",
-						"enum": ["global", "us"]
-					},
 					"prompt_cache_key": {
 						"type": "string",
 						"description": "OpenAI-only prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
@@ -1320,7 +1338,7 @@
 						"properties": {
 							"effort": {
 								"type": "string",
-								"description": "Canonical Stogas effort. Each accepted value has an explicit model-specific provider-adapter mapping; undeclared values are rejected. `none` is rejected when reasoning cannot be disabled.",
+								"description": "Canonical Stogas effort admitted by the selected deployment. Undeclared values are rejected; the provider transport performs the native wire conversion. `none` is rejected when reasoning cannot be disabled.",
 								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"summary": {
@@ -1341,11 +1359,6 @@
 						"type": "string",
 						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
 						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
-					},
-					"speed": {
-						"type": "string",
-						"description": "Anthropic-only deployment routing hint. `fast` selects cataloged fast-mode deployments where available; `standard` selects normal-speed deployments.",
-						"enum": ["fast", "standard"]
 					},
 					"stream_options": {
 						"type": "object",
@@ -1429,9 +1442,21 @@
 						"type": "string",
 						"description": "Client-supplied user identifiers are not supported. Stogas sets upstream user identity from the authenticated API key."
 					},
-					"prompt_cache_retention": {
-						"type": "string",
-						"description": "OpenAI-only prompt cache retention policy. Stogas validates that this is a string, normalizes known aliases before dispatch, and rejects this field on Anthropic deployments."
+					"prompt_cache_options": {
+						"type": "object",
+						"description": "GPT-5.6 prompt caching mode. `implicit` adds the provider-managed breakpoint; `explicit` writes only `input_text` blocks carrying `prompt_cache_breakpoint`. Up to four writes are accepted per request.",
+						"properties": {
+							"mode": {
+								"type": "string",
+								"enum": ["implicit", "explicit"]
+							},
+							"ttl": {
+								"type": "string",
+								"enum": ["30m"]
+							}
+						},
+						"required": ["mode"],
+						"additionalProperties": false
 					},
 					"stop_sequences": {
 						"type": "array",

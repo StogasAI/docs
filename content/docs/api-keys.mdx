@@ -30,8 +30,8 @@ A provisioning key represents a group of people who should follow the same polic
 be a team, department, project, cost center, or customer account.
 
 The provisioning key is not an inference credential and has no secret. Instead, administrators use
-it to create one assigned key for each member. Its policy can set common expiration, rate, and spend
-limits for those assigned keys.
+it to create one assigned key for each member. Member limits apply independently to every assigned
+key. Shared limits can separately cap the combined rate and spend of the whole group.
 
 For example, create a provisioning key named **Research team**, set the team's limits once, then
 assign a child key to every researcher.
@@ -39,17 +39,23 @@ assign a child key to every researcher.
 ## Assigned key
 
 An assigned key belongs to one member and is created under a provisioning key. The member generates
-their own secret and uses it to call the API. Administrators can manage the assignment and its
-policy, but cannot see the member's secret.
+their own secret and uses it to call the API. They may add an earlier expiration or stricter personal
+rate and spend limits. Administrators manage the group policy and can suspend or revoke the
+assignment, but cannot see the secret or edit the member's private settings.
 
 Members can give their key a private name. Administrators continue to see the member relationship,
 such as `Alex's key`, so the assignment stays clear.
 
-## Policy options
+## Limits
 
-By default, a provisioning key supplies settings to its assigned keys. Administrators can also:
+A provisioning key has two independent sets of optional controls:
 
-- **Share enforcement** so the group uses common rate and spend limits.
-- **Delegate unset fields** so members can choose only the limits the administrator leaves open.
+- **Member limits** apply separately to each assigned key.
+- **Shared limits** apply to combined usage from every assigned key.
+
+Every usable API key also has the platform's 60 requests-per-second ceiling when no lower key or
+member rate is configured. A combined rate may be higher because it covers many independently
+rate-limited keys. Clearing a member's private limit restores the provisioning limit; it does not
+remove organization policy.
 
 Changing or revoking one assigned key does not reveal or rotate another member's secret.

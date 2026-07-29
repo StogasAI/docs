@@ -26,7 +26,7 @@ Browser and optional native E2EE encrypt the complete inner inference request on
 
 The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key IDs, ciphertext length, and network timing. The encrypted inner request contains the API key, OpenAI request body, relevant content negotiation, and optional extra-field preference. The encrypted response contains its status, safe response headers, body or SSE frames, and terminal state. This keeps routing and bounded parsing outside the ciphertext while keeping credentials and inference semantics inside it.
 
-The same signed response receipt travels inside the encrypted response, so E2EE does not introduce a second proof format. The receipt binds hashes of the exact plaintext request and response bytes, request ID, endpoint, resolved catalog route, current drand round, and the E2EE transcript when present. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
+The same signed response receipt travels inside the encrypted response, so E2EE does not introduce a second proof format. The receipt binds hashes of the exact plaintext request and response bytes, the active catalog digest, all five resolved catalog node IDs, and the E2EE transcript when present. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
 
 ## Release authorization
 

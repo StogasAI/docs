@@ -48,7 +48,7 @@ For each request, the client:
 
 The outer envelope reveals only routing and protocol metadata such as the request ID, bundle hash, deadline, recipient key IDs, and ciphertext length. The authenticated inner envelope contains the credential, API request, and negotiated options. Responses, SSE events, and the final proof frame remain encrypted until they reach the client.
 
-The response receipt binds the exact request bytes, response bytes, request ID, route, resolved catalog nodes, freshness beacon, and E2EE transcript. The managed transport verifies that receipt against the same trust state used to encrypt the request.
+The response receipt binds the exact request bytes, response bytes, active catalog digest, all five resolved catalog node IDs, and E2EE transcript. The managed transport verifies that receipt against the same trust state used to encrypt the request.
 
 Version 1 uses HPKE with P-256, HKDF-SHA-256, and AES-256-GCM. It does not claim post-quantum protection.
 

@@ -1,40 +1,12 @@
-import client from '@/components/api-page.client';
-import { codeUsages } from '@/lib/openapi-code-usage';
+import { APIPageClient } from '@/components/api-page.client';
 import { openapi } from '@/lib/openapi';
-import { createAPIPage } from 'fumadocs-openapi/ui';
-import { StyleInjector } from './style-injector';
+import type { OpenAPIPageProps_Spec } from 'fumadocs-openapi/ui';
 
-const BaseAPIPage = createAPIPage(openapi, {
-	client,
-	codeUsages,
-	generateTypeScriptDefinitions: false,
-	content: {
-		renderOperationLayout: (slots) => (
-			<div className="stogas-api-operation-layout">
-				<div className="stogas-api-operation-main">
-					{slots.header}
-					{slots.apiPlayground}
-					{slots.description}
-					{slots.authSchemes}
-					{slots.parameters}
-					{slots.body}
-					{slots.responses}
-					{slots.callbacks}
-				</div>
-				<div className="stogas-api-operation-examples">{slots.apiExample}</div>
-			</div>
-		)
-	},
-	playground: {
-		enabled: true
-	}
-});
+type APIPageProps = Omit<OpenAPIPageProps_Spec, 'payload'> & {
+	document: string;
+};
 
-export function APIPage(props: any) {
-	return (
-		<>
-			<StyleInjector />
-			<BaseAPIPage {...props} />
-		</>
-	);
+export async function APIPage({ document, ...props }: APIPageProps) {
+	const { bundled } = await openapi.getSchema(document);
+	return <APIPageClient {...props} payload={{ bundled }} />;
 }
