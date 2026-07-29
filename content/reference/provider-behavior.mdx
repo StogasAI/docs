@@ -21,21 +21,21 @@ Do not send both fields. Routing hints are removed before upstream dispatch.
 
 Service tiers are deployment capabilities, not portable promises across providers.
 
-| Provider | Accepted values | Behavior |
-| --- | --- | --- |
-| OpenAI | `auto`, `default`, `flex`, `priority` | `scale` and `provisioned` are unavailable. The catalog routes and prices the selected tier. |
-| Anthropic | `auto`, `priority`, `default`, `flex`, `standard`, `standard_only` | `auto` and `priority` are sent upstream as `auto`; the other values are sent as `standard_only`. All currently use standard-tier Stogas rates. |
+| Provider  | Accepted values                        | Behavior                                                                                                                                                                        |
+| --------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI    | `auto`, `default`, `flex`, `priority`  | `scale` and `provisioned` are unavailable. The catalog routes and prices the selected tier.                                                                                     |
+| Anthropic | `default`, `standard`, `standard_only` | All values select the cataloged Standard Tier and are sent upstream as `standard_only`. `auto` and `priority` require a separate Priority Tier contract; `flex` does not exist. |
 
-Only use a value declared by the selected catalog deployment. A tier can also be incompatible with another deployment feature, such as Anthropic fast mode.
+Only use a value declared by the selected catalog deployment.
 
 ## Rejected fields
 
 These familiar provider fields are intentionally outside the current Stogas surface:
 
-| Endpoint | Rejected fields | Use instead |
-| --- | --- | --- |
-| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key`, `safety_identifier`, `store` | Text content; `tools` and `tool_choice`; server-owned routing, retention, and safety identity |
-| Responses | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`, `safety_identifier`, `store` | Synchronous requests with complete client-supplied conversation state; server-owned routing, retention, and safety identity |
+| Endpoint         | Rejected fields                                                                                                             | Use instead                                                                                                                 |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key`, `safety_identifier`, `store` | Text content; `tools` and `tool_choice`; server-owned routing, retention, and safety identity                               |
+| Responses        | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`, `safety_identifier`, `store`                | Synchronous requests with complete client-supplied conversation state; server-owned routing, retention, and safety identity |
 
 Unknown or rejected top-level fields return `400`; they are never forwarded opportunistically.
 
@@ -46,7 +46,7 @@ Unknown or rejected top-level fields return `400`; they are never forwarded oppo
 - `stream: true` uses the endpoint's normal Server-Sent Events format.
 - OpenAI `max_tokens` is accepted as an alias for `max_completion_tokens` on Chat Completions.
 - Anthropic deployments reject requests that set both `temperature` and `top_p`.
-- `inference_geo: "global"` uses standard multi-region pricing; `inference_geo: "us"` selects eligible US-only deployments.
+- Provider-specific speed and inference geography are selected with an exact deployment slug, not request parameters.
 - Provider-specific cache controls and hosted tools are accepted only where the catalog can route and bill them correctly.
 
 See [Model Tools](/docs/model-tools) for supported function, MCP, and provider-hosted tools.

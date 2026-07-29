@@ -1,18 +1,29 @@
 ---
 title: Catalog
-description: >-
-  Returns the active public gateway catalog used for model discovery, aliases,
-  routing, and prices.
+description: Returns the active public gateway catalog used for model discovery,
+  aliases, routing, and prices.
 full: true
 _openapi:
+  preload:
+    - stogas
   method: GET
+  webhook: false
   toc: []
   structuredData:
     headings: []
     contents:
-      - content: >-
-          Returns the active public gateway catalog used for model discovery,
+      - content: Returns the active public gateway catalog used for model discovery,
           aliases, routing, and prices.
 ---
 
-<APIPage document={'stogas'} operations={[{ path: '/v1/catalog', method: 'get' }]} />
+export default function Layout(props) {
+  const { APIPage, OpenAPIPage } = props.components ?? {};
+  // "APIPage" is the old name from v10, this allows both for backward compatibility
+  const Comp = OpenAPIPage ?? APIPage;
+  return (
+    <>
+      {props.children}
+      <Comp document="stogas" operations={[{"path":"/v1/catalog","method":"get"}]} />
+    </>
+  );
+}

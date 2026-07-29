@@ -67,4 +67,4 @@ local URL remains valid until the transport is freed.
 
 After accepting a bundle with the same verifier, call `stogas_verifier_verify_response_proof` with the receipt JSON and exact request and response bytes. Historical verification uses `stogas_verifier_verify_historical_response_proof` and additionally accepts the immutable Trust Center ledger record.
 
-Both functions return owned JSON containing the request ID, node ID, request SHA-256, response SHA-256, and receipt SHA-256. Pass an empty E2EE transcript field for an ordinary TLS exchange.
+Both functions return owned JSON containing the node ID, catalog digest, deployment, and route. Pass an empty E2EE transcript field for an ordinary TLS exchange.

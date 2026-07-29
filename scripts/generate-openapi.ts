@@ -8,10 +8,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const openapi = createOpenAPI({
-	input() {
-		return {
-			stogas: spec as any
-		};
+	input: {
+		stogas: spec as any
 	}
 });
 
