@@ -42,7 +42,7 @@ import { StogasTransport } from '@stogas/verifier';
 const transport = await StogasTransport.create({
 	baseURL: 'https://api.stogas.ai/v1',
 	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
-	bundleRefreshIntervalSeconds: 300,
+	bundleRefreshIntervalSeconds: 60,
 	fetch: globalThis.fetch.bind(globalThis)
 });
 const client = new OpenAI(transport.openAIOptions(process.env.STOGAS_API_KEY!));

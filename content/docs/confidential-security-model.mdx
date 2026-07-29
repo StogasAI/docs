@@ -42,6 +42,11 @@ It signs canonical `stogas.gateway.launch-policy.v1` bytes using the domain sepa
 
 A verified bundle can contain older records kept for recovery. The verifier reports them separately and never adds them to the trusted set.
 
+Bundles are delivered through independent Cloudflare/R2 and AWS CloudFront/S3 origins. Managed
+clients select an origin randomly and fail over to the other when delivery or verification fails.
+Both origins carry the same public evidence; neither origin can create trust because every bundle
+is checked locally against roots shipped with the verifier.
+
 The verifier fails closed after bundle expiry. Confidential verification can authenticate a reachable gateway, but it cannot prevent a network, host, or service outage.
 
 ## What is not proven
