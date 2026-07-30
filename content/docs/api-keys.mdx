@@ -1,15 +1,15 @@
 ---
-title: API key types
-description: Choose a key for a service, a group, or a person.
+title: API keys and upstream credentials
+description: Choose a key for a service, a group, or a person, and optionally use your own provider account.
 ---
 
 Stogas has three API key types:
 
-| Key type | Use it for |
-| --- | --- |
-| **Service key** | Work owned by the organization, such as a server, application, or CI job |
+| Key type             | Use it for                                                               |
+| -------------------- | ------------------------------------------------------------------------ |
+| **Service key**      | Work owned by the organization, such as a server, application, or CI job |
 | **Provisioning key** | A team, department, project, or other group that needs one shared policy |
-| **Assigned key** | One person working under a provisioning key's policy |
+| **Assigned key**     | One person working under a provisioning key's policy                     |
 
 Only service keys and assigned keys have secrets that can call the API.
 In the dashboard Playground, members select a usable service or assigned key directly; no API
@@ -59,3 +59,28 @@ rate-limited keys. Clearing a member's private limit restores the provisioning l
 remove organization policy.
 
 Changing or revoking one assigned key does not reveal or rotate another member's secret.
+
+## Upstream credentials
+
+Administrators can add an OpenAI or Anthropic credential on the **Credentials** page, then select
+it for the matching provider from an API key's **Credentials** tab. A service key owns its
+assignments directly. A provisioning key's assigned children inherit its assignments and cannot
+override them.
+
+Assignments are provider-specific. A key may use your OpenAI credential while continuing to use
+Stogas for Anthropic. If an assigned credential is disabled or unavailable, matching requests fail
+instead of falling back to a Stogas credential.
+
+The provider secret is accepted only when the credential is created, encrypted at rest, and
+decrypted in the confidential gateway for matching requests. The dashboard later returns its name
+and short preview, never the secret. To rotate it, create a new credential, reassign keys, then
+delete the old credential after it is no longer assigned.
+
+Requests made with your provider credential are billed at 2% of the upstream request cost. Stogas
+reserves 2% of the estimated cost and settles 2% of the actual cost, rounding up to the nearest USD
+atom. Key spend limits and balances use the billed amount. Analytics separately shows upstream cost
+and billed cost and can filter requests or API keys by upstream credential.
+
+Request logs identify the selected upstream credential as `stogas` or its credential ID. For
+bring-your-own-key requests, Stogas does not add its managed OpenAI `safety_identifier` or Anthropic
+`metadata.user_id` to the provider request.

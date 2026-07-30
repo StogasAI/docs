@@ -642,7 +642,7 @@
 				"properties": {
 					"model": {
 						"type": "string",
-						"description": "Catalog model or deployment slug to route to, optionally provider-qualified, such as `gpt-5.5-latest`, `openai-gpt-5.5-2026-04-23-flex-latest`, or `openai/openai-gpt-5.5-2026-04-23-priority-latest`."
+						"description": "Catalog model or deployment slug to route to, optionally provider-qualified, such as `gpt-5.5-latest`, `openai-gpt-5.5-2026-04-23-flex-latest`, or `openai/openai-gpt-5.5-2026-04-23-fast-latest`."
 					},
 					"provider": {
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
@@ -840,7 +840,7 @@
 					"service_tier": {
 						"type": "string",
 						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
-						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
+						"enum": ["auto", "default", "fast", "flex", "priority", "standard", "standard_only"]
 					},
 					"stream_options": {
 						"type": "object",
@@ -1358,7 +1358,7 @@
 					"service_tier": {
 						"type": "string",
 						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
-						"enum": ["auto", "default", "flex", "priority", "standard", "standard_only"]
+						"enum": ["auto", "default", "fast", "flex", "priority", "standard", "standard_only"]
 					},
 					"stream_options": {
 						"type": "object",
