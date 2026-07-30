@@ -21,12 +21,12 @@ Do not send both fields. Routing hints are removed before upstream dispatch.
 
 Service tiers are deployment capabilities, not portable promises across providers.
 
-| Provider  | Accepted values                        | Behavior                                                                                                                                                                        |
-| --------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OpenAI    | `auto`, `default`, `flex`, `priority`  | `scale` and `provisioned` are unavailable. The catalog routes and prices the selected tier.                                                                                     |
-| Anthropic | `default`, `standard`, `standard_only` | All values select the cataloged Standard Tier and are sent upstream as `standard_only`. `auto` and `priority` require a separate Priority Tier contract; `flex` does not exist. |
+| Provider  | Accepted values                               | Behavior                                                                                                                                                                        |
+| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI    | `auto`, `default`, `fast`, `flex`, `priority` | `fast` and its accepted legacy spelling `priority` select the same Fast deployment. `scale` and `provisioned` are unavailable.                                                  |
+| Anthropic | `default`, `standard`, `standard_only`        | All values select the cataloged Standard Tier and are sent upstream as `standard_only`. `auto` and `priority` require a separate Priority Tier contract; `flex` does not exist. |
 
-Only use a value declared by the selected catalog deployment.
+An exact deployment slug rejects a `service_tier` value that selects a different deployment.
 
 ## Rejected fields
 
