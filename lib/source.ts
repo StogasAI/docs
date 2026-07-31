@@ -1,5 +1,6 @@
 import { docs, reference } from 'collections/server';
 import spec from '@/content/openapi/stogas.json';
+import type { Item, Root } from 'fumadocs-core/page-tree';
 import { loader } from 'fumadocs-core/source';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { openapiPlugin } from 'fumadocs-openapi/server';
@@ -33,7 +34,7 @@ const apiTree = apiSource.getPageTree();
 // Unified tree with root folders — enables native Fumadocs sidebar tabs (dropdown picker).
 // Each child folder has root: true, which getLayoutTabs reads to build the tab list.
 // Only the active tab's pages are visible in the sidebar.
-export const unifiedTree: any = {
+export const unifiedTree: Root = {
 	name: 'Docs',
 	children: [
 		{
@@ -41,7 +42,9 @@ export const unifiedTree: any = {
 			name: 'Platform Documentation',
 			icon: React.createElement(BookOpen, { className: 'size-4' }),
 			root: true,
-			index: docsTree.children.find((c) => c.type === 'page' && c.url === docsRoute),
+			index: docsTree.children.find(
+				(child): child is Item => child.type === 'page' && child.url === docsRoute
+			),
 			children: docsTree.children
 		},
 		{
@@ -49,7 +52,9 @@ export const unifiedTree: any = {
 			name: 'API Reference',
 			icon: React.createElement(TerminalSquare, { className: 'size-4' }),
 			root: true,
-			index: apiTree.children.find((c) => c.type === 'page' && c.url === referenceRoute),
+			index: apiTree.children.find(
+				(child): child is Item => child.type === 'page' && child.url === referenceRoute
+			),
 			children: apiTree.children
 		}
 	]
@@ -65,9 +70,15 @@ export function getPageImage(page: (typeof source)['$inferPage']) {
 	};
 }
 
-type JsonObject = Record<string, any>;
+type JsonObject = Record<string, unknown>;
 
-const openApiSpec = spec as JsonObject;
+const openApiSpec = spec as unknown as JsonObject;
+
+function jsonObject(value: unknown): JsonObject | undefined {
+	return value !== null && typeof value === 'object' && !Array.isArray(value)
+		? (value as JsonObject)
+		: undefined;
+}
 
 function cloneJson<T>(value: T): T {
 	return JSON.parse(JSON.stringify(value)) as T;
@@ -75,14 +86,13 @@ function cloneJson<T>(value: T): T {
 
 function getJsonPointer(root: JsonObject, ref: string) {
 	if (!ref.startsWith('#/')) return;
-
-	return ref
-		.slice(2)
-		.split('/')
-		.reduce<any>(
-			(current, segment) => current?.[segment.replaceAll('~1', '/').replaceAll('~0', '~')],
-			root
-		);
+	let current: unknown = root;
+	for (const segment of ref.slice(2).split('/')) {
+		const object = jsonObject(current);
+		if (!object) return;
+		current = object[segment.replaceAll('~1', '/').replaceAll('~0', '~')];
+	}
+	return current;
 }
 
 function collectRefs(value: unknown, refs = new Set<string>()) {
@@ -111,11 +121,12 @@ function addSecuritySchemes(components: JsonObject, security: unknown) {
 	for (const requirement of security) {
 		if (!requirement || typeof requirement !== 'object') continue;
 		for (const schemeName of Object.keys(requirement)) {
-			const scheme = openApiSpec.components?.securitySchemes?.[schemeName];
+			const scheme = jsonObject(jsonObject(openApiSpec.components)?.securitySchemes)?.[schemeName];
 			if (!scheme) continue;
 
-			components.securitySchemes ??= {};
-			components.securitySchemes[schemeName] = cloneJson(scheme);
+			const securitySchemes = jsonObject(components.securitySchemes) ?? {};
+			securitySchemes[schemeName] = cloneJson(scheme);
+			components.securitySchemes = securitySchemes;
 		}
 	}
 }
@@ -135,10 +146,11 @@ function getScopedComponents(routeSpec: JsonObject, operation: JsonObject) {
 		if (!category || !name) continue;
 
 		const value = getJsonPointer(openApiSpec, ref);
-		if (!value) continue;
+		if (value === undefined) continue;
 
-		components[category] ??= {};
-		components[category][name] = cloneJson(value);
+		const categoryComponents = jsonObject(components[category]) ?? {};
+		categoryComponents[name] = cloneJson(value);
+		components[category] = categoryComponents;
 
 		for (const nestedRef of collectRefs(value)) {
 			if (!visited.has(nestedRef)) refs.add(nestedRef);
@@ -155,11 +167,12 @@ function findOperationForPage(page: (typeof source)['$inferPage']) {
 		?.replace(/\.mdx$/, '');
 	if (!operationId) return;
 
-	for (const [pathName, pathItemValue] of Object.entries(openApiSpec.paths ?? {})) {
-		const pathItem = pathItemValue as JsonObject;
+	for (const [pathName, pathItemValue] of Object.entries(jsonObject(openApiSpec.paths) ?? {})) {
+		const pathItem = jsonObject(pathItemValue);
+		if (!pathItem) continue;
 		for (const method of ['get', 'post', 'put', 'patch', 'delete', 'options', 'head']) {
-			const operation = pathItem[method] as JsonObject | undefined;
-			if (operation?.operationId === operationId) {
+			const operation = jsonObject(pathItem[method]);
+			if (operation && operation.operationId === operationId) {
 				return { path: pathName, method, operation, pathItem };
 			}
 		}
@@ -186,10 +199,14 @@ export function getOpenApiOperationSpec(page: (typeof source)['$inferPage']) {
 	};
 	const components = getScopedComponents(routeSpec, operation);
 	if (components) routeSpec.components = components;
-	if (Array.isArray(operation.tags) && Array.isArray(openApiSpec.tags)) {
-		routeSpec.tags = openApiSpec.tags.filter((tag: JsonObject) =>
-			operation.tags.includes(tag.name)
-		);
+	const operationTags = Array.isArray(operation.tags)
+		? operation.tags.filter((tag): tag is string => typeof tag === 'string')
+		: null;
+	if (operationTags && Array.isArray(openApiSpec.tags)) {
+		routeSpec.tags = openApiSpec.tags.filter((tag) => {
+			const name = jsonObject(tag)?.name;
+			return typeof name === 'string' && operationTags.includes(name);
+		});
 	}
 
 	if (!operation.security && openApiSpec.security) routeSpec.security = openApiSpec.security;

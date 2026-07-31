@@ -22,13 +22,18 @@ _openapi:
 ---
 
 export default function Layout(props) {
-  const { APIPage, OpenAPIPage } = props.components ?? {};
-  // "APIPage" is the old name from v10, this allows both for backward compatibility
-  const Comp = OpenAPIPage ?? APIPage;
+  const { Callout, OpenAPIPage } = props.components ?? {};
   return (
     <>
       {props.children}
-      <Comp document="stogas" operations={[{"path":"/v1/responses","method":"post"}]} />
+      <Callout type="info" title="Application E2EE">
+        This endpoint accepts standard OpenAI-compatible JSON and Stogas E2EE framing on the same path.
+        Use the managed transport for E2EE. Do not make the encrypted envelope. Request and response
+        types do not change after decryption. See [Application E2EE](/docs/reference/security#application-e2ee)
+        and [Compatibility Notes](/docs/reference/provider-behavior).
+      </Callout>
+
+      <OpenAPIPage document="stogas" operations={[{ path: '/v1/responses', method: 'post' }]} />
     </>
   );
 }

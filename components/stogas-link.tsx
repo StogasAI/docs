@@ -43,15 +43,29 @@ function getFallbackEnvironment(): Environment {
 	return process.env.NODE_ENV === 'development' ? 'localhost' : 'production';
 }
 
-function stripPort(hostname: string) {
-	return hostname.replace(/:\d+$/, '').toLowerCase();
+function normalizeHostname(hostname: string) {
+	const value = hostname.trim().toLowerCase();
+	const bracketed = /^\[([^\]]+)](?::\d+)?$/.exec(value);
+	if (bracketed) return bracketed[1];
+	return value.includes(':') && !value.includes('::') ? value.replace(/:\d+$/, '') : value;
+}
+
+function isLoopbackHostname(hostname: string) {
+	if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname === '::1')
+		return true;
+	const octets = hostname.split('.');
+	return (
+		octets.length === 4 &&
+		octets[0] === '127' &&
+		octets.every((octet) => /^\d{1,3}$/.test(octet) && Number(octet) <= 255)
+	);
 }
 
 function detectEnvironment(hostname: string, isDev: boolean): Environment {
-	const host = stripPort(hostname);
+	const host = normalizeHostname(hostname);
 	const known = HOST_TO_SEGMENT.get(host);
 	if (known) return known.environment;
-	if (host.includes('localhost') || host.startsWith('127.') || host === '::1') return 'localhost';
+	if (isLoopbackHostname(host)) return 'localhost';
 	return isDev ? 'localhost' : 'production';
 }
 

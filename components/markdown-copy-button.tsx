@@ -1,9 +1,12 @@
 'use client';
 
 import { cn } from '@/lib/cn';
+import { readBoundedResponseText } from '@/lib/http';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
-import { Check, Copy } from 'lucide-react';
+import { Check, CircleAlert, Copy } from 'lucide-react';
 import { useState } from 'react';
+
+const MAX_MARKDOWN_BYTES = 2 * 1024 * 1024;
 
 export function MarkdownCopyButton({
 	markdownUrl,
@@ -16,16 +19,25 @@ export function MarkdownCopyButton({
 }) {
 	const [loading, setLoading] = useState(false);
 	const [copied, setCopied] = useState(false);
+	const [failed, setFailed] = useState(false);
 
 	async function copyMarkdown() {
 		setLoading(true);
+		setFailed(false);
 		try {
-			const response = await fetch(markdownUrl, { cache: 'no-store' });
+			const response = await fetch(markdownUrl, {
+				cache: 'no-store',
+				signal: AbortSignal.timeout(10_000)
+			});
 			if (!response.ok) throw new Error(`Failed to fetch markdown: ${response.status}`);
 
-			await navigator.clipboard.writeText(await response.text());
+			await navigator.clipboard.writeText(
+				await readBoundedResponseText(response, MAX_MARKDOWN_BYTES)
+			);
 			setCopied(true);
 			window.setTimeout(() => setCopied(false), 1500);
+		} catch {
+			setFailed(true);
 		} finally {
 			setLoading(false);
 		}
@@ -44,9 +56,10 @@ export function MarkdownCopyButton({
 				}),
 				className
 			)}
+			aria-live="polite"
 		>
-			{copied ? <Check /> : <Copy />}
-			{children}
+			{copied ? <Check /> : failed ? <CircleAlert /> : <Copy />}
+			{copied ? 'Copied' : failed ? 'Copy failed' : children}
 		</button>
 	);
 }

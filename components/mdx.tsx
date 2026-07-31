@@ -3,7 +3,7 @@ import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import type { MDXComponents } from 'mdx/types';
-import { APIPage } from './api-page';
+import { OpenAPIPage } from './openapi-page';
 import { StogasLink } from './stogas-link';
 
 export function getMDXComponents(components?: MDXComponents) {
@@ -11,7 +11,7 @@ export function getMDXComponents(components?: MDXComponents) {
 		...defaultMdxComponents,
 		Accordion,
 		Accordions,
-		APIPage,
+		OpenAPIPage,
 		Step,
 		Steps,
 		Tab,

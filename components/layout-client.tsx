@@ -1,6 +1,7 @@
 'use client';
 
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
+import type { Root } from 'fumadocs-core/page-tree';
 import { ExternalLink, LayoutDashboard, Home } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
@@ -18,7 +19,7 @@ function GithubIcon({ className }: { className?: string }) {
 
 interface LayoutClientProps {
 	children: ReactNode;
-	tree: any;
+	tree: Root;
 	baseOptions: BaseLayoutProps;
 }
 
