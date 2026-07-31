@@ -1,17 +1,10 @@
 import { generateFiles } from 'fumadocs-openapi';
-import { createOpenAPI } from 'fumadocs-openapi/server';
-import spec from '../content/openapi/stogas.json';
+import { openapi } from '../lib/openapi';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const openapi = createOpenAPI({
-	input: {
-		stogas: spec as any
-	}
-});
 
 function formatMetaJson(content: Record<string, unknown>) {
 	let json = JSON.stringify(content, null, '\t');
@@ -38,45 +31,41 @@ async function main() {
 		beforeWrite: (files) => {
 			for (const file of files) {
 				if (file.path.endsWith('meta.json')) {
-					try {
-						let content = JSON.parse(file.content);
-						if (file.path === 'meta.json') {
-							content = {
-								title: 'API Reference',
-								root: true,
-								pages: [
-									'index',
-									'---Catalog---',
-									'...catalog',
-									'---Models---',
-									'...openai-compatible',
-									'---Other Endpoints---',
-									'...',
-									'---Gateway---',
-									'provider-behavior',
-									'security'
-								]
-							};
-						}
-						content.pages = content.pages?.map((page: string) =>
-							page === '---Open A I compatible---' ? '---Models---' : page
-						);
-						if (content.title === 'Open A I compatible') {
-							content.title = 'Models';
-							content.description = 'Model inference endpoints.';
-						}
-						if (file.path === path.join('openai-compatible', 'meta.json')) {
-							content.title = 'Models';
-							content.description = 'Model inference endpoints.';
-						}
-						if (file.path === path.join('catalog', 'meta.json')) {
-							content.title = 'Catalog';
-							content.description = 'Public model and routing discovery endpoints.';
-						}
-						file.content = formatMetaJson(content);
-					} catch {
-						continue;
+					let content = JSON.parse(file.content);
+					if (file.path === 'meta.json') {
+						content = {
+							title: 'API Reference',
+							root: true,
+							pages: [
+								'index',
+								'---Catalog---',
+								'...catalog',
+								'---Models---',
+								'...openai-compatible',
+								'---Other Endpoints---',
+								'...',
+								'---Gateway---',
+								'provider-behavior',
+								'security'
+							]
+						};
 					}
+					content.pages = content.pages?.map((page: string) =>
+						page === '---Open A I compatible---' ? '---Models---' : page
+					);
+					if (content.title === 'Open A I compatible') {
+						content.title = 'Models';
+						content.description = 'Model inference endpoints.';
+					}
+					if (file.path === path.join('openai-compatible', 'meta.json')) {
+						content.title = 'Models';
+						content.description = 'Model inference endpoints.';
+					}
+					if (file.path === path.join('catalog', 'meta.json')) {
+						content.title = 'Catalog';
+						content.description = 'Public model and routing discovery endpoints.';
+					}
+					file.content = formatMetaJson(content);
 				}
 				if (file.path.endsWith('.mdx')) {
 					// Remove the generated warning comment
@@ -91,8 +80,15 @@ async function main() {
 					}
 					file.content = file.content
 						.replace(
-							/<APIPage document=\{"([^"]+)"\} operations=\{\[\{"path":"([^"]+)","method":"([^"]+)"\}\]\} \/>/g,
-							"<APIPage document={'$1'} operations={[{ path: '$2', method: '$3' }]} />"
+							`  const { APIPage, OpenAPIPage } = props.components ?? {};
+  // "APIPage" is the old name from v10, this allows both for backward compatibility
+  const Comp = OpenAPIPage ?? APIPage;`,
+							'  const { OpenAPIPage } = props.components ?? {};'
+						)
+						.replace('<Comp ', '<OpenAPIPage ')
+						.replace(
+							/<OpenAPIPage document="([^"]+)" operations=\{\[\{"path":"([^"]+)","method":"([^"]+)"\}\]\} \/>/g,
+							"<OpenAPIPage document=\"$1\" operations={[{ path: '$2', method: '$3' }]} />"
 						)
 						.replace(/\n{3,}/g, '\n\n')
 						.trimEnd()
@@ -101,18 +97,22 @@ async function main() {
 						file.content.includes("path: '/v1/responses'") ||
 						file.content.includes("path: '/v1/chat/completions'")
 					) {
-						file.content = file.content.replace(
-							'<APIPage ',
-							`<Callout type="info" title="Application E2EE">
-	This endpoint accepts ordinary OpenAI-compatible JSON and Stogas E2EE framing on the same path.
-	Choose E2EE through the managed transport; applications should not construct the encrypted
-	envelope directly. Request and response types remain unchanged after transport decryption. See
-	[Application E2EE](/docs/reference/security#application-e2ee) and
-	[Compatibility Notes](/docs/reference/provider-behavior).
-</Callout>
+						file.content = file.content
+							.replace(
+								'  const { OpenAPIPage } = props.components ?? {};',
+								'  const { Callout, OpenAPIPage } = props.components ?? {};'
+							)
+							.replace(
+								'<OpenAPIPage ',
+								`<Callout type="info" title="Application E2EE">
+        This endpoint accepts standard OpenAI-compatible JSON and Stogas E2EE framing on the same path.
+        Use the managed transport for E2EE. Do not make the encrypted envelope. Request and response
+        types do not change after decryption. See [Application E2EE](/docs/reference/security#application-e2ee)
+        and [Compatibility Notes](/docs/reference/provider-behavior).
+      </Callout>
 
-<APIPage `
-						);
+      <OpenAPIPage `
+							);
 					}
 				}
 			}
@@ -121,4 +121,4 @@ async function main() {
 	console.log('API documentation generated.');
 }
 
-main().catch(console.error);
+await main();

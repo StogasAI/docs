@@ -58,7 +58,8 @@ try {
 
 The default bundle refresh interval is one minute. Set `bundleRefreshIntervalSeconds` to a whole
 number from 1 through 840, or call `await transport.refreshBundle()` for an immediate manual
-refresh. Official defaults randomly choose between the Cloudflare/R2 and AWS CloudFront/S3
+refresh. More frequent polling normally obtains newer evidence but never relaxes verification or
+expiry. Official defaults randomly choose between the Cloudflare/R2 and AWS CloudFront/S3
 evidence origins, then try the other after a fetch, HTTP, verification, or sequence-regression
 failure. Identical bundle bytes are hash-deduplicated before cryptographic verification, and the
 transport always attempts another fetch before the active bundle expires.

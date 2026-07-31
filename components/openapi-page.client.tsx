@@ -4,7 +4,7 @@ import { codeUsages } from '@/lib/openapi-code-usage';
 import { createOpenAPIPage, type OpenAPIPageProps_Spec } from 'fumadocs-openapi/ui';
 import { StyleInjector } from './style-injector';
 
-const OpenAPIPage = createOpenAPIPage({
+const Page = createOpenAPIPage({
 	codeUsages,
 	generateTypeScriptDefinitions: false,
 	content: {
@@ -32,11 +32,11 @@ const OpenAPIPage = createOpenAPIPage({
 	}
 });
 
-export function APIPageClient(props: OpenAPIPageProps_Spec) {
+export function OpenAPIPageClient(props: OpenAPIPageProps_Spec) {
 	return (
 		<>
 			<StyleInjector />
-			<OpenAPIPage {...props} />
+			<Page {...props} />
 		</>
 	);
 }
