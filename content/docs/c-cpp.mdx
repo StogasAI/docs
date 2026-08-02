@@ -39,7 +39,7 @@ The same native library starts the managed Rust transport in-process:
 const char *options =
     "{"
     "\"security\":\"both\","
-    "\"bundle_refresh_interval_seconds\":60,"
+    "\"bundle_refresh_interval_seconds\":300,"
     "\"base_url\":\"https://api.stogas.ai\","
     "\"bundle_url\":\"https://evidence.stogas.ai/bundles/latest.json\""
     "}";
@@ -65,6 +65,6 @@ local URL remains valid until the transport is freed.
 
 ## Verify a response receipt
 
-After accepting a bundle with the same verifier, call `stogas_verifier_verify_response_proof` with the receipt JSON and exact request and response bytes. Historical verification uses `stogas_verifier_verify_historical_response_proof` and additionally accepts the immutable Trust Center ledger record.
+After accepting a bundle with the same verifier, call `stogas_verifier_verify_response_proof` with the receipt JSON and exact request and response bytes. Historical verification uses `stogas_verifier_verify_historical_response_proof` and additionally accepts the immutable Trust Center node record and catalog approval.
 
-Both functions return owned JSON containing the node ID, catalog digest, deployment, and route. Pass an empty E2EE transcript field for an ordinary TLS exchange.
+Both functions return owned JSON containing the node ID, catalog digest, and signed author, model, deployment, route, and provider IDs. Pass an empty E2EE transcript field for an ordinary TLS exchange.

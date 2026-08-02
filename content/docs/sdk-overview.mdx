@@ -65,7 +65,7 @@ E2EE. Native clients can select `tls`, `e2ee`, or `both`.
 | Control                 | Default            | Notes                                                            |
 | ----------------------- | ------------------ | ---------------------------------------------------------------- |
 | Security mode           | Runtime-specific   | Selects one of the modes above                                   |
-| Bundle refresh interval | 60 seconds         | Any whole number from 1 through 840                              |
+| Bundle refresh interval | 300 seconds        | Any positive whole number                                        |
 | Manual refresh          | On demand          | Fetches immediately; unchanged bundle bytes reuse verified state |
 | API and evidence URLs   | Stogas public URLs | Override only for another deployment using the same Stogas trust |
 | Close                   | Explicit or scoped | Stops refresh work and releases the transport                    |
@@ -73,7 +73,7 @@ E2EE. Native clients can select `tls`, `e2ee`, or `both`.
 The SDK also fetches shortly before an accepted bundle expires, regardless of the configured
 interval. A failed refresh can use the current bundle only until its authenticated expiry.
 Official URL defaults randomly choose one of two independent evidence origins per refresh and try
-the other only after fetch, verification, or sequence regression failure. The mutable alias is
+the other only after fetch, verification, or snapshot-order failure. The mutable alias is
 normally cached for at most five seconds; an origin error may use a cached response for at most the
 remainder of one publication interval. The origins are
 `https://evidence.stogas.ai/bundles/latest.json` on Cloudflare/R2 and
@@ -111,4 +111,4 @@ Each package also includes a networkless `Verifier` for applications that need t
 gateway set or want to validate response receipts themselves:
 
 - `Transport` manages protected OpenAI-compatible requests.
-- `Verifier` checks caller-supplied snapshots, response receipts, and historical gateway records.
+- `Verifier` checks caller-supplied snapshots, signed request results, and historical node and catalog records.

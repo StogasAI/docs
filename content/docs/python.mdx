@@ -38,7 +38,7 @@ from stogas_verifier import Transport
 
 transport = Transport(
     security="both",
-    bundle_refresh_interval_seconds=60,
+    bundle_refresh_interval_seconds=300,
     base_url="https://api.stogas.ai",
     bundle_url="https://evidence.stogas.ai/bundles/latest.json",
 )
@@ -69,7 +69,8 @@ Reuse the `Verifier` that accepted the bundle:
 receipt = json.loads(
     verifier.verify_response_proof(proof_json, request_body, response_body)
 )
-print(receipt["request_sha256"], receipt["response_sha256"])
+print(receipt["proof"]["request_sha256"], receipt["proof"]["response_sha256"])
 ```
 
-Use `verify_historical_response_proof(..., ledger_json)` for a gateway that is no longer in the active bundle. The body arguments must be the exact plaintext bytes sent and received.
+Use `verify_historical_response_proof(..., ledger_json, catalog_json)` for a node that is no longer
+in the active bundle. The body arguments must be the exact plaintext bytes sent and received.
