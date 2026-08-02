@@ -136,7 +136,7 @@
 				"description": "Create an OpenAI-compatible chat completion. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/ReturnExtraFields"
+						"$ref": "#/components/parameters/ExtraFields"
 					}
 				],
 				"requestBody": {
@@ -152,6 +152,14 @@
 				"responses": {
 					"200": {
 						"description": "Successful completion. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
+						"headers": {
+							"X-Stogas-Proof": {
+								"description": "Base64url-encoded `stogas.response-proof.v5` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
+								"schema": {
+									"type": "string"
+								}
+							}
+						},
 						"content": {
 							"application/json": {
 								"schema": {
@@ -161,7 +169,7 @@
 							"text/event-stream": {
 								"schema": {
 									"type": "string",
-									"description": "Server-Sent Events stream. Each `data:` frame contains a chat completion chunk; the stream ends with `data: [DONE]`."
+									"description": "Server-Sent Events stream. Each `data:` frame contains a chat completion chunk. With extra fields enabled, a final `: stogas <base64url-json>` comment appears before `data: [DONE]`. SSE clients ignore the comment."
 								},
 								"example": "data: {\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"chat.completion.chunk\",\"created\":1714343120,\"model\":\"gpt-5.5\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Hello\"},\"finish_reason\":null}]}\n\ndata: [DONE]\n\n"
 							}
@@ -208,7 +216,7 @@
 				"description": "Create an OpenAI-compatible Responses API response. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/ReturnExtraFields"
+						"$ref": "#/components/parameters/ExtraFields"
 					}
 				],
 				"requestBody": {
@@ -224,6 +232,14 @@
 				"responses": {
 					"200": {
 						"description": "Successful response. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
+						"headers": {
+							"X-Stogas-Proof": {
+								"description": "Base64url-encoded `stogas.response-proof.v5` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
+								"schema": {
+									"type": "string"
+								}
+							}
+						},
 						"content": {
 							"application/json": {
 								"schema": {
@@ -233,7 +249,7 @@
 							"text/event-stream": {
 								"schema": {
 									"type": "string",
-									"description": "Server-Sent Events stream. Each `data:` frame contains a Responses API event; the stream ends with `data: [DONE]`."
+									"description": "Server-Sent Events stream. Each `data:` frame contains a Responses API event. With extra fields enabled, a final `: stogas <base64url-json>` comment appears before `data: [DONE]`. SSE clients ignore the comment."
 								},
 								"example": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"response\",\"created_at\":1714343120,\"status\":\"in_progress\",\"model\":\"gpt-5.5\",\"output\":[]}}\n\ndata: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_0192f217-35b0-7e2c-9be7-f4cc24f2a4b0\",\"output_index\":0,\"content_index\":0,\"delta\":\"Hello\"}\n\ndata: [DONE]\n\n"
 							}
@@ -307,13 +323,14 @@
 			}
 		},
 		"parameters": {
-			"ReturnExtraFields": {
-				"name": "X-Stogas-Return-Extra-Fields",
+			"ExtraFields": {
+				"name": "X-Stogas-Extra-Fields",
 				"in": "header",
 				"schema": {
-					"type": "string"
+					"type": "boolean",
+					"default": false
 				},
-				"description": "Comma-separated catalog-defined Stogas metadata fields to include under `stogas`, such as `provider`, `model_requested`, `model_deployment`, `latency`, `provider_response_headers`, `raw_request`, and `raw_response`."
+				"description": "Set to `true` to request one bounded signed result with request, node, catalog, pricing, timing, and proof fields. The gateway does not add fields to the OpenAI JSON body. Set to `false` or omit the header to disable it."
 			}
 		},
 		"responses": {
@@ -1017,44 +1034,6 @@
 					},
 					"usage": {
 						"$ref": "#/components/schemas/ChatUsage"
-					},
-					"stogas": {
-						"type": "object",
-						"title": "Gateway Metadata",
-						"description": "Optional Stogas metadata returned when requested with Stogas debug headers.",
-						"properties": {
-							"provider": {
-								"type": "string",
-								"description": "The upstream AI provider that served the request"
-							},
-							"latency": {
-								"type": "integer",
-								"description": "Total round-trip latency in milliseconds"
-							},
-							"model_requested": {
-								"type": "string",
-								"description": "The exact model alias or name requested"
-							},
-							"model_deployment": {
-								"type": "string",
-								"description": "The upstream model deployment selected by the gateway"
-							},
-							"provider_response_headers": {
-								"type": "object",
-								"additionalProperties": {
-									"type": "string"
-								},
-								"description": "Catalog-approved response headers from the upstream provider"
-							},
-							"raw_request": {
-								"type": ["object", "array", "string", "number", "boolean", "null"],
-								"description": "The translated upstream provider request, returned when requested."
-							},
-							"raw_response": {
-								"type": ["object", "array", "string", "number", "boolean", "null"],
-								"description": "The raw upstream provider JSON body, returned when requested."
-							}
-						}
 					}
 				},
 				"required": ["id", "object", "created", "model", "choices"],
@@ -1629,44 +1608,6 @@
 					},
 					"usage": {
 						"$ref": "#/components/schemas/ResponsesUsage"
-					},
-					"stogas": {
-						"type": "object",
-						"title": "Gateway Metadata",
-						"description": "Optional Stogas metadata returned when requested with Stogas debug headers.",
-						"properties": {
-							"provider": {
-								"type": "string",
-								"description": "The upstream AI provider that served the request"
-							},
-							"latency": {
-								"type": "integer",
-								"description": "Total round-trip latency in milliseconds"
-							},
-							"model_requested": {
-								"type": "string",
-								"description": "The exact model alias or name requested"
-							},
-							"model_deployment": {
-								"type": "string",
-								"description": "The upstream model deployment selected by the gateway"
-							},
-							"provider_response_headers": {
-								"type": "object",
-								"additionalProperties": {
-									"type": "string"
-								},
-								"description": "Catalog-approved response headers from the upstream provider"
-							},
-							"raw_request": {
-								"type": ["object", "array", "string", "number", "boolean", "null"],
-								"description": "The translated upstream provider request, returned when requested."
-							},
-							"raw_response": {
-								"type": ["object", "array", "string", "number", "boolean", "null"],
-								"description": "The raw upstream provider JSON body, returned when requested."
-							}
-						}
 					}
 				},
 				"required": ["id", "object", "created_at", "model", "output", "status"],

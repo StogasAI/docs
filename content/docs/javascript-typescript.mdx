@@ -42,7 +42,7 @@ import { StogasTransport } from '@stogas/verifier';
 const transport = await StogasTransport.create({
 	baseURL: 'https://api.stogas.ai/v1',
 	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
-	bundleRefreshIntervalSeconds: 60,
+	bundleRefreshIntervalSeconds: 300,
 	fetch: globalThis.fetch.bind(globalThis)
 });
 const client = new OpenAI(transport.openAIOptions(process.env.STOGAS_API_KEY!));
@@ -69,11 +69,23 @@ The low-level `Verifier` remains useful when an application needs the verified g
 
 ## Verify a response receipt
 
-After `verify_bundle`, pass the decoded receipt JSON and the exact plaintext request and response bytes to the same verifier:
+Send `X-Stogas-Extra-Fields: true`. After `verify_bundle`, decode the base64url `X-Stogas-Proof`
+value and pass the JSON with the exact plaintext request and response bytes to the same verifier:
 
 ```ts
 const receipt = verifier.verify_response_proof(proofBytes, requestBytes, responseBytes);
-console.log(receipt.request_sha256, receipt.response_sha256);
+console.log(receipt.proof.request_sha256, receipt.proof.response_sha256);
 ```
 
-For an older gateway, call `verify_historical_response_proof` with its immutable Trust Center ledger record instead of relying on an active bundle. Decode the base64url `X-Stogas-Proof` header before passing it to the verifier; the final `stogas.proof` streaming event already contains the receipt JSON.
+For a stream, the final Stogas field is an SSE comment before `[DONE]`. It does not change the JSON
+event stream seen by standard OpenAI clients. Use a running verifier so the full SSE transcript does
+not stay in memory:
+
+```ts
+const stream = verifier.start_response_proof(requestBytes);
+stream.write(frameBytes); // Each non-Stogas frame, including [DONE].
+const receipt = stream.finish(proofBytes, e2eeTranscriptSHA256);
+```
+
+For an older node, call `verify_historical_response_proof` with both its immutable Trust Center node
+record and its immutable catalog approval. These public records contain no request or response data.

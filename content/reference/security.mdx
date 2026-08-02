@@ -33,6 +33,12 @@ Do not expose a privileged API key in public browser code. Use a narrowly limite
 - Provider response headers are hidden unless they are on the safe diagnostics allowlist.
 - Client-supplied private Stogas and Bifrost control headers are rejected.
 
+## Transport security
+
+The public OpenAI-compatible API accepts TLS 1.2 only with ECDHE-AEAD cipher suites. It prefers TLS 1.3 and hybrid ML-KEM key exchange while retaining classical key exchange for standard HTTPS clients.
+
+Native Stogas managed transports in `tls` or `both` mode require TLS 1.3 with X25519MLKEM768, WebPKI, and a certificate and public key from the active verified bundle. They never fall back to classical key exchange. Use `e2ee` mode when the client or network path cannot use hybrid TLS. E2EE uses ordinary WebPKI HTTPS because the verified application envelope supplies hybrid post-quantum confidentiality.
+
 ## Application E2EE
 
 Stogas application E2EE protects the API key, request body, response body, streamed events, and response errors between the client and the verified confidential gateway process. It uses the same `/v1/chat/completions` and `/v1/responses` paths as ordinary OpenAI-compatible requests.
@@ -48,19 +54,28 @@ For each request, the client:
 
 The outer envelope reveals only routing and protocol metadata such as the request ID, bundle hash, deadline, recipient key IDs, and ciphertext length. The authenticated inner envelope contains the credential, API request, and negotiated options. Responses, SSE events, and the final proof frame remain encrypted until they reach the client.
 
-The response receipt binds the exact request bytes, response bytes, active catalog digest, all five resolved catalog node IDs, and E2EE transcript. The managed transport verifies that receipt against the same trust state used to encrypt the request.
+The response receipt binds the exact request bytes, response bytes, complete active catalog through its digest, resolved author/model/deployment/route/provider IDs, and E2EE transcript. The managed transport requires the digest to match a verified catalog approval in the same trust state used to encrypt the request.
 
-Version 1 uses HPKE with P-256, HKDF-SHA-256, and AES-256-GCM. It does not claim post-quantum protection.
+Version 1 uses HPKE with the hybrid MLKEM768-X25519 (X-Wing) KEM, HKDF-SHA-256, and AES-256-GCM. This gives the encrypted payload hybrid post-quantum confidentiality, but the complete attestation and signature chain still has classical dependencies.
 
 See the [security and trust model](/docs/confidential-security-model) for detailed guarantees and
 [Verify a gateway](/docs/verification) for the practical setup.
 
-## Optional diagnostics
+## Signed request fields
 
-Request safe response metadata with:
+Request the bounded signed result with:
 
 ```http
-X-Stogas-Return-Extra-Fields: provider,model_requested,latency
+X-Stogas-Extra-Fields: true
 ```
 
-For request transformation debugging, `raw_request` and `raw_response` may also be requested. These fields can contain prompt or model-output data and should not be logged without an appropriate data policy.
+The result contains `request_id`, `node_id`, and four groups:
+
+- `catalog`: digest, sequence, and the resolved author/model/deployment/route/provider node IDs;
+- `pricing`: the settled meter bag, total Stogas cost, and optional BYOK provider cost;
+- `timing`: total, provider, and optional first-output milliseconds;
+- `proof`: request, response, and optional E2EE transcript SHA-256 values plus the node signature.
+
+A buffered response puts base64url JSON in `X-Stogas-Proof`. A stream puts the same value in a final
+`: stogas` SSE comment before `[DONE]`. The proof comment is not part of the response hash. The
+`[DONE]` frame is part of it. The gateway does not add raw request or response content to this result.

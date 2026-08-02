@@ -90,21 +90,21 @@ Use `--json` for automation. A failed check exits non-zero and produces no trust
 
 ## Refresh schedule
 
-The default interval is one minute:
+The default interval is five minutes:
 
 ```console
 stogas-verify serve
 ```
 
-Choose any whole-second interval from 1 through 840:
+Choose any positive whole-second interval:
 
 ```console
 stogas-verify serve --bundle-refresh-seconds 30
 ```
 
 For the standard Stogas endpoint, each refresh randomly selects either the Cloudflare/R2 or
-AWS/CloudFront evidence origin. A fetch, HTTP, verification, or sequence-regression failure causes
-an immediate attempt against the other origin.
+AWS/CloudFront evidence origin. A fetch, HTTP, verification, or non-advancing snapshot causes an
+immediate attempt against the other origin.
 
 `serve` retries failed refreshes while the current snapshot remains usable and makes an extra
 replacement attempt before expiry. It never activates a candidate that fails verification.
@@ -121,7 +121,9 @@ Zero is not a refresh interval. Manual mode is the explicit `verify` operation r
 
 ## Verify a response receipt
 
-Save the `X-Stogas-Proof` value or final `stogas.proof` SSE payload, plus the exact plaintext request and response bodies:
+Send `X-Stogas-Extra-Fields: true`. Save the buffered `X-Stogas-Proof` value or the value from the
+final `: stogas <base64url-json>` SSE comment. Also save the exact plaintext request and response
+bytes:
 
 ```console
 stogas-verify proof proof.txt \
@@ -130,7 +132,12 @@ stogas-verify proof proof.txt \
   --bundle bundle.json
 ```
 
-Use `--ledger node.json` instead of `--bundle` for historical evidence. For an encrypted exchange, save the locally computed `X-Stogas-E2EE-Transcript-SHA256` response header and pass it with `--e2ee-transcript-sha256`. Streaming response input is the exact SSE byte sequence excluding the final `stogas.proof` event itself.
+For historical evidence, replace `--bundle bundle.json` with both
+`--ledger node.json --catalog catalog.json`. For an encrypted exchange, save the locally computed
+`X-Stogas-E2EE-Transcript-SHA256` response header and pass it with
+`--e2ee-transcript-sha256`. Streaming response input contains every exact SSE byte except the Stogas
+comment and includes the `[DONE]` frame. The command hashes body files incrementally, so their size
+does not set its memory use.
 
 ## All options
 

@@ -42,7 +42,7 @@ use stogas::{SecurityMode, Transport, TransportOptions};
 
 let transport = Transport::start(TransportOptions {
     security: SecurityMode::Both,
-    bundle_refresh_interval: Duration::from_secs(60),
+    bundle_refresh_interval: Duration::from_secs(300),
     base_url: "https://api.stogas.ai".to_owned(),
     bundle_url: "https://evidence.stogas.ai/bundles/latest.json".to_owned(),
 })?;
@@ -68,4 +68,6 @@ let receipt = verifier.verify_response_proof(
 )?;
 ```
 
-Use `verify_historical_response_proof` with an immutable Trust Center ledger record when the signing gateway is no longer in the active bundle. Exact request and response bytes are required.
+Use `verify_historical_response_proof` with both the immutable Trust Center node record and catalog
+approval when the signing node is no longer in the active bundle. Exact request and response bytes
+are required. Hash-based methods are available for incremental readers.

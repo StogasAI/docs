@@ -14,8 +14,8 @@ https://evidence2.stogas.ai/bundles/latest.json
 
 The first endpoint is delivered by Cloudflare from R2. The second is an independent AWS
 CloudFront distribution backed by a private S3 bucket. Official managed clients choose one at
-random for each refresh and try the other after a network, HTTP, verification, or sequence
-regression failure.
+random for each refresh and try the other after a network, HTTP, verification, or non-advancing
+snapshot failure.
 
 Neither CDN is trusted. After retrieval, verification is entirely local: the verifier does not
 contact GitHub, AMD, Sigstore, drand, or Stogas while deciding whether to accept the bytes.
@@ -26,20 +26,22 @@ Each bundle is written to both object stores. A destination advances its `latest
 after accepting that bundle's immutable version. A transient failure at one store does not prevent
 the other from publishing, and the next one-minute cycle repairs freshness with a new bundle.
 
-The mutable alias normally remains at an edge for no more than five seconds. During an origin
-error, a CDN may serve its last response for at most the remainder of one publication interval.
-The verifier still applies the complete cryptographic policy and retains an earlier accepted bundle
+The mutable alias normally remains at an edge for no more than five seconds. An origin error is
+not hidden by an added stale-cache interval, so the client can try the independent origin. The
+verifier still applies the complete cryptographic policy and retains an earlier accepted bundle
 only until its authenticated expiry.
 
 ## What the trust bundle proves
 
 The bundle contains:
 
+- one or two catalog approvals, each with a GitHub Actions build attestation and a separate
+  Stogas-signed manifest over independently built matching hashes;
 - approved gateway releases and their build records;
 - AMD certificate chains and SEV-SNP reports for each gateway;
 - an explicit AMD processor profile binding report CPUID, the generation-specific hardware identifier and TCB layout, and a pinned product root; unknown processor generations fail closed;
 - recent drand evidence;
-- TLS, response-signing, and E2EE public keys created by each gateway; and
+- each gateway's quote-bound active catalog identity, TLS, response-signing, and E2EE public keys; and
 - an expiration time.
 
 The bundle has no outer signature. Its body SHA-256 identifies the exact bytes and detects
@@ -59,17 +61,49 @@ The verifier applies three separate time limits:
 | Gateway evidence | The drand round is no more than two minutes older than bundle creation      | Requires recent evidence from every accepted gateway      |
 | Bundle expiry    | No more than 15 minutes after creation                                      | Sets a hard deadline for an accepted bundle               |
 
+Bundle creation time cannot grant trust by itself. The client clock bounds it, and every accepted
+gateway's quote-bound drand round constrains it.
+
 Every accepted gateway certificate and required AMD certificate or revocation list remains valid
 through the bundle's complete actual lifetime. That lifetime is at most 15 minutes and may end
 sooner at one of those validity deadlines. It does not mean clients should wait 15 minutes before
 checking for an update.
 
+The transport reuses only exact active bytes and otherwise requires a fully verified snapshot with
+a later creation time. Sequence remains useful operational metadata, but it is not signed and never
+controls client activation. This prevents one corrupted mirror from pinning a client to an inflated
+sequence. No ordering field can detect an attacker who freezes one snapshot, so every changed
+candidate receives all cryptographic, creation-time, and expiry checks; those checks cannot be
+limited to the first bundle after startup.
+
+## Keep the client clock accurate
+
+Bundle verification uses the client's wall clock. Keep automatic time synchronization enabled and
+monitor it as part of host health:
+
+- On Linux servers and virtual machines, run `chronyd` with several independent sources. Use NTS
+  where the sources and operating environment support it. Permit large clock steps only during
+  early boot, then gate application readiness with `chronyc waitsync` and monitor `chronyc tracking`.
+- Containers and Kubernetes pods use the host clock. Configure and monitor synchronization on each
+  node instead of installing a separate time daemon in each container.
+- Desktop, mobile, and browser clients use the operating-system clock. Keep automatic date and time
+  enabled. If verification reports that a bundle is from the future or unexpectedly old, report a
+  clock error instead of applying an application-specific offset.
+- Managed serverless runtimes use the provider's host clock. An offline application that supplies a
+  time to an embedded verifier must obtain it from a trustworthy synchronized clock.
+
+See the [chrony FAQ](https://chrony-project.org/faq.html),
+[`chrony.conf` reference](https://chrony-project.org/doc/4.7/chrony.conf.html), and
+[`chronyc` reference](https://chrony-project.org/doc/4.7/chronyc.html) for source authentication,
+startup stepping, status, and readiness controls.
+
 ## Keeping verification current
 
-Managed transports check every minute by default and make another attempt before the active bundle
-expires. Applications can choose an interval from 1 through 840 seconds or request an immediate
+Managed transports check every five minutes by default and make another attempt before the active
+bundle expires. Applications can choose any positive whole-second interval or request an immediate
 refresh. More frequent polling normally provides newer evidence without changing any verification
-or expiry rule.
+or expiry rule. A one-minute interval is a reasonable choice when the newest available fleet
+evidence matters more than the extra request traffic.
 
 If the downloaded bytes have not changed, the transport reuses the existing verified result. A
 failed update can keep using the last accepted bundle only until that bundle expires.
@@ -78,12 +112,23 @@ failed update can keep using the last accepted bundle only until that bundle exp
 
 Every response can include a compact receipt:
 
+- request it with `X-Stogas-Extra-Fields: true`;
 - non-streaming responses use `X-Stogas-Proof`;
-- streaming responses end with a `stogas.proof` SSE event.
+- streaming responses add a final `: stogas <base64url-json>` SSE comment before `[DONE]`.
 
-The receipt identifies the gateway and signs hashes of the exact request and response, the API
-route, the selected model route, current freshness evidence, and the encrypted-connection transcript
-when E2EE is used.
+The `stogas.response-proof.v5` result signs the request and node IDs; hashes of the exact request and
+response; catalog digest, sequence, and resolved author/model/deployment/route/provider IDs; settled
+meter pricing and totals; timing; and the encrypted-connection transcript when E2EE is used. The
+signing key is already bound to the verified node by its SEV-SNP report. The result does not repeat
+the quote, AMD collateral, catalog approval, or release proof.
+
+For an active bundle, the verifier also requires the receipt's catalog digest to match one verified
+catalog approval. The five IDs preserve the gateway's exact request resolution. To check that each
+ID is a member of that catalog graph, fetch and cache the immutable runtime catalog by digest.
+Catalog identity is request-time state and does not have to match the catalog that was active when
+the gateway first joined the fleet. Before dispatch, the gateway requires the selected catalog to
+match its current quote snapshot. It makes one quote refresh after a catalog change and fails closed
+if the values still differ.
 
 Reuse the verifier that accepted the active bundle:
 
@@ -96,7 +141,13 @@ const receipt = verifier.verify_response_proof(
 );
 ```
 
-The verifier calculates the request and response hashes again from the bytes you provide. For an
-older response, download its node record from the Trust Center and use
-`verify_historical_response_proof`. When E2EE is enabled, also keep the locally calculated
+The verifier calculates the request and response hashes again from the bytes you provide. A browser
+can use `start_response_proof`, `write`, and `finish` to keep only a running response hash. Write all
+SSE bytes except the Stogas comment and include `[DONE]`. For an older response, download its node
+record and catalog approval from the Trust Center and use `verify_historical_response_proof`. The
+public lookup uses only `node_id` and catalog sequence. It never receives the private request or
+response. When E2EE is enabled, also keep the locally calculated
 `X-Stogas-E2EE-Transcript-SHA256` response header.
+
+The Trust Center history separates node admissions, gateway releases, and catalog releases. Opening
+a record downloads its exact public evidence and verifies it locally before display.

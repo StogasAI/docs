@@ -11,10 +11,13 @@ gateway's memory, private keys, provider credentials, or plaintext requests.
 
 1. **Release provenance:** GitHub Actions and Stogas independently authorize the same public source, IGVM hash, launch policy, and SNP measurement.
 2. **Hardware attestation:** AMD-signed SNP evidence proves an approved measurement booted on genuine hardware at an accepted security version.
-3. **Key binding:** SNP report data binds the node's TLS key, certificate hashes, and application keys to that measured guest.
-4. **Freshness:** every trusted node's signed drand round is at most two minutes older than the authenticated bundle creation time. The verifier clock separately rejects delayed, future-dated, or expired bundles.
+3. **Workload binding:** SNP report data binds the active catalog sequence and digest, TLS key, certificate hashes, and application keys to that measured guest.
+4. **Freshness:** every trusted node's signed drand round is at most two minutes older than the locally accepted bundle creation time. The verifier clock separately rejects delayed, future-dated, or expired bundles.
 
 No root of trust is accepted from the downloaded bundle. The verifier ships the AMD, Sigstore, drand, and Stogas release roots it trusts.
+Because the freshness checks use the local wall clock, follow the
+[client clock guidance](/docs/verification#keep-the-client-clock-accurate) for servers,
+containers, browsers, and managed runtimes.
 
 ## Request path
 
@@ -26,7 +29,7 @@ Browser and optional native E2EE encrypt the complete inner inference request on
 
 The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key IDs, ciphertext length, and network timing. The encrypted inner request contains the API key, OpenAI request body, relevant content negotiation, and optional extra-field preference. The encrypted response contains its status, safe response headers, body or SSE frames, and terminal state. This keeps routing and bounded parsing outside the ciphertext while keeping credentials and inference semantics inside it.
 
-The same signed response receipt travels inside the encrypted response, so E2EE does not introduce a second proof format. The receipt binds hashes of the exact plaintext request and response bytes, the active catalog digest, all five resolved catalog node IDs, and the E2EE transcript when present. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
+The same opt-in `stogas.response-proof.v5` result travels inside the encrypted response, so E2EE does not introduce a second proof format. It binds the request and node IDs; hashes of the exact plaintext request and response bytes; catalog digest, sequence, and resolved author/model/deployment/route/provider IDs; settled pricing; timing; and the E2EE transcript when present. Active-bundle verification requires the exact node and catalog to be in the accepted bundle. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
 
 ## Release authorization
 
@@ -37,6 +40,8 @@ MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
 ```
 
 It signs canonical `stogas.gateway.launch-policy.v1` bytes using the domain separator `stogas gateway launch policy v1\n`. GitHub's attestation must independently bind the exact same launch-policy digest and IGVM digest. A node is trusted only when its SNP measurement belongs to that verified release set.
+
+Catalog releases use the same public key but a separate `stogas catalog release v3\n` domain. GitHub Actions attests the runtime and public artifact hashes. Stogas independently builds the tagged source and signs its own manifest of those hashes; it does not sign the GitHub attestation. The verifier accepts the catalog only when both lanes contain the same hashes and the pinned source and workflow identities.
 
 ## Availability
 
@@ -61,8 +66,8 @@ Confidential verification does not:
 - let browser JavaScript inspect the certificate used by `fetch`;
 - protect API keys from malicious same-origin browser script.
 
-The v1 E2EE recipient profile uses RFC 9180 HPKE with P-256, HKDF-SHA256, and AES-256-GCM. The envelope is versioned for algorithm migration. Stogas does not claim complete post-quantum security: AMD SNP, drand, WebPKI, Sigstore, and existing signing keys still depend on classical cryptography.
+The v1 E2EE recipient profile uses HPKE with the hybrid MLKEM768-X25519 (X-Wing) KEM, HKDF-SHA-256, and AES-256-GCM. The same suite protects Control-to-guest secret release. Stogas does not claim complete post-quantum security: AMD SNP, drand, WebPKI, Sigstore, and existing signing keys still depend on classical cryptography.
 
-The gateway uses Go 1.26's default TLS 1.3 curve policy, which offers hybrid ML-KEM key exchange to capable clients while retaining interoperable classical fallbacks. This reduces harvest-now-decrypt-later exposure for the TLS session; it does not make the complete attestation or E2EE trust chain post-quantum.
+The public gateway listener uses TLS 1.3 and offers hybrid ML-KEM key exchange first while retaining classical fallback for standard clients. Managed native transports require X25519MLKEM768 with no classical fallback. E2EE protects application payloads when a browser or other standard client negotiates classical TLS. These controls do not make the complete attestation trust chain post-quantum.
 
 The recipient key exists only in one guest generation and is destroyed when that guest stops. Because v1 uses a non-interactive static HPKE recipient key, compromise of that key while the generation is alive could expose requests recorded for that generation; v1 does not claim interactive forward secrecy.

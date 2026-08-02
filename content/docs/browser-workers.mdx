@@ -39,7 +39,7 @@ await init();
 const transport = await StogasTransport.create({
 	baseURL: 'https://api.stogas.ai/v1',
 	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
-	bundleRefreshIntervalSeconds: 60,
+	bundleRefreshIntervalSeconds: 300,
 	fetch: window.fetch.bind(window)
 });
 const client = new OpenAI(transport.openAIOptions(userProvidedStogasKey));
@@ -56,12 +56,12 @@ try {
 }
 ```
 
-The default bundle refresh interval is one minute. Set `bundleRefreshIntervalSeconds` to a whole
-number from 1 through 840, or call `await transport.refreshBundle()` for an immediate manual
+The default bundle refresh interval is five minutes. Set `bundleRefreshIntervalSeconds` to any
+positive whole number, or call `await transport.refreshBundle()` for an immediate manual
 refresh. More frequent polling normally obtains newer evidence but never relaxes verification or
 expiry. Official defaults randomly choose between the Cloudflare/R2 and AWS CloudFront/S3
-evidence origins, then try the other after a fetch, HTTP, verification, or sequence-regression
-failure. Identical bundle bytes are hash-deduplicated before cryptographic verification, and the
+evidence origins, then try the other after a fetch, HTTP, verification, or non-advancing snapshot.
+Identical bundle bytes are hash-deduplicated before cryptographic verification, and the
 transport always attempts another fetch before the active bundle expires.
 
 The transport exposes delivery and local-verification metadata without weakening the trust
@@ -82,7 +82,11 @@ its original verification measurement.
 
 The transport uses the normal `/v1/responses` and `/v1/chat/completions` endpoints. It disables automatic SDK retries because retrying after an ambiguous connection failure could execute inference twice under a new request ID.
 
-For later receipt verification, the decrypted response exposes the locally computed E2EE transcript as `X-Stogas-E2EE-Transcript-SHA256`. OpenAI JavaScript callers can access response headers with the SDK's raw-response helper when they need to archive this value.
+For later receipt verification, send `X-Stogas-Extra-Fields: true`. The decrypted response exposes
+the locally computed E2EE transcript as `X-Stogas-E2EE-Transcript-SHA256`. OpenAI JavaScript callers
+can access response headers with the SDK's raw-response helper when they need to archive this value.
+Use `transport.createResponseProofStream(requestBytes)` for constant-memory verification of an SSE
+response.
 
 <Callout type="warn">
 	Each user should provide their own API key. Never ship a shared key in browser assets; E2EE cannot
@@ -102,7 +106,7 @@ verifier.free();
 const transport = await StogasTransport.create({
 	baseURL: 'https://api.stogas.ai/v1',
 	bundleURL: 'https://evidence.stogas.ai/bundles/latest.json',
-	bundleRefreshIntervalSeconds: 60,
+	bundleRefreshIntervalSeconds: 300,
 	fetch
 });
 const client = new OpenAI(transport.openAIOptions(stogasAPIKey));
