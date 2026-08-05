@@ -3,7 +3,7 @@ title: Compatibility Notes
 description: The small set of Stogas behaviors that differ from a direct provider API.
 ---
 
-Stogas supports OpenAI-compatible Chat Completions and Responses requests across cataloged OpenAI and Anthropic models. Operation pages show accepted fields; rejected compatibility fields are collected here.
+Stogas supports the cataloged interfaces for OpenAI, Anthropic, Azure, and Chutes deployments. Operation pages show accepted fields; rejected compatibility fields are collected here.
 
 ## Routing
 
@@ -28,20 +28,34 @@ Service tiers are deployment capabilities, not portable promises across provider
 
 An exact deployment slug rejects a `service_tier` value that selects a different deployment.
 
+## Prompt caching
+
+Prompt caching remains at the selected provider. Stogas does not store complete model responses.
+
+| Provider  | Implicit caching | Client controls                                                                                                                                                                     |
+| --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI    | Yes              | Chat and Responses accept `prompt_cache_key` and model-specific legacy retention. GPT-5.6 uses `prompt_cache_options` and content-block `prompt_cache_breakpoint`.                  |
+| Anthropic | Opt-in           | Chat and Responses accept top-level and supported content-block `cache_control`; TTL is `5m` or `1h`.                                                                               |
+| Azure     | Yes              | Chat and Responses accept `prompt_cache_key`; cataloged GPT-5.6 deployments accept `prompt_cache_retention: "24h"` but not options or breakpoints.                                  |
+| Chutes    | Yes              | No client cache-control fields.                                                                                                                                                     |
+
+Cache reads and writes appear in the endpoint's input-token usage details when the provider reports them. Provider-specific breakpoint formats are not translated across deployments. See [Prompt caching](/docs/prompt-caching) for the complete contract and Azure accounting limitation.
+
 ## Rejected fields
 
 These familiar provider fields are intentionally outside the current Stogas surface:
 
-| Endpoint         | Rejected fields                                                                                                             | Use instead                                                                                                                 |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key`, `safety_identifier`, `store` | Text content; `tools` and `tool_choice`; server-owned routing, retention, and safety identity                               |
-| Responses        | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`, `safety_identifier`, `store`                | Synchronous requests with complete client-supplied conversation state; server-owned routing, retention, and safety identity |
+| Endpoint         | Rejected fields                                                                                                    | Use instead                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key`, `safety_identifier` | Text content; `tools` and `tool_choice`; server-owned routing, retention, and safety identity                               |
+| Responses        | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`, `safety_identifier`               | Synchronous requests with complete client-supplied conversation state; server-owned routing, retention, and safety identity |
 
 Unknown or rejected top-level fields return `400`; they are never forwarded opportunistically.
 
 ## Other differences
 
 - Requests are strict: unknown top-level fields return `400` instead of being forwarded.
+- `store` may be omitted or set to `false`. `store: true` is rejected, and Stogas never enables provider response storage.
 - The current public surface accepts text content only.
 - `stream: true` uses the endpoint's normal Server-Sent Events format.
 - OpenAI `max_tokens` is accepted as an alias for `max_completion_tokens` on Chat Completions.
@@ -62,6 +76,7 @@ Errors use an OpenAI-compatible `error` object. Common status codes are:
 | `402` / `403` | Billing or key policy rejected the request |
 |         `413` | Request body too large                     |
 |         `429` | Stogas or provider rate limit              |
+|         `502` | Invalid or unavailable upstream response   |
 |         `503` | No provider route was available            |
 |         `504` | Upstream request timed out                 |
 |         `529` | Provider overloaded                        |
