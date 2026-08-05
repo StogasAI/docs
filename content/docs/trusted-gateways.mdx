@@ -116,7 +116,7 @@ Every response can include a compact receipt:
 - non-streaming responses use `X-Stogas-Proof`;
 - streaming responses add a final `: stogas <base64url-json>` SSE comment before `[DONE]`.
 
-The `stogas.response-proof.v5` result signs the request and node IDs; hashes of the exact request and
+The `stogas.response-proof.v1` result signs the request and node IDs; hashes of the exact request and
 response; catalog digest, sequence, and resolved author/model/deployment/route/provider IDs; settled
 meter pricing and totals; timing; and the encrypted-connection transcript when E2EE is used. The
 signing key is already bound to the verified node by its SEV-SNP report. The result does not repeat

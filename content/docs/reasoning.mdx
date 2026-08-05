@@ -1,0 +1,112 @@
+---
+title: Reasoning controls
+description: Select reasoning effort, manual token limits, Pro mode, and service tiers.
+---
+
+Stogas accepts one portable reasoning scale across providers:
+
+`none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
+
+Each catalog deployment has `reasoningAvailability`, `reasoningEfforts`, and
+`reasoningMaxTokens`. Availability is `unsupported`, `optional`, or `required`. The effort list
+contains only distinct positive levels that the deployment can select; it never contains `none`.
+An empty list can therefore mean binary on/off reasoning, required reasoning without selectable
+levels, or no reasoning. Read it with availability. If you omit reasoning, Stogas also omits the
+control from the provider request. Omission lets the provider apply its default and is not the
+same as `none`.
+
+## Select an effort
+
+Use the OpenAI-compatible field for the endpoint:
+
+```json title="Chat Completions"
+{
+	"model": "gpt-5.6-sol",
+	"messages": [{ "role": "user", "content": "Solve this carefully." }],
+	"reasoning_effort": "high"
+}
+```
+
+```json title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Solve this carefully.",
+	"reasoning": { "effort": "high" }
+}
+```
+
+An effort passes through unchanged when the selected deployment lists that exact value. Another
+positive effort maps to the nearest available positive level, with upward ties. Explicit `none`
+disables optional reasoning and is rejected when reasoning is required. On an optional binary
+deployment, any positive effort means on and `none` means off; Stogas does not pretend that binary
+on is a specific effort such as `high`. A required deployment with no selectable level rejects an
+effort because there is no accurate level mapping. Check the selected deployment in the catalog
+when exact provider behavior matters.
+
+Chat Completions also accepts the OpenRouter-compatible binary form:
+
+```json
+{
+	"reasoning": { "enabled": true }
+}
+```
+
+For a deployment with effort levels, `true` selects its nearest equivalent to `medium` and
+`false` disables optional reasoning. For a binary deployment, it directly selects on or off.
+Conflicting `enabled` and `effort` values are rejected. Responses uses `reasoning.effort`.
+
+## Manual token limits
+
+Some deployments accept a maximum reasoning-token budget:
+
+```json
+{
+	"reasoning": { "max_tokens": 4096 }
+}
+```
+
+The catalog marks these deployments with a non-null `reasoningMaxTokens` object. Its inclusive
+`minimum` and `maximum` are the exact integer bounds that the deployment accepts. The request
+value must also be less than the request's output-token limit. It is a maximum budget and does not
+guarantee that the model will use that exact number of tokens. Do not send an effort and a manual
+limit in the same request.
+
+When a provider accepts only a manual token budget but the client sends an advertised effort,
+Stogas converts the effort within the available reasoning range:
+
+| Effort    | Position in available range |
+| --------- | --------------------------- |
+| `minimal` | 2.5%                        |
+| `low`     | 15%                         |
+| `medium`  | 42.5%                       |
+| `high`    | 80%                         |
+| `xhigh`   | 92%                         |
+| `max`     | Maximum                     |
+
+For a positive effort, the budget calculation is
+`minimum + floor(position × (output limit - minimum))`. Explicit `none` maps to zero. If the
+provider requires reasoning tokens to be strictly below total output tokens, `max` uses one token
+less than that limit.
+
+## GPT-5.6 Pro
+
+Pro is a deployment choice, not a client-supplied `reasoning.mode` field. Select it with a model
+slug:
+
+| Model family | Standard Pro        | Flex Pro                 | Fast Pro                 |
+| ------------ | ------------------- | ------------------------ | ------------------------ |
+| Luna         | `gpt-5.6-luna-pro`  | `gpt-5.6-luna-pro-flex`  | `gpt-5.6-luna-pro-fast`  |
+| Terra        | `gpt-5.6-terra-pro` | `gpt-5.6-terra-pro-flex` | `gpt-5.6-terra-pro-fast` |
+| Sol          | `gpt-5.6-sol-pro`   | `gpt-5.6-sol-pro-flex`   | `gpt-5.6-sol-pro-fast`   |
+
+Sol also has the shorter `gpt-5.6-pro`, `gpt-5.6-pro-flex`, and `gpt-5.6-pro-fast` aliases. Pro
+deployments use the Responses API. You can still select an admitted reasoning effort within Pro.
+
+## Fast service
+
+`fast` is the canonical service-tier name. `priority` is accepted as a compatibility alias and
+selects the same `-fast` deployment and price. For example, either spelling can retarget
+`gpt-5.6-pro` to `gpt-5.6-pro-fast`.
+
+An explicit deployment slug pins its price and behavior. A conflicting `service_tier` is rejected
+instead of silently changing that deployment.

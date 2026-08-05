@@ -1,0 +1,113 @@
+---
+title: Prompt caching
+description: Use provider-native prompt caches and understand cache usage and billing.
+---
+
+Prompt caching is a feature of the selected upstream provider. Stogas does not keep a prompt cache
+or a complete-response cache, and it does not return a stored response without calling the
+provider.
+
+## Provider controls
+
+| Provider  | Behavior  | Accepted controls                                                                 |
+| --------- | --------- | --------------------------------------------------------------------------------- |
+| OpenAI    | Automatic | `prompt_cache_key`; model-specific retention; GPT-5.6 options and breakpoints     |
+| Anthropic | Opt-in    | Top-level or supported content-block `cache_control`; `5m` or `1h` TTL           |
+| Azure     | Automatic | `prompt_cache_key`; GPT-5.6 `prompt_cache_retention: "24h"`                      |
+| Chutes    | Automatic | No client cache-control fields                                                    |
+
+Stogas preserves the provider-native fields that Bifrost represents for the selected route. It
+does not translate OpenAI breakpoints into Anthropic cache controls, or Anthropic cache controls
+into OpenAI breakpoints.
+
+## OpenAI GPT-5.6
+
+GPT-5.6 uses `prompt_cache_options`. Implicit mode is the default. Explicit mode writes only at
+marked content blocks.
+
+```json title="Chat Completions"
+{
+	"model": "gpt-5.6-sol",
+	"messages": [
+		{
+			"role": "user",
+			"content": [
+				{
+					"type": "text",
+					"text": "A long reusable reference...",
+					"prompt_cache_breakpoint": { "mode": "explicit" }
+				},
+				{ "type": "text", "text": "Answer the current question." }
+			]
+		}
+	],
+	"prompt_cache_key": "reference-v3",
+	"prompt_cache_options": { "mode": "explicit", "ttl": "30m" }
+}
+```
+
+Responses uses the same top-level controls and puts `prompt_cache_breakpoint` on `input_text`
+blocks. Chat Completions puts it on `text` blocks. OpenAI supports more cacheable block types, but
+the current Stogas API is text-only. OpenAI tracks at most four active breakpoints. They produce
+one cache-write token partition in usage, not overlapping copies of the same prompt tokens.
+
+`prompt_cache_retention` is the legacy retention control for models before GPT-5.6. For GPT-5.6,
+use `prompt_cache_options.ttl`; the current accepted value is `30m`. Caching starts at 1,024 prompt
+tokens. Reuse a stable `prompt_cache_key` for prompts with the same prefix, and distribute a busy
+workload across stable keys if one key approaches about 15 requests per minute.
+
+## Anthropic
+
+Add one top-level control for automatic caching:
+
+```json
+{
+	"model": "anthropic/claude-sonnet-5",
+	"cache_control": { "type": "ephemeral", "ttl": "1h" },
+	"messages": [{ "role": "user", "content": "Use the long shared context..." }]
+}
+```
+
+For explicit caching, put the same object on supported text-content or tool blocks. Omit `ttl` or
+use `5m` for the five-minute cache; use `1h` for the one-hour cache. Anthropic permits four cache
+slots, with automatic caching using one slot. When TTLs are mixed, one-hour content must appear
+before five-minute content. Minimum cacheable prompt length depends on the Claude model.
+
+## Azure
+
+Azure Chat Completions and Responses use automatic prompt caching on their matching native
+endpoints. Use `prompt_cache_key` on GPT-5.6 to improve matching. Azure does not support
+`prompt_cache_options`, explicit breakpoints, or an opt-out. Current GPT-5.6 deployments use
+24-hour retention. Azure caching begins at 1,024 prompt tokens.
+
+Azure reports cache reads but does not report GPT-5.6 cache writes. For a cacheable prompt, Stogas
+therefore classifies the uncached prompt portion at the documented cache-write rate. This is a
+conservative per-request estimate; Azure does not expose enough usage data for an exact write
+count.
+
+## Usage and billing
+
+Chat Completions reports cache details in `usage.prompt_tokens_details`. Responses reports them in
+`usage.input_tokens_details`. The OpenAI-compatible fields are:
+
+- `cached_tokens`: input tokens read from the provider cache
+- `cache_write_tokens`: input tokens written to the provider cache
+
+Anthropic also reports five-minute and one-hour write detail. Each provider-reported input token is
+settled once as ordinary input, a cache read, or a cache write. Reasoning tokens are removed from
+the aggregate output count before the remaining output is priced.
+
+Before dispatch, Stogas reserves the highest possible input category once and the highest possible
+output category once. Provider-hosted tools can add separate call or generated-content capacity.
+After the provider returns valid usage, Stogas prices the actual partitions and releases the unused
+hold. Meter quantities are combined before rounding. Bring-your-own-key requests reserve and
+settle 2% of those amounts.
+
+If a successful provider response has missing, negative, inconsistent, or overflowing usage,
+Stogas returns an upstream protocol error instead of inventing a successful charge.
+
+## Provider references
+
+- [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
+- [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
+- [Azure prompt caching](https://learn.microsoft.com/azure/foundry/openai/how-to/prompt-caching)

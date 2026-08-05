@@ -64,7 +64,7 @@
 								"examples": {
 									"catalog": {
 										"value": {
-											"schema": "stogas.gateway.catalog.v2",
+											"schema": "stogas.gateway.catalog.v1",
 											"sequence": 184,
 											"runtimeDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 											"publicDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
@@ -154,7 +154,7 @@
 						"description": "Successful completion. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
 						"headers": {
 							"X-Stogas-Proof": {
-								"description": "Base64url-encoded `stogas.response-proof.v5` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
+								"description": "Base64url-encoded `stogas.response-proof.v1` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
 								"schema": {
 									"type": "string"
 								}
@@ -234,7 +234,7 @@
 						"description": "Successful response. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
 						"headers": {
 							"X-Stogas-Proof": {
-								"description": "Base64url-encoded `stogas.response-proof.v5` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
+								"description": "Base64url-encoded `stogas.response-proof.v1` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
 								"schema": {
 									"type": "string"
 								}
@@ -526,7 +526,7 @@
 				"properties": {
 					"schema": {
 						"type": "string",
-						"const": "stogas.gateway.catalog.v2"
+						"const": "stogas.gateway.catalog.v1"
 					},
 					"sequence": {
 						"type": "integer",
@@ -680,6 +680,12 @@
 						"type": "boolean",
 						"default": false
 					},
+					"store": {
+						"type": "boolean",
+						"enum": [false],
+						"default": false,
+						"description": "May be omitted or set to false. Stogas rejects true and does not enable provider response storage."
+					},
 					"frequency_penalty": {
 						"type": "number",
 						"description": "OpenAI-only Chat Completions frequency penalty. Anthropic deployments reject this field."
@@ -747,13 +753,18 @@
 					},
 					"prompt_cache_key": {
 						"type": "string",
-						"description": "OpenAI-only prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
+						"description": "OpenAI and Azure prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
 						"minLength": 1,
 						"maxLength": 256
 					},
+					"prompt_cache_retention": {
+						"type": "string",
+						"description": "Legacy OpenAI retention control for models before GPT-5.6, and Azure retention policy. GPT-5.6 OpenAI requests should use `prompt_cache_options.ttl`; current Azure GPT-5.6 deployments accept only `24h`.",
+						"enum": ["in_memory", "24h"]
+					},
 					"prompt_cache_options": {
 						"type": "object",
-						"description": "GPT-5.6 prompt caching mode. `implicit` adds the provider-managed breakpoint; `explicit` writes only text blocks carrying `prompt_cache_breakpoint`. Up to four writes are accepted per request.",
+						"description": "OpenAI GPT-5.6 prompt caching mode. `implicit` keeps the provider-managed breakpoint; `explicit` writes only marked prompt blocks. OpenAI tracks at most four active breakpoints and reports cache writes as one input-token partition.",
 						"properties": {
 							"mode": {
 								"type": "string",
@@ -764,12 +775,11 @@
 								"enum": ["30m"]
 							}
 						},
-						"required": ["mode"],
 						"additionalProperties": false
 					},
 					"cache_control": {
 						"type": "object",
-						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on text content/tool blocks, prices cache writes conservatively for holds, and rejects this field on OpenAI deployments.",
+						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on text content/tool blocks, and prices cache writes conservatively for holds.",
 						"properties": {
 							"type": {
 								"type": "string",
@@ -788,11 +798,12 @@
 						"description": "Reasoning configuration for models that expose reasoning controls.",
 						"properties": {
 							"enabled": {
-								"type": "boolean"
+								"type": "boolean",
+								"description": "OpenRouter-compatible binary control. On a deployment with effort levels, true selects the nearest level to medium."
 							},
 							"effort": {
 								"type": "string",
-								"description": "Canonical Stogas effort admitted by the selected deployment. Undeclared values are rejected; the provider transport performs the native wire conversion. `none` is rejected when reasoning cannot be disabled.",
+								"description": "Canonical Stogas effort. Unsupported positive values map to the nearest deployment level, with upward ties; `none` is rejected when reasoning cannot be disabled.",
 								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"display": {
@@ -800,7 +811,8 @@
 							},
 							"max_tokens": {
 								"type": "integer",
-								"minimum": 1
+								"minimum": 1,
+								"description": "Maximum reasoning-token budget. The selected deployment supplies the exact inclusive minimum and maximum."
 							}
 						},
 						"additionalProperties": false
@@ -1145,6 +1157,9 @@
 					"total_tokens": {
 						"type": "integer",
 						"description": "Total number of tokens used"
+					},
+					"prompt_tokens_details": {
+						"$ref": "#/components/schemas/PromptTokenDetails"
 					}
 				},
 				"required": ["prompt_tokens", "completion_tokens", "total_tokens"]
@@ -1219,6 +1234,14 @@
 					},
 					"text": {
 						"type": "string"
+					},
+					"prompt_cache_breakpoint": {
+						"$ref": "#/components/schemas/PromptCacheBreakpoint",
+						"description": "OpenAI GPT-5.6 explicit prompt-cache breakpoint."
+					},
+					"cache_control": {
+						"$ref": "#/components/schemas/AnthropicCacheControl",
+						"description": "Anthropic prompt-cache control for this text block."
 					}
 				}
 			},
@@ -1256,6 +1279,12 @@
 					"stream": {
 						"type": "boolean",
 						"default": false
+					},
+					"store": {
+						"type": "boolean",
+						"enum": [false],
+						"default": false,
+						"description": "May be omitted or set to false. Stogas rejects true and does not enable provider response storage."
 					},
 					"include": {
 						"type": "array",
@@ -1307,9 +1336,14 @@
 					},
 					"prompt_cache_key": {
 						"type": "string",
-						"description": "OpenAI-only prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
+						"description": "OpenAI and Azure prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
 						"minLength": 1,
 						"maxLength": 256
+					},
+					"prompt_cache_retention": {
+						"type": "string",
+						"description": "Legacy OpenAI retention control for models before GPT-5.6, and Azure retention policy. GPT-5.6 OpenAI requests should use `prompt_cache_options.ttl`; current Azure GPT-5.6 deployments accept only `24h`.",
+						"enum": ["in_memory", "24h"]
 					},
 					"reasoning": {
 						"type": "object",
@@ -1317,7 +1351,7 @@
 						"properties": {
 							"effort": {
 								"type": "string",
-								"description": "Canonical Stogas effort admitted by the selected deployment. Undeclared values are rejected; the provider transport performs the native wire conversion. `none` is rejected when reasoning cannot be disabled.",
+								"description": "Canonical Stogas effort. Unsupported positive values map to the nearest deployment level, with upward ties; `none` is rejected when reasoning cannot be disabled.",
 								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"summary": {
@@ -1329,7 +1363,8 @@
 							},
 							"max_tokens": {
 								"type": "integer",
-								"minimum": 1
+								"minimum": 1,
+								"description": "Maximum reasoning-token budget. The selected deployment supplies the exact inclusive minimum and maximum."
 							}
 						},
 						"additionalProperties": false
@@ -1409,7 +1444,7 @@
 					},
 					"tools": {
 						"type": "array",
-						"description": "Responses API tool definitions accepted by compatible providers. Stogas admits function/custom tools, remote MCP tools with narrowed allowed_tools, priced provider-hosted web search tools, and Anthropic web_fetch tools. See the Model Tools guide for the current provider matrix and billing behavior.",
+						"description": "Responses API tool definitions accepted by compatible providers. Stogas admits function/custom tools, remote MCP tools with optional allowed_tools, priced provider-hosted web search tools, and Anthropic web_fetch tools. OpenAI and Azure MCP tools may use an HTTPS server URL or connector ID with optional request-scoped headers. See the Model Tools guide for the current provider matrix and billing behavior.",
 						"items": {
 							"type": "object"
 						}
@@ -1423,7 +1458,7 @@
 					},
 					"prompt_cache_options": {
 						"type": "object",
-						"description": "GPT-5.6 prompt caching mode. `implicit` adds the provider-managed breakpoint; `explicit` writes only `input_text` blocks carrying `prompt_cache_breakpoint`. Up to four writes are accepted per request.",
+						"description": "OpenAI GPT-5.6 prompt caching mode. `implicit` keeps the provider-managed breakpoint; `explicit` writes only marked prompt blocks. OpenAI tracks at most four active breakpoints and reports cache writes as one input-token partition.",
 						"properties": {
 							"mode": {
 								"type": "string",
@@ -1434,7 +1469,6 @@
 								"enum": ["30m"]
 							}
 						},
-						"required": ["mode"],
 						"additionalProperties": false
 					},
 					"stop_sequences": {
@@ -1446,7 +1480,7 @@
 					},
 					"cache_control": {
 						"type": "object",
-						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on input content/tool blocks, prices cache writes conservatively for holds, and rejects this field on OpenAI deployments.",
+						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on input content/tool blocks, and prices cache writes conservatively for holds.",
 						"properties": {
 							"type": {
 								"type": "string",
@@ -1569,6 +1603,17 @@
 					},
 					"prompt_cache_key": {
 						"type": ["string", "null"]
+					},
+					"prompt_cache_retention": {
+						"type": ["string", "null"]
+					},
+					"prompt_cache_options": {
+						"type": ["object", "null"],
+						"properties": {
+							"mode": { "type": "string", "enum": ["implicit", "explicit"] },
+							"ttl": { "type": "string", "enum": ["30m"] }
+						},
+						"additionalProperties": false
 					},
 					"reasoning": {
 						"type": "object"
@@ -1717,27 +1762,7 @@
 						"description": "Total number of tokens."
 					},
 					"input_tokens_details": {
-						"type": "object",
-						"properties": {
-							"text_tokens": {
-								"type": "integer"
-							},
-							"audio_tokens": {
-								"type": "integer"
-							},
-							"image_tokens": {
-								"type": "integer"
-							},
-							"cached_tokens": {
-								"type": "integer"
-							},
-							"cached_read_tokens": {
-								"type": "integer"
-							},
-							"cached_write_tokens": {
-								"type": "integer"
-							}
-						}
+						"$ref": "#/components/schemas/PromptTokenDetails"
 					},
 					"output_tokens_details": {
 						"type": "object",
@@ -1881,8 +1906,64 @@
 					},
 					"refusal": {
 						"type": "string"
+					},
+					"prompt_cache_breakpoint": {
+						"$ref": "#/components/schemas/PromptCacheBreakpoint",
+						"description": "OpenAI GPT-5.6 explicit prompt-cache breakpoint."
+					},
+					"cache_control": {
+						"$ref": "#/components/schemas/AnthropicCacheControl",
+						"description": "Anthropic prompt-cache control for this text block."
 					}
 				}
+			},
+			"PromptCacheBreakpoint": {
+				"type": "object",
+				"properties": {
+					"mode": {
+						"type": "string",
+						"enum": ["explicit"]
+					}
+				},
+				"required": ["mode"],
+				"additionalProperties": false
+			},
+			"AnthropicCacheControl": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["ephemeral"]
+					},
+					"ttl": {
+						"type": "string",
+						"enum": ["5m", "1h"]
+					}
+				},
+				"required": ["type"],
+				"additionalProperties": false
+			},
+			"PromptTokenDetails": {
+				"type": "object",
+				"description": "Provider-reported input-token partitions. `cached_tokens` is the OpenAI-compatible cache-read field and `cache_write_tokens` is the OpenAI-compatible cache-write field.",
+				"properties": {
+					"text_tokens": { "type": "integer", "minimum": 0 },
+					"audio_tokens": { "type": "integer", "minimum": 0 },
+					"image_tokens": { "type": "integer", "minimum": 0 },
+					"cached_tokens": { "type": "integer", "minimum": 0 },
+					"cache_write_tokens": { "type": "integer", "minimum": 0 },
+					"cached_read_tokens": { "type": "integer", "minimum": 0 },
+					"cached_write_tokens": { "type": "integer", "minimum": 0 },
+					"cached_write_token_details": {
+						"type": "object",
+						"properties": {
+							"cached_write_tokens_5m": { "type": "integer", "minimum": 0 },
+							"cached_write_tokens_1h": { "type": "integer", "minimum": 0 }
+						},
+						"additionalProperties": false
+					}
+				},
+				"additionalProperties": false
 			}
 		}
 	}

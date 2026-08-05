@@ -30,8 +30,8 @@ const catalog = jsonObject(
 		'value'
 	)
 );
-if (catalog?.schema !== 'stogas.gateway.catalog.v2') {
-	errors.push('/v1/catalog example must use stogas.gateway.catalog.v2.');
+if (catalog?.schema !== 'stogas.gateway.catalog.v1') {
+	errors.push('/v1/catalog example must use stogas.gateway.catalog.v1.');
 }
 if (
 	catalog &&

@@ -62,14 +62,31 @@ Changing or revoking one assigned key does not reveal or rotate another member's
 
 ## Upstream credentials
 
-Administrators can add an OpenAI or Anthropic credential on the **Credentials** page, then select
-it for the matching provider from an API key's **Credentials** tab. A service key owns its
-assignments directly. A provisioning key's assigned children inherit its assignments and cannot
-override them.
+Administrators can add an upstream credential on the **Credentials** page, then select it for the
+matching provider from an API key's **Credentials** tab. A service key owns its assignments
+directly. A provisioning key's assigned children inherit its assignments and cannot override them.
 
-Assignments are provider-specific. A key may use your OpenAI credential while continuing to use
-Stogas for Anthropic. If an assigned credential is disabled or unavailable, matching requests fail
-instead of falling back to a Stogas credential.
+| Provider  | Available credential modes |
+| --------- | -------------------------- |
+| OpenAI    | Your credential only       |
+| Anthropic | Your credential only       |
+| Azure     | Your credential only       |
+| Chutes    | Stogas or your credential  |
+
+Assignments are provider-specific. A key may use your Chutes credential while another key uses the
+Stogas Chutes credential. OpenAI, Anthropic, and Azure requests require a matching assigned
+credential. If an assigned credential is disabled or unavailable, matching requests fail instead
+of falling back to a Stogas credential.
+
+### Azure credentials
+
+For Azure, select **Azure OpenAI** or **Azure AI Foundry**, then enter the resource name and API
+key. Enter only the resource name, such as `my-resource`, not a domain or URL. Stogas constructs the
+trusted `*.openai.azure.com` or `*.services.ai.azure.com` origin from that selection.
+
+The form does not ask for deployment aliases. Your Azure resource must contain deployments named
+with the canonical Stogas model IDs, such as `gpt-5.6-sol`. Chat Completions requests use Azure's
+native Chat Completions endpoint, and Responses requests use Azure's native Responses endpoint.
 
 The provider secret is accepted only when the credential is created, encrypted at rest, and
 decrypted in the confidential gateway for matching requests. The dashboard later returns its name
@@ -77,9 +94,11 @@ and short preview, never the secret. To rotate it, create a new credential, reas
 delete the old credential after it is no longer assigned.
 
 Requests made with your provider credential are billed at 2% of the upstream request cost. Stogas
-reserves 2% of the estimated cost and settles 2% of the actual cost, rounding up to the nearest USD
-atom. Key spend limits and balances use the billed amount. Analytics separately shows upstream cost
-and billed cost and can filter requests or API keys by upstream credential.
+reserves 2% of the estimated cost and settles 2% of the provider-reported cost, rounding up to the
+nearest USD atom. Azure GPT-5.6 cache writes are the documented exception because Azure does not
+report their token quantity; see [Prompt caching](/docs/prompt-caching). Key spend limits and balances
+use the billed amount. Analytics separately shows upstream cost and billed cost and can filter
+requests or API keys by upstream credential.
 
 Request logs identify the selected upstream credential as `stogas` or its credential ID. For
 bring-your-own-key requests, Stogas does not add its managed OpenAI `safety_identifier` or Anthropic
