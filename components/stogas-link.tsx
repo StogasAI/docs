@@ -3,11 +3,17 @@
 import type { AnchorHTMLAttributes, MouseEvent, PointerEvent } from 'react';
 import { useEffect, useState } from 'react';
 
-type Environment = 'localhost' | 'staging' | 'production';
+type Environment = 'development' | 'localhost' | 'staging' | 'production';
 type Segment = 'marketing' | 'app' | 'api' | 'pay';
 type Deployment = Record<Segment, string | undefined>;
 
 const DEPLOYMENTS: Record<Environment, Deployment> = {
+	development: {
+		api: 'api-dev.stogas.ai',
+		app: 'app-dev.stogas.ai',
+		marketing: 'dev.stogas.ai',
+		pay: undefined
+	},
 	localhost: {
 		api: 'api.stogas.localhost',
 		app: 'app.stogas.localhost',
