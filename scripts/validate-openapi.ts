@@ -49,15 +49,16 @@ console.log('OpenAPI validation passed.');
 
 function containsPrivateExtension(value: unknown): boolean {
 	if (Array.isArray(value)) return value.some(containsPrivateExtension);
-	if (!value || typeof value !== 'object') return false;
-	const record = value as Record<string, unknown>;
-	return Object.hasOwn(record, 'x-stogas') || Object.values(record).some(containsPrivateExtension);
+	if (!isJsonObject(value)) return false;
+	return Object.hasOwn(value, 'x-stogas') || Object.values(value).some(containsPrivateExtension);
 }
 
 function jsonObject(value: unknown): Record<string, unknown> | undefined {
-	return value !== null && typeof value === 'object' && !Array.isArray(value)
-		? (value as Record<string, unknown>)
-		: undefined;
+	return isJsonObject(value) ? value : undefined;
+}
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function getJsonValue(root: Record<string, unknown>, ...path: string[]): unknown {

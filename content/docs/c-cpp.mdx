@@ -27,6 +27,10 @@ stogas_verifier_string_free(result);
 stogas_verifier_free(verifier);
 ```
 
+Use `stogas_verifier_verify_bundle_with_policy` to replace only the bundle's AMD appraisal rules
+with a caller-owned bare policy. The function takes the policy JSON bytes and length before the
+wall-clock argument.
+
 Check `stogas_verifier_abi_version()` before loading a library version your application has not tested. Every returned string is owned by the library and must be released with `stogas_verifier_string_free`. Do not free a verifier while another thread is using it.
 
 The header includes C++ linkage guards. C++ applications can wrap the two owned pointers with RAII without changing the ABI.

@@ -25,9 +25,22 @@ Verification and evidence publication happen outside the inference request path.
 
 The managed native SDK transport additionally checks that the upstream TLS connection presents a certificate hash and public key belonging to the same verified node.
 
-Browser and optional native E2EE encrypt the complete inner inference request once under a random content key, then wrap that key independently to every node in the verified bundle. Random L4 routing therefore requires no session affinity or plaintext-aware intermediary. The selected guest decrypts inside confidential memory and encrypts response metadata, body or SSE frames, errors, and an authenticated terminal frame.
+If that exact pin check fails, the native transport immediately verifies the latest bundle and
+retries once only when the accepted bundle changes. The failed TLS handshake sends no inference
+request bytes. Network, WebPKI, and other TLS failures are not retried automatically.
 
-The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key IDs, ciphertext length, and network timing. The encrypted inner request contains the API key, OpenAI request body, relevant content negotiation, and optional extra-field preference. The encrypted response contains its status, safe response headers, body or SSE frames, and terminal state. This keeps routing and bounded parsing outside the ciphertext while keeping credentials and inference semantics inside it.
+Browser and optional native E2EE encrypt the complete inner inference request once under a random content key, then wrap that key independently to every node in the verified bundle. Random L4 routing therefore requires no session affinity or plaintext-aware intermediary. The selected guest decrypts inside confidential memory and encrypts response metadata, body or SSE records, errors, and an authenticated terminal record.
+
+The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key wraps, ciphertext length, and network timing. One ciphertext contains the API key, complete OpenAI request body, relevant content negotiation, optional provider credential, and extra-field preference. The encrypted response contains its status, safe response headers, body or SSE records, and terminal state. This keeps routing, freshness checks, and recipient selection outside the ciphertext while keeping credentials and inference semantics inside it.
+
+The E2EE wire is version 1. Encrypted responses start with
+`STGE || 0x01 || nonce[12]`. The nonce is public random data, not a secret. It is the base AES-GCM
+nonce; each implicit record sequence is XORed into its final eight bytes and bound with the request
+transcript in authenticated data. Each record contains only a four-byte ciphertext length and the
+ciphertext. Record 0 contains metadata, later non-empty records contain body bytes, and the first
+authenticated empty record terminates the response. The client rejects truncation. Later outer bytes
+are ignored because they cannot change the authenticated response. The random nonce prevents reuse if
+the same encrypted request can produce responses on more than one verified node.
 
 The same signed response receipt, `stogas.response-proof.v1`, travels inside the encrypted response when extra fields are enabled. E2EE does not introduce a second proof format. The receipt binds the request and node IDs; hashes of the exact plaintext request and response bytes; catalog digest, sequence, and resolved author/model/deployment/route/provider IDs; settled pricing; timing; and the E2EE transcript when present. Active-bundle verification requires the exact node and catalog to be in the accepted bundle. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
 
@@ -46,6 +59,17 @@ Catalog releases use the same public key but a separate `stogas catalog release 
 ## Availability
 
 A verified bundle can contain older records kept for recovery. The verifier reports them separately and never adds them to the trusted set.
+
+A valid bundle can therefore have an empty trusted set. Managed transports treat it as an explicit
+unavailable-fleet state: they stop protected requests and poll both evidence origins every four to
+eight seconds. When a non-empty bundle is active, both official origins must return verified empty
+candidates before they can replace it. The transport does not retain the older trust set after that
+replacement.
+
+When no previously routable gateway still has fresh evidence, a verified replacement can restore
+server capacity before the next bundle is published. The first recovery bundle fixes that initial
+cohort. Later gateways still wait until every unexpired client trust set can authenticate them.
+Clients do not trust the replacement early: they must verify the recovery bundle before connecting.
 
 Bundles are delivered through independent Cloudflare/R2 and AWS CloudFront/S3 origins. Managed
 clients select an origin randomly and fail over to the other when delivery or verification fails.

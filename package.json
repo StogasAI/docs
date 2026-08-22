@@ -5,39 +5,36 @@
 	"scripts": {
 		"generate:openapi": "bun scripts/validate-openapi.ts && bun scripts/generate-openapi.ts",
 		"build": "bun run generate:openapi && next build",
-		"build:worker": "opennextjs-cloudflare build",
-		"cf-typegen": "wrangler types",
-		"clean": "rm -rf .next .open-next .wrangler .source next-env.d.ts tsconfig.tsbuildinfo",
+		"clean": "rm -rf .next .wrangler .source out next-env.d.ts tsconfig.tsbuildinfo",
 		"dev": "bun run generate:openapi && next dev",
-		"preview": "bun run build && next start",
-		"start": "next start",
 		"typecheck": "bun run generate:openapi && next typegen && fumadocs-mdx && tsc --noEmit",
-		"types:check": "bun run typecheck",
 		"postinstall": "fumadocs-mdx"
 	},
 	"dependencies": {
-		"fumadocs-core": "16.14.0",
-		"fumadocs-mdx": "15.2.1",
-		"fumadocs-openapi": "11.2.2",
-		"fumadocs-ui": "16.14.0",
-		"lucide-react": "1.28.0",
-		"next": "16.2.12",
+		"fumadocs-core": "16.14.3",
+		"fumadocs-mdx": "15.2.3",
+		"fumadocs-openapi": "11.2.3",
+		"fumadocs-ui": "16.14.3",
+		"lucide-react": "1.31.0",
+		"next": "16.3.0",
 		"react": "19.2.8",
 		"react-dom": "19.2.8",
-		"shiki": "4.4.1",
 		"tailwind-merge": "3.6.0"
 	},
 	"devDependencies": {
-		"@opennextjs/cloudflare": "1.20.2",
 		"@tailwindcss/postcss": "4.3.3",
 		"@types/mdx": "2.0.14",
-		"@types/node": "26.1.2",
+		"@types/node": "26.2.0",
 		"@types/react": "19.2.18",
 		"@types/react-dom": "19.2.4",
-		"prettier": "3.9.6",
-		"postcss": "8.5.25",
+		"postcss": "8.5.26",
 		"tailwindcss": "4.3.3",
 		"typescript": "6.0.3",
-		"wrangler": "4.118.0"
-	}
+		"wrangler": "4.122.0"
+	},
+	"engines": {
+		"bun": ">=1.3.14",
+		"node": ">=22.13.0"
+	},
+	"packageManager": "bun@1.3.14"
 }

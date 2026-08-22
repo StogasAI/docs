@@ -90,13 +90,13 @@ Use `--json` for automation. A failed check exits non-zero and produces no trust
 
 ## Refresh schedule
 
-The default interval is five minutes:
+The default target is five minutes. Each scheduled interval receives ±10% jitter:
 
 ```console
 stogas-verify serve
 ```
 
-Choose any positive whole-second interval:
+Choose any positive whole-second target; configured targets receive the same jitter:
 
 ```console
 stogas-verify serve --bundle-refresh-seconds 30
@@ -119,6 +119,21 @@ stogas-verify verify bundle.json --json
 
 Zero is not a refresh interval. Manual mode is the explicit `verify` operation rather than a hidden sentinel value.
 
+## Use your own AMD security policy
+
+Bundles include the default Stogas-signed hardware policy. To choose the AMD firmware,
+mitigation-vector, and platform-state requirements yourself, pass a bare policy JSON file:
+
+```console
+stogas-verify verify bundle.json --policy hardware-policy.json
+stogas-verify serve --policy hardware-policy.json
+```
+
+The local file replaces only these changing appraisal rules. All fixed cryptographic and evidence
+checks remain mandatory. The same policy must accept at least one published node or the local
+endpoint will remain unavailable. See [Choose the AMD security policy](/docs/verification#choose-the-amd-security-policy)
+for the trust boundary.
+
 ## Verify a response receipt
 
 Send `X-Stogas-Extra-Fields: true`. Save the buffered `X-Stogas-Proof` value or the value from the
@@ -129,8 +144,11 @@ bytes:
 stogas-verify proof proof.txt \
   --request request.json \
   --response response.json \
-  --bundle bundle.json
+  --bundle bundle.json \
+  --policy hardware-policy.json
 ```
+
+Omit `--policy` to use the signed policy in the bundle.
 
 For historical evidence, replace `--bundle bundle.json` with both
 `--ledger node.json --catalog catalog.json`. For an encrypted exchange, save the locally computed

@@ -9,12 +9,12 @@ provider.
 
 ## Provider controls
 
-| Provider  | Behavior  | Accepted controls                                                                 |
-| --------- | --------- | --------------------------------------------------------------------------------- |
-| OpenAI    | Automatic | `prompt_cache_key`; model-specific retention; GPT-5.6 options and breakpoints     |
-| Anthropic | Opt-in    | Top-level or supported content-block `cache_control`; `5m` or `1h` TTL           |
-| Azure     | Automatic | `prompt_cache_key`; GPT-5.6 `prompt_cache_retention: "24h"`                      |
-| Chutes    | Automatic | No client cache-control fields                                                    |
+| Provider  | Behavior  | Accepted controls                                                             |
+| --------- | --------- | ----------------------------------------------------------------------------- |
+| OpenAI    | Automatic | `prompt_cache_key`; model-specific retention; GPT-5.6 options and breakpoints |
+| Anthropic | Opt-in    | Top-level or supported content-block `cache_control`; `5m` or `1h` TTL        |
+| Azure     | Automatic | `prompt_cache_key`; GPT-5.6 `prompt_cache_retention: "24h"`                   |
+| Chutes    | Automatic | No client cache-control fields                                                |
 
 Stogas preserves the provider-native fields that Bifrost represents for the selected route. It
 does not translate OpenAI breakpoints into Anthropic cache controls, or Anthropic cache controls

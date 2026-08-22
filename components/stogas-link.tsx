@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 type Environment = 'development' | 'localhost' | 'staging' | 'production';
 type Segment = 'marketing' | 'app' | 'api' | 'pay';
 type Deployment = Record<Segment, string | undefined>;
+const ENVIRONMENTS: readonly Environment[] = ['development', 'localhost', 'staging', 'production'];
+const SEGMENTS: readonly Segment[] = ['marketing', 'app', 'api', 'pay'];
 
 const DEPLOYMENTS: Record<Environment, Deployment> = {
 	development: {
@@ -35,11 +37,11 @@ const DEPLOYMENTS: Record<Environment, Deployment> = {
 };
 
 const HOST_TO_SEGMENT = new Map<string, { environment: Environment; segment: Segment }>();
-for (const [environment, deployment] of Object.entries(DEPLOYMENTS) as [
-	Environment,
-	Deployment
-][]) {
-	for (const [segment, host] of Object.entries(deployment) as [Segment, string | undefined][]) {
+
+for (const environment of ENVIRONMENTS) {
+	const deployment = DEPLOYMENTS[environment];
+	for (const segment of SEGMENTS) {
+		const host = deployment[segment];
 		if (host) HOST_TO_SEGMENT.set(host, { environment, segment });
 	}
 }
@@ -95,11 +97,11 @@ function rewriteStogasUrl(href: string, environment: Environment): string {
 	return url.toString();
 }
 
-export function getInitialStogasHref(href: string | undefined): string | undefined {
+function getInitialStogasHref(href: string | undefined): string | undefined {
 	return href ? rewriteStogasUrl(href, getFallbackEnvironment()) : href;
 }
 
-export function resolveStogasHref(href: string | undefined): string | undefined {
+function resolveStogasHref(href: string | undefined): string | undefined {
 	if (!href || typeof window === 'undefined') return getInitialStogasHref(href);
 	return rewriteStogasUrl(
 		href,

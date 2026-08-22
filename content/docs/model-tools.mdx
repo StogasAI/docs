@@ -5,8 +5,15 @@ description: Supported client tools, provider-hosted tools, and how tool usage i
 
 Tools let a model call something outside normal text generation. The gateway treats tools as either client tools or provider-hosted tools:
 
-- **Client tools** are run by your application or by an MCP server you provide. They do not have a separate tool charge from the gateway. You pay for the model tokens the provider reports.
+- **Client tools** are run by your application. They do not have a separate tool charge from the gateway. You pay for the model tokens the provider reports.
 - **Provider-hosted tools** are run by OpenAI or Anthropic. These can have separate provider charges, so only the hosted tools listed below are available.
+
+<Callout type="info">
+	The MVP API accepts and returns text only. Catalog modalities report the actual upstream model and
+	deployment capabilities; they do not enable image, audio, video, file, or PDF content on the
+	public wire. Supported hosted tools can return text, citations, and control records, but not
+	binary or file artifacts.
+</Callout>
 
 <Callout type="info">
 	OpenAI search-model deployments such as `gpt-5-search-api` expose web retrieval through
@@ -18,36 +25,48 @@ Tools let a model call something outside normal text generation. The gateway tre
 
 Chat Completions is intentionally conservative. It is best for normal function calling and simple tool routing.
 
-| Tool type                               | OpenAI | Anthropic | Azure | Chutes | Billing                                                           |
-| --------------------------------------- | :----: | :-------: | :---: | :----: | ----------------------------------------------------------------- |
-| `function`                              |  Yes   |    Yes    |  Yes  |  Yes   | Token usage only                                                  |
-| `custom`                                |  Yes   |    No     |  Yes  |   No   | Token usage only                                                  |
-| Anthropic `mcp_toolset` + `mcp_servers` |   No   |    Yes    |  No   |   No   | Token usage only; MCP server costs are billed outside the gateway |
-| Provider-hosted web/search tools        |   No   |    No     |  No   |   No   | Use Responses API or OpenAI search-model deployments              |
+| Tool type                               | OpenAI | Anthropic | Azure | Chutes | Billing                                                         |
+| --------------------------------------- | :----: | :-------: | :---: | :----: | --------------------------------------------------------------- |
+| `function`                              |  Yes   |    Yes    |  Yes  |  Yes   | Token usage only                                                |
+| `custom`                                |   No   |    No     |  No   |   No   | Use the Responses API on an OpenAI-format deployment            |
+| Anthropic `mcp_toolset` + `mcp_servers` |   No   |    No     |  No   |   No   | Not accepted because provider execution has no request-wide cap |
+| Provider-hosted web/search tools        |   No   |    No     |  No   |   No   | Use Responses API or OpenAI search-model deployments            |
 
-<Callout type="info">
-	Anthropic Chat custom tools are not available through the OpenAI-compatible Chat Completions
-	route. Use Anthropic Responses for `custom` tools, or use standard `function` tools on Chat
-	Completions.
-</Callout>
+Chat tool calls and tool results must form a complete adjacent pair in the same stateless request.
+Custom Chat calls cannot be replayed through the provider-neutral Chat history shape, so Chat accepts
+only `function` definitions.
 
 ## Responses API
 
-Responses supports the broader tool surface. Use it when you need hosted web tools, MCP, or custom tools.
+Responses supports the broader tool surface. Use it when you need hosted web tools or custom tools.
 
 | Tool type             | OpenAI | Anthropic | Azure | Chutes | Billing                                                                  |
 | --------------------- | :----: | :-------: | :---: | :----: | ------------------------------------------------------------------------ |
 | `function`            |  Yes   |    Yes    |  Yes  |   —    | Token usage only                                                         |
-| `custom`              |  Yes   |    Yes    |  Yes  |   —    | Token usage only                                                         |
-| `mcp`                 |  Yes   |    Yes    |  Yes  |   —    | Token usage only; MCP server costs are billed outside the gateway        |
+| `custom`              |  Yes   |    No     | Yes¹  |   —    | Token usage only                                                         |
+| `mcp`                 |   No   |    No     |  No   |   —    | Remote provider execution cannot be bounded or approved per request      |
 | `web_search*`         |  Yes   |    Yes    |  No   |   —    | Web-search call charge plus provider-reported token usage                |
 | `web_search_preview*` |  Yes   |    No     |  No   |   —    | OpenAI web-search-preview call charge plus provider-reported token usage |
 | `web_fetch*`          |   No   |    Yes    |  No   |   —    | Provider-reported token usage only                                       |
 
-OpenAI and Azure MCP tools require `require_approval: "never"`. Anthropic MCP tools omit that
-OpenAI-specific field. Chutes does not expose a Responses route.
+Chutes does not expose a Responses route.
+
+¹ Azure custom tools are available only on OpenAI-format deployments. Azure Claude rejects them
+because the free-form input format is not preserved by its Anthropic translation.
+
+Stogas accepts only provider versions with known wire behavior and cataloged pricing. OpenAI accepts
+`web_search`, `web_search_2025_08_26`, `web_search_preview`, and
+`web_search_preview_2025_03_11`. Anthropic accepts the cataloged `web_search` and `web_fetch`
+versions shown by the deployment catalog. Unknown future aliases fail closed instead of inheriting a
+current tool price.
 
 Use `max_tool_calls` to bound provider-hosted tool calls. If you omit it for a priced hosted tool, the gateway applies a conservative default cap before the request is sent upstream.
+
+Anthropic accepts one hosted tool definition per request. Its Responses translation accepts the string
+tool-choice modes `auto`, `none`, and `required`, plus a named `function` selector. Hosted-tool object
+selectors and `allowed_tools` are rejected because the Anthropic wire does not preserve them. Stogas
+reserves every possible server-side sampling iteration, including a possible compaction step before
+each iteration.
 
 <Callout type="info">
 	`tool_choice: "none"` disables provider-hosted tool calls for that request, so no hosted-tool call
@@ -73,27 +92,13 @@ Anthropic Responses web tools are billed as:
 
 Anthropic may use code execution internally as part of web search or web fetch. That bundled behavior is treated as part of the admitted web tool. Standalone code execution is not available.
 
-## MCP Tools
+## Remote MCP Tools
 
-MCP tools connect the model to a remote server. The gateway bills model tokens only; any cost from your MCP server is your responsibility.
-
-For Responses MCP tools:
-
-- use exactly one HTTPS `server_url` or, on OpenAI and Azure, a `connector_id`
-- optionally send `allowed_tools`; omission or `null` exposes the full tool list, while `[]` exposes none
-- use an array allowlist on all three providers, or an OpenAI/Azure filter object
-- optionally send request-scoped `headers` on OpenAI and Azure
-- use approval-free execution
-
-For OpenAI and Azure Responses, set `require_approval: "never"`.
-
-Approval workflows, deferred loading, caller restrictions, and provider tunnel IDs are not available.
-
-For Anthropic Chat, use Anthropic's native `mcp_servers` array with matching `tools[].type: "mcp_toolset"` entries.
+Remote MCP tools are not accepted on either interface for any provider. OpenAI documents `max_tool_calls` for built-in tools, not remote MCP. Anthropic does not expose a request-wide MCP call cap. Stogas also cannot mediate a provider approval round trip through its synchronous request contract. Rejecting MCP before authorization prevents unbounded remote execution and keeps third-party MCP servers outside the cataloged data-handling and E2EE boundary.
 
 ## Unavailable Provider Tools
 
-The public API is text-only and does not expose every provider-hosted tool.
+The public API does not expose every provider-hosted tool.
 
 | Tool family                                                   | Availability  |
 | ------------------------------------------------------------- | ------------- |

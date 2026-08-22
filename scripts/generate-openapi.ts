@@ -79,10 +79,9 @@ async function main() {
 						file.content = file.content.replace('---', '---\nfull: true');
 					}
 					file.content = file.content
+						// Fumadocs currently emits both component names. Keep one local contract.
 						.replace(
-							`  const { APIPage, OpenAPIPage } = props.components ?? {};
-  // "APIPage" is the old name from v10, this allows both for backward compatibility
-  const Comp = OpenAPIPage ?? APIPage;`,
+							/ {2}const \{ APIPage, OpenAPIPage \} = props\.components \?\? \{\};\n {2}\/\/ "APIPage"[^\n]*\n {2}const Comp = OpenAPIPage \?\? APIPage;/,
 							'  const { OpenAPIPage } = props.components ?? {};'
 						)
 						.replace('<Comp ', '<OpenAPIPage ')

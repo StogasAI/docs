@@ -31,6 +31,11 @@ Keep one `Verifier` instance when checking successive bundles. It reuses verifie
 
 These imports work unchanged in JavaScript and TypeScript on Node, Bun, and Deno.
 
+To replace only the default AMD appraisal rules, call
+`verifier.verify_bundle_with_policy(bundle, policyBytes)`. For the managed transport, set
+`hardwarePolicy` to the same UTF-8 JSON bytes. A local policy does not weaken the fixed
+cryptographic and evidence checks.
+
 ## OpenAI client
 
 Create one `StogasTransport`, give its options to the OpenAI client, and reuse both objects:

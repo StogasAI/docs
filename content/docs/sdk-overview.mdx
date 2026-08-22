@@ -62,16 +62,23 @@ E2EE. Native clients can select `tls`, `e2ee`, or `both`.
 
 ## Configuration
 
-| Control                 | Default            | Notes                                                            |
-| ----------------------- | ------------------ | ---------------------------------------------------------------- |
-| Security mode           | Runtime-specific   | Selects one of the modes above                                   |
-| Bundle refresh interval | 300 seconds        | Any positive whole number                                        |
-| Manual refresh          | On demand          | Fetches immediately; unchanged bundle bytes reuse verified state |
-| API and evidence URLs   | Stogas public URLs | Override only for another deployment using the same Stogas trust |
-| Close                   | Explicit or scoped | Stops refresh work and releases the transport                    |
+| Control               | Default            | Notes                                                            |
+| --------------------- | ------------------ | ---------------------------------------------------------------- |
+| Security mode         | Runtime-specific   | Selects one of the modes above                                   |
+| Bundle refresh target | 300 seconds        | ±10% jitter; any positive whole-number target                    |
+| Manual refresh        | On demand          | Fetches immediately; unchanged bundle bytes reuse verified state |
+| API and evidence URLs | Stogas public URLs | Override only for another deployment using the same Stogas trust |
+| Close                 | Explicit or scoped | Stops refresh work and releases the transport                    |
 
 The SDK also fetches shortly before an accepted bundle expires, regardless of the configured
 interval. A failed refresh can use the current bundle only until its authenticated expiry.
+An authenticated bundle with no trusted nodes is a successful unavailable-fleet refresh. It blocks
+requests and polls both official evidence origins every four to eight seconds until a newer bundle
+provides a trusted node.
+
+When a non-empty bundle is active, both official origins must return verified empty candidates
+before they can replace it. A custom evidence URL is intentionally single-origin.
+
 Official URL defaults randomly choose one of two independent evidence origins per refresh and try
 the other only after fetch, verification, or snapshot-order failure. The mutable alias is
 normally cached for at most five seconds; an origin error may use a cached response for at most the

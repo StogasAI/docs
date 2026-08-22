@@ -26,6 +26,10 @@ try {
 
 The browser package is the Rust core compiled to WebAssembly. It uses no network during verification.
 
+Use `verifier.verify_bundle_with_policy(bundleBytes, policyBytes)` when your application owns the
+AMD appraisal policy. The managed transport accepts the same bare JSON bytes as `hardwarePolicy`.
+The policy can change AMD thresholds but cannot disable fixed verification checks.
+
 ## OpenAI client in a browser
 
 `StogasTransport` verifies and refreshes bundles, encrypts inference to every currently trusted node, and decrypts authenticated buffered or streaming responses.
@@ -56,13 +60,19 @@ try {
 }
 ```
 
-The default bundle refresh interval is five minutes. Set `bundleRefreshIntervalSeconds` to any
-positive whole number, or call `await transport.refreshBundle()` for an immediate manual
-refresh. More frequent polling normally obtains newer evidence but never relaxes verification or
-expiry. Official defaults randomly choose between the Cloudflare/R2 and AWS CloudFront/S3
+The default bundle refresh target is five minutes, with each scheduled attempt jittered from 270 to
+330 seconds. Set `bundleRefreshIntervalSeconds` to any positive whole-number target, or call
+`await transport.refreshBundle()` for an immediate manual refresh. Configured targets receive the
+same ±10% jitter. More frequent polling normally obtains newer evidence but never relaxes
+verification or expiry. Official defaults randomly choose between the Cloudflare/R2 and AWS CloudFront/S3
 evidence origins, then try the other after a fetch, HTTP, verification, or non-advancing snapshot.
 Identical bundle bytes are hash-deduplicated before cryptographic verification, and the
 transport always attempts another fetch before the active bundle expires.
+
+A verified bundle with no trusted nodes remains active with snapshot status `unavailable`.
+Protected requests fail locally, and the transport polls both official origins every four to eight
+seconds until a newer verified bundle provides a trusted node. If a non-empty bundle is already
+active, both official origins must return verified empty candidates before they can replace it.
 
 The transport exposes delivery and local-verification metadata without weakening the trust
 boundary:
@@ -74,6 +84,7 @@ console.log(transport.bundleURLs); // configured independent origins
 console.log(snapshot.bundleURL); // origin used for the latest successful refresh
 console.log(snapshot.verificationDurationMs); // local cryptographic verification time
 console.log(snapshot.verifiedAtUnixMs);
+console.log(snapshot.status); // ready, unavailable, refreshing, error, or idle
 ```
 
 `verificationDurationMs` measures the local WebAssembly verification, not network retrieval. When a
@@ -81,6 +92,10 @@ refresh returns byte-identical evidence, the transport reuses the earlier verifi
 its original verification measurement.
 
 The transport uses the normal `/v1/responses` and `/v1/chat/completions` endpoints. It disables automatic SDK retries because retrying after an ambiguous connection failure could execute inference twice under a new request ID.
+
+OpenAI, Anthropic, and Chutes pass-through BYOK headers are moved into the encrypted inner request.
+The provider credential is not present in the outer HTTPS request. Azure requires a stored,
+discovered credential and does not accept pass-through headers.
 
 For later receipt verification, send `X-Stogas-Extra-Fields: true`. The decrypted response exposes
 the locally computed E2EE transcript as `X-Stogas-E2EE-Transcript-SHA256`. OpenAI JavaScript callers

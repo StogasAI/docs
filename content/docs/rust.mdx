@@ -32,6 +32,9 @@ println!("{}", verified.bundle.nodes.len());
 
 The core accepts one captured wall-clock value so tests and audits remain deterministic. Packaged language adapters capture that value automatically.
 
+Use `verify_bundle_with_policy(&bundle, &policy, now, &environment)` to replace only the signed
+bundle's AMD appraisal rules with a caller-owned bare policy.
+
 ## Send requests
 
 The same crate embeds the managed transport:
@@ -45,6 +48,7 @@ let transport = Transport::start(TransportOptions {
     bundle_refresh_interval: Duration::from_secs(300),
     base_url: "https://api.stogas.ai".to_owned(),
     bundle_url: "https://evidence.stogas.ai/bundles/latest.json".to_owned(),
+    hardware_policy: None,
 })?;
 
 let changed = transport.refresh_bundle()?;

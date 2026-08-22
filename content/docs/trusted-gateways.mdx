@@ -28,8 +28,10 @@ the other from publishing, and the next one-minute cycle repairs freshness with 
 
 The mutable alias normally remains at an edge for no more than five seconds. An origin error is
 not hidden by an added stale-cache interval, so the client can try the independent origin. The
-verifier still applies the complete cryptographic policy and retains an earlier accepted bundle
-only until its authenticated expiry.
+verifier still applies the complete cryptographic policy. A failed refresh can retain an earlier
+accepted bundle only until its authenticated expiry. If both official origins return verified
+empty candidates, managed transports replace an earlier non-empty bundle with an explicit
+unavailable-fleet state and stop protected requests.
 
 ## What the trust bundle proves
 
@@ -50,6 +52,15 @@ cryptographic root.
 
 The verifier returns the gateways that are safe to use as `nodes`. Older or unusable records may
 appear as `excluded_nodes`, but they never authorize a connection.
+
+A bundle can verify successfully with no trusted `nodes`. This state grants no connection trust,
+so managed transports report the fleet as unavailable and do not route through it. They keep the
+verified state active and retry both evidence origins every four to eight seconds so a recovered
+fleet is acquired promptly.
+
+An empty candidate from only one official origin cannot displace an active non-empty bundle. The
+transport checks the other origin and retries the disagreement after four to eight seconds. A
+caller-selected custom evidence URL is intentionally single-origin and cannot use this safeguard.
 
 ## Freshness rules
 
@@ -99,14 +110,19 @@ startup stepping, status, and readiness controls.
 
 ## Keeping verification current
 
-Managed transports check every five minutes by default and make another attempt before the active
-bundle expires. Applications can choose any positive whole-second interval or request an immediate
-refresh. More frequent polling normally provides newer evidence without changing any verification
-or expiry rule. A one-minute interval is a reasonable choice when the newest available fleet
-evidence matters more than the extra request traffic.
+Managed transports use a five-minute target with ±10% jitter by default and make another attempt
+before the active bundle expires. Applications can choose any positive whole-second target or
+request an immediate refresh. More frequent polling normally provides newer evidence without
+changing any verification or expiry rule.
 
 If the downloaded bytes have not changed, the transport reuses the existing verified result. A
-failed update can keep using the last accepted bundle only until that bundle expires.
+failed update can keep using the last accepted bundle only until that bundle expires. A verified
+empty replacement confirmed through both official origins is not a failed update: it becomes the
+active unavailable state and cannot use the previous trust set.
+
+Native attested TLS also requests one immediate verified refresh after an exact certificate or
+public-key pin mismatch. It retries the connection once only if the accepted bundle changes. The
+failed TLS handshake sent no request bytes, and other connection failures do not use this retry.
 
 ## Verifying a response later
 

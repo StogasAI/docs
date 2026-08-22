@@ -26,6 +26,9 @@ verified = json.loads(verifier.verify_bundle(bundle))
 print(verified["bundle"]["nodes"])
 ```
 
+Call `verifier.verify_bundle_with_policy(bundle, policy)` to replace only the default AMD
+appraisal rules. Both arguments are bytes containing JSON.
+
 ## OpenAI client
 
 Create one transport with your application, reuse it across requests, and close it during graceful
@@ -41,6 +44,7 @@ transport = Transport(
     bundle_refresh_interval_seconds=300,
     base_url="https://api.stogas.ai",
     bundle_url="https://evidence.stogas.ai/bundles/latest.json",
+    hardware_policy=None,
 )
 try:
     changed = transport.refresh_bundle()

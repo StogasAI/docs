@@ -26,12 +26,23 @@ Do not expose a privileged API key in public browser code. Use a narrowly limite
 
 ## Request handling
 
-- Unknown top-level JSON fields are rejected.
+- The MVP API accepts text input and returns text output. Catalog modalities describe upstream capabilities; they do not enable image, audio, video, file, or PDF content on the public API.
+- Unknown top-level JSON fields are accepted and ignored for SDK compatibility. They are never forwarded to a provider.
+- Meaningful values for known unsupported features are rejected before authorization. Optional `null` values and selected empty SDK defaults are treated as omission.
 - Compressed bodies are checked after decompression; oversized bodies return `413`.
 - Unrecognized client headers are accepted and ignored for SDK and browser compatibility.
 - Client headers are never forwarded to providers.
 - Provider response headers are hidden unless they are on the safe diagnostics allowlist.
 - Client-supplied private Stogas and Bifrost control headers are rejected.
+
+## Limits
+
+| Input                     |   Limit |
+| ------------------------- | ------: |
+| Decoded JSON request body | 128 MiB |
+| Decoded E2EE ciphertext   |  94 MiB |
+
+The 94 MiB ciphertext limit leaves room for base64 encoding and recipient records inside the 128 MiB JSON limit. Compressed requests are measured after decompression. The gateway does not impose a token-count limit; the selected model and provider enforce their context and request limits. This permits current one-million-token models and does not preclude future two-million-token models when their valid JSON fits within the body limit.
 
 ## Transport security
 
@@ -52,11 +63,11 @@ For each request, the client:
 3. wraps that key to every eligible node in the verified bundle; and
 4. sends one opaque request that any eligible relay can route without reading the prompt.
 
-The outer envelope reveals only routing and protocol metadata such as the request ID, bundle hash, deadline, recipient key IDs, and ciphertext length. The authenticated inner envelope contains the credential, API request, and negotiated options. Responses, SSE events, and the final proof frame remain encrypted until they reach the client.
+One authenticated ciphertext contains the credential, complete OpenAI JSON body, and negotiated options. Outside it are only the version, request ID and deadline, verified-bundle hash, recipient key wraps, and ciphertext. Responses, SSE events, and the final proof remain encrypted until they reach the client.
 
 The response receipt binds the exact request bytes, response bytes, complete active catalog through its digest, resolved author/model/deployment/route/provider IDs, and E2EE transcript. The managed transport requires the digest to match a verified catalog approval in the same trust state used to encrypt the request.
 
-Version 1 uses HPKE with the hybrid MLKEM768-X25519 (X-Wing) KEM, HKDF-SHA-256, and AES-256-GCM. This gives the encrypted payload hybrid post-quantum confidentiality, but the complete attestation and signature chain still has classical dependencies.
+The E2EE wire is version 1 and uses HPKE with the hybrid MLKEM768-X25519 (X-Wing) KEM, HKDF-SHA-256, and AES-256-GCM. An encrypted response uses one public random nonce and a stream of length-prefixed authenticated records: metadata, body bytes, then an empty terminal record. Record order is authenticated and not repeated on the wire. The authenticated terminal is authoritative, so later outer bytes are ignored. This gives the encrypted payload hybrid post-quantum confidentiality, but the complete attestation and signature chain still has classical dependencies.
 
 See the [security and trust model](/docs/confidential-security-model) for detailed guarantees and
 [Verify a gateway](/docs/verification) for the practical setup.

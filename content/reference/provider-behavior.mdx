@@ -32,12 +32,12 @@ An exact deployment slug rejects a `service_tier` value that selects a different
 
 Prompt caching remains at the selected provider. Stogas does not store complete model responses.
 
-| Provider  | Implicit caching | Client controls                                                                                                                                                                     |
-| --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OpenAI    | Yes              | Chat and Responses accept `prompt_cache_key` and model-specific legacy retention. GPT-5.6 uses `prompt_cache_options` and content-block `prompt_cache_breakpoint`.                  |
-| Anthropic | Opt-in           | Chat and Responses accept top-level and supported content-block `cache_control`; TTL is `5m` or `1h`.                                                                               |
-| Azure     | Yes              | Chat and Responses accept `prompt_cache_key`; cataloged GPT-5.6 deployments accept `prompt_cache_retention: "24h"` but not options or breakpoints.                                  |
-| Chutes    | Yes              | No client cache-control fields.                                                                                                                                                     |
+| Provider  | Implicit caching | Client controls                                                                                                                                                    |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OpenAI    | Yes              | Chat and Responses accept `prompt_cache_key` and model-specific legacy retention. GPT-5.6 uses `prompt_cache_options` and content-block `prompt_cache_breakpoint`. |
+| Anthropic | Opt-in           | Chat and Responses accept top-level and supported content-block `cache_control`; TTL is `5m` or `1h`.                                                              |
+| Azure     | Yes              | Chat and Responses accept `prompt_cache_key`; cataloged GPT-5.6 deployments accept `prompt_cache_retention: "24h"` but not options or breakpoints.                 |
+| Chutes    | Yes              | No client cache-control fields.                                                                                                                                    |
 
 Cache reads and writes appear in the endpoint's input-token usage details when the provider reports them. Provider-specific breakpoint formats are not translated across deployments. See [Prompt caching](/docs/prompt-caching) for the complete contract and Azure accounting limitation.
 
@@ -45,25 +45,35 @@ Cache reads and writes appear in the endpoint's input-token usage details when t
 
 These familiar provider fields are intentionally outside the current Stogas surface:
 
-| Endpoint         | Rejected fields                                                                                                    | Use instead                                                                                                                 |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key`, `safety_identifier` | Text content; `tools` and `tool_choice`; server-owned routing, retention, and safety identity                               |
-| Responses        | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`, `safety_identifier`               | Synchronous requests with complete client-supplied conversation state; server-owned routing, retention, and safety identity |
+| Endpoint         | Rejected fields                                                                               | Use instead                                                                                               |
+| ---------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key` | Text content; `tools` and `tool_choice`; server-owned routing and retention                               |
+| Responses        | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`                | Synchronous requests with complete client-supplied conversation state; server-owned routing and retention |
 
-Unknown or rejected top-level fields return `400`; they are never forwarded opportunistically.
+Meaningful values of known rejected fields return `400`. Unknown top-level fields are ignored for
+SDK compatibility and never forwarded. Optional `null` values and common empty SDK defaults are
+treated as omission. Client `user` and `safety_identifier` values are accepted as compatibility
+metadata but removed; Stogas owns upstream identity fields.
 
 ## Other differences
 
-- Requests are strict: unknown top-level fields return `400` instead of being forwarded.
+- Unknown extensions stay compatible at the public boundary but cannot become provider parameters.
 - `store` may be omitted or set to `false`. `store: true` is rejected, and Stogas never enables provider response storage.
 - The current public surface accepts text content only.
+- Chat accepts only exact `function` tool definitions. Assistant tool calls must be followed by one adjacent result for every call ID in the same stateless request.
+- Responses client tool calls must include valid JSON-object function arguments and one matching output in the same input. Custom calls and encrypted reasoning history are accepted only on the OpenAI-format deployments that preserve them.
 - `stream: true` uses the endpoint's normal Server-Sent Events format.
 - OpenAI `max_tokens` is accepted as an alias for `max_completion_tokens` on Chat Completions.
-- Anthropic deployments reject requests that set both `temperature` and `top_p`.
+- Sampling values are preserved without gateway-owned numeric ranges or combination rules. The selected provider decides which values and combinations its current model accepts.
+- `task_budget` is available only on direct Anthropic Opus 4.7+, Fable 5, and Mythos 5 deployments. It requires `type: "tokens"`, a `total` of at least 20,000, and an optional `remaining` from zero through `total`. Azure Claude does not support it.
+- Anthropic-format `context_management` accepts the exact `clear_thinking_20251015`, `clear_tool_uses_20250919`, and `compact_20260112` edit shapes. Edit types must be unique, and clear-thinking must be first. Compaction is limited to supported Fable 5, Mythos 5 or Preview, Opus 4.6 through 5, and Sonnet 4.6 or 5 deployments. Stogas reserves each possible compaction iteration and settles the sum of provider `usage.iterations`.
+- Remote MCP tools are not accepted for any provider. Provider execution cannot be bounded and approved per request, and third-party MCP servers are outside the cataloged data-handling and E2EE boundary.
+- Unknown hosted-tool versions are rejected. A future provider alias cannot inherit the price or wire behavior of a current web tool.
+- Anthropic Responses accepts string tool-choice modes and named function selectors. It rejects `allowed_tools` and hosted-tool object selectors because its provider translation does not preserve those constraints.
 - Provider-specific speed and inference geography are selected with an exact deployment slug, not request parameters.
 - Provider-specific cache controls and hosted tools are accepted only where the catalog can route and bill them correctly.
 
-See [Model Tools](/docs/model-tools) for supported function, MCP, and provider-hosted tools.
+See [Model Tools](/docs/model-tools) for supported function, custom, and provider-hosted tools.
 
 ## Errors
 

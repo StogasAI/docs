@@ -27,6 +27,9 @@ if err != nil { return err }
 fmt.Println(string(verifiedJSON))
 ```
 
+Call `v.VerifyBundleWithPolicy(bundle, policy)` to replace only the signed bundle's AMD appraisal
+rules with a caller-owned bare policy.
+
 ## OpenAI client
 
 Create one transport when your service starts, reuse its base URL across OpenAI clients, and close
@@ -38,6 +41,7 @@ transport, err := stogas.NewTransport(stogas.TransportOptions{
     BundleRefreshIntervalSeconds: 300,
     BaseURL:                      "https://api.stogas.ai",
     BundleURL:                    "https://evidence.stogas.ai/bundles/latest.json",
+    HardwarePolicy:               nil,
 })
 if err != nil { return err }
 defer transport.Close()

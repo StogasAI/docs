@@ -68,6 +68,8 @@ A successful check confirms that:
 
 - the gateway software matches an approved public release;
 - genuine AMD confidential-computing hardware started that software;
+- the report satisfies the selected AMD security policy, including all four TCB states, active
+  mitigation vectors, and platform flags;
 - the gateway's connection, encryption, and response-signing keys belong to that running instance;
   and
 - the evidence is recent and has not expired.
@@ -76,3 +78,24 @@ When you send `X-Stogas-Extra-Fields: true`, the response includes a compact res
 can verify it now or later to confirm which node handled the exact request and response.
 
 For the full guarantees and limits, see the [security and trust model](/docs/confidential-security-model).
+
+## Choose the AMD security policy
+
+Each bundle contains a Stogas-signed AMD policy. It defines the current minimum firmware,
+mitigation bits, and platform flags for each supported processor revision. The signature proves
+which policy Stogas published. It does not make Stogas's security judgment objective.
+
+You can replace that policy with a local JSON policy:
+
+```console
+stogas-verify serve --policy hardware-policy.json
+```
+
+The local policy replaces only the changing AMD appraisal rules. It cannot disable quote and
+certificate verification, report bindings, approved-release checks, freshness checks, or strict
+encoding checks. A stricter or stale local policy can reject every gateway and cause downtime.
+
+Start from the bare policy published with the verifier source, review its AMD bulletin references,
+and distribute your edited file through your own trusted configuration system. This removes trust
+in Stogas's choice of AMD thresholds. You still trust Stogas to authorize the gateway software and
+fleet unless you also replace those separate trust roots.

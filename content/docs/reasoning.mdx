@@ -15,6 +15,10 @@ levels, or no reasoning. Read it with availability. If you omit reasoning, Stoga
 control from the provider request. Omission lets the provider apply its default and is not the
 same as `none`.
 
+Reasoning levels can differ by API route. Stogas applies the selected route before it maps the
+portable scale. For GPT-5.6, Responses accepts native `max`, while Chat Completions maps `max` to
+native `xhigh`.
+
 ## Select an effort
 
 Use the OpenAI-compatible field for the endpoint:
@@ -110,3 +114,22 @@ selects the same `-fast` deployment and price. For example, either spelling can 
 
 An explicit deployment slug pins its price and behavior. A conflicting `service_tier` is rejected
 instead of silently changing that deployment.
+
+## Microsoft Foundry variants
+
+Azure OpenAI has separate Pro and Priority controls:
+
+| Model family | Pro | Priority | Pro with Priority |
+| ------------ | --- | -------- | ----------------- |
+| Luna         | Yes | No       | No                |
+| Terra        | Yes | Yes      | Yes               |
+| Sol          | Yes | Yes      | Yes               |
+
+Azure calls its low-latency service tier Priority. Azure deployment IDs use `-priority`; `-fast`
+is a compatibility alias. Pro does not add a price multiplier. A Pro+Priority deployment uses the
+Priority token rates. Priority requests above 272,000 input tokens fall back to standard
+processing and standard long-context rates.
+
+Claude Fast mode is not available through Microsoft Foundry. This applies to both Azure-hosted
+and Anthropic-hosted Claude deployments. Azure Claude deployment choices therefore represent only
+documented host and data-zone contracts, not Fast variants.

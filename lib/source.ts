@@ -72,16 +72,24 @@ export function getPageImage(page: (typeof source)['$inferPage']) {
 
 type JsonObject = Record<string, unknown>;
 
-const openApiSpec = spec as unknown as JsonObject;
+const openApiSpec = requireJsonObject(spec, 'OpenAPI document');
 
 function jsonObject(value: unknown): JsonObject | undefined {
-	return value !== null && typeof value === 'object' && !Array.isArray(value)
-		? (value as JsonObject)
-		: undefined;
+	return isJsonObject(value) ? value : undefined;
+}
+
+function requireJsonObject(value: unknown, label: string): JsonObject {
+	const object = jsonObject(value);
+	if (!object) throw new TypeError(`${label} must be a JSON object.`);
+	return object;
+}
+
+function isJsonObject(value: unknown): value is JsonObject {
+	return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function cloneJson<T>(value: T): T {
-	return JSON.parse(JSON.stringify(value)) as T;
+	return structuredClone(value);
 }
 
 function getJsonPointer(root: JsonObject, ref: string) {
@@ -96,14 +104,14 @@ function getJsonPointer(root: JsonObject, ref: string) {
 }
 
 function collectRefs(value: unknown, refs = new Set<string>()) {
-	if (!value || typeof value !== 'object') return refs;
-
 	if (Array.isArray(value)) {
 		for (const item of value) collectRefs(item, refs);
 		return refs;
 	}
 
-	for (const [key, child] of Object.entries(value as JsonObject)) {
+	const object = jsonObject(value);
+	if (!object) return refs;
+	for (const [key, child] of Object.entries(object)) {
 		if (key === '$ref' && typeof child === 'string' && child.startsWith('#/components/')) {
 			refs.add(child);
 			continue;
@@ -179,7 +187,7 @@ function findOperationForPage(page: (typeof source)['$inferPage']) {
 	}
 }
 
-export function getOpenApiOperationSpec(page: (typeof source)['$inferPage']) {
+function getOpenApiOperationSpec(page: (typeof source)['$inferPage']) {
 	if (!page.url.startsWith(referenceRoute)) return;
 
 	const match = findOperationForPage(page);

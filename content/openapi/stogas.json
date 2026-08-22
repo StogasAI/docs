@@ -137,6 +137,12 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/ExtraFields"
+					},
+					{
+						"$ref": "#/components/parameters/UpstreamApiKey"
+					},
+					{
+						"$ref": "#/components/parameters/UpstreamProvider"
 					}
 				],
 				"requestBody": {
@@ -217,6 +223,12 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/ExtraFields"
+					},
+					{
+						"$ref": "#/components/parameters/UpstreamApiKey"
+					},
+					{
+						"$ref": "#/components/parameters/UpstreamProvider"
 					}
 				],
 				"requestBody": {
@@ -331,6 +343,28 @@
 					"default": false
 				},
 				"description": "Set to `true` to request one bounded signed result with request, node, catalog, pricing, timing, and proof fields. The gateway does not add fields to the OpenAI JSON body. Set to `false` or omit the header to disable it."
+			},
+			"UpstreamApiKey": {
+				"name": "X-Stogas-Upstream-API-Key",
+				"in": "header",
+				"required": false,
+				"schema": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 4096,
+					"pattern": "^[!-~]+$"
+				},
+				"description": "Use this provider API key for this request. A valid Stogas API key is still required in Authorization. The value must contain printable ASCII without spaces. Stogas does not store a pass-through provider secret. Supply X-Stogas-Upstream-Provider with it."
+			},
+			"UpstreamProvider": {
+				"name": "X-Stogas-Upstream-Provider",
+				"in": "header",
+				"required": false,
+				"schema": {
+					"type": "string",
+					"enum": ["anthropic", "chutes", "openai"]
+				},
+				"description": "Provider routing constraint required with X-Stogas-Upstream-API-Key. The gateway rejects request routing that conflicts with this provider and never sends the credential to another provider."
 			}
 		},
 		"responses": {
@@ -431,7 +465,7 @@
 				}
 			},
 			"PayloadTooLarge": {
-				"description": "<span className=\"text-red-500 font-bold\">Payload Too Large:</span> The request body exceeds the gateway's maximum allowed size.",
+				"description": "<span className=\"text-red-500 font-bold\">Payload Too Large:</span> The decoded JSON request body exceeds 128 MiB.",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -439,7 +473,7 @@
 						},
 						"example": {
 							"error": {
-								"message": "Payload Too Large: The request body exceeds the maximum allowed size of 100MB.",
+								"message": "Decompressed request body exceeds max allowed size of 134217728 bytes",
 								"type": "invalid_request_error"
 							}
 						}
@@ -653,8 +687,8 @@
 			},
 			"ChatCompletionRequest": {
 				"type": "object",
-				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API.",
-				"additionalProperties": false,
+				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API. Unknown top-level fields are accepted for SDK compatibility, ignored, and never forwarded upstream.",
+				"additionalProperties": true,
 				"required": ["model", "messages"],
 				"properties": {
 					"model": {
@@ -671,7 +705,8 @@
 					},
 					"messages": {
 						"type": "array",
-						"description": "Conversation messages. Stogas currently accepts text-only content only.",
+						"description": "Non-empty text-only conversation. Assistant function calls must be followed immediately by one tool result for every call ID in the same stateless request.",
+						"minItems": 1,
 						"items": {
 							"$ref": "#/components/schemas/ChatMessage"
 						}
@@ -853,14 +888,10 @@
 						"additionalProperties": true
 					},
 					"task_budget": {
-						"type": "object",
-						"description": "Anthropic-only advisory token budget object for agentic loops. Provider-owned details are forwarded and do not reduce Stogas billing holds.",
-						"additionalProperties": true
+						"$ref": "#/components/schemas/AnthropicTaskBudget"
 					},
 					"context_management": {
-						"type": "object",
-						"description": "Anthropic-only context management object. Provider-owned edit details are forwarded and do not reduce Stogas billing holds.",
-						"additionalProperties": true
+						"$ref": "#/components/schemas/AnthropicContextManagement"
 					},
 					"seed": {
 						"type": "integer",
@@ -905,43 +936,18 @@
 					"temperature": {
 						"type": "number",
 						"default": 1,
-						"description": "Sampling temperature. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
+						"description": "Sampling temperature. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
 					},
 					"tool_choice": {
 						"type": ["string", "object"],
-						"description": "Tool choice. Chat Completions accepts `auto`, `none`, `required`, declared function choices, and custom tool choices where supported."
+						"description": "Tool choice. Chat Completions accepts `auto`, `none`, `required`, or an exact `{type:\"function\",function:{name}}` selector for a declared function."
 					},
 					"tools": {
 						"type": "array",
-						"description": "Tool definitions. Chat Completions accepts function tools for OpenAI and Anthropic, custom tools where supported, and Anthropic-only `mcp_toolset` entries paired one-to-one with `mcp_servers`.",
+						"description": "At most 128 exact function definitions. Chat custom and hosted tools are not accepted because their calls cannot be replayed losslessly through the provider-neutral stateless Chat history shape. Remote MCP tools are not accepted because provider execution cannot be bounded or approved per request.",
+						"maxItems": 128,
 						"items": {
-							"type": "object"
-						}
-					},
-					"mcp_servers": {
-						"type": "array",
-						"description": "Anthropic Chat only. Remote MCP server definitions paired one-to-one with `tools[].type=\"mcp_toolset\"`; each server must be `type:\"url\"` with an HTTPS URL and unique name.",
-						"items": {
-							"type": "object",
-							"additionalProperties": false,
-							"properties": {
-								"type": {
-									"type": "string",
-									"enum": ["url"]
-								},
-								"url": {
-									"type": "string",
-									"format": "uri"
-								},
-								"name": {
-									"type": "string"
-								},
-								"authorization_token": {
-									"type": "string",
-									"description": "Forwarded upstream and redacted from Stogas raw request metadata."
-								}
-							},
-							"required": ["type", "url", "name"]
+							"$ref": "#/components/schemas/ChatFunctionTool"
 						}
 					},
 					"top_logprobs": {
@@ -954,11 +960,15 @@
 					},
 					"top_p": {
 						"type": "number",
-						"description": "Nucleus sampling control. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
+						"description": "Nucleus sampling control. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
+					},
+					"safety_identifier": {
+						"type": ["string", "null"],
+						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream safety identity from the authenticated API key."
 					},
 					"user": {
-						"type": "string",
-						"description": "Client-supplied user identifiers are not supported. Stogas sets upstream user identity from the authenticated API key."
+						"type": ["string", "null"],
+						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream user identity from the authenticated API key."
 					},
 					"verbosity": {
 						"type": "string",
@@ -1078,6 +1088,8 @@
 			},
 			"ChatMessage": {
 				"type": "object",
+				"additionalProperties": false,
+				"description": "Exact text-only Chat history item. Tool call IDs must be unique and every assistant call must have one adjacent tool result.",
 				"required": ["role"],
 				"properties": {
 					"name": {
@@ -1105,6 +1117,7 @@
 					},
 					"reasoning_details": {
 						"type": "array",
+						"description": "Signed Anthropic-format reasoning history. Rejected on OpenAI-format and Chutes deployments.",
 						"items": {
 							"type": "object"
 						}
@@ -1180,7 +1193,14 @@
 			},
 			"ChatToolCall": {
 				"type": "object",
+				"additionalProperties": false,
+				"required": ["id", "type", "function"],
 				"properties": {
+					"index": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "When present, this must match the call's array position."
+					},
 					"id": {
 						"type": "string"
 					},
@@ -1190,14 +1210,52 @@
 					},
 					"function": {
 						"type": "object",
+						"additionalProperties": false,
+						"required": ["name", "arguments"],
 						"properties": {
 							"name": {
 								"type": "string"
 							},
 							"arguments": {
-								"type": "string"
+								"type": "string",
+								"description": "A string that encodes a JSON object."
 							}
 						}
+					}
+				}
+			},
+			"ChatFunctionTool": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["type", "function"],
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["function"]
+					},
+					"function": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["name"],
+						"properties": {
+							"name": {
+								"type": "string",
+								"pattern": "^[A-Za-z0-9_-]{1,64}$"
+							},
+							"description": {
+								"type": "string",
+								"maxLength": 1024
+							},
+							"parameters": {
+								"type": "object"
+							},
+							"strict": {
+								"type": "boolean"
+							}
+						}
+					},
+					"cache_control": {
+						"$ref": "#/components/schemas/AnthropicCacheControl"
 					}
 				}
 			},
@@ -1247,8 +1305,8 @@
 			},
 			"ResponsesRequest": {
 				"type": "object",
-				"description": "OpenAI-compatible Responses API request fields parsed by the Stogas HTTP API.",
-				"additionalProperties": false,
+				"description": "OpenAI-compatible Responses API request fields parsed by the Stogas HTTP API. Unknown top-level fields are accepted for SDK compatibility, ignored, and never forwarded upstream.",
+				"additionalProperties": true,
 				"required": ["model", "input"],
 				"properties": {
 					"model": {
@@ -1263,13 +1321,15 @@
 						"description": "Alias for `provider`. Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
 					},
 					"input": {
-						"description": "Input for the Responses API. Stogas accepts a plain string or an array of Responses input/output items.",
+						"description": "A non-empty string or exact stateless input-item array. Client function/custom calls require one matching output in the same array before another message.",
 						"oneOf": [
 							{
-								"type": "string"
+								"type": "string",
+								"minLength": 1
 							},
 							{
 								"type": "array",
+								"minItems": 1,
 								"items": {
 									"$ref": "#/components/schemas/ResponsesRequestInputItem"
 								}
@@ -1304,7 +1364,7 @@
 					"max_tool_calls": {
 						"type": "integer",
 						"minimum": 1,
-						"description": "Optional cap for priced hosted Responses tools. If omitted for priced hosted tools, Stogas injects an effective cap of 50 before dispatch. On Anthropic Responses, this field is only accepted when Stogas can translate it to hosted-tool max_uses; token-priced function, custom, and MCP tools must omit it."
+						"description": "Optional cap for priced hosted Responses tools. If omitted for a priced hosted tool, Stogas injects an effective cap of 50 before dispatch. Anthropic translates this cap to hosted-tool max_uses; function-only and custom-only requests must omit it."
 					},
 					"metadata": {
 						"type": "object",
@@ -1325,14 +1385,10 @@
 						"description": "Whether the model may call multiple tools in parallel."
 					},
 					"task_budget": {
-						"type": "object",
-						"description": "Anthropic-only advisory token budget object forwarded as output_config.task_budget. Provider-owned details do not reduce Stogas billing holds.",
-						"additionalProperties": true
+						"$ref": "#/components/schemas/AnthropicTaskBudget"
 					},
 					"context_management": {
-						"type": "object",
-						"description": "Anthropic-only context management object forwarded as provider-owned runtime behavior. Stogas does not treat compaction as a hold reduction.",
-						"additionalProperties": true
+						"$ref": "#/components/schemas/AnthropicContextManagement"
 					},
 					"prompt_cache_key": {
 						"type": "string",
@@ -1387,7 +1443,7 @@
 					"temperature": {
 						"type": "number",
 						"default": 1,
-						"description": "Sampling temperature. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
+						"description": "Sampling temperature. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
 					},
 					"frequency_penalty": {
 						"type": "number",
@@ -1436,15 +1492,16 @@
 					},
 					"top_p": {
 						"type": "number",
-						"description": "Nucleus sampling control. Stogas validates JSON shape only; provider-owned numeric bounds are left to the selected provider. Anthropic deployments reject requests that set both `temperature` and `top_p`."
+						"description": "Nucleus sampling control. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
 					},
 					"tool_choice": {
 						"type": ["string", "object"],
-						"description": "Tool choice, such as `auto`, `none`, `required`, or a named tool object."
+						"description": "Exact tool choice. OpenAI-format deployments accept `auto`, `none`, `required`, named function/custom selectors, exact declared hosted selectors, or `{type:\"allowed_tools\",mode:\"auto\"|\"required\",tools:[...]}`. Anthropic-format deployments accept only the string modes or a named function selector."
 					},
 					"tools": {
 						"type": "array",
-						"description": "Responses API tool definitions accepted by compatible providers. Stogas admits function/custom tools, remote MCP tools with optional allowed_tools, priced provider-hosted web search tools, and Anthropic web_fetch tools. OpenAI and Azure MCP tools may use an HTTPS server URL or connector ID with optional request-scoped headers. See the Model Tools guide for the current provider matrix and billing behavior.",
+						"description": "At most 128 exact Responses tool definitions. Stogas admits function tools, custom tools on OpenAI-format deployments, known and priced OpenAI/Anthropic web-search versions, and known Anthropic `web_fetch` versions. Unknown future versions fail closed instead of inheriting current pricing. Remote MCP tools are rejected because provider execution cannot be bounded or approved per request and third-party servers are outside the cataloged data-handling boundary. See the Model Tools guide for the current provider matrix and billing behavior.",
+						"maxItems": 128,
 						"items": {
 							"type": "object"
 						}
@@ -1452,9 +1509,13 @@
 					"truncation": {
 						"type": "string"
 					},
+					"safety_identifier": {
+						"type": ["string", "null"],
+						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream safety identity from the authenticated API key."
+					},
 					"user": {
-						"type": "string",
-						"description": "Client-supplied user identifiers are not supported. Stogas sets upstream user identity from the authenticated API key."
+						"type": ["string", "null"],
+						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream user identity from the authenticated API key."
 					},
 					"prompt_cache_options": {
 						"type": "object",
@@ -1689,7 +1750,7 @@
 			},
 			"ResponsesInputItem": {
 				"type": "object",
-				"description": "Responses API input or previous output item. Supported item types include messages, function calls and outputs, tool calls, reasoning, and item references.",
+				"description": "Responses API output item returned by the supported text, client-tool, reasoning, web-search, and web-fetch paths.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -1699,17 +1760,12 @@
 						"enum": [
 							"message",
 							"web_search_call",
+							"web_fetch_call",
 							"function_call",
 							"function_call_output",
-							"mcp_call",
 							"custom_tool_call",
 							"custom_tool_call_output",
-							"mcp_list_tools",
-							"mcp_approval_request",
-							"mcp_approval_responses",
-							"reasoning",
-							"item_reference",
-							"refusal"
+							"reasoning"
 						]
 					},
 					"status": {
@@ -1851,17 +1907,26 @@
 			},
 			"ResponsesRequestInputItem": {
 				"type": "object",
-				"description": "Text-only Responses API input item accepted by Stogas. Function calls, tool outputs, reasoning items, files, images, and audio inputs are rejected before upstream dispatch.",
+				"additionalProperties": false,
+				"description": "Exact text-only stateless Responses input item. Function and custom calls require one matching output in the same array. Custom history is OpenAI-format only; encrypted reasoning history is OpenAI reasoning-deployment only.",
 				"properties": {
 					"id": {
 						"type": "string"
 					},
 					"type": {
 						"type": "string",
-						"enum": ["message", "input_text", "output_text", "refusal"]
+						"enum": [
+							"message",
+							"function_call",
+							"function_call_output",
+							"custom_tool_call",
+							"custom_tool_call_output",
+							"reasoning"
+						]
 					},
 					"status": {
-						"type": "string"
+						"type": "string",
+						"enum": ["completed", "in_progress", "incomplete"]
 					},
 					"role": {
 						"type": "string",
@@ -1870,10 +1935,30 @@
 					"content": {
 						"$ref": "#/components/schemas/ResponsesRequestMessageContent"
 					},
-					"text": {
+					"call_id": {
 						"type": "string"
 					},
-					"refusal": {
+					"name": {
+						"type": "string",
+						"pattern": "^[A-Za-z0-9_-]{1,64}$"
+					},
+					"arguments": {
+						"type": "string",
+						"description": "Function arguments encoded as a JSON object string."
+					},
+					"input": {
+						"type": "string"
+					},
+					"output": {
+						"type": "string"
+					},
+					"summary": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						}
+					},
+					"encrypted_content": {
 						"type": "string"
 					}
 				}
@@ -1886,6 +1971,7 @@
 					},
 					{
 						"type": "array",
+						"minItems": 1,
 						"items": {
 							"$ref": "#/components/schemas/ResponsesRequestContentBlock"
 						}
@@ -1894,6 +1980,7 @@
 			},
 			"ResponsesRequestContentBlock": {
 				"type": "object",
+				"additionalProperties": false,
 				"description": "Text-only Responses content block accepted by Stogas.",
 				"required": ["type"],
 				"properties": {
@@ -1942,6 +2029,241 @@
 				},
 				"required": ["type"],
 				"additionalProperties": false
+			},
+			"AnthropicTaskBudget": {
+				"type": "object",
+				"description": "Advisory agent-loop budget for direct Anthropic Opus 4.7+, Fable 5, and Mythos 5 deployments. Azure Claude and other models reject it. This value does not reduce the Stogas billing hold; remaining must not exceed total.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["tokens"]
+					},
+					"total": {
+						"type": "integer",
+						"minimum": 20000
+					},
+					"remaining": {
+						"type": "integer",
+						"minimum": 0
+					}
+				},
+				"required": ["type", "total"],
+				"additionalProperties": false
+			},
+			"AnthropicContextManagement": {
+				"type": "object",
+				"description": "Strict Anthropic-wire context editing. Edit types must be unique, and clear_thinking_20251015 must be first when present. compact_20260112 is accepted only for Fable 5, Mythos 5 or Preview, Opus 4.6 through 5, and Sonnet 4.6 or 5 deployments, including matching Azure Claude deployments. Compaction does not reduce the billing hold; Stogas reserves a possible compaction sampling step before every bounded model sampling iteration and settles the sum of provider usage.iterations.",
+				"properties": {
+					"edits": {
+						"type": "array",
+						"minItems": 1,
+						"items": {
+							"oneOf": [
+								{
+									"$ref": "#/components/schemas/AnthropicClearThinkingEdit"
+								},
+								{
+									"$ref": "#/components/schemas/AnthropicClearToolUsesEdit"
+								},
+								{
+									"$ref": "#/components/schemas/AnthropicCompactEdit"
+								}
+							]
+						}
+					}
+				},
+				"required": ["edits"],
+				"additionalProperties": false
+			},
+			"AnthropicClearThinkingEdit": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["clear_thinking_20251015"]
+					},
+					"keep": {
+						"oneOf": [
+							{
+								"type": "string",
+								"enum": ["all"]
+							},
+							{
+								"type": "object",
+								"properties": {
+									"type": {
+										"type": "string",
+										"enum": ["all"]
+									}
+								},
+								"required": ["type"],
+								"additionalProperties": false
+							},
+							{
+								"type": "object",
+								"properties": {
+									"type": {
+										"type": "string",
+										"enum": ["thinking_turns"]
+									},
+									"value": {
+										"type": "integer",
+										"minimum": 1
+									}
+								},
+								"required": ["type", "value"],
+								"additionalProperties": false
+							}
+						]
+					}
+				},
+				"required": ["type"],
+				"additionalProperties": false
+			},
+			"AnthropicClearToolUsesEdit": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["clear_tool_uses_20250919"]
+					},
+					"clear_at_least": {
+						"oneOf": [
+							{
+								"$ref": "#/components/schemas/AnthropicInputTokenCount"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"clear_tool_inputs": {
+						"oneOf": [
+							{
+								"type": "boolean"
+							},
+							{
+								"$ref": "#/components/schemas/AnthropicToolNameArray"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"exclude_tools": {
+						"oneOf": [
+							{
+								"$ref": "#/components/schemas/AnthropicToolNameArray"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"keep": {
+						"$ref": "#/components/schemas/AnthropicToolUseCount"
+					},
+					"trigger": {
+						"$ref": "#/components/schemas/AnthropicContextEditTrigger"
+					}
+				},
+				"required": ["type"],
+				"additionalProperties": false
+			},
+			"AnthropicCompactEdit": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["compact_20260112"]
+					},
+					"instructions": {
+						"type": ["string", "null"]
+					},
+					"pause_after_compaction": {
+						"type": "boolean"
+					},
+					"trigger": {
+						"oneOf": [
+							{
+								"$ref": "#/components/schemas/AnthropicCompactionTrigger"
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": ["type"],
+				"additionalProperties": false
+			},
+			"AnthropicInputTokenCount": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["input_tokens"]
+					},
+					"value": {
+						"type": "integer",
+						"minimum": 0
+					}
+				},
+				"required": ["type", "value"],
+				"additionalProperties": false
+			},
+			"AnthropicToolUseCount": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["tool_uses"]
+					},
+					"value": {
+						"type": "integer",
+						"minimum": 0
+					}
+				},
+				"required": ["type", "value"],
+				"additionalProperties": false
+			},
+			"AnthropicContextEditTrigger": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["input_tokens", "tool_uses"]
+					},
+					"value": {
+						"type": "integer",
+						"minimum": 0
+					}
+				},
+				"required": ["type", "value"],
+				"additionalProperties": false
+			},
+			"AnthropicCompactionTrigger": {
+				"type": "object",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": ["input_tokens"]
+					},
+					"value": {
+						"type": "integer",
+						"minimum": 50000
+					}
+				},
+				"required": ["type", "value"],
+				"additionalProperties": false
+			},
+			"AnthropicToolNameArray": {
+				"type": "array",
+				"items": {
+					"type": "string",
+					"minLength": 1
+				},
+				"uniqueItems": true
 			},
 			"PromptTokenDetails": {
 				"type": "object",
