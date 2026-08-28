@@ -37,17 +37,20 @@ unavailable-fleet state and stop protected requests.
 
 The bundle contains:
 
-- one or two catalog approvals, each with a GitHub Actions build attestation and a separate
-  Stogas-signed manifest over independently built matching hashes;
+- the current and optional next immutable catalog proof, each with a GitHub Actions build
+  attestation and a separate Stogas-signed manifest over independently built matching hashes;
 - approved gateway releases and their build records;
-- AMD certificate chains and SEV-SNP reports for each gateway;
-- an explicit AMD processor profile binding report CPUID, the generation-specific hardware identifier and TCB layout, and a pinned product root; unknown processor generations fail closed;
+- AMD certificate chains, ARK-signed product CRLs, and SEV-SNP reports for each gateway;
+- one hardware document with grouped exact processor IDs, CPUID, TCB floor, mitigation requirements,
+  platform requirements, a Stogas DSSE signature, and a Rekor v1 proof;
+- one independent grouped launch-policy document inside each gateway release; a gateway's exact chip
+  ID must occur in one group in each file, and the files do not refer to each other;
 - recent drand evidence;
-- each gateway's quote-bound active catalog identity, TLS, response-signing, and E2EE public keys; and
+- each gateway's quote-bound TLS, response-signing, and E2EE public keys; and
 - an expiration time.
 
 The bundle has no outer signature. Its body SHA-256 identifies the exact bytes and detects
-corruption, while each release, node, certificate, and drand claim verifies to its own embedded
+corruption, while each release, hardware policy, node, certificate, and drand claim verifies to its own embedded
 cryptographic root.
 
 The verifier returns the gateways that are safe to use as `nodes`. Older or unusable records may
@@ -86,6 +89,9 @@ controls client activation. This prevents one corrupted mirror from pinning a cl
 sequence. No ordering field can detect an attacker who freezes one snapshot, so every changed
 candidate receives all cryptographic, creation-time, and expiry checks; those checks cannot be
 limited to the first bundle after startup.
+
+The hardware-policy schema versions its file format. The signed document has no ordering counter.
+Each verified bundle carries the complete policy that applies to that bundle.
 
 ## Keep the client clock accurate
 
@@ -128,13 +134,14 @@ failed TLS handshake sent no request bytes, and other connection failures do not
 
 Every response can include a compact receipt:
 
-- request it with `X-Stogas-Extra-Fields: true`;
-- non-streaming responses use `X-Stogas-Proof`;
-- streaming responses add a final `: stogas <base64url-json>` SSE comment before `[DONE]`.
+- request it with `Stogas-Receipt: v1`;
+- non-streaming responses add a final top-level `stogas` object;
+- streams add a `: stogas {...}` SSE comment before `[DONE]`, `response.completed`, or
+  `response.incomplete`.
 
-The `stogas.response-proof.v1` result signs the request and node IDs; hashes of the exact request and
-response; catalog digest, sequence, and resolved author/model/deployment/route/provider IDs; settled
-meter pricing and totals; timing; and the encrypted-connection transcript when E2EE is used. The
+The `stogas.response-proof.v1` result signs the request ID, canonical creation time, and node ID;
+hashes of the exact request and response; catalog digest, sequence, and ordered selection IDs;
+settled meter pricing and totals; timing; and the encrypted-connection transcript when E2EE is used. The
 signing key is already bound to the verified node by its SEV-SNP report. The result does not repeat
 the quote, AMD collateral, catalog approval, or release proof.
 
@@ -149,17 +156,12 @@ if the values still differ.
 Reuse the verifier that accepted the active bundle:
 
 ```ts
-const receipt = verifier.verify_response_proof(
-	proofBytes,
-	requestBytes,
-	responseBytes,
-	e2eeTranscriptSHA256
-);
+const receipt = verifier.verify_response_proof(requestBytes, responseBytes, e2eeTranscriptSHA256);
 ```
 
 The verifier calculates the request and response hashes again from the bytes you provide. A browser
 can use `start_response_proof`, `write`, and `finish` to keep only a running response hash. Write all
-SSE bytes except the Stogas comment and include `[DONE]`. For an older response, download its node
+SSE bytes except the Stogas comment and include the terminal frame. For an older response, download its node
 record and catalog approval from the Trust Center and use `verify_historical_response_proof`. The
 public lookup uses only `node_id` and catalog sequence. It never receives the private request or
 response. When E2EE is enabled, also keep the locally calculated

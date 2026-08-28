@@ -20,11 +20,11 @@ pass-through credentials. Azure accepts only a stored Microsoft Entra applicatio
 
 ## Store a provider credential
 
-1. Open **BYOK keys** in the dashboard.
-2. Select **Add BYOK key** and choose the provider.
+1. Open **BYOK** in the dashboard.
+2. Select **Add** and choose the provider.
 3. Enter a name and the provider credential. For Azure, enter the tenant ID, application client ID,
    client secret, and the subscription IDs that Stogas may inspect.
-4. Open a service or provisioning API key and select the stored credential for that provider.
+4. Open a service or member API key and select the stored credential for that provider.
 
 Stogas sends one free, authenticated metadata request to the provider before it encrypts and saves
 the credential. OpenAI and Anthropic use their model-list operation. Chutes uses an authenticated
@@ -32,9 +32,8 @@ account-quota operation because its model catalog is public. Azure uses the mana
 data APIs described below. A provider rejection blocks the save; a timeout, provider rate limit, or
 provider outage asks you to try again.
 
-The dashboard never returns the stored secret. You can replace an Azure application credential in
-place, so its API-key assignments do not change. For another provider, add the replacement, update
-API-key policies, and delete the old credential after it is no longer assigned.
+The dashboard never returns the stored secret. You can replace any stored provider credential in
+place. Its stable credential ID, API-key assignments, and analytics history do not change.
 
 ## Send a pass-through credential
 
@@ -43,23 +42,38 @@ Add the provider key to an ordinary authenticated request:
 ```console
 curl https://api.stogas.ai/v1/responses \
   -H "Authorization: Bearer $STOGAS_API_KEY" \
-  -H "X-Stogas-Upstream-API-Key: $OPENAI_API_KEY" \
+  -H "X-Stogas-Upstream-OpenAI-API-Key: $OPENAI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"openai/gpt-5-mini","input":"Hello"}'
 ```
 
-| Header                       | When it is required                                                 |
-| ---------------------------- | ------------------------------------------------------------------- |
-| `Authorization`              | Every request. Use `Bearer <Stogas API key>`.                       |
-| `X-Stogas-Upstream-API-Key`  | Every pass-through request. Use the provider credential value.      |
-| `X-Stogas-Upstream-Provider` | Every pass-through request. Use `openai`, `anthropic`, or `chutes`. |
+| Header                                | Provider  |
+| ------------------------------------- | --------- |
+| `X-Stogas-Upstream-Anthropic-API-Key` | Anthropic |
+| `X-Stogas-Upstream-Chutes-API-Key`    | Chutes    |
+| `X-Stogas-Upstream-OpenAI-API-Key`    | OpenAI    |
 
 Do not put the provider key in `Authorization`; that header always contains the Stogas API key.
-The same headers work with Chat Completions and Responses.
-The provider header is a routing constraint. Stogas rejects a request when its `provider` or
-`rules.only` selection conflicts with the pass-through credential provider. It never retries that
-credential against another provider. Pass-through credentials are not preflighted; the normal
-upstream request checks them.
+The same headers work with Chat Completions and Responses. You can supply at most one key for each
+supported provider on one request.
+
+Pass-through keys do not constrain catalog routing. Stogas resolves the concrete provider first,
+then uses only that provider's supplied key and discards the other supplied keys. A supplied key
+does not cause a retry, fallback, or reroute after resolution. Pass-through keys are not preflighted;
+the normal upstream request checks the selected key.
+
+### Name a pass-through credential
+
+A successful pass-through request records a stable 64-character credential ID in analytics. Select
+an unnamed ID to open a prefilled **Pass-through** form, or copy the ID into the BYOK page's **Add**
+form. The dashboard saves only the name, provider, and ID; it does not receive the provider secret,
+probe the provider, or change earlier logs. The inference gateway saw the secret only in memory for
+the original request. Earlier requests automatically show the name because the ID is deterministic
+within the organization, workspace, and provider.
+
+You can use a named ID for analytics filters or require that exact pass-through credential on an API
+key. Naming an ID does not convert it to a stored credential. To store a secret, create a separate
+stored credential.
 
 ## Connect Azure
 
@@ -91,64 +105,51 @@ Azure resource region. Pro and Priority are request controls on the same physica
 they do not require separate Azure deployments. A region filter can select only catalog deployments
 whose documented data handling satisfies it; unknown regions do not satisfy a narrow filter.
 
-## Set the API key policy
+## Set the API key credential mode
 
-A service API key owns one policy per provider. Assigned member keys inherit each policy from their
-provisioning key.
+Every service or member API key owns one credential mode per provider. Members with BYOK and
+organization-wide API key management configure it.
 
-| Policy                 | Result                                                               |
-| ---------------------- | -------------------------------------------------------------------- |
-| **Any credential**     | Use a supplied key. Without one, use managed service when available. |
-| **Managed only**       | Reject a supplied key and require Stogas managed service.            |
-| **Stored credential**  | Require the selected encrypted credential.                           |
-| **Any pass-through**   | Require any validly formed provider credential on the request.       |
-| **Named pass-through** | Require the pass-through credential with the selected credential ID. |
+| Policy                            | Result                                                               |
+| --------------------------------- | -------------------------------------------------------------------- |
+| **Any credential**                | Use a supplied key. Without one, use managed service when available. |
+| **Managed only**                  | Use Stogas managed service and ignore a supplied key.                |
+| **Stored credential**             | Use the selected encrypted credential and ignore a supplied key.     |
+| **Any pass-through credential**   | Require a supplied key for the provider.                             |
+| **Named pass-through credential** | Require the supplied key to match the selected credential ID.        |
 
-Policy resolution and the billing hold happen in one database call. A selected credential that is
-missing, disabled, or not valid for the provider fails closed. Stogas does not silently change to a
-managed credential after an upstream provider rejects a BYOK credential.
+Policy resolution and the billing hold happen in one database call. A selected stored or named
+pass-through credential that is missing, disabled, or invalid for the provider fails closed.
+Disabling a named pass-through record affects API keys assigned to that exact record. It is not a
+denylist for API keys set to **Any credential** or **Any pass-through credential**. Stogas does not
+change credential source after an upstream provider rejects a BYOK credential.
 
 Azure exposes only **Unassigned** and one named **Stored credential** in this policy picker. It does
 not accept pass-through or Stogas-managed credential modes.
 
-## Name a pass-through credential
-
-For each pass-through request, the confidential gateway computes an opaque, deterministic
-credential ID in memory. The ID is scoped to the organization, workspace, and provider. Request
-logs contain the ID, never the provider secret.
-
-After a successful request, select its unknown credential ID in Analytics. The BYOK page verifies
-that request observation and asks for a name. This adds only the name and ID to the BYOK list; the
-provider secret is not sent to the control plane. You can then restrict an API key to that exact
-pass-through credential.
-
-To store it later, open the credential actions, select **Store secret**, and explicitly upload the
-provider credential. Stogas validates the upload and requires it to produce the selected ID before
-it adds encrypted storage to that row. Its ID does not change, so stored and pass-through usage stays
-grouped without updating old logs.
-
 ## Security and billing
 
 - Pass-through secrets are not written to PostgreSQL or Tinybird. The gateway keeps the plaintext
-  only for the authorized upstream dispatch.
+  only for the authorized upstream dispatch. PostgreSQL and analytics receive a keyed,
+  organization-, workspace-, and provider-scoped credential ID. A request never creates a dashboard
+  credential row.
 - Azure does not accept pass-through secrets. Its stored Entra application secret and discovered
   bindings are used only when that exact credential is assigned to the Stogas API key.
 - Stored secrets are encrypted before database storage. Dashboard responses contain only the name,
   status, and a short preview.
 - BYOK requests reserve and settle 2% of the upstream request cost, rounded up to the nearest USD
   atom. API key spend limits and the organization balance use that billed amount.
-- Analytics shows upstream cost and Stogas billed cost separately and can filter by credential ID.
+- Analytics shows upstream cost and Stogas billed cost separately. Named pass-through IDs and stored
+  credentials are available as filters; unnamed pass-through IDs remain visible as hashes.
 
 ## Troubleshooting
 
 - **BYOK credential required:** The selected provider has no managed service, or the API key policy
   requires stored or pass-through BYOK.
-- **Pass-through BYOK is not allowed:** The API key is set to managed-only or stored-only for that
-  provider.
+- **Pass-through BYOK is not allowed:** The credential ID format is invalid, or pass-through was
+  supplied for Azure.
 - **Provider authentication or permission error:** Confirm the credential, provider permissions,
   account quota, and model deployment with the provider. For Azure, confirm management read access,
   Cognitive Services User access, and then refresh the credential.
-- **Named pass-through mismatch:** Send the exact provider credential that produced the selected ID
-  in this organization and workspace.
 
 See the [API reference](/docs/reference) for the complete header schemas.

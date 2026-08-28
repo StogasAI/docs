@@ -97,7 +97,7 @@ OpenAI, Anthropic, and Chutes pass-through BYOK headers are moved into the encry
 The provider credential is not present in the outer HTTPS request. Azure requires a stored,
 discovered credential and does not accept pass-through headers.
 
-For later receipt verification, send `X-Stogas-Extra-Fields: true`. The decrypted response exposes
+For later receipt verification, send `Stogas-Receipt: v1`. The decrypted response exposes
 the locally computed E2EE transcript as `X-Stogas-E2EE-Transcript-SHA256`. OpenAI JavaScript callers
 can access response headers with the SDK's raw-response helper when they need to archive this value.
 Use `transport.createResponseProofStream(requestBytes)` for constant-memory verification of an SSE

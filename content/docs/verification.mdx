@@ -74,7 +74,7 @@ A successful check confirms that:
   and
 - the evidence is recent and has not expired.
 
-When you send `X-Stogas-Extra-Fields: true`, the response includes a compact response receipt. You
+When you send `Stogas-Receipt: v1`, the response includes a compact response receipt. You
 can verify it now or later to confirm which node handled the exact request and response.
 
 For the full guarantees and limits, see the [security and trust model](/docs/confidential-security-model).
@@ -88,7 +88,7 @@ which policy Stogas published. It does not make Stogas's security judgment objec
 You can replace that policy with a local JSON policy:
 
 ```console
-stogas-verify serve --policy hardware-policy.json
+stogas-verify serve --policy hardware-policies.json
 ```
 
 The local policy replaces only the changing AMD appraisal rules. It cannot disable quote and

@@ -1,77 +1,85 @@
 ---
-title: API keys
-description: Choose a key for a service, a group, or a person.
+title: API keys and grants
+description: Create organization service keys or let members create their own keys through grants.
 ---
 
-Stogas has three API key types:
+Stogas has two API key types and one access control:
 
-| Key type             | Use it for                                                               |
-| -------------------- | ------------------------------------------------------------------------ |
-| **Service key**      | Work owned by the organization, such as a server, application, or CI job |
-| **Provisioning key** | A team, department, project, or other group that needs one shared policy |
-| **Assigned key**     | One person working under a provisioning key's policy                     |
+| Resource        | Purpose                                                                   |
+| --------------- | ------------------------------------------------------------------------- |
+| **Service key** | A credential for an organization-owned server, application, or CI job     |
+| **Member key**  | A credential that one member creates and owns through an assigned grant   |
+| **Grant**       | Permission for selected members to create a limited number of member keys |
 
-Only service keys and assigned keys have secrets that can call the API.
-In the dashboard Playground, members select a usable service or assigned key directly; no API
-secret is required or revealed.
+A grant is not an API key. It has no secret and cannot call the inference API.
+In the dashboard Playground, a member selects a usable API key directly. The dashboard does not
+reveal its secret.
 
-## Service key
+## Service keys
 
-A service key belongs directly to the organization. Use it for organization-owned activity rather
-than for one person.
+A service key belongs to the organization. Use one for work that must continue independently of one
+member, such as a production service, deployment, or CI job.
 
-Good examples include a production server, internal application, automation, or CI job.
-Administrators create the key, set its limits, and rotate its secret. The secret is shown only when
-it is created or rotated.
+Members with organization-wide API key management can create, configure, rotate, disable, and delete
+service keys. The secret is shown only when the key is created or rotated.
 
-## Provisioning key
+## Grants
 
-A provisioning key represents a group of people who should follow the same policy. The group might
-be a team, department, project, cost center, or customer account.
+An administrator creates a grant on the separate **Grants** page. A grant controls:
 
-The provisioning key is not an inference credential and has no secret. Instead, administrators use
-it to create one assigned key for each member. Member limits apply independently to every assigned
-key. Shared limits can separately cap the combined rate and spend of the whole group.
+- which members may use it;
+- how many keys each assigned member may create;
+- whether it is enabled; and
+- whether members may change expiration, rate, and spend settings on their keys.
 
-For example, create a provisioning key named **Research team**, set the team's limits once, then
-assign a child key to every researcher.
+A member starts with no grant. An assigned member creates keys only when they need them, up to that
+grant's per-member allowance. The same grant may be assigned to many members, and each member has an
+independent allowance.
 
-## Assigned key
+Lowering an allowance does not delete existing keys. It stops the member from creating another key
+until their key count is below the new allowance.
 
-An assigned key belongs to one member and is created under a provisioning key. The member generates
-their own secret and uses it to call the API. They may add an earlier expiration or stricter personal
-rate and spend limits. Administrators manage the group policy and can suspend or revoke the
-assignment, but cannot see the secret or edit the member's private settings.
+An administrator can select members directly or select roles as a shortcut. Role selection adds the
+members who have those roles when the grant is saved. Later role changes do not silently add or remove
+grant access.
 
-Members can give their key a private name. Administrators continue to see the member relationship,
-such as `Alex's key`, so the assignment stays clear.
+Disabling a grant immediately rejects new requests from all keys under it without deleting the keys.
+Removing a member from a grant deletes that member's keys under the grant. Deleting the grant deletes
+all keys under it. The dashboard asks for confirmation before either destructive change.
+
+## Member keys
+
+A member key is a normal inference credential owned by one member under one grant. A member can give
+each key a separate name, rotate its secret, disable it, or delete it. Administrators can see and
+manage all organization keys, including member keys.
+
+When **Member key settings** is enabled on the grant, the member may also set expiration, request-rate,
+lifetime-spend, and recurring-spend limits. When it is disabled, only an administrator may change
+those settings. Each key keeps its own settings; grants do not add inherited rate or spend policy.
 
 ## Limits
 
-A provisioning key has two independent sets of optional controls:
+Each usable key can have these optional controls:
 
-- **Member limits** apply separately to each assigned key.
-- **Shared limits** apply to combined usage from every assigned key.
+- expiration;
+- requests per second;
+- lifetime spend; and
+- recurring spend with an anchored reset schedule.
 
-Every usable API key also has the platform's 60 requests-per-second ceiling when no lower key or
-member rate is configured. A combined rate may be higher because it covers many independently
-rate-limited keys. Clearing a member's private limit restores the provisioning limit; it does not
-remove organization policy.
+The gateway enforces these controls and the organization balance in the authorization transaction for
+every request. The default gateway ceiling is 60 requests per second when no lower key rate is set.
 
-Changing or revoking one assigned key does not reveal or rotate another member's secret.
+## Provider credentials
 
-## Upstream credentials
+Every service or member key owns one credential choice for each provider. Members with BYOK and
+organization-wide API key management configure these choices.
 
-An API key has one credential policy for each provider. A service key owns its policies directly.
-A provisioning key's assigned children inherit its policies and cannot override them.
-
-| Mode                   | Behavior                                                                |
-| ---------------------- | ----------------------------------------------------------------------- |
-| **Any credential**     | Use a supplied credential, or use Stogas managed service when available |
-| **Managed only**       | Reject supplied credentials and use Stogas managed service              |
-| **Stored credential**  | Use one encrypted credential selected in the dashboard                  |
-| **Any pass-through**   | Require a credential with each request                                  |
-| **Named pass-through** | Require the pass-through credential with the selected ID                |
+| Mode                      | Behavior                                                                |
+| ------------------------- | ----------------------------------------------------------------------- |
+| **Any credential**        | Use a supplied credential, or use Stogas managed service when available |
+| **Managed only**          | Use Stogas managed service and ignore supplied credentials              |
+| **Stored credential**     | Use one encrypted credential and ignore supplied credentials            |
+| **Pass-through required** | Require any supplied credential or one selected named credential ID     |
 
 Managed service is currently available for Chutes. OpenAI and Anthropic therefore need a stored or
 pass-through credential. Azure accepts one stored, discovered credential per API key or remains
@@ -79,4 +87,4 @@ unassigned; it does not accept pass-through. A disabled or unavailable selected 
 closed.
 
 See [Bring your own provider key](/docs/byok) for stored credentials, pass-through request headers,
-Azure discovery, credential naming, validation behavior, rotation, billing, and troubleshooting.
+Azure discovery, validation, rotation, billing, and troubleshooting.

@@ -63,6 +63,7 @@ metadata but removed; Stogas owns upstream identity fields.
 - Chat accepts only exact `function` tool definitions. Assistant tool calls must be followed by one adjacent result for every call ID in the same stateless request.
 - Responses client tool calls must include valid JSON-object function arguments and one matching output in the same input. Custom calls and encrypted reasoning history are accepted only on the OpenAI-format deployments that preserve them.
 - `stream: true` uses the endpoint's normal Server-Sent Events format.
+- Direct Chat Completions and Responses requests have a 60-minute lifecycle. A healthy stream can use that full period. Stogas closes a downstream connection only when a socket write makes no progress for five minutes or when final delivery reaches five minutes past the request deadline.
 - OpenAI `max_tokens` is accepted as an alias for `max_completion_tokens` on Chat Completions.
 - Sampling values are preserved without gateway-owned numeric ranges or combination rules. The selected provider decides which values and combinations its current model accepts.
 - `task_budget` is available only on direct Anthropic Opus 4.7+, Fable 5, and Mythos 5 deployments. It requires `type: "tokens"`, a `total` of at least 20,000, and an optional `remaining` from zero through `total`. Azure Claude does not support it.

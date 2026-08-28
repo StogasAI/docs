@@ -13,7 +13,7 @@ cargo add stogas
 
 ```rust
 use std::time::{SystemTime, UNIX_EPOCH};
-use stogas::{Environment, Verifier};
+use stogas::Verifier;
 
 let bundle = std::fs::read("bundle.json")?;
 let now = i64::try_from(
@@ -21,18 +21,14 @@ let now = i64::try_from(
 )?;
 
 let mut verifier = Verifier::default();
-let verified = verifier.verify_bundle(
-    &bundle,
-    now,
-    &Environment::stogas(),
-)?;
+let verified = verifier.verify_bundle(&bundle, now)?;
 
 println!("{}", verified.bundle.nodes.len());
 ```
 
 The core accepts one captured wall-clock value so tests and audits remain deterministic. Packaged language adapters capture that value automatically.
 
-Use `verify_bundle_with_policy(&bundle, &policy, now, &environment)` to replace only the signed
+Use `verify_bundle_with_policy(&bundle, &policy, now)` to replace only the signed
 bundle's AMD appraisal rules with a caller-owned bare policy.
 
 ## Send requests
@@ -64,7 +60,6 @@ Reuse the verifier that accepted the current bundle:
 
 ```rust
 let receipt = verifier.verify_response_proof(
-    &proof_json,
     &request_body,
     &response_body,
     None,
@@ -73,5 +68,5 @@ let receipt = verifier.verify_response_proof(
 ```
 
 Use `verify_historical_response_proof` with both the immutable Trust Center node record and catalog
-approval when the signing node is no longer in the active bundle. Exact request and response bytes
-are required. Hash-based methods are available for incremental readers.
+approval when the signing node is no longer in the active bundle. The response body is the complete
+buffered JSON with its final `stogas` object. Hash-based methods accept raw receipt JSON for streams.

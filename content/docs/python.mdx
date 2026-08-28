@@ -71,10 +71,10 @@ Reuse the `Verifier` that accepted the bundle:
 
 ```python
 receipt = json.loads(
-    verifier.verify_response_proof(proof_json, request_body, response_body)
+    verifier.verify_response_proof(request_body, response_body)
 )
 print(receipt["proof"]["request_sha256"], receipt["proof"]["response_sha256"])
 ```
 
 Use `verify_historical_response_proof(..., ledger_json, catalog_json)` for a node that is no longer
-in the active bundle. The body arguments must be the exact plaintext bytes sent and received.
+in the active bundle. The response body is the complete buffered JSON with its final `stogas` object.

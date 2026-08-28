@@ -136,13 +136,16 @@
 				"description": "Create an OpenAI-compatible chat completion. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/ExtraFields"
+						"$ref": "#/components/parameters/Receipt"
 					},
 					{
-						"$ref": "#/components/parameters/UpstreamApiKey"
+						"$ref": "#/components/parameters/UpstreamAnthropicApiKey"
 					},
 					{
-						"$ref": "#/components/parameters/UpstreamProvider"
+						"$ref": "#/components/parameters/UpstreamChutesApiKey"
+					},
+					{
+						"$ref": "#/components/parameters/UpstreamOpenAIApiKey"
 					}
 				],
 				"requestBody": {
@@ -158,14 +161,6 @@
 				"responses": {
 					"200": {
 						"description": "Successful completion. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
-						"headers": {
-							"X-Stogas-Proof": {
-								"description": "Base64url-encoded `stogas.response-proof.v1` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
-								"schema": {
-									"type": "string"
-								}
-							}
-						},
 						"content": {
 							"application/json": {
 								"schema": {
@@ -175,7 +170,7 @@
 							"text/event-stream": {
 								"schema": {
 									"type": "string",
-									"description": "Server-Sent Events stream. Each `data:` frame contains a chat completion chunk. With extra fields enabled, a final `: stogas <base64url-json>` comment appears before `data: [DONE]`. SSE clients ignore the comment."
+									"description": "Server-Sent Events stream. Each `data:` frame contains a chat completion chunk. When a receipt is requested, a `: stogas {...}` comment appears before `data: [DONE]`. SSE clients ignore the comment."
 								},
 								"example": "data: {\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"chat.completion.chunk\",\"created\":1714343120,\"model\":\"gpt-5.5\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Hello\"},\"finish_reason\":null}]}\n\ndata: [DONE]\n\n"
 							}
@@ -222,13 +217,16 @@
 				"description": "Create an OpenAI-compatible Responses API response. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
 				"parameters": [
 					{
-						"$ref": "#/components/parameters/ExtraFields"
+						"$ref": "#/components/parameters/Receipt"
 					},
 					{
-						"$ref": "#/components/parameters/UpstreamApiKey"
+						"$ref": "#/components/parameters/UpstreamAnthropicApiKey"
 					},
 					{
-						"$ref": "#/components/parameters/UpstreamProvider"
+						"$ref": "#/components/parameters/UpstreamChutesApiKey"
+					},
+					{
+						"$ref": "#/components/parameters/UpstreamOpenAIApiKey"
 					}
 				],
 				"requestBody": {
@@ -244,14 +242,6 @@
 				"responses": {
 					"200": {
 						"description": "Successful response. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
-						"headers": {
-							"X-Stogas-Proof": {
-								"description": "Base64url-encoded `stogas.response-proof.v1` JSON. Present only for a successful non-streaming request with `X-Stogas-Extra-Fields: true`. A stream carries the value in its final Stogas SSE comment instead.",
-								"schema": {
-									"type": "string"
-								}
-							}
-						},
 						"content": {
 							"application/json": {
 								"schema": {
@@ -261,9 +251,9 @@
 							"text/event-stream": {
 								"schema": {
 									"type": "string",
-									"description": "Server-Sent Events stream. Each `data:` frame contains a Responses API event. With extra fields enabled, a final `: stogas <base64url-json>` comment appears before `data: [DONE]`. SSE clients ignore the comment."
+									"description": "Server-Sent Events stream. Each `data:` frame contains a Responses API event. When a receipt is requested, a `: stogas {...}` comment appears before `response.completed` or `response.incomplete`. SSE clients ignore the comment."
 								},
-								"example": "data: {\"type\":\"response.created\",\"response\":{\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"response\",\"created_at\":1714343120,\"status\":\"in_progress\",\"model\":\"gpt-5.5\",\"output\":[]}}\n\ndata: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_0192f217-35b0-7e2c-9be7-f4cc24f2a4b0\",\"output_index\":0,\"content_index\":0,\"delta\":\"Hello\"}\n\ndata: [DONE]\n\n"
+								"example": "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"response\",\"created_at\":1714343120,\"status\":\"in_progress\",\"model\":\"gpt-5.5\",\"output\":[]}}\n\nevent: response.output_text.delta\ndata: {\"type\":\"response.output_text.delta\",\"item_id\":\"msg_0192f217-35b0-7e2c-9be7-f4cc24f2a4b0\",\"output_index\":0,\"content_index\":0,\"delta\":\"Hello\"}\n\nevent: response.completed\ndata: {\"type\":\"response.completed\",\"sequence_number\":2,\"response\":{\"id\":\"8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7\",\"object\":\"response\",\"created_at\":1714343120,\"status\":\"completed\",\"model\":\"gpt-5.5\",\"output\":[]}}\n\n"
 							}
 						}
 					},
@@ -335,17 +325,17 @@
 			}
 		},
 		"parameters": {
-			"ExtraFields": {
-				"name": "X-Stogas-Extra-Fields",
+			"Receipt": {
+				"name": "Stogas-Receipt",
 				"in": "header",
 				"schema": {
-					"type": "boolean",
-					"default": false
+					"type": "string",
+					"enum": ["v1"]
 				},
-				"description": "Set to `true` to request one bounded signed result with request, node, catalog, pricing, timing, and proof fields. The gateway does not add fields to the OpenAI JSON body. Set to `false` or omit the header to disable it."
+				"description": "Set to `v1` to request one bounded signed Stogas receipt. Omit the header to disable it."
 			},
-			"UpstreamApiKey": {
-				"name": "X-Stogas-Upstream-API-Key",
+			"UpstreamAnthropicApiKey": {
+				"name": "X-Stogas-Upstream-Anthropic-API-Key",
 				"in": "header",
 				"required": false,
 				"schema": {
@@ -354,17 +344,31 @@
 					"maxLength": 4096,
 					"pattern": "^[!-~]+$"
 				},
-				"description": "Use this provider API key for this request. A valid Stogas API key is still required in Authorization. The value must contain printable ASCII without spaces. Stogas does not store a pass-through provider secret. Supply X-Stogas-Upstream-Provider with it."
+				"description": "Optional Anthropic credential for this request. A valid Stogas API key is still required in Authorization. The credential does not constrain routing and is used only if the resolved provider is Anthropic."
 			},
-			"UpstreamProvider": {
-				"name": "X-Stogas-Upstream-Provider",
+			"UpstreamChutesApiKey": {
+				"name": "X-Stogas-Upstream-Chutes-API-Key",
 				"in": "header",
 				"required": false,
 				"schema": {
 					"type": "string",
-					"enum": ["anthropic", "chutes", "openai"]
+					"minLength": 1,
+					"maxLength": 4096,
+					"pattern": "^[!-~]+$"
 				},
-				"description": "Provider routing constraint required with X-Stogas-Upstream-API-Key. The gateway rejects request routing that conflicts with this provider and never sends the credential to another provider."
+				"description": "Optional Chutes credential for this request. A valid Stogas API key is still required in Authorization. The credential does not constrain routing and is used only if the resolved provider is Chutes."
+			},
+			"UpstreamOpenAIApiKey": {
+				"name": "X-Stogas-Upstream-OpenAI-API-Key",
+				"in": "header",
+				"required": false,
+				"schema": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 4096,
+					"pattern": "^[!-~]+$"
+				},
+				"description": "Optional OpenAI credential for this request. A valid Stogas API key is still required in Authorization. The credential does not constrain routing and is used only if the resolved provider is OpenAI."
 			}
 		},
 		"responses": {
@@ -1027,6 +1031,102 @@
 					"temperature": 0.7
 				}
 			},
+			"StogasReceipt": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"schema",
+					"request_id",
+					"created_at",
+					"node_id",
+					"catalog",
+					"pricing",
+					"timing",
+					"proof"
+				],
+				"properties": {
+					"schema": { "type": "string", "const": "stogas.response-proof.v1" },
+					"request_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+					"created_at": {
+						"type": "string",
+						"format": "date-time",
+						"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$",
+						"description": "Signed UTC audit time with millisecond precision. It is not a freshness proof."
+					},
+					"node_id": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+					"catalog": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["digest", "sequence", "selection_ids"],
+						"properties": {
+							"digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+							"sequence": { "type": "integer", "minimum": 0 },
+							"selection_ids": {
+								"type": "array",
+								"prefixItems": [
+									{ "type": "string", "pattern": "^author:[a-z0-9][a-z0-9._-]{0,127}$" },
+									{ "type": "string", "pattern": "^model:[a-z0-9][a-z0-9._-]{0,127}$" },
+									{ "type": "string", "pattern": "^deployment:[a-z0-9][a-z0-9._-]{0,127}$" },
+									{ "type": "string", "pattern": "^route:[a-z0-9][a-z0-9._-]{0,127}$" },
+									{ "type": "string", "pattern": "^provider:[a-z0-9][a-z0-9._-]{0,127}$" }
+								],
+								"items": false,
+								"minItems": 5,
+								"maxItems": 5
+							}
+						}
+					},
+					"pricing": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["meters", "total_cost_usd_atoms"],
+						"properties": {
+							"meters": {
+								"type": "object",
+								"maxProperties": 64,
+								"additionalProperties": {
+									"type": "object",
+									"additionalProperties": false,
+									"required": ["quantity", "rate_key", "rate_usd_atoms", "usd_atoms"],
+									"properties": {
+										"quantity": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+										"rate_key": { "type": "string", "minLength": 1, "maxLength": 128 },
+										"rate_usd_atoms": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+										"usd_atoms": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }
+									}
+								}
+							},
+							"total_cost_usd_atoms": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" },
+							"byok_cost_usd_atoms": { "type": "string", "pattern": "^(0|[1-9][0-9]*)$" }
+						}
+					},
+					"timing": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["total_ms", "provider_ms"],
+						"properties": {
+							"total_ms": { "type": "integer", "minimum": 0 },
+							"provider_ms": { "type": "integer", "minimum": 0 },
+							"ttft_ms": {
+								"type": "integer",
+								"minimum": 0,
+								"description": "Gateway-observed time from request start until the first generated token-bearing streaming payload is accepted for sending. It includes Stogas processing, retries, and provider time. It is omitted for non-streaming responses and streams without generated output."
+							}
+						}
+					},
+					"proof": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["request_sha256", "response_sha256", "signature"],
+						"properties": {
+							"request_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+							"response_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+							"e2ee_transcript_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+							"signature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+						}
+					}
+				}
+			},
 			"ChatCompletionResponse": {
 				"type": "object",
 				"description": "Chat completion response",
@@ -1056,6 +1156,9 @@
 					},
 					"usage": {
 						"$ref": "#/components/schemas/ChatUsage"
+					},
+					"stogas": {
+						"$ref": "#/components/schemas/StogasReceipt"
 					}
 				},
 				"required": ["id", "object", "created", "model", "choices"],
@@ -1078,11 +1181,6 @@
 						"prompt_tokens": 9,
 						"completion_tokens": 11,
 						"total_tokens": 20
-					},
-					"stogas": {
-						"provider": "OpenAI",
-						"latency": 842,
-						"model_requested": "gpt-5.5-latest"
 					}
 				}
 			},
@@ -1714,6 +1812,9 @@
 					},
 					"usage": {
 						"$ref": "#/components/schemas/ResponsesUsage"
+					},
+					"stogas": {
+						"$ref": "#/components/schemas/StogasReceipt"
 					}
 				},
 				"required": ["id", "object", "created_at", "model", "output", "status"],

@@ -72,11 +72,11 @@ The struct above shows every transport option. Zero-valued fields use the public
 Reuse the verifier after `VerifyBundle`:
 
 ```go
-receipt, err := v.VerifyResponseProof(proofJSON, requestBody, responseBody, "")
+receipt, err := v.VerifyResponseProof(requestBody, responseBody, "")
 if err != nil { return err }
 fmt.Println(string(receipt))
 ```
 
 Call `VerifyHistoricalResponseProof` with the immutable Trust Center node record and catalog approval
-for a node that is no longer active. Pass the E2EE transcript SHA-256 as the final argument when the
-exchange was encrypted.
+for a node that is no longer active. `responseBody` is the complete buffered JSON with its final
+`stogas` object. Pass the E2EE transcript SHA-256 as the final argument when the exchange was encrypted.

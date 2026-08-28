@@ -125,8 +125,8 @@ Bundles include the default Stogas-signed hardware policy. To choose the AMD fir
 mitigation-vector, and platform-state requirements yourself, pass a bare policy JSON file:
 
 ```console
-stogas-verify verify bundle.json --policy hardware-policy.json
-stogas-verify serve --policy hardware-policy.json
+stogas-verify verify bundle.json --policy hardware-policies.json
+stogas-verify serve --policy hardware-policies.json
 ```
 
 The local file replaces only these changing appraisal rules. All fixed cryptographic and evidence
@@ -136,26 +136,26 @@ for the trust boundary.
 
 ## Verify a response receipt
 
-Send `X-Stogas-Extra-Fields: true`. Save the buffered `X-Stogas-Proof` value or the value from the
-final `: stogas <base64url-json>` SSE comment. Also save the exact plaintext request and response
-bytes:
+Send `Stogas-Receipt: v1`. For a buffered response, save the complete response body and exact
+plaintext request body:
 
 ```console
-stogas-verify proof proof.txt \
-  --request request.json \
+stogas-verify proof --request request.json \
   --response response.json \
   --bundle bundle.json \
-  --policy hardware-policy.json
+  --policy hardware-policies.json
 ```
 
-Omit `--policy` to use the signed policy in the bundle.
+Omit `--policy` to use the signed policy in the bundle. For a stream, save the raw JSON from the
+`: stogas {...}` comment and add `--proof proof.json`. The response input then contains every exact
+SSE byte except the Stogas comment, including `[DONE]`, `response.completed`, or
+`response.incomplete`. Stream files are
+hashed incrementally.
 
 For historical evidence, replace `--bundle bundle.json` with both
 `--ledger node.json --catalog catalog.json`. For an encrypted exchange, save the locally computed
 `X-Stogas-E2EE-Transcript-SHA256` response header and pass it with
-`--e2ee-transcript-sha256`. Streaming response input contains every exact SSE byte except the Stogas
-comment and includes the `[DONE]` frame. The command hashes body files incrementally, so their size
-does not set its memory use.
+`--e2ee-transcript-sha256`.
 
 ## All options
 

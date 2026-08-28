@@ -32,7 +32,7 @@ Do not expose a privileged API key in public browser code. Use a narrowly limite
 - Compressed bodies are checked after decompression; oversized bodies return `413`.
 - Unrecognized client headers are accepted and ignored for SDK and browser compatibility.
 - Client headers are never forwarded to providers.
-- Provider response headers are hidden unless they are on the safe diagnostics allowlist.
+- Provider response headers are not returned to clients.
 - Client-supplied private Stogas and Bifrost control headers are rejected.
 
 ## Limits
@@ -40,9 +40,10 @@ Do not expose a privileged API key in public browser code. Use a narrowly limite
 | Input                     |   Limit |
 | ------------------------- | ------: |
 | Decoded JSON request body | 128 MiB |
+| Encoded E2EE envelope     | 128 MiB |
 | Decoded E2EE ciphertext   |  94 MiB |
 
-The 94 MiB ciphertext limit leaves room for base64 encoding and recipient records inside the 128 MiB JSON limit. Compressed requests are measured after decompression. The gateway does not impose a token-count limit; the selected model and provider enforce their context and request limits. This permits current one-million-token models and does not preclude future two-million-token models when their valid JSON fits within the body limit.
+The ciphertext and complete encoded envelope have independent limits. Base64 encoding and one key-wrap record per verified node use envelope space, so the maximum usable ciphertext decreases as the verified fleet grows. There is no fixed fleet-recipient policy cap. Compressed requests are measured after decompression. The gateway does not impose a token-count limit; the selected model and provider enforce their context and request limits. This permits current one-million-token models and does not preclude future two-million-token models when their valid JSON fits within the body limit.
 
 ## Transport security
 
@@ -55,6 +56,8 @@ Native Stogas managed transports in `tls` or `both` mode require TLS 1.3 with X2
 Stogas application E2EE protects the API key, request body, response body, streamed events, and response errors between the client and the verified confidential gateway process. It uses the same `/v1/chat/completions` and `/v1/responses` paths as ordinary OpenAI-compatible requests.
 
 Use a Stogas managed transport or SDK. Applications should not construct the wire envelope directly.
+
+The outer request `Content-Type` selects E2EE mode. Its body is the envelope object itself, with no extra wrapper field. The gateway ignores any outer credential in this mode and uses only the credential in the authenticated ciphertext. Ordinary JSON mode continues to use its outer credential. The same E2EE media type identifies the encrypted response.
 
 For each request, the client:
 
@@ -77,16 +80,17 @@ See the [security and trust model](/docs/confidential-security-model) for detail
 Request the bounded signed result with:
 
 ```http
-X-Stogas-Extra-Fields: true
+Stogas-Receipt: v1
 ```
 
-The result contains `request_id`, `node_id`, and four groups:
+The result contains `request_id`, canonical UTC-millisecond `created_at`, `node_id`, and four groups:
 
-- `catalog`: digest, sequence, and the resolved author/model/deployment/route/provider node IDs;
+- `catalog`: digest, sequence, and ordered author/model/deployment/route/provider `selection_ids`;
 - `pricing`: the settled meter bag, total Stogas cost, and optional BYOK provider cost;
-- `timing`: total, provider, and optional first-output milliseconds;
+- `timing`: total, provider, and optional request-level TTFT milliseconds;
 - `proof`: request, response, and optional E2EE transcript SHA-256 values plus the node signature.
 
-A buffered response puts base64url JSON in `X-Stogas-Proof`. A stream puts the same value in a final
-`: stogas` SSE comment before `[DONE]`. The proof comment is not part of the response hash. The
-`[DONE]` frame is part of it. The gateway does not add raw request or response content to this result.
+A buffered response adds a final top-level `stogas` object. A stream puts the same raw compact JSON
+in a `: stogas {...}` SSE comment before `[DONE]`, `response.completed`, or `response.incomplete`.
+The comment is not part of
+the response hash; the terminal frame is. The gateway does not add raw request or response content.

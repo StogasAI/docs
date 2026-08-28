@@ -11,7 +11,7 @@ gateway's memory, private keys, provider credentials, or plaintext requests.
 
 1. **Release provenance:** GitHub Actions and Stogas independently authorize the same public source, IGVM hash, launch policy, and SNP measurement.
 2. **Hardware attestation:** AMD-signed SNP evidence proves an approved measurement booted on genuine hardware at an accepted security version.
-3. **Workload binding:** SNP report data binds the active catalog sequence and digest, TLS key, certificate hashes, and application keys to that measured guest.
+3. **Workload binding:** SNP report data binds the TLS key, public certificate hashes, and application keys to that measured guest. The quote-bound signing key signs the active catalog in every heartbeat and the catalog used in every response receipt.
 4. **Freshness:** every trusted node's signed drand round is at most two minutes older than the locally accepted bundle creation time. The verifier clock separately rejects delayed, future-dated, or expired bundles.
 
 No root of trust is accepted from the downloaded bundle. The verifier ships the AMD, Sigstore, drand, and Stogas release roots it trusts.
@@ -29,9 +29,9 @@ If that exact pin check fails, the native transport immediately verifies the lat
 retries once only when the accepted bundle changes. The failed TLS handshake sends no inference
 request bytes. Network, WebPKI, and other TLS failures are not retried automatically.
 
-Browser and optional native E2EE encrypt the complete inner inference request once under a random content key, then wrap that key independently to every node in the verified bundle. Random L4 routing therefore requires no session affinity or plaintext-aware intermediary. The selected guest decrypts inside confidential memory and encrypts response metadata, body or SSE records, errors, and an authenticated terminal record.
+Browser and optional native E2EE encrypt the complete inner inference request once under a random content key, then wrap that key independently to every node in the verified bundle. The request E2EE media type selects this mode before the gateway reads the body. Outer credentials have no authority in E2EE mode. Random L4 routing therefore requires no session affinity or plaintext-aware intermediary. The selected guest decrypts inside confidential memory and encrypts response metadata, body or SSE records, errors, and an authenticated terminal record.
 
-The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key wraps, ciphertext length, and network timing. One ciphertext contains the API key, complete OpenAI request body, relevant content negotiation, optional provider credential, and extra-field preference. The encrypted response contains its status, safe response headers, body or SSE records, and terminal state. This keeps routing, freshness checks, and recipient selection outside the ciphertext while keeping credentials and inference semantics inside it.
+The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key wraps, ciphertext length, and network timing. One ciphertext contains the API key, complete OpenAI request body, relevant content negotiation, optional provider credential, and receipt preference. The encrypted response contains its status, safe response headers, body or SSE records, and terminal state. This keeps routing, freshness checks, and recipient selection outside the ciphertext while keeping credentials and inference semantics inside it.
 
 The E2EE wire is version 1. Encrypted responses start with
 `STGE || 0x01 || nonce[12]`. The nonce is public random data, not a secret. It is the base AES-GCM
@@ -42,7 +42,7 @@ authenticated empty record terminates the response. The client rejects truncatio
 are ignored because they cannot change the authenticated response. The random nonce prevents reuse if
 the same encrypted request can produce responses on more than one verified node.
 
-The same signed response receipt, `stogas.response-proof.v1`, travels inside the encrypted response when extra fields are enabled. E2EE does not introduce a second proof format. The receipt binds the request and node IDs; hashes of the exact plaintext request and response bytes; catalog digest, sequence, and resolved author/model/deployment/route/provider IDs; settled pricing; timing; and the E2EE transcript when present. Active-bundle verification requires the exact node and catalog to be in the accepted bundle. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
+The same signed response receipt, `stogas.response-proof.v1`, travels inside the encrypted response when `Stogas-Receipt: v1` is selected. E2EE does not introduce a second proof format. The receipt binds the request ID, canonical creation time, node ID, hashes of the exact plaintext request and response bytes, catalog digest and ordered selection IDs, settled pricing, timing, and the E2EE transcript when present. Active-bundle verification requires the exact node and catalog to be in the accepted bundle. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
 
 ## Release authorization
 
@@ -52,7 +52,9 @@ The Stogas release public key is:
 MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
 ```
 
-It signs canonical `stogas.gateway.launch-policy.v1` bytes using the domain separator `stogas gateway launch policy v1\n`. GitHub's attestation must independently bind the exact same launch-policy digest and IGVM digest. A node is trusted only when its SNP measurement belongs to that verified release set.
+It signs canonical `stogas.gateway.release.v1` manifest bytes using the domain separator `stogas gateway counterbuild v1\n`. The manifest binds the exact IGVM and launch-policy files, reproducible-build identity, and SNP measurement. GitHub independently attests those same manifest bytes. A node is trusted only when its exact chip ID has an applicable group in both the independent hardware document and that release's launch document, and its quote matches both.
+
+The global hardware document is separate from gateway releases. Stogas signs it as Ed25519 DSSE and publishes that signed envelope to public Rekor v1. The bundle carries the complete Rekor proof, so the verifier checks it locally without querying Rekor. The hardware and launch documents do not refer to each other.
 
 Catalog releases use the same public key but a separate `stogas catalog release v1\n` domain. GitHub Actions attests the runtime and public artifact hashes. Stogas independently builds the tagged source and signs its own manifest of those hashes; it does not sign the GitHub attestation. The verifier accepts the catalog only when both lanes contain the same hashes and the pinned source and workflow identities.
 

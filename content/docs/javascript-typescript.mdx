@@ -74,21 +74,21 @@ The low-level `Verifier` remains useful when an application needs the verified g
 
 ## Verify a response receipt
 
-Send `X-Stogas-Extra-Fields: true`. After `verify_bundle`, decode the base64url `X-Stogas-Proof`
-value and pass the JSON with the exact plaintext request and response bytes to the same verifier:
+Send `Stogas-Receipt: v1`. After `verify_bundle`, pass the exact plaintext request and complete
+buffered response bytes to the same verifier. It extracts the final top-level `stogas` object:
 
 ```ts
-const receipt = verifier.verify_response_proof(proofBytes, requestBytes, responseBytes);
+const receipt = verifier.verify_response_proof(requestBytes, responseBytes);
 console.log(receipt.proof.request_sha256, receipt.proof.response_sha256);
 ```
 
-For a stream, the final Stogas field is an SSE comment before `[DONE]`. It does not change the JSON
-event stream seen by standard OpenAI clients. Use a running verifier so the full SSE transcript does
-not stay in memory:
+For a stream, the Stogas receipt is raw compact JSON in an SSE comment before `[DONE]`,
+`response.completed`, or `response.incomplete`. It does not change the event stream seen by standard OpenAI clients. Use a
+running verifier so the full SSE transcript does not stay in memory:
 
 ```ts
 const stream = verifier.start_response_proof(requestBytes);
-stream.write(frameBytes); // Each non-Stogas frame, including [DONE].
+stream.write(frameBytes); // Each non-Stogas frame, including the terminal frame.
 const receipt = stream.finish(proofBytes, e2eeTranscriptSHA256);
 ```
 
