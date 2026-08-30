@@ -1,0 +1,301 @@
+---
+title: API key configuration
+description: Set routing, access periods, limits, and request redaction in one versioned JSON document.
+---
+
+Each API key has one versioned JSON configuration. Edit it on the key page or through the management
+API. Stogas validates the full document before it saves any change.
+
+```json title="key-config.json"
+{
+	"$schema": "https://stogas.ai/schemas/key-config-v1.json",
+	"version": 1,
+	"routing": {
+		"query": "where deployment.data.dataHandling.trainingUse == false\n  and deployment.data.dataHandling.tee == true\norder by deployment.data.pricing.input_tokens.per_mill_tokens asc",
+		"allowedCatalogNodes": {
+			"providers": ["openai", "chutes"]
+		},
+		"fallbacks": {
+			"maxPreDispatchCandidates": 2
+		}
+	},
+	"limits": {
+		"requests": {
+			"max": 60,
+			"window": { "count": 1, "unit": "minute" },
+			"burst": 10
+		},
+		"spend": {
+			"lifetimeUsd": "500.00",
+			"recurring": {
+				"maxUsd": "100.00",
+				"window": { "count": 1, "unit": "month" },
+				"timeZone": "UTC"
+			}
+		}
+	},
+	"expiresAt": "2026-12-01T00:00:00Z"
+}
+```
+
+JSON is the only configuration format in version 1. It gives command-line tools, agents, editors,
+and the dashboard one exact schema. Stogas stores canonical JSON, so comments and whitespace are not
+preserved.
+
+## Routing query
+
+The query can filter catalog candidates and sort the candidates that remain. It is not SQL and it
+cannot run code.
+
+```text
+where provider.id in ['openai', 'chutes']
+  and deployment.data.capabilities.streaming == true
+order by deployment.data.pricing.output_tokens.per_mill_tokens asc
+```
+
+Use single quotes for values inside a JSON query string. A provider ID such as `openai` needs no
+escaped double quotes.
+
+Version 1 supports only:
+
+- `where` and `order by`;
+- `and`, `or`, and `not`;
+- `==`, `!=`, `<`, `<=`, `>`, and `>=`;
+- `in`, `contains`, and `exists`;
+- parentheses;
+- string, integer, Boolean, and list values; and
+- `asc` and `desc`.
+
+It does not support joins, regular expressions, arithmetic, functions other than `exists`, automatic
+type conversion, scripts, network access, random values, or current time.
+
+`and` binds before `or`. Use parentheses when that order is not clear. `contains` checks for a
+substring in a string or an exact item in a string list. `in` checks one scalar value against a list.
+
+A missing value does not match any comparison, including `!=`. `not` does not turn a missing value
+into a match. Test presence with `exists()`:
+
+```text
+where deployment.data.dataHandling.tee == true
+  and deployment.data.dataHandling.teeVerified == true
+```
+
+Stogas rejects an unknown path or a value of the wrong type when you save the configuration. A query
+can contain at most 4,096 characters, 64 expression nodes, 12 nested expressions, 32 values in one
+list, four configured sort fields, and 1,024 UTF-8 bytes in one string value. When `order by` is
+present, Stogas adds `deployment.id asc` as the final stable sort. A filter-only query keeps the
+client's provider order.
+
+`order by` is optional at every configuration scope. An organization does not need a default
+provider sort. Without a configured sort or request order, Stogas uses the model author's provider
+when it remains usable. If no author provider remains and the choice is still ambiguous, the request
+fails with the valid provider-qualified selectors instead of choosing one silently.
+
+### Field paths
+
+The resolved catalog chain has five nodes. Each node exposes its stable ID and its registered catalog
+data:
+
+| Root         | Available paths                                                                                     |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| `author`     | `author.id`, `author.data.name`, `author.data.aliases`                                              |
+| `model`      | `model.id` and scalar or list fields under `model.data`                                             |
+| `deployment` | `deployment.id` and scalar or list fields under `deployment.data`                                   |
+| `route`      | `route.id`, `route.data.providerId`, `route.data.interfaces`                                        |
+| `provider`   | `provider.id`, `provider.data.name`, `provider.data.aliases`, `provider.data.credentialModes`       |
+| `request`    | `request.estimatedInputTokens`, `request.maximumOutputTokens`, `request.model`, and `request.route` |
+
+There are no shortcut `pricing` or `capability` roots. For example, use
+`deployment.data.capabilities.streaming` and
+`deployment.data.dataHandling.trainingUse`. Deployment precision is available as
+`deployment.data.weightPrecision` when the catalog defines it.
+
+Deployment pricing paths have this form:
+
+```text
+deployment.data.pricing.<meter>.<rate>
+```
+
+Token meters are `input_tokens`, `cached_input_tokens`, `cache_write_input_tokens`,
+`cache_write_5m_input_tokens`, `cache_write_1h_input_tokens`, `output_tokens`, and
+`reasoning_tokens`. Their rate is `per_mill_tokens`, `per_mill_context_lte_272k`, or
+`per_mill_context_gt_272k`.
+
+Call meters use `per_1k_calls`. The one exception is
+`openai_chat_completion_search_preview_model_calls`, which uses the low, medium, and high search
+context rates. A rate that is valid for one meter is not automatically valid for another meter.
+
+The configuration schema exposes only registered scalar and list fields. It does not allow an
+unchecked path into catalog JSON. Live health and recent latency are not routing fields in version 1.
+
+A model selector starts with each provider's default deployment. A filter or explicit sort can select
+a compatible geography or hosting variant. Stogas does not cross the selected service tier or
+reasoning mode. A deployment selector stays pinned to that exact deployment.
+
+The `request` values are safe estimates made before authorization. `estimatedInputTokens` is the
+conservative input-token hold estimate. Encrypted reasoning can force it to the deployment's input
+limit because Stogas cannot inspect that content. `maximumOutputTokens` is the accepted output
+limit. Neither value is final usage.
+
+## Allowed catalog nodes
+
+Use `allowedCatalogNodes` when exact IDs are clearer than a query:
+
+```json
+{
+	"version": 1,
+	"routing": {
+		"allowedCatalogNodes": {
+			"models": ["gpt-5"],
+			"providers": ["openai"]
+		}
+	}
+}
+```
+
+A candidate must match every list that is present. Omitted lists do not restrict that node type. The
+five lists can contain at most 64 IDs in total. IDs are checked against the active catalog at request
+time, so an ID that is no longer available cannot route a request.
+
+## Pre-dispatch candidates
+
+`maxPreDispatchCandidates` can be 1, 2, or 3. The default is 1.
+
+This setting does **not** retry a provider request. It lets Stogas check the next resolved candidate
+only when the current candidate is rejected before a provider call starts. Examples include a
+provider-specific request shape that cannot be prepared or a candidate that has no permitted
+credential.
+
+After a provider call starts, Stogas never sends the request to another provider. This prevents
+duplicate charges, duplicate side effects, changed model behavior, and lost prompt-cache affinity.
+The client receives the provider error and can decide whether to retry.
+
+Provider attempts contain only real provider calls. A candidate check does not create a provider
+attempt or a separate request log. If a request has already created a hold and final setup then
+fails, Stogas releases the hold and records one request with an empty provider-attempt list. One
+client request can therefore create at most one request log through this setting.
+
+## Request rate
+
+The version 1 request limiter is a token bucket:
+
+```json
+{
+	"version": 1,
+	"limits": {
+		"requests": {
+			"max": 120,
+			"window": { "count": 1, "unit": "minute" },
+			"burst": 20
+		}
+	}
+}
+```
+
+`max` and `window` set the steady refill rate. `burst` sets the bucket capacity. When `burst` is
+omitted, it equals `max`. Supported request windows range from seconds through weeks. The resulting
+rate must be between one request per century and 60 requests per second.
+
+Version 1 has one request bucket per key. It does not offer several limiter kinds or arbitrary named
+counters. Those controls need separate transactional counters; placing a list in JSON would not make
+concurrent enforcement correct. If `limits.requests` is absent, the platform safety bucket still
+limits a key to 60 requests per second with a burst of 60.
+
+## Spend and expiration
+
+`lifetimeUsd` limits total settled spend for the key. `recurring` limits spend in one anchored period.
+Both can be present:
+
+```json
+{
+	"version": 1,
+	"limits": {
+		"spend": {
+			"lifetimeUsd": "1000.00",
+			"recurring": {
+				"anchor": "2026-08-31T04:00:00Z",
+				"maxUsd": "50.00",
+				"window": { "count": 1, "unit": "week" },
+				"timeZone": "America/New_York"
+			}
+		}
+	}
+}
+```
+
+USD values are decimal strings. Do not use JSON numbers for money. `anchor` fixes the phase of every
+window; it does not delay enforcement. If it is omitted, Stogas sets it when the configuration is
+first saved. Month and year periods keep the anchor's local day and time, clamped to the last day of
+shorter months. Recurring windows use minute, hour, day, week, month, or year units and can contain at
+most 1,000 units. Spend belongs to the window in which Stogas creates the request hold. A request that
+finishes after the next window starts does not consume both windows.
+
+`expiresAt` is an absolute timestamp with an offset. An expired key is disabled and cannot be enabled
+until its expiration changes.
+
+The request rate, spend limits, expiration, current balance, and current usage are checked in the
+same PostgreSQL authorization transaction that creates the hold. PostgreSQL does not parse the JSON
+on this path; save-time compilation writes the typed values used by the transaction.
+
+## Deny periods
+
+Time rules use a small structured form instead of adding time functions to the routing language:
+
+```json
+{
+	"version": 1,
+	"access": {
+		"deny": [
+			{
+				"days": ["mon", "tue", "wed", "thu", "fri"],
+				"start": "00:00",
+				"end": "08:00",
+				"timeZone": "America/New_York"
+			}
+		]
+	}
+}
+```
+
+The start is included and the end is excluded. An end can be `24:00`. A period cannot cross midnight.
+Split an overnight period into two entries, such as `20:00`–`24:00` and `00:00`–`08:00`. IANA time
+zones apply their daylight-saving rules. A configuration can have at most 16 deny periods.
+
+## PII redaction
+
+Stogas redacts its secure default set before provider routing. The default covers every built-in group
+except IP addresses. Key configuration can add IP detection and bounded custom RE2 patterns; it cannot
+disable the secure defaults.
+
+```json
+{
+	"version": 1,
+	"plugins": {
+		"stogasPiiRedaction": {
+			"patterns": ["ip_address"],
+			"customPatterns": ["EMP-[0-9]{6}\\b"]
+		}
+	}
+}
+```
+
+There can be at most 16 custom patterns, 512 bytes per pattern, and 4,096 bytes in total. Patterns
+cannot match empty text or redaction placeholders. RE2 does not support lookarounds or backreferences.
+An invalid or excessive expression is rejected before the key is updated. `ip_address` is the only
+value accepted in `patterns` in version 1; the other built-in groups are already active.
+
+## Activation and cache behavior
+
+Stogas compiles a saved document and writes a digest and increasing generation to the key. A gateway
+node can cache that compiled result for up to 30 seconds. The authorization transaction compares the
+cached generation with the key row. A stale generation cannot create a hold; the node reloads once and
+tries authorization again.
+
+This keeps normal requests to one configuration read plus one authorization transaction on a cold
+cache, and only the authorization transaction on a warm node. A policy tightening is still enforced
+at the hold boundary even when a node has an older cached copy. A relaxed deny period can continue to
+reject requests on one node until that node's cached copy expires, for at most 30 seconds. The same
+bound applies when any configuration change makes enforcement less restrictive.
+
+The complete JSON Schema is available at
+[`https://stogas.ai/schemas/key-config-v1.json`](https://stogas.ai/schemas/key-config-v1.json).

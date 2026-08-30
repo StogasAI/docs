@@ -7,7 +7,23 @@ Stogas supports the cataloged interfaces for OpenAI, Anthropic, Azure, and Chute
 
 ## Routing
 
-Choose a public model ID from `/v1/models`. If a slug is available from more than one provider, use `provider` or its `rules` alias:
+The `model` field accepts three forms:
+
+| Form               | Example              | Meaning                                     |
+| ------------------ | -------------------- | ------------------------------------------- |
+| Model ID           | `gpt-5.6-sol`        | Use the model author's provider when usable |
+| Provider and model | `azure/gpt-5.6-sol`  | Use that provider's deployment of the model |
+| Deployment ID      | `openai-gpt-5.6-sol` | Pin the exact catalog deployment            |
+
+Provider and deployment IDs come from `/v1/models` and the catalog. A deployment ID stays pinned;
+Stogas does not move it to another tier, region, speed, or reasoning mode.
+
+For an unqualified model, Stogas first removes deployments that cannot satisfy the request and API
+key configuration. It then applies `provider.only` as a strict restriction and `provider.order` as
+a preference. If no order is set, the model author's provider is first when it remains usable. This
+means `service_tier: "flex"` can select the only provider with a cataloged Flex deployment.
+
+Use `provider` or its `rules` alias to restrict or order providers:
 
 ```json
 {
@@ -24,9 +40,15 @@ Service tiers are deployment capabilities, not portable promises across provider
 | Provider  | Accepted values                               | Behavior                                                                                                                                                                        |
 | --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | OpenAI    | `auto`, `default`, `fast`, `flex`, `priority` | `fast` and its accepted legacy spelling `priority` select the same Fast deployment. `scale` and `provisioned` are unavailable.                                                  |
+| Azure     | `auto`, `default`, `fast`, `priority`         | `fast` and `priority` select the same cataloged Priority deployment. Azure does not accept `flex`.                                                                              |
 | Anthropic | `default`, `standard`, `standard_only`        | All values select the cataloged Standard Tier and are sent upstream as `standard_only`. `auto` and `priority` require a separate Priority Tier contract; `flex` does not exist. |
 
 An exact deployment slug rejects a `service_tier` value that selects a different deployment.
+
+[OpenAI's Ultrafast preview](https://openai.com/index/previewing-ultrafast/) is access-controlled and
+currently applies to GPT-5.6 Sol. Stogas does not route it until OpenAI publishes the price needed
+for authorization and settlement. An `ultrafast` request is therefore rejected before provider
+dispatch.
 
 ## Prompt caching
 

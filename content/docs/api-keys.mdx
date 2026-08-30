@@ -30,7 +30,7 @@ An administrator creates a grant on the separate **Grants** page. A grant contro
 - which members may use it;
 - how many keys each assigned member may create;
 - whether it is enabled; and
-- whether members may change expiration, rate, and spend settings on their keys.
+- whether members may change their key configuration.
 
 A member starts with no grant. An assigned member creates keys only when they need them, up to that
 grant's per-member allowance. The same grant may be assigned to many members, and each member has an
@@ -53,21 +53,25 @@ A member key is a normal inference credential owned by one member under one gran
 each key a separate name, rotate its secret, disable it, or delete it. Administrators can see and
 manage all organization keys, including member keys.
 
-When **Member key settings** is enabled on the grant, the member may also set expiration, request-rate,
-lifetime-spend, and recurring-spend limits. When it is disabled, only an administrator may change
-those settings. Each key keeps its own settings; grants do not add inherited rate or spend policy.
+When **Member key settings** is enabled on the grant, the member may also change the key's routing,
+access, limit, and redaction configuration. When it is disabled, only an administrator may change the
+configuration. Each key keeps its own configuration; grants do not add inherited policy in version 1.
 
 ## Limits
 
-Each usable key can have these optional controls:
+Each usable key can have these optional controls in one versioned JSON document:
 
-- expiration;
-- requests per second;
-- lifetime spend; and
-- recurring spend with an anchored reset schedule.
+- catalog filters and sorting;
+- an allowed set of catalog node IDs;
+- up to three candidates checked before provider dispatch;
+- access deny periods and expiration;
+- a request token bucket;
+- lifetime and recurring spend limits; and
+- additional PII redaction patterns.
 
 The gateway enforces these controls and the organization balance in the authorization transaction for
-every request. The default gateway ceiling is 60 requests per second when no lower key rate is set.
+every request. See [API key configuration](/docs/api-key-configuration) for the schema, routing fields,
+limits, and exact pre-dispatch behavior.
 
 ## Provider credentials
 

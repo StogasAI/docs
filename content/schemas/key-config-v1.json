@@ -1,0 +1,215 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://stogas.ai/schemas/key-config-v1.json",
+	"title": "Stogas API key configuration v1",
+	"description": "Editable API key configuration. The canonical UTF-8 document must not exceed 16384 bytes. Unknown properties are rejected.",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["version"],
+	"properties": {
+		"$schema": {
+			"const": "https://stogas.ai/schemas/key-config-v1.json"
+		},
+		"version": {
+			"const": 1
+		},
+		"routing": {
+			"type": "object",
+			"additionalProperties": false,
+			"minProperties": 1,
+			"properties": {
+				"query": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 4096,
+					"description": "A bounded Stogas routing query. See https://stogas.ai/docs/api-key-configuration."
+				},
+				"allowedCatalogNodes": {
+					"type": "object",
+					"additionalProperties": false,
+					"minProperties": 1,
+					"description": "The lists contain at most 64 IDs in total. A candidate must match each list that is present.",
+					"properties": {
+						"authors": { "$ref": "#/$defs/catalogNodeIds" },
+						"models": { "$ref": "#/$defs/catalogNodeIds" },
+						"deployments": { "$ref": "#/$defs/catalogNodeIds" },
+						"routes": { "$ref": "#/$defs/catalogNodeIds" },
+						"providers": { "$ref": "#/$defs/catalogNodeIds" }
+					}
+				},
+				"fallbacks": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["maxPreDispatchCandidates"],
+					"properties": {
+						"maxPreDispatchCandidates": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 3,
+							"description": "Maximum candidates that Stogas may check before one provider call starts. This does not retry an upstream request."
+						}
+					}
+				}
+			}
+		},
+		"limits": {
+			"type": "object",
+			"additionalProperties": false,
+			"minProperties": 1,
+			"properties": {
+				"requests": {
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["max", "window"],
+					"properties": {
+						"max": { "type": "integer", "minimum": 1, "maximum": 1000000000000 },
+						"burst": { "type": "integer", "minimum": 1, "maximum": 1000000000000 },
+						"window": { "$ref": "#/$defs/requestWindow" }
+					}
+				},
+				"spend": {
+					"type": "object",
+					"additionalProperties": false,
+					"minProperties": 1,
+					"properties": {
+						"lifetimeUsd": { "$ref": "#/$defs/usd" },
+						"recurring": {
+							"type": "object",
+							"additionalProperties": false,
+							"required": ["maxUsd", "timeZone", "window"],
+							"properties": {
+								"anchor": { "$ref": "#/$defs/dateTime" },
+								"maxUsd": { "$ref": "#/$defs/usd" },
+								"timeZone": { "$ref": "#/$defs/timeZone" },
+								"window": { "$ref": "#/$defs/window" }
+							}
+						}
+					}
+				}
+			}
+		},
+		"expiresAt": { "$ref": "#/$defs/dateTime" },
+		"access": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["deny"],
+			"properties": {
+				"deny": {
+					"type": "array",
+					"minItems": 1,
+					"maxItems": 16,
+					"items": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["days", "start", "end", "timeZone"],
+						"properties": {
+							"days": {
+								"type": "array",
+								"minItems": 1,
+								"maxItems": 7,
+								"uniqueItems": true,
+								"items": { "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] }
+							},
+							"start": { "$ref": "#/$defs/time" },
+							"end": {
+								"$ref": "#/$defs/endTime",
+								"description": "The end must be later than the start. Split an overnight period into two entries."
+							},
+							"timeZone": { "$ref": "#/$defs/timeZone" }
+						}
+					}
+				}
+			}
+		},
+		"plugins": {
+			"type": "object",
+			"additionalProperties": false,
+			"minProperties": 1,
+			"properties": {
+				"stogasPiiRedaction": {
+					"type": "object",
+					"additionalProperties": false,
+					"minProperties": 1,
+					"properties": {
+						"patterns": {
+							"type": "array",
+							"minItems": 1,
+							"maxItems": 1,
+							"uniqueItems": true,
+							"description": "Built-in patterns to add. Secure default detection remains enabled. ip_address is the only optional built-in in v1.",
+							"items": {
+								"const": "ip_address"
+							}
+						},
+						"customPatterns": {
+							"type": "array",
+							"minItems": 1,
+							"maxItems": 16,
+							"uniqueItems": true,
+							"description": "Bounded RE2 expressions. The expressions use at most 4096 UTF-8 bytes in total and cannot match empty text or redaction placeholders.",
+							"items": { "type": "string", "minLength": 1, "maxLength": 512 }
+						}
+					}
+				}
+			}
+		}
+	},
+	"$defs": {
+		"catalogNodeIds": {
+			"type": "array",
+			"minItems": 1,
+			"maxItems": 64,
+			"uniqueItems": true,
+			"items": { "$ref": "#/$defs/catalogNodeId" }
+		},
+		"catalogNodeId": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 128,
+			"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+		},
+		"dateTime": {
+			"type": "string",
+			"format": "date-time",
+			"pattern": "^(?!0000-)"
+		},
+		"requestWindow": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["count", "unit"],
+			"properties": {
+				"count": { "type": "integer", "minimum": 1, "maximum": 999999 },
+				"unit": { "enum": ["second", "minute", "hour", "day", "week"] }
+			}
+		},
+		"time": {
+			"type": "string",
+			"pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+		},
+		"endTime": {
+			"type": "string",
+			"pattern": "^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$"
+		},
+		"timeZone": {
+			"type": "string",
+			"minLength": 1,
+			"maxLength": 64,
+			"pattern": "^[A-Za-z0-9_+\\-/]+$",
+			"description": "An IANA time zone name, such as America/New_York or UTC."
+		},
+		"usd": {
+			"type": "string",
+			"pattern": "^0*(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{1,18})?|1000000000000(?:\\.0{1,18})?)$",
+			"description": "A non-negative decimal amount with at most 18 decimal places."
+		},
+		"window": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["count", "unit"],
+			"properties": {
+				"count": { "type": "integer", "minimum": 1, "maximum": 1000 },
+				"unit": { "enum": ["minute", "hour", "day", "week", "month", "year"] }
+			}
+		}
+	}
+}
