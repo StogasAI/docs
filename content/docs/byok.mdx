@@ -104,6 +104,8 @@ Azure-hosted or partner-hosted inference, and Instant access. It does not duplic
 Azure resource region. Pro and Priority are request controls on the same physical deployment, so
 they do not require separate Azure deployments. A region filter can select only catalog deployments
 whose documented data handling satisfies it; unknown regions do not satisfy a narrow filter.
+An applicable catalog guarantee of no ordinary-content storage does not require Azure to report a
+storage region. It does not establish a separate zero-data-retention agreement.
 
 ## Set the API key credential mode
 
@@ -137,8 +139,10 @@ not accept pass-through or Stogas-managed credential modes.
   bindings are used only when that exact credential is assigned to the Stogas API key.
 - Stored secrets are encrypted before database storage. Dashboard responses contain only the name,
   status, and a short preview.
-- BYOK requests reserve and settle 2% of the upstream request cost, rounded up to the nearest USD
+- BYOK requests reserve and settle 2% of the usage cost calculated from catalog rates, rounded up to the nearest USD
   atom. API key spend limits and the organization balance use that billed amount.
+- The provider bills you separately. Catalog rates do not include your private discounts or capacity
+  reservations and are not a statement of your provider invoice.
 - Analytics shows upstream cost and Stogas billed cost separately. Named pass-through IDs and stored
   credentials are available as filters; unnamed pass-through IDs remain visible as hashes.
 

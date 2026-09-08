@@ -46,13 +46,15 @@ The same signed response receipt, `stogas.response-proof.v1`, travels inside the
 
 ## Release authorization
 
-The Stogas release public key is:
+The production Stogas release public key is:
 
 ```text
 MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
 ```
 
 It signs canonical `stogas.gateway.release.v1` manifest bytes using the domain separator `stogas gateway counterbuild v1\n`. The manifest binds the exact IGVM and launch-policy files, reproducible-build identity, and SNP measurement. GitHub independently attests those same manifest bytes. A node is trusted only when its exact chip ID has an applicable group in both the independent hardware document and that release's launch document, and its quote matches both.
+
+Production verification never accepts the separate staging signing key. Staging verification also accepts production releases. A local staging build can use a manifest-bound placeholder instead of GitHub's build proof, but it must still carry a valid Stogas signature.
 
 The global hardware document is separate from gateway releases. Stogas signs it as Ed25519 DSSE and publishes that signed envelope to public Rekor v1. The bundle carries the complete Rekor proof, so the verifier checks it locally without querying Rekor. The hardware and launch documents do not refer to each other.
 

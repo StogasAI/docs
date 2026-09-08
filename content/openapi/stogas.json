@@ -74,9 +74,7 @@
 												"deployments": {},
 												"providers": {},
 												"routes": {}
-											},
-											"aliases": {},
-											"evidence": {}
+											}
 										}
 									}
 								}
@@ -550,17 +548,55 @@
 			}
 		},
 		"schemas": {
+			"RequestRoutingPolicy": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["version", "routing"],
+				"description": "Optional, at most 16 KiB. Requires saved routing.requestPolicy permission. Intersects saved policies and is never forwarded upstream. Forbidden policies return 403 and invalid permitted policies return 400.",
+				"properties": {
+					"version": { "type": "integer", "enum": [1] },
+					"routing": {
+						"type": "object",
+						"additionalProperties": false,
+						"minProperties": 1,
+						"properties": {
+							"query": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 4096,
+								"description": "Bounded source query. Sorting requires filter_and_sort permission."
+							},
+							"allowedCatalogNodes": {
+								"type": "object",
+								"additionalProperties": false,
+								"minProperties": 1,
+								"description": "At most 64 IDs in total. Empty lists deny all candidates.",
+								"properties": {
+									"authors": { "$ref": "#/components/schemas/RequestPolicyNodeIds" },
+									"models": { "$ref": "#/components/schemas/RequestPolicyNodeIds" },
+									"deployments": { "$ref": "#/components/schemas/RequestPolicyNodeIds" },
+									"routes": { "$ref": "#/components/schemas/RequestPolicyNodeIds" },
+									"providers": { "$ref": "#/components/schemas/RequestPolicyNodeIds" }
+								}
+							}
+						}
+					}
+				}
+			},
+			"RequestPolicyNodeIds": {
+				"type": "array",
+				"maxItems": 64,
+				"uniqueItems": true,
+				"items": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 128,
+					"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+				}
+			},
 			"CatalogResponse": {
 				"type": "object",
-				"required": [
-					"schema",
-					"sequence",
-					"runtimeDigest",
-					"publicDigest",
-					"graph",
-					"aliases",
-					"evidence"
-				],
+				"required": ["schema", "sequence", "runtimeDigest", "publicDigest", "graph"],
 				"properties": {
 					"schema": {
 						"type": "string",
@@ -581,16 +617,6 @@
 					"graph": {
 						"type": "object",
 						"description": "Resolved five-node graph: authors, models, deployments, routes, and providers.",
-						"additionalProperties": true
-					},
-					"aliases": {
-						"type": "object",
-						"description": "Explicit request slugs pointing to deployments.",
-						"additionalProperties": true
-					},
-					"evidence": {
-						"type": "object",
-						"description": "Sources for public data-handling and moderation claims.",
 						"additionalProperties": true
 					}
 				}
@@ -695,6 +721,7 @@
 				"additionalProperties": true,
 				"required": ["model", "messages"],
 				"properties": {
+					"policy": { "$ref": "#/components/schemas/RequestRoutingPolicy" },
 					"model": {
 						"type": "string",
 						"description": "Catalog model or deployment slug to route to, optionally provider-qualified, such as `gpt-5.5-latest`, `openai-gpt-5.5-2026-04-23-flex-latest`, or `openai/openai-gpt-5.5-2026-04-23-fast-latest`."
@@ -1407,6 +1434,7 @@
 				"additionalProperties": true,
 				"required": ["model", "input"],
 				"properties": {
+					"policy": { "$ref": "#/components/schemas/RequestRoutingPolicy" },
 					"model": {
 						"type": "string"
 					},
