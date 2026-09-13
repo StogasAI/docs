@@ -9,11 +9,11 @@ upstream provider request.
 
 ## Choose a credential method
 
-| Method             | Where the provider secret is supplied | Best for                                     |
-| ------------------ | ------------------------------------- | -------------------------------------------- |
-| **Stored BYOK**    | Once in the Stogas dashboard          | Services that should not carry provider keys |
-| **Pass-through**   | On each API request                   | Secrets that Stogas must never store         |
-| **Stogas managed** | By Stogas                             | Providers where managed service is available |
+| Method             | Where the provider secret is supplied | Best for                                        |
+| ------------------ | ------------------------------------- | ----------------------------------------------- |
+| **Stored BYOK**    | Once in the Stogas dashboard          | Services that should not carry provider keys    |
+| **Pass-through**   | On each API request                   | Keeping provider keys out of persistent storage |
+| **Stogas managed** | By Stogas                             | Providers where managed service is available    |
 
 Managed service is currently available for Chutes. OpenAI and Anthropic accept stored or
 pass-through credentials. Azure accepts only a stored Microsoft Entra application credential.
@@ -26,11 +26,11 @@ pass-through credentials. Azure accepts only a stored Microsoft Entra applicatio
    client secret, and the subscription IDs that Stogas may inspect.
 4. Open a service or member API key and select the stored credential for that provider.
 
-Stogas sends one free, authenticated metadata request to the provider before it encrypts and saves
-the credential. OpenAI and Anthropic use their model-list operation. Chutes uses an authenticated
-account-quota operation because its model catalog is public. Azure uses the management and model
-data APIs described below. A provider rejection blocks the save; a timeout, provider rate limit, or
-provider outage asks you to try again.
+Before saving or replacing a secret, Stogas checks it through authenticated metadata calls, not
+paid inference. OpenAI and Anthropic use their model-list operation; Chutes uses its account-quota
+operation. Azure uses its management and model APIs. A rejected credential is not saved. If the
+provider is unavailable or rate-limits the check, try again. A successful check does not guarantee
+quota or access to every model.
 
 The dashboard never returns the stored secret. You can replace any stored provider credential in
 place. Its stable credential ID, API-key assignments, and analytics history do not change.
@@ -67,13 +67,14 @@ the normal upstream request checks the selected key.
 A successful pass-through request records a stable 64-character credential ID in analytics. Select
 an unnamed ID to open a prefilled **Pass-through** form, or copy the ID into the BYOK page's **Add**
 form. The dashboard saves only the name, provider, and ID; it does not receive the provider secret,
-probe the provider, or change earlier logs. The inference gateway saw the secret only in memory for
-the original request. Earlier requests automatically show the name because the ID is deterministic
-within the organization, workspace, and provider.
+probe the provider, or change earlier logs. Earlier requests show the saved name because the ID is
+stable within the organization, workspace, and provider. The ID is a keyed hash, not a hash you
+calculate yourself from the secret.
 
 You can use a named ID for analytics filters or require that exact pass-through credential on an API
 key. Naming an ID does not convert it to a stored credential. To store a secret, create a separate
-stored credential.
+stored credential. A saved pass-through ID cannot be edited. When the provider key changes, name
+its new ID separately so old requests remain linked to the original credential.
 
 ## Connect Azure
 
@@ -120,21 +121,41 @@ organization-wide API key management configure it.
 | **Any pass-through credential**   | Require a supplied key for the provider.                             |
 | **Named pass-through credential** | Require the supplied key to match the selected credential ID.        |
 
-Policy resolution and the billing hold happen in one database call. A selected stored or named
-pass-through credential that is missing, disabled, or invalid for the provider fails closed.
-Disabling a named pass-through record affects API keys assigned to that exact record. It is not a
-denylist for API keys set to **Any credential** or **Any pass-through credential**. Stogas does not
-change credential source after an upstream provider rejects a BYOK credential.
+Stogas checks the current credential mode and status when authorizing each request. A missing,
+disabled, or mismatched selected credential blocks the request. Stogas does not switch to another
+credential after a provider rejects it.
 
 Azure exposes only **Unassigned** and one named **Stored credential** in this policy picker. It does
 not accept pass-through or Stogas-managed credential modes.
 
+## Rotate or revoke a credential
+
+- **Replace a stored secret:** Open the credential, choose **Edit**, and replace its secret. Stogas
+  validates the replacement. Its ID, assignments, and analytics history stay the same.
+- **Rotate a pass-through key:** Change the key sent by your application. If an API key requires a
+  named credential, save the new ID and update that assignment before using it.
+- **Disable a stored credential:** New requests assigned to it are blocked.
+- **Disable a named pass-through credential:** New requests using that ID are blocked within its
+  organization, workspace, and provider, including **Any credential** and **Any pass-through
+  credential** modes. A supplied key ignored by **Managed only** or **Stored credential** does not
+  affect that request.
+- **Delete a credential:** Its saved name is removed. Exact assignments stop working. Deleting a
+  pass-through record also removes its block, so open credential modes may accept that key again.
+
+Keep a pass-through record disabled to block it. To revoke the provider key everywhere, revoke it
+with the provider. Changes do not cancel requests that were already authorized.
+
 ## Security and billing
 
-- Pass-through secrets are not written to PostgreSQL or Tinybird. The gateway keeps the plaintext
-  only for the authorized upstream dispatch. PostgreSQL and analytics receive a keyed,
-  organization-, workspace-, and provider-scoped credential ID. A request never creates a dashboard
-  credential row.
+- Pass-through secrets are not written to databases or analytics. A request never creates a dashboard
+  credential row. Only the scoped credential ID is recorded.
+- Provider secrets are used in confidential gateway memory. Chutes also reuses credential-specific
+  connection and ticket pools across requests. Each gateway retains at most 2,048 customer pools;
+  idle pools are retired after five minutes, with cleanup every 15 seconds. Active requests and
+  streams keep their pool until they finish. The managed Chutes pool lasts for the gateway process.
+- Azure access tokens are cached separately from client secrets: at most 2,048 tokens per gateway,
+  retired after five minutes idle or before their actual expiry. Client-secret SDK objects are not
+  retained across token loads. Every inference request still requires current authorization.
 - Azure does not accept pass-through secrets. Its stored Entra application secret and discovered
   bindings are used only when that exact credential is assigned to the Stogas API key.
 - Stored secrets are encrypted before database storage. Dashboard responses contain only the name,

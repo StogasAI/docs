@@ -52,13 +52,24 @@ The production Stogas release public key is:
 MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
 ```
 
-It signs canonical `stogas.gateway.release.v1` manifest bytes using the domain separator `stogas gateway counterbuild v1\n`. The manifest binds the exact IGVM and launch-policy files, reproducible-build identity, and SNP measurement. GitHub independently attests those same manifest bytes. A node is trusted only when its exact chip ID has an applicable group in both the independent hardware document and that release's launch document, and its quote matches both.
+Gateway and catalog releases use one evidence format:
 
-Production verification never accepts the separate staging signing key. Staging verification also accepts production releases. A local staging build can use a manifest-bound placeholder instead of GitHub's build proof, but it must still carry a valid Stogas signature.
+- `schema`: `stogas.release-evidence.v1`, identifying the envelope format;
+- `manifest`: the release identity, artifact hashes, and applicable policy;
+- `signature`: the Stogas approval, containing `key_id` and an Ed25519 `signature`;
+- `attested_builds`: the build provenance, currently one GitHub Actions Sigstore bundle.
 
-The global hardware document is separate from gateway releases. Stogas signs it as Ed25519 DSSE and publishes that signed envelope to public Rekor v1. The bundle carries the complete Rekor proof, so the verifier checks it locally without querying Rekor. The hardware and launch documents do not refer to each other.
+Stogas signs `stogas signed document v1\n` followed by compact, recursively key-sorted manifest JSON without a trailing newline. The manifest's signed `schema` is `stogas.gateway.release.v1` or `stogas.catalog.release.v1`. Manifest files add one newline, which is included in their GitHub-attested hash. The outer schema versions the evidence packaging; the signed manifest schema authenticates the independently published release document's type and format. Unsupported envelope versions are rejected.
 
-Catalog releases use the same public key but a separate `stogas catalog release v1\n` domain. GitHub Actions attests the runtime and public artifact hashes. Stogas independently builds the tagged source and signs its own manifest of those hashes; it does not sign the GitHub attestation. The verifier accepts the catalog only when both lanes contain the same hashes and the pinned source and workflow identities.
+The fleet entrypoint, `bundles/latest.json`, uses the outer schema `stogas.confidential-bundle-envelope.v1` with `body` and `body_sha256`. Its body retains `stogas.confidential-bundle.v1`. The checksum identifies the body bytes; trust comes from the individual proofs inside them.
+
+The gateway build measures the completed IGVM with `igvmmeasure --check-kvm gateway.igvm measure`, then records its launch measurement and SHA-256 hash in the manifest. GitHub attests both the IGVM and manifest. The launch policies are embedded in that manifest and need no separate signature or attestation. The offline verifier compares each SNP report with the authenticated manifest measurement and the policy for its exact chip ID.
+
+For catalogs, GitHub attests the manifest and both runtime and public artifact hashes. Stogas rebuilds the tagged source and signs the same manifest after matching the results. Its signature proves approval; the current evidence does not prove that Stogas independently rebuilt either release. The verifier checks the pinned GitHub source and workflow identities as well as both signatures.
+
+The global hardware document remains separate. Stogas signs it as Ed25519 DSSE and publishes that signed envelope to public Rekor v1. The bundle carries the complete inclusion proof for offline verification. This records an operator policy decision, which has no build to attest. Hardware and launch policies do not refer to each other. GitHub's build-log entry records GitHub's attestation, not the later Stogas approval signature.
+
+Production verification rejects the separate staging signing key and staging build placeholders. Staging verification also accepts production releases. A staging placeholder binds the same artifact and manifest hashes and still requires a valid Stogas signature.
 
 ## Availability
 

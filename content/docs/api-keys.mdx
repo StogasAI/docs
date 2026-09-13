@@ -55,7 +55,17 @@ manage all organization keys, including member keys.
 
 When **Member key settings** is enabled on the grant, the member may also change the key's routing,
 access, limit, and redaction configuration. When it is disabled, only an administrator may change the
-configuration. Each key keeps its own configuration; grants do not add inherited policy in version 1.
+configuration. Each key keeps its own configuration; organization and grant policies also apply.
+
+## Key status
+
+Open a key to view **Status**: enabled state, lifetime and recurring spend, pending holds,
+remaining allowance, reset times, request capacity, lifecycle dates, and the last admission failure.
+Counters reflect the displayed update time; refill timing assumes no further requests. Shared
+organization and grant allowances apply separately from per-key counters.
+
+The enabled switch saves immediately. **Settings** contains the name, policy, and secret actions;
+**BYOK** contains provider assignments. Changing status does not save an unfinished settings draft.
 
 ## Limits
 
@@ -78,17 +88,11 @@ limits, and exact pre-dispatch behavior.
 Every service or member key owns one credential choice for each provider. Members with BYOK and
 organization-wide API key management configure these choices.
 
-| Mode                      | Behavior                                                                |
-| ------------------------- | ----------------------------------------------------------------------- |
-| **Any credential**        | Use a supplied credential, or use Stogas managed service when available |
-| **Managed only**          | Use Stogas managed service and ignore supplied credentials              |
-| **Stored credential**     | Use one encrypted credential and ignore supplied credentials            |
-| **Pass-through required** | Require any supplied credential or one selected named credential ID     |
-
 Managed service is currently available for Chutes. OpenAI and Anthropic therefore need a stored or
 pass-through credential. Azure accepts one stored, discovered credential per API key or remains
 unassigned; it does not accept pass-through. A disabled or unavailable selected credential fails
 closed.
 
-See [Bring your own provider key](/docs/byok) for stored credentials, pass-through request headers,
-Azure discovery, validation, rotation, billing, and troubleshooting.
+See [Bring your own provider key](/docs/byok) to set the credential mode, send a provider key,
+connect Azure, or rotate and revoke credentials. Disabling a named pass-through ID also blocks that
+ID for open pass-through modes; deleting its record removes that block.

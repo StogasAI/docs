@@ -38,7 +38,7 @@ unavailable-fleet state and stop protected requests.
 The bundle contains:
 
 - the current and optional next immutable catalog proof, each with a GitHub Actions build
-  attestation and a separate Stogas-signed manifest over independently built matching hashes;
+  attestation and a Stogas approval signature binding the same manifest and artifact hashes;
 - approved gateway releases and their build records;
 - AMD certificate chains, ARK-signed product CRLs, and SEV-SNP reports for each gateway;
 - one hardware document with grouped exact processor IDs, CPUID, TCB floor, mitigation requirements,
@@ -52,6 +52,9 @@ The bundle contains:
 The bundle has no outer signature. Its body SHA-256 identifies the exact bytes and detects
 corruption, while each release, hardware policy, node, certificate, and drand claim verifies to its own embedded
 cryptographic root.
+
+Stogas release signatures authorize the gateway and catalog manifests. They do not prove that
+Stogas performed the independent rebuilds used in its release checks.
 
 The verifier returns the gateways that are safe to use as `nodes`. Older or unusable records may
 appear as `excluded_nodes`, but they never authorize a connection.

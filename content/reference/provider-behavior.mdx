@@ -116,6 +116,29 @@ Errors use an OpenAI-compatible `error` object. Common status codes are:
 
 Provider validation messages may be returned when useful. Provider credentials, topology, and internal failures are never exposed.
 
+### Request analytics
+
+Requests enter analytics after Stogas authorizes a billing hold. Every admitted request has one
+logical final record, including provider errors, cancellations, and failures with zero cost.
+The record keeps the provider status, a broad error category, usage, cost, and timing; it excludes
+prompts, responses, and raw error messages. An error alone does not determine the charge: usable
+provider-reported usage determines billing within the authorized hold.
+
+Malformed requests, invalid credentials, and billing or key-policy declines before admission do
+not create request records. Known-key billing and policy declines update the key's failure state.
+The key's failure state keeps the latest reason and time, rather than a history of each rejected
+attempt. This also applies when a customer normally runs out of credit. Open **API Keys**, select
+the key, and check **Status → Last failure** for its latest rejection.
+
+Stogas processing and provider results remain separate. If a provider succeeds but Stogas cannot
+finish pricing or build the response proof, the record retains the provider success and marks
+Stogas processing as failed. A setup failure before provider dispatch has no provider attempt;
+an interrupted provider call with no known result has an unknown outcome. Request status and
+success rate use both Stogas processing and the final provider result. Client logging preferences
+cannot disable accounting records. A handled billing warning does not make a valid response fail:
+if reported costs exceed the authorized hold, Stogas discards the charge and keeps the provider
+result. Discarding the charge does not itself mark Stogas processing as failed.
+
 ## Cancellation and billing
 
 Disconnecting does not guarantee that the upstream provider stopped. A request may still be billed for usage the provider reports after the client disconnects. Streaming responses may remain open long enough to receive final usage needed for accurate settlement.
