@@ -1,0 +1,166 @@
+---
+title: Routing
+description: Choose permitted models and providers, filter deployment properties, and order the matches.
+---
+
+Use `allowedCatalogNodes` to allow specific catalog IDs. Use `query` to filter deployment
+properties or order the choices that remain. You can combine both.
+
+This policy permits OpenAI or Chutes, but only where the catalog says request data is not used
+for training:
+
+```json title="policy.json"
+{
+	"version": 1,
+	"routing": {
+		"query": "where deployment.data.dataHandling.trainingUse == false",
+		"allowedCatalogNodes": {
+			"providers": ["openai", "chutes"]
+		}
+	}
+}
+```
+
+Each possible deployment is a **candidate**. It must satisfy the request's model and provider
+selectors and every applicable policy. A filter can narrow those choices; it cannot add a model
+or provider that the caller did not request.
+
+## Query syntax
+
+A query has an optional `where` filter followed by an optional `order by` clause. At least one
+must be present. For example:
+
+```text
+where provider.id in ['openai', 'chutes']
+  and deployment.data.capabilities.streaming == true
+order by deployment.data.pricing.output_tokens.per_mill_tokens asc
+```
+
+Inside JSON, put the whole query in `routing.query`. Single-quoted query values avoid escaping
+double quotes: `"query": "where provider.id == 'openai'"`.
+
+| Operator             | Meaning                                                    | Example expression                                   |
+| -------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
+| `==`, `!=`           | Equal or unequal; strings, integers, and Booleans          | `provider.id == 'openai'`                            |
+| `<`, `<=`, `>`, `>=` | Numeric order for integers; lexical order for strings      | `deployment.data.contextWindowTokens >= 128000`      |
+| `in`                 | A scalar equals one item in a nonempty list                | `provider.id in ['openai', 'chutes']`                |
+| `contains`           | A substring in a string, or an exact item in a string list | `deployment.data.reasoningEfforts contains 'high'`   |
+| `exists(field)`      | The field has a value                                      | `exists(deployment.data.deprecationDate)`            |
+| `not`                | Negate an expression                                       | `not (provider.id == 'openai')`                      |
+| `and`, `or`          | Combine expressions                                        | `provider.id == 'openai' or provider.id == 'chutes'` |
+
+`not` binds first, then `and`, then `or`. Parentheses change the order. Use `not (field in [...])`
+for exclusion; `not in` is not a separate operator. List values must have the field's type and
+must be unique. A string-list field supports only `contains` or `exists`, not whole-list equality.
+
+Keywords are case-insensitive; field names and string values are case-sensitive. Strings can use
+single or double quotes. Inside a query string, only its quote character and backslash can be
+escaped. JSON escaping is a separate outer layer. Integers can be negative but cannot use decimals
+or exponent notation. Booleans are unquoted `true` and `false`.
+
+The left side of a comparison is a registered field; the right side is a literal or an `in` list.
+There is no field-to-field comparison, automatic type conversion, arithmetic, regex operator,
+`select`, script execution, current-time function, or function other than `exists`.
+
+### Missing values
+
+Only a filter result of `true` permits a candidate. A comparison with a missing value is unknown,
+including `!=`; negating it is still unknown. Empty strings and absent catalog values count as
+missing. Use `exists` when absence itself matters:
+
+```text title="Allow an absent or explicitly false training-use disclosure"
+where not exists(deployment.data.dataHandling.trainingUse)
+  or deployment.data.dataHandling.trainingUse == false
+```
+
+That example deliberately permits missing disclosure. If your application requires a no-training
+declaration, use only `deployment.data.dataHandling.trainingUse == false`.
+
+With combined expressions, a true branch makes `or` true even if another branch is unknown.
+A false branch makes `and` false. Otherwise, unknown values remain unknown.
+
+### Sorting
+
+Use `order by field asc` for ascending order or `desc` for descending order. Direction defaults
+to `asc`; comma-separated fields break ties from left to right. Missing values always sort last.
+Numbers sort numerically, strings lexically, and Booleans as `false` before `true` in ascending order.
+
+Organization sort fields come first, then grant, key, and permitted request sort fields.
+Repeated fields keep the parent's direction. Stogas finally uses `deployment.id asc` for a stable
+choice. If you explicitly include that field, it must be last and ascending; it leaves no ties
+for a child policy to reorder.
+
+Without a policy sort, the caller's provider order is preserved. Without either order, Stogas
+prefers the model author's provider when usable. If that still leaves an ambiguous choice, the
+request fails with valid provider-qualified selectors for the caller to choose from.
+
+### Query bounds
+
+| Item                                                       | Maximum per query        |
+| ---------------------------------------------------------- | ------------------------ |
+| Query length                                               | 4,096 Unicode characters |
+| Expression nodes, including comparisons and logical groups | 64                       |
+| Nesting depth                                              | 12                       |
+| Items in an `in` list                                      | 32                       |
+| Explicit sort fields                                       | 4                        |
+| One string literal                                         | 1,024 UTF-8 bytes        |
+
+The [routing field reference](/docs/policies/routing-fields) lists every field and type, including
+all pricing meters. Pricing comparisons use integer USD atoms, not decimal dollar amounts.
+
+## Deployment selection
+
+A model selector starts with each provider's default deployment. A filter or explicit sort can
+select a compatible geography or hosting variant. It cannot cross the selected service tier or
+reasoning mode. A deployment selector stays pinned to that exact deployment.
+
+Catalog facts describe the candidate, not measured live performance. There are no recent-latency
+or live-health fields in the query language.
+
+## Allowed catalog nodes
+
+Use `allowedCatalogNodes` when exact IDs are clearer than a query:
+
+```json
+{
+	"version": 1,
+	"routing": {
+		"allowedCatalogNodes": {
+			"models": ["gpt-5"],
+			"providers": ["openai"]
+		}
+	}
+}
+```
+
+A candidate must match every list that is present. The supported lists are `authors`, `models`,
+`deployments`, `routes`, and `providers`, with at most 64 IDs in total. Use canonical catalog IDs;
+names and aliases are not resolved here. See the [ID format](/docs/policies/reference#allowed-catalog-nodes).
+
+Omitting a list adds no restriction. An empty list, such as `"providers": []`, denies all candidates.
+Parent and child lists intersect: a parent allowing OpenAI and Chutes plus a child allowing
+OpenAI and Anthropic leaves only OpenAI. IDs no longer in the active catalog cannot match.
+
+## Candidate checks
+
+By default, Stogas prepares one candidate. This policy allows up to three local candidate checks:
+
+```json title="policy.json"
+{
+	"version": 1,
+	"routing": {
+		"fallbacks": { "maxPreDispatchCandidates": 3 }
+	}
+}
+```
+
+`maxPreDispatchCandidates` accepts 1, 2, or 3. The smallest explicit value across saved scopes
+wins; omission adds no restriction unless every scope omits it, in which case the default is one.
+
+Stogas can try preparing the next candidate if the current one cannot be prepared locally,
+such as when a provider-specific request shape is incompatible. Once hold authorization starts,
+there is no second candidate. Balance and policy declines do not trigger a fallback.
+
+This setting never retries a provider call. After dispatch, the client receives the provider result
+or error and decides whether to retry. One client request can create at most one provider attempt
+and one request log through this setting.

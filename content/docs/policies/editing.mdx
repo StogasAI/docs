@@ -1,0 +1,116 @@
+---
+title: Edit a policy
+description: Open the policy editor, save a change, and resolve validation errors.
+---
+
+Open a policy editor at the scope you want to change. Organization, grant, and key policies use
+the same JSON format. Do not add a scope or resource ID inside the document.
+
+## Open the editor
+
+| Scope        | Where to edit                                   | Who can edit                                                                                                    |
+| ------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Organization | Open **Organization policy** from **API Keys**. | Members with organization-wide API key management.                                                              |
+| Grant        | Open the grant from **Grants**.                 | Members with organization-wide API key management.                                                              |
+| API key      | Open the key, then **Settings**.                | Members with organization-wide API key management, or the key owner when the grant permits member key settings. |
+
+A member key owner also needs permission to manage their own keys.
+See [Scopes and inheritance](/docs/policies/scopes) before changing a shared policy.
+
+## Set a lifetime spend limit
+
+This complete policy limits the scope to $10 in lifetime Stogas charges:
+
+```json title="policy.json"
+{
+	"version": 1,
+	"limits": {
+		"spend": {
+			"lifetimeUsd": "10.00"
+		}
+	}
+}
+```
+
+The `spend` object is required. `limits.lifetimeUsd` is not a valid field.
+Use a decimal string for money, such as `"10.00"`, rather than the JSON number `10`.
+For other settings, use the [policy reference](/docs/policies/reference).
+
+Saving at organization scope makes the limit shared across all organization keys. Saving on a key
+limits only that key. Existing lifetime spend and pending requests count toward the allowance;
+setting a limit does not start a new lifetime counter.
+
+## Save and check the result
+
+1. Start from the saved policy and edit the fields you want to change.
+2. Use **Format JSON** if needed. Formatting changes layout, not policy validity.
+3. Save the policy. Stogas validates it together with the policies that apply to affected keys.
+4. On an API key, review its effective policy and **Status** to check the resulting restrictions
+   and usage.
+
+Suggestions appear as you type, with or without opening quotation marks. Use the arrow keys
+and **Enter**, or select a suggestion. The editor inserts the JSON quotes and preserves an
+existing value when you replace a field name. **Esc** dismisses suggestions without changing
+the draft; **Ctrl + Space** opens them again.
+
+Suggestions include policy fields, preset flags, enum values, time zones, and catalog IDs.
+Inside `routing.query`, they include registered fields, typed operators, and values from the
+loaded catalog. Catalog availability does not prevent manual editing or change policy validation.
+Enter your own amounts, dates, limit names, and custom expressions.
+
+**Tab** indents; **Shift + Tab** outdents. Press **Esc**, then **Tab** to leave the editor.
+The keyboard button lists these shortcuts.
+
+A save replaces that scope's complete policy, not just the fields in your draft.
+Parent changes leave each child's saved policy and manual enabled state intact.
+
+Changes that tighten a policy cannot authorize a new request using an older policy.
+Already-authorized requests retain their reservation. See
+[When changes take effect](/docs/policies/scopes#when-changes-take-effect).
+
+## Remove a setting
+
+Delete the field from the JSON. Do not set it to `null`, and remove any object left empty.
+For example, removing the last spend setting also means removing `spend` and `limits`.
+
+To remove every optional setting at this scope, save:
+
+```json
+{
+	"version": 1
+}
+```
+
+Parent restrictions and platform safeguards still apply. Removing a spend limit does not reset
+lifetime spend. Recurring limits have separate
+[accounting rules](/docs/policies/limits#edit-or-remove-limits).
+
+## Resolve a validation error
+
+| Problem                                         | What to check                                                                                                    |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Invalid JSON                                    | Use double-quoted property names and strings. Remove comments and trailing commas.                               |
+| An invalid or unrecognized field under `limits` | Put money limits under `limits.spend` and request rates under `limits.requests`.                                 |
+| A setting has the wrong type                    | Keep money as strings and counts as numbers; use the exact types in the reference.                               |
+| An empty object is rejected                     | Omit an unused section instead of saving `"limits": {}`.                                                         |
+| A routing expression is rejected                | Check the [operators](/docs/policies/routing#query-syntax) and [field reference](/docs/policies/routing-fields). |
+| A draft is valid but cannot be saved            | Check parent restrictions, combined pattern limits, time zones, and your current permissions.                    |
+| The saved version changed                       | Keep a copy of your draft, reload the saved policy, and reapply the changes you still want.                      |
+
+A conflict does not overwrite someone else's save. **Reload saved policy** replaces the current
+draft, so copy any work you want to keep first.
+
+## Use an external editor
+
+Add the optional `$schema` field for structural checks in editors that support JSON Schema:
+
+```json
+{
+	"$schema": "https://stogas.ai/schemas/key-config-v1.json",
+	"version": 1
+}
+```
+
+A saved source can contain at most 16 KiB of canonical JSON. Stogas stores normalized JSON;
+comments are not accepted and formatting is not retained. Schema checks do not replace save-time
+validation of routing, time zones, and custom patterns.

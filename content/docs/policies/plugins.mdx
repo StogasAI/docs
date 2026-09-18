@@ -1,0 +1,277 @@
+---
+title: Redaction
+description: Configure nine redaction presets and one custom pattern, with full coverage details.
+---
+
+Use `plugins.stogasRedaction` to choose what Stogas removes from provider-bound text.
+Choose from nine presets and, optionally, one custom RE2 expression per policy.
+
+## Configure redaction
+
+This example redacts email addresses, banking and healthcare identifiers, and employee IDs such as `EMP-123456`:
+
+```json title="policy.json"
+{
+	"version": 1,
+	"plugins": {
+		"stogasRedaction": {
+			"email_address": true,
+			"bank_identifiers": true,
+			"health_identifiers": true,
+			"customPattern": "\\bEMP-[0-9]{6}\\b"
+		}
+	}
+}
+```
+
+Keep only the options you need. Preset flags are optional Booleans; within a configured plugin,
+omitted flags are off. `customPattern` is one optional string, not an array. An empty plugin
+object is invalid.
+
+Set a flag to `false` to leave that preset off at this scope. For example,
+`"stogasRedaction": { "email_address": false }` requires no redaction of its own;
+parent-required presets and custom patterns still apply.
+
+If no organization, grant, or key policy configures this plugin, Stogas uses the defaults below.
+As soon as any scope configures it, the explicit options from all applicable scopes determine
+what is redacted.
+
+## Presets
+
+Choose from these nine flags. Each enables the whole category; identifiers within a category
+are not separate options. The default column applies only when no scope configures the plugin.
+
+| Preset                   | Detects                                                                                  | Default     |
+| ------------------------ | ---------------------------------------------------------------------------------------- | ----------- |
+| `email_address`          | Email addresses, including plus-addressing and subdomains.                               | On          |
+| `phone_number`           | Formatted phone numbers, including international numbers.                                | On          |
+| `social_security_number` | U.S. Social Security numbers.                                                            | On          |
+| `credit_card_number`     | Payment card numbers.                                                                    | On          |
+| `ip_address`             | IPv4 and IPv6 addresses.                                                                 | Off; opt in |
+| `api_keys_and_secrets`   | Labeled credentials, private keys, JWTs, credential URLs, and recognized service tokens. | On          |
+| `bank_identifiers`       | IBANs and U.S. ABA routing numbers.                                                      | On          |
+| `national_identifiers`   | The national, tax, and business identifiers listed below.                                | On          |
+| `health_identifiers`     | The healthcare and health-insurance identifiers listed below.                            | On          |
+
+SSNs and payment cards have their own flags: `national_identifiers` does not include U.S. SSNs,
+and `bank_identifiers` does not include payment cards.
+
+Detection checks format, checksum, and nearby context where applicable. These checks reduce
+false positives; they do not verify that an identifier was issued or is active. Ambiguous
+numbers may need a label such as `ITIN`, `NHS`, or `routing number` to match.
+
+Phone numbers and numeric identifiers such as SSNs also recognize Unicode decimal digits, including full-width and Arabic-Indic
+digits, and common Unicode spaces and hyphens. The same format, checksum, and context rules apply.
+Only matched values are replaced; Stogas does not normalize the rest of your text.
+
+### Email addresses
+
+Covers ordinary addresses, plus-addressing, subdomains, and Unicode letters and combining marks
+in local parts and domains, such as `élise@bücher.de`. Reserved example and test domains stay
+unchanged. Quoted local parts, address literals, and arbitrary obfuscated addresses are not supported.
+
+### Phone numbers
+
+Covers formatted North American numbers, such as `(415) 555-2671`, `415.555.2671`, and
+`+1 415-555-2671`, plus supported international formats such as `+44 20 7946 0958`.
+This is not a catch-all for bare digit strings or every local phone-number format.
+Full-width punctuation and non-breaking spaces are supported. A marked extension of up to ten
+decimal digits is included in the replacement: `ext`, `ext.`, `extn`, `extension`, `x`, `#`, or
+`;ext=`. An unmarked number after a phone number is not treated as an extension.
+
+### Banking
+
+`bank_identifiers` covers IBANs with supported country lengths and checksum validation,
+including spaced forms, and nine-digit U.S. ABA routing numbers with routing context and
+checksum validation. It does not detect arbitrary bank account numbers, SWIFT/BIC codes,
+or cryptocurrency wallet addresses.
+
+### National, tax, and business identifiers
+
+`national_identifiers` enables all of the following. U.S. SSNs remain a separate preset.
+
+| Country        | Identifiers                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| Australia      | Tax File Number (TFN), Australian Business Number (ABN), Australian Company Number (ACN). |
+| Brazil         | Individual taxpayer number (CPF), business taxpayer number (CNPJ).                        |
+| Canada         | Social Insurance Number (SIN).                                                            |
+| China          | Resident identity card number.                                                            |
+| Finland        | Personal identity code (HETU).                                                            |
+| Germany        | Tax identification number (Steuer-ID), social security number (RVNR).                     |
+| India          | Aadhaar number.                                                                           |
+| Israel         | National ID number.                                                                       |
+| Italy          | Fiscal code (codice fiscale), VAT number (partita IVA).                                   |
+| Nigeria        | National Identification Number (NIN).                                                     |
+| Poland         | PESEL number.                                                                             |
+| Singapore      | National Registration Identity Card (NRIC) or Foreign Identification Number (FIN).        |
+| South Africa   | National ID number.                                                                       |
+| South Korea    | Resident or foreigner registration number, business registration number.                  |
+| Spain          | National identity number (DNI) or foreigner identity number (NIE).                        |
+| Sweden         | Personal identity number (personnummer).                                                  |
+| Thailand       | National ID number.                                                                       |
+| Türkiye        | National identity number (TCKN).                                                          |
+| United Kingdom | National Insurance number (NINO).                                                         |
+| United States  | Individual Taxpayer Identification Number (ITIN).                                         |
+
+This is a closed list, not a detector for every government-issued identifier. Passport numbers,
+driver's license numbers, and formats from unlisted countries are not included.
+
+### Healthcare
+
+`health_identifiers` enables all five identifier types:
+
+| Country        | Identifiers                                                                |
+| -------------- | -------------------------------------------------------------------------- |
+| Australia      | Medicare number.                                                           |
+| Germany        | Health-insurance identifier (KVNR).                                        |
+| United Kingdom | NHS number.                                                                |
+| United States  | National Provider Identifier (NPI), Medicare Beneficiary Identifier (MBI). |
+
+This preset detects identifiers, not diagnoses, medical narratives, or arbitrary patient-record numbers.
+
+### API keys and secrets
+
+`api_keys_and_secrets` covers:
+
+- Labeled passwords, API keys, access tokens, client secrets, and related credential assignments,
+  including supported Bearer and Basic authorization text inside scanned content.
+- PEM private-key blocks and JSON Web Tokens (JWTs).
+- Credentials in HTTP, HTTPS, FTP, FTPS, and SFTP URLs.
+- Credential-bearing PostgreSQL, CockroachDB, MySQL, MariaDB, MongoDB, SQL Server, Redis, and AMQP URLs.
+- Recognized service-token formats from AWS and Bedrock, GitHub, GitLab, Google, Slack, Stogas,
+  Anthropic, OpenAI, Stripe, Hugging Face, Groq, npm, PyPI, Doppler, 1Password, PlanetScale,
+  Pulumi, Sentry, Vault, Databricks, DigitalOcean, Perplexity, Twilio, Shopify, Linear,
+  Atlassian, age, SendGrid, Telegram, and Notion.
+
+This is format detection, not a credential-validity check. An arbitrary secret without a recognized
+format or label may not match. Request authentication headers themselves are not scanned.
+
+## Combining scopes
+
+Save redaction options on an organization, grant, or API key. A preset enabled by **any**
+applicable scope stays enabled. A child's `false` or omission cannot cancel a parent's `true`.
+
+Custom expressions also combine: a match in **any** scope is redacted. Exact duplicate
+expressions run once. The text does not have to match every expression. Request policies
+cannot add, disable, or replace redaction options.
+
+For example, organization email detection, grant banking detection, and a key custom
+pattern all run on the same request. Removing an option from one scope removes it only when
+no other scope requires it.
+
+## Custom pattern
+
+Use a custom pattern for identifiers with a clear structure, such as an employee or account ID.
+Each expression matches text to replace with the fixed placeholder `<CUSTOM_PII>`.
+Custom replacements and capture-group substitutions are not supported.
+
+For custom-only redaction, set just `customPattern`. Use alternation to match more than one format:
+
+```json title="policy.json"
+{
+	"version": 1,
+	"plugins": {
+		"stogasRedaction": {
+			"customPattern": "\\b(?:EMP-[0-9]{6}|ACCT-[A-Z]{2}-[0-9]{8})\\b"
+		}
+	}
+}
+```
+
+Expressions use [RE2 syntax](https://github.com/google/re2/wiki/Syntax). Character classes,
+alternation, groups, repetition, and supported flags such as `(?i)` are available. Lookarounds
+and backreferences are not. JSON needs an extra backslash: write `"\\bEMP-[0-9]{6}\\b"`
+for the expression `\bEMP-[0-9]{6}\b`. Writing `\b` with a single backslash inside JSON
+encodes a backspace instead of a word boundary.
+
+| Bound                                                         | Maximum            |
+| ------------------------------------------------------------- | ------------------ |
+| Custom expressions per scope                                  | 1                  |
+| Unique custom expressions across organization, grant, and key | 3                  |
+| Size of one expression                                        | 512 UTF-8 bytes    |
+| Combined expression size                                      | 1,536 UTF-8 bytes  |
+| Total compiled matcher size                                   | 4,096 instructions |
+| Shared scan-work budget per request                           | 67,108,864 weighted units |
+
+Every expression must consume text. Stogas rejects empty, zero-width, invalid, overly complex,
+or placeholder-matching expressions. For example, `.*` is too broad and can match empty text.
+Each expression uses leftmost-longest matching on the original text. Stogas merges overlapping
+matches before replacement, so one scope cannot hide another scope's match. Client-supplied
+placeholders do not exempt surrounding text from redaction. The complexity bound can reject
+short expressions with large repetitions; narrow the expression to the identifier you need.
+
+Across scopes, exact duplicates count once.
+If a parent edit would put a child's combined set over a bound, the whole save fails and the
+saved policies remain unchanged.
+
+### Scan cost and rejected requests
+
+Unbounded repetitions such as `+` and `*` remain available within a valid, nonempty expression.
+For predictable cost, prefer a literal prefix and a realistic length bound, such as
+`EMP-[0-9]{1,12}`. A short expression is not necessarily cheap: a pattern such as `a.*z|a` can
+repeatedly search the same text.
+
+Stogas meters custom matching and variable lookahead in credential and private-key detection.
+All scanned text fields and inherited custom expressions share one request budget. Repeated
+reads count again, and more complex expressions cost more per character. These weighted units
+are not bytes, tokens, or milliseconds; actual latency also depends on the input and hardware.
+
+If a request exceeds the budget, scanning stops and the request fails with **HTTP 413** before
+provider dispatch or a spend hold. No partially redacted or original text is sent as a fallback.
+Narrow the expression or reduce the input before retrying. Passing policy validation means the
+expression is allowed, not that it can scan every possible input within the budget.
+
+The gateway also bounds concurrent preprocessing across requests and organizations. When those
+slots are busy, it returns **HTTP 503** with `gateway_capacity_exceeded` instead of queuing more
+CPU work. Retry a capacity rejection with backoff.
+
+## What is scanned
+
+Model, provider, service-tier, and routing-policy checks run before redaction. Redaction then
+runs on accepted Chat Completions and Responses text before token estimation and provider conversion.
+Final route ranking follows request-compatibility checks. It covers message and input text, instructions, tool definitions and
+arguments, text-format definitions, and supported stop sequences. It scans string values inside
+these containers while preserving protocol fields and accepted signed or encrypted reasoning replay.
+
+Model selectors, routing policies, authentication headers, sampling controls, cache controls,
+and request metadata are not prompt-text redaction targets. Do not put sensitive prompt content
+in metadata. Image, audio, and file scanning are not supported.
+
+Built-in matches become typed placeholders such as `<EMAIL_ADDRESS>`; custom matches become
+`<CUSTOM_PII>`. Replacement is irreversible. Stogas keeps no map for restoring the original values,
+and it does not restore placeholders in the response. This plugin redacts request text, not newly
+generated provider output.
+
+The match bounds are 65,536 candidate matches per text value, before overlaps are merged, and
+100,000 replacements per request. JSON nesting is limited to 128 levels. Exceeding a bound
+rejects the request before dispatch.
+
+## Limits of detection
+
+The defaults exclude inferred person names, street addresses, locations, UUIDs, ordinary dates,
+and unformatted numbers. IP addresses also stay unchanged unless you opt in. Redaction does not
+guarantee that every sensitive value will be found. Check representative inputs, including values
+that should stay unchanged, before relying on a custom expression.
+
+Each request is scanned once against its original text. Sending the redacted result in a later
+request can produce different matches if nearby context has changed. Typed placeholders do not
+act as identifier labels or exempt surrounding text from redaction.
+
+For a logged request, the plugin reports only `items_redacted` and `duration_us` under
+`plugins.stogas_structured_pii_redaction`. It does not log original values, replacement maps,
+offsets, or per-category counts. The log name differs from the policy name, `stogasRedaction`.
+
+In **Analytics → Requests**, redacted requests show the number of replaced items. Open a request
+to see **Stogas redaction**, with its match count and duration in microseconds.
+
+Use the analytics search bar to filter requests, charts, and exports:
+
+| Filter                   | Matches                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `redaction:redacted`     | One or more items were replaced.                                             |
+| `redaction:no_matches`   | Redaction ran and reported zero replacements.                                |
+| `redaction:not_recorded` | The log has no redaction metrics. This does not mean redaction was disabled. |
+
+Combine filters, for example `redaction:redacted AND provider:openai` or
+`NOT redaction:not_recorded`. A replacement count is not a count of distinct people or detector
+categories. Original text is never included in these metrics.

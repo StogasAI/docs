@@ -3,219 +3,50 @@
 @import 'fumadocs-ui/css/preset.css';
 @import 'fumadocs-openapi/css/preset.css';
 
-html {
-	scrollbar-gutter: stable;
-	font-family:
-		Inter,
-		ui-sans-serif,
-		system-ui,
-		-apple-system,
-		BlinkMacSystemFont,
-		'Segoe UI',
-		sans-serif;
+@font-face {
+	font-family: 'Inter Variable';
+	font-style: normal;
+	font-display: optional;
+	font-weight: 100 900;
+	src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
 }
 
-html > body[data-scroll-locked] {
-	margin-right: 0px !important;
-	--removed-body-scroll-bar-size: 0px !important;
+@font-face {
+	font-family: 'Geist Mono Variable';
+	font-style: normal;
+	font-display: optional;
+	font-weight: 100 900;
+	src: url('@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2')
+		format('woff2');
 }
 
-#nd-docs-layout {
-	--fd-layout-width: 100vw;
+@theme {
+	--font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
+	--font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	/* Stogas uses opaque surfaces throughout, including Fumadocs overlays. */
+	--blur-*: initial;
+	/* HTTP method labels must remain readable on selected light surfaces. */
+	--color-green-600: var(--color-green-800);
+	--color-blue-600: var(--color-blue-800);
+	/* Inherit the neutral palette; strengthen secondary text and keep surfaces opaque. */
+	--color-fd-muted-foreground: hsl(0, 0%, 35%);
+	--color-fd-accent: hsl(0, 0%, 89%);
+	--color-fd-ring: hsl(0, 0%, 32%);
+	--color-fd-overlay: var(--color-fd-background);
+	--color-response-success: #166534;
+	--color-response-success-background: #dcfce7;
+	--color-response-error: #991b1b;
+	--color-response-error-background: #fee2e2;
 }
 
-#nd-page[data-full='true'] {
-	max-width: min(100%, 1400px);
-}
-
-.stogas-api-operation-layout {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem 2rem;
-}
-
-.stogas-api-operation-main,
-.stogas-api-operation-examples {
-	min-width: 0;
-}
-
-@container (min-width: 56rem) {
-	.stogas-api-operation-layout {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(440px, min(48%, 640px));
-		align-items: start;
-	}
-
-	.stogas-api-operation-examples {
-		position: sticky;
-		top: calc(var(--fd-docs-row-1, 2rem) + 1rem);
-	}
-}
-
-@container (min-width: 72rem) {
-	.stogas-api-operation-layout {
-		grid-template-columns: minmax(0, 1fr) minmax(520px, min(50%, 720px));
-	}
-}
-
-.stogas-api-operation-layout
-	:is(.fd-scroll-container, pre, [class*='overflow-auto'], [class*='overflow-x-auto']) {
-	scrollbar-width: auto;
-	scrollbar-color: color-mix(in oklch, var(--color-fd-muted-foreground) 45%, transparent)
-		transparent;
-}
-
-.stogas-api-operation-layout figure.shiki > div.absolute.top-3 {
-	right: calc(var(--spacing) * 7);
-}
-
-.stogas-api-operation-layout figure.shiki pre.shiki {
-	--padding-right: calc(var(--spacing) * 14);
-}
-
-.stogas-api-operation-layout
-	:is(
-		.fd-scroll-container,
-		pre,
-		[class*='overflow-auto'],
-		[class*='overflow-x-auto']
-	)::-webkit-scrollbar {
-	height: 28px;
-	width: 28px;
-}
-
-.stogas-api-operation-layout
-	:is(
-		.fd-scroll-container,
-		pre,
-		[class*='overflow-auto'],
-		[class*='overflow-x-auto']
-	)::-webkit-scrollbar-thumb {
-	border: 7px solid transparent;
-	border-radius: 999px;
-	background-clip: content-box;
-	background-color: color-mix(in oklch, var(--color-fd-muted-foreground) 45%, transparent);
-	cursor: grab;
-}
-
-.stogas-api-operation-layout
-	:is(
-		.fd-scroll-container,
-		pre,
-		[class*='overflow-auto'],
-		[class*='overflow-x-auto']
-	)::-webkit-scrollbar-thumb:hover {
-	background-color: color-mix(in oklch, var(--color-fd-muted-foreground) 65%, transparent);
-	cursor: grab;
-}
-
-.stogas-api-operation-layout
-	:is(
-		.fd-scroll-container,
-		pre,
-		[class*='overflow-auto'],
-		[class*='overflow-x-auto']
-	)::-webkit-scrollbar-thumb:active {
-	cursor: grabbing;
-}
-
-.stogas-api-operation-layout
-	:is(
-		.fd-scroll-container,
-		pre,
-		[class*='overflow-auto'],
-		[class*='overflow-x-auto']
-	)::-webkit-scrollbar-track {
-	background: transparent;
-}
-
-.fd-scroll-container.fd-scroll-container {
-	scrollbar-width: auto !important;
-	scrollbar-color: color-mix(in oklch, var(--color-fd-muted-foreground) 55%, transparent)
-		transparent !important;
-}
-
-.fd-scroll-container.fd-scroll-container::-webkit-scrollbar {
-	height: 28px !important;
-	width: 28px !important;
-}
-
-.fd-scroll-container.fd-scroll-container::-webkit-scrollbar-thumb {
-	border: 7px solid transparent !important;
-	border-radius: 999px !important;
-	background-clip: content-box !important;
-	background-color: color-mix(
-		in oklch,
-		var(--color-fd-muted-foreground) 55%,
-		transparent
-	) !important;
-	cursor: grab !important;
-}
-
-.fd-scroll-container.fd-scroll-container::-webkit-scrollbar-thumb:hover {
-	background-color: color-mix(
-		in oklch,
-		var(--color-fd-muted-foreground) 75%,
-		transparent
-	) !important;
-	cursor: grab !important;
-}
-
-.fd-scroll-container.fd-scroll-container::-webkit-scrollbar-thumb:active {
-	cursor: grabbing !important;
-}
-
-:where(
-	a[href],
-	button:not(:disabled),
-	select:not(:disabled),
-	summary,
-	label[for],
-	[role='button']:not([aria-disabled='true']),
-	[role='tab']:not([aria-disabled='true']),
-	[role='switch']:not([aria-disabled='true']),
-	[role='combobox']:not([aria-disabled='true']),
-	[role='menuitem']:not([aria-disabled='true']),
-	[role='option']:not([aria-disabled='true'])
-) {
-	cursor: pointer;
-}
-
-:where(button:disabled, [aria-disabled='true']) {
-	cursor: not-allowed;
-}
-
-input[type='number']::-webkit-inner-spin-button,
-input[type='number']::-webkit-outer-spin-button {
-	cursor: pointer;
-}
-
-[data-radix-popper-content-wrapper] .fd-scroll-container > a[href] {
-	padding-block: 0.625rem;
-}
-
-:where(
-	[role='combobox'],
-	[role='listbox'],
-	[role='menu'],
-	[role='menuitem'],
-	[role='option'],
-	[data-radix-popper-content-wrapper],
-	[data-radix-popper-content-wrapper] *
-):is(:focus, :focus-visible, [data-highlighted]) {
-	outline: none !important;
-	box-shadow: none !important;
-}
-
-/* Hide Fumadocs OpenAPI Filter Properties component */
-div:has(> input[data-object-search-input]) {
-	display: none !important;
-}
-
-/* Remove the leftover divider (top border) from the first property that follows the hidden filter */
-div:has(> input[data-object-search-input]) ~ div.border-t:nth-of-type(2) {
-	border-top: none !important;
-	border-top-width: 0px !important;
+.dark {
+	--color-fd-muted-foreground: hsl(0, 0%, 70%);
+	--color-fd-accent: hsl(0, 0%, 17.5%);
+	--color-fd-overlay: var(--color-fd-background);
+	--color-response-success: #86efac;
+	--color-response-success-background: #112b1c;
+	--color-response-error: #fca5a5;
+	--color-response-error-background: #351b1d;
 }
 
 @property --holographic-hue {
@@ -245,20 +76,178 @@ div:has(> input[data-object-search-input]) ~ div.border-t:nth-of-type(2) {
 		oklch(76% 0.18 calc(var(--holographic-hue) + 360deg))
 	);
 	background-size: 200% 100%;
-	-webkit-background-clip: text;
 	background-clip: text;
 	-webkit-text-fill-color: transparent;
 	color: transparent;
 	animation: holographic-hue-shift 40s linear infinite;
 }
 
-/* Align the sidebar title and collapse icon vertically, and balance spacing */
-#nd-sidebar div.flex.flex-col > div.flex:first-child {
-	align-items: center !important;
-	margin-bottom: 0.25rem !important; /* Increases the gap to search trigger from 12px (gap-3) to 16px */
+/* Stable status hooks are supplied by the small OpenAPI presentation patch. */
+[data-response-status] {
+	border-radius: 0.375rem;
+	padding: 0.125rem 0.375rem;
+	font-family: var(--font-mono);
+	font-weight: 500;
 }
 
-/* Ensure the collapse button aligns in the center instead of pushing to the top */
-#nd-sidebar div.flex.flex-col > div.flex:first-child button {
-	margin-bottom: 0 !important;
+[data-response-status^='2'] {
+	color: var(--color-response-success);
+	background-color: var(--color-response-success-background);
+}
+
+[data-response-status^='4'],
+[data-response-status^='5'] {
+	color: var(--color-response-error);
+	background-color: var(--color-response-error-background);
+}
+
+html {
+	color-scheme: only dark;
+	scrollbar-gutter: stable;
+	font-family: var(--font-sans);
+}
+
+html.light {
+	color-scheme: only light;
+}
+
+/* Documented Fumadocs layout hooks and semantic popup roles. */
+#nd-docs-layout {
+	--fd-layout-width: 100%;
+}
+
+#nd-page[data-full='true'] {
+	max-width: min(100%, 1400px);
+}
+
+#nd-subnav,
+[data-toc-popover],
+[data-toc-popover-content] {
+	background-color: var(--color-fd-background);
+}
+
+[role='dialog'],
+[role='listbox'],
+[role='menu'] {
+	background-color: var(--color-fd-popover);
+}
+
+[data-card] {
+	border-width: 0;
+}
+
+[data-card]:hover {
+	background-color: var(--color-fd-accent);
+}
+
+.prose th + th {
+	border-inline-start: 1px solid var(--color-fd-border);
+}
+
+.prose :is(p, li, td) {
+	overflow-wrap: anywhere;
+}
+
+.stogas-skip-link {
+	position: fixed;
+	inset-block-start: 0.75rem;
+	inset-inline-start: 0.75rem;
+	z-index: 100;
+	transform: translateY(-200%);
+	border-radius: 0.5rem;
+	padding: 0.75rem 1rem;
+	background: var(--color-fd-primary);
+	color: var(--color-fd-primary-foreground);
+}
+
+.stogas-skip-link:focus {
+	transform: none;
+}
+
+[data-object-search-input] {
+	min-width: 0;
+}
+
+:where(a[href], button, select, summary, [role='tab'], [role='combobox']) {
+	touch-action: manipulation;
+	cursor: pointer;
+}
+
+:where(button:disabled, [aria-disabled='true']) {
+	cursor: not-allowed;
+}
+
+/* Preserve native, discoverable scrolling for long code and schemas. */
+.fd-scroll-container {
+	scrollbar-width: auto;
+	scrollbar-color: var(--color-fd-muted-foreground) var(--color-fd-card);
+}
+
+.stogas-api-operation-layout {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem 2rem;
+}
+
+.stogas-api-operation-main,
+.stogas-api-operation-examples {
+	min-width: 0;
+}
+
+@container (min-width: 56rem) {
+	.stogas-api-operation-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(440px, min(48%, 640px));
+		align-items: start;
+	}
+
+	.stogas-api-operation-examples {
+		position: sticky;
+		top: calc(var(--fd-docs-row-1, 2rem) + 1rem);
+	}
+}
+
+@media (pointer: coarse) {
+	:where(button, select, [role='tab'], [role='combobox']) {
+		min-height: 2.75rem;
+		min-width: 2.75rem;
+	}
+
+	:where(#nd-sidebar, #nd-sidebar-mobile, [role='dialog'], #nd-toc) a[href] {
+		min-height: 2.75rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.holographic-accent-text {
+		animation: none;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+@media (forced-colors: active) {
+	.holographic-accent-text {
+		background: none;
+		-webkit-text-fill-color: CanvasText;
+		color: CanvasText;
+	}
+
+	[data-card],
+	[role='dialog'],
+	[role='listbox'],
+	[role='menu'] {
+		border: 1px solid CanvasText;
+	}
+
+	:focus-visible {
+		outline-color: Highlight;
+	}
 }

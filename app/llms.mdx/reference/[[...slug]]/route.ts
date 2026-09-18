@@ -1,7 +1,7 @@
 import {
 	apiSource,
-	getLLMContentType,
 	getLLMText,
+	getOpenApiOperationSpec,
 	getOpenApiJsonUrl,
 	getPageMarkdownUrl,
 	isOpenApiOperationPage
@@ -20,11 +20,16 @@ export async function GET(
 	const page = apiSource.getPage(slug?.slice(0, -1));
 	if (!page) notFound();
 
-	return new Response(await getLLMText(page), {
-		headers: {
-			'Content-Type': getLLMContentType(page, format)
+	const operationSpec = format === 'openapi.json' ? getOpenApiOperationSpec(page) : undefined;
+	if (format !== 'content.md' && !operationSpec) notFound();
+	return new Response(
+		operationSpec ? JSON.stringify(operationSpec, null, '\t') : await getLLMText(page),
+		{
+			headers: {
+				'Content-Type': operationSpec ? 'application/json' : 'text/markdown; charset=utf-8'
+			}
 		}
-	});
+	);
 }
 
 export function generateStaticParams() {

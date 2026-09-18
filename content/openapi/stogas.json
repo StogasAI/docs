@@ -152,6 +152,15 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/ChatCompletionRequest"
+							},
+							"example": {
+								"model": "openai/gpt-5-mini",
+								"messages": [
+									{
+										"role": "user",
+										"content": "Say hello in one sentence."
+									}
+								]
 							}
 						}
 					}
@@ -233,6 +242,10 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/ResponsesRequest"
+							},
+							"example": {
+								"model": "openai/gpt-5-mini",
+								"input": "Say hello in one sentence."
 							}
 						}
 					}
@@ -403,7 +416,7 @@
 				}
 			},
 			"PaymentRequired": {
-				"description": "<span className=\"text-red-500 font-bold\">Payment Required:</span> Returned when your account balance is insufficient or the API key lifetime or recurring spend limit is exhausted.",
+				"description": "<span className=\"text-red-500 font-bold\">Payment Required:</span> Returned when your organization has insufficient credit or a key, grant, or organization spend limit is exhausted. Use error.code to distinguish insufficient_balance from key_spend_limit, grant_spend_limit, and organization_spend_limit.",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -411,15 +424,17 @@
 						},
 						"example": {
 							"error": {
-								"message": "Insufficient balance. Please add funds to your Stogas account to continue making requests.",
-								"type": "billing_error"
+								"message": "Insufficient credit. Add funds to your organization to retry this request.",
+								"type": "billing_error",
+								"code": "insufficient_balance",
+								"param": null
 							}
 						}
 					}
 				}
 			},
 			"Forbidden": {
-				"description": "<span className=\"text-red-500 font-bold\">Forbidden:</span> The API key is disabled or expired. Expired keys are disabled automatically before the error is returned.",
+				"description": "<span className=\"text-red-500 font-bold\">Forbidden:</span> The API key is disabled or expired, or a key policy denied the request.",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -483,7 +498,7 @@
 				}
 			},
 			"RateLimited": {
-				"description": "<span className=\"text-red-500 font-bold\">Rate Limited:</span> The API key token bucket does not currently have capacity for another request.",
+				"description": "<span className=\"text-red-500 font-bold\">Rate Limited:</span> An applicable platform, organization, grant, or API-key request bucket does not currently have capacity for another request.",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -670,6 +685,14 @@
 							},
 							"type": {
 								"type": "string"
+							},
+							"code": {
+								"type": ["string", "null"],
+								"description": "A code for handling a specific error in your app. May be absent or null when only a broad error type is available. Do not match message text."
+							},
+							"param": {
+								"type": ["string", "null"],
+								"description": "The request field related to the error, when known."
 							}
 						}
 					}
@@ -748,9 +771,9 @@
 					},
 					"store": {
 						"type": "boolean",
-						"enum": [false],
+						"const": false,
 						"default": false,
-						"description": "May be omitted or set to false. Stogas rejects true and does not enable provider response storage."
+						"description": "Provider response storage is disabled."
 					},
 					"frequency_penalty": {
 						"type": "number",
@@ -1468,9 +1491,9 @@
 					},
 					"store": {
 						"type": "boolean",
-						"enum": [false],
+						"const": false,
 						"default": false,
-						"description": "May be omitted or set to false. Stogas rejects true and does not enable provider response storage."
+						"description": "Provider response storage is disabled."
 					},
 					"include": {
 						"type": "array",

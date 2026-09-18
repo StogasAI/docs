@@ -1,0 +1,77 @@
+---
+title: Access periods
+description: Expire access at a specific time or block requests during a weekly schedule.
+---
+
+Time restrictions apply together with the organization's, grant's, and key's other rules.
+They do not change whether a key is manually enabled.
+
+## Set an expiration
+
+```json title="policy.json"
+{
+	"version": 1,
+	"expiresAt": "2026-12-01T00:00:00Z"
+}
+```
+
+Use an absolute timestamp with an offset. The earliest expiration across applicable scopes wins.
+Removing a key's expiration does not remove an organization or grant expiration.
+Once all applicable expiration restrictions are removed, an otherwise enabled key can be used again.
+At the expiration instant, new requests are blocked. Requests already authorized are not cancelled.
+
+## Deny periods
+
+This policy blocks new requests before 08:00 on weekdays in New York:
+
+```json
+{
+	"version": 1,
+	"access": {
+		"deny": [
+			{
+				"days": ["mon", "tue", "wed", "thu", "fri"],
+				"start": "00:00",
+				"end": "08:00",
+				"timeZone": "America/New_York"
+			}
+		]
+	}
+}
+```
+
+Use lowercase day names: `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, and `sun`. Every field is
+required. The start is included and the end is excluded, so the example permits requests at 08:00
+if all other policies allow them. Use `00:00` to `24:00` to deny an entire day.
+
+Outside the deny periods, this setting adds no restriction. To allow only business hours, deny
+the hours outside that schedule and deny weekends. There is no separate `allow` schedule.
+
+## Overnight periods
+
+A period cannot cross midnight. Split Friday 20:00 through Saturday 08:00 into two entries:
+
+```json title="policy.json"
+{
+	"version": 1,
+	"access": {
+		"deny": [
+			{ "days": ["fri"], "start": "20:00", "end": "24:00", "timeZone": "UTC" },
+			{ "days": ["sat"], "start": "00:00", "end": "08:00", "timeZone": "UTC" }
+		]
+	}
+}
+```
+
+The second entry uses the following day. Equal start and end times are invalid; they do not
+mean all day.
+
+## Time zones and scope
+
+IANA time zones apply their daylight-saving rules. A repeated local hour is checked against
+the deny period on both occurrences; a skipped local hour never occurs. Use UTC for a schedule
+that does not shift with daylight saving.
+
+Each saved policy allows at most 16 deny periods. All organization, grant, and key periods
+apply together, so up to 48 can apply to a member key. Request policies cannot change expiration
+or deny periods. See the [field reference](/docs/policies/reference#access) for exact bounds.

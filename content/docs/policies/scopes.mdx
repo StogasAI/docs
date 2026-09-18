@@ -1,0 +1,93 @@
+---
+title: Scopes and inheritance
+description: Understand which policies apply and how their restrictions and shared limits combine.
+---
+
+Every request must satisfy every applicable policy. A child policy adds restrictions; it cannot
+remove a parent's restriction. This is an intersection, not a last-setting-wins merge.
+
+| Key type    | Policies that apply                                              |
+| ----------- | ---------------------------------------------------------------- |
+| Service key | Organization and key, plus any permitted request policy.         |
+| Member key  | Organization, grant, and key, plus any permitted request policy. |
+
+The document has the same shape at each saved scope. Its scope comes from where you save it.
+
+## Shared limits
+
+Organization limits count usage across all organization keys. Grant limits count usage across
+all keys under that grant, including keys owned by different members. Key limits count only
+that key's usage.
+
+For example, an organization can have a $1,000 monthly budget, a grant a $200 monthly budget,
+and a member key a $10 daily budget. A request must fit all three. Other keys can use the
+organization and grant allowances too, so the member key may be blocked before it spends $10.
+
+Counters remain separate even when two scopes use the same limit name. All key owners can see
+the shared usage, holds, and remaining allowances that apply to their keys. See [Limits](/docs/policies/limits).
+
+## How settings combine
+
+| Setting                                       | Effective behavior                                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Routing filters                               | Every scope's filter must match.                                                                                        |
+| Allowed catalog nodes                         | Intersect each list. An empty list permits no candidates.                                                               |
+| Sort order                                    | Apply parent fields first, then child fields as tie-breakers. A repeated field keeps the parent's direction.            |
+| Expiration                                    | Use the earliest timestamp.                                                                                             |
+| Deny periods                                  | Apply every period; remove exact duplicates.                                                                            |
+| Redaction                                     | Combine enabled presets and custom expressions; remove duplicates. Use defaults only if no scope configures the plugin. |
+| Candidate checks before authorization         | Use the smallest explicit maximum; the default is one.                                                                  |
+| Spend, request, token, and concurrency limits | Check every limit separately against its scope's shared or individual usage.                                            |
+| Permission to supply a request policy         | Use the most restrictive permission, with the scope defaults below.                                                     |
+
+Omitting a setting does not remove a parent's restriction. For allowed-node lists, omission
+means no added restriction, while an empty list means no matching candidates.
+A parent sort ending in `deployment.id asc` leaves no ties for a child to reorder.
+
+## Permission to supply request policies
+
+`routing.requestPolicy` controls whether a caller may supply a routing policy in an inference
+request. Its values are `deny`, `filter`, and `filter_and_sort`.
+
+| Saved scope  | When `routing.requestPolicy` is omitted                 |
+| ------------ | ------------------------------------------------------- |
+| Organization | Adds no restriction to the permission granted below it. |
+| Grant        | Does not permit request policies.                       |
+| Service key  | Does not permit request policies.                       |
+| Member key   | Inherits its grant's permission.                        |
+
+A grant must explicitly permit request policies for its member keys. A service key must explicitly
+permit them for itself. An organization can reduce either permission; a member key can reduce
+its grant's permission. An explicit `deny` at any applicable scope wins.
+
+See [Request policies](/docs/policies/request-policies) for examples and accepted request fields.
+
+## Member key settings
+
+A grant's **Member key settings** switch controls whether its assigned members may edit their own
+key policies. This is separate from `routing.requestPolicy`, which controls what an inference
+request may contain.
+
+Organization-wide API key managers can edit the policies of member keys regardless of that switch.
+Allowing a member to edit a key never lets that member bypass organization or grant restrictions.
+
+## Saved and effective policies
+
+The saved policy is the source you edit at one scope. The effective policy combines all applicable
+sources. Its limits appear under `organization`, `grant`, and `key` to keep their counters distinct.
+Do not paste that effective limit structure back into a source editor.
+
+A parent save validates and updates all affected keys together. It does not erase a child's source
+policy or change whether a key is manually enabled.
+
+Stogas keeps the current policy and counters, not an archive of every previous policy.
+
+## When changes take effect
+
+New authorizations check the current saved policy. If a Gateway has an older cached policy,
+the request can receive `503` with code `key_configuration_changed`; retry with bounded backoff.
+The Gateway discards that cached policy and loads the new one on the next request.
+
+Tightening a policy cannot authorize new requests under the old permissions. After you relax a
+restriction, an older cached policy can still reject requests for up to 30 seconds. Changes do not
+cancel requests already authorized. The dashboard refreshes affected key status after a save.

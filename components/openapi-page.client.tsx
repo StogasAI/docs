@@ -2,11 +2,16 @@
 
 import { codeUsages } from '@/lib/openapi-code-usage';
 import { createOpenAPIPage, type OpenAPIPageProps_Spec } from 'fumadocs-openapi/ui';
-import { StyleInjector } from './style-injector';
+import { OpenAPIRequestBody } from './openapi-request-body';
+import { DefaultCollapsiblePanel } from 'fumadocs-openapi/playground/client';
+import { codeThemes } from '@/lib/highlight';
+import { OpenAPICodeBlock } from './openapi-code-block';
 
 const Page = createOpenAPIPage({
 	codeUsages,
+	shikiOptions: { themes: codeThemes },
 	generateTypeScriptDefinitions: false,
+	components: { CodeBlock: OpenAPICodeBlock },
 	content: {
 		renderOperationLayout: (slots) => (
 			<div className="stogas-api-operation-layout">
@@ -26,6 +31,12 @@ const Page = createOpenAPIPage({
 	},
 	playground: {
 		enabled: true,
+		renderBodyField: () => <OpenAPIRequestBody />,
+		components: {
+			CollapsiblePanel: (props) => (
+				<DefaultCollapsiblePanel {...props} defaultOpen={props['data-type'] === 'body'} />
+			)
+		},
 		fetchOptions: {
 			requestTimeout: 45
 		}
@@ -33,10 +44,5 @@ const Page = createOpenAPIPage({
 });
 
 export function OpenAPIPageClient(props: OpenAPIPageProps_Spec) {
-	return (
-		<>
-			<StyleInjector />
-			<Page {...props} />
-		</>
-	);
+	return <Page {...props} />;
 }

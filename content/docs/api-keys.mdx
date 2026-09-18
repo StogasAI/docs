@@ -43,6 +43,9 @@ An administrator can select members directly or select roles as a shortcut. Role
 members who have those roles when the grant is saved. Later role changes do not silently add or remove
 grant access.
 
+Select grant icons to enable, disable, or delete several grants at once. The header selects all grants
+matching the current filter. Deletion confirms the number of attached keys that will also be deleted.
+
 Disabling a grant immediately rejects new requests from all keys under it without deleting the keys.
 Removing a member from a grant deletes that member's keys under the grant. Deleting the grant deletes
 all keys under it. The dashboard asks for confirmation before either destructive change.
@@ -51,23 +54,24 @@ all keys under it. The dashboard asks for confirmation before either destructive
 
 A member key is a normal inference credential owned by one member under one grant. A member can give
 each key a separate name, rotate its secret, disable it, or delete it. Administrators can see and
-manage all organization keys, including member keys.
+manage all organization keys, including member keys. A disabled key or grant does not prevent an
+authorized secret rotation; rotation leaves the enabled state unchanged.
 
-When **Member key settings** is enabled on the grant, the member may also change the key's routing,
+When **Allow user to narrow final policy** is enabled on the grant, the member may also change the key's routing,
 access, limit, and redaction configuration. When it is disabled, only an administrator may change the
 configuration. Each key keeps its own configuration; organization and grant policies also apply.
 
 ## Key status
 
-Open a key to view **Status**: enabled state, lifetime and recurring spend, pending holds,
+Open a key to view **Overview**: enabled state, lifetime and recurring spend, pending holds,
 remaining allowance, reset times, request capacity, lifecycle dates, and the last admission failure.
 Counters reflect the displayed update time; refill timing assumes no further requests. Shared
 organization and grant allowances apply separately from per-key counters.
 
 The enabled switch saves immediately. **Settings** contains the name, policy, and secret actions;
-**BYOK** contains provider assignments. Changing status does not save an unfinished settings draft.
+**Credentials** contains provider assignments. Changing status does not save an unfinished settings draft.
 
-## Limits
+## Policies
 
 Each usable key can have these optional controls in one versioned JSON document:
 
@@ -75,13 +79,14 @@ Each usable key can have these optional controls in one versioned JSON document:
 - an allowed set of catalog node IDs;
 - up to three candidates checked before provider dispatch;
 - access deny periods and expiration;
-- a request token bucket;
-- lifetime and recurring spend limits; and
+- multiple request rates and burst capacities;
+- lifetime and recurring spend limits;
+- token quotas and concurrent-request limits; and
 - additional PII redaction patterns.
 
-The gateway enforces these controls and the organization balance in the authorization transaction for
-every request. See [API key configuration](/docs/api-key-configuration) for the schema, routing fields,
-limits, and exact pre-dispatch behavior.
+Every request must satisfy its applicable policies and the organization balance. Start with
+[Edit a policy](/docs/policies/editing), or see [Scopes and inheritance](/docs/policies/scopes)
+to understand which restrictions and shared allowances apply.
 
 ## Provider credentials
 

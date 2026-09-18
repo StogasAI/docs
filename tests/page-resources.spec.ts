@@ -1,0 +1,161 @@
+import { expect, test } from '@playwright/test';
+import { parse } from 'yaml';
+
+function parseMarkdown(text: string) {
+	const match = text.match(/^---\n([\s\S]+?)\n---\n\n# (.+)\n/);
+	expect(match, 'Markdown has metadata and a title').not.toBeNull();
+	const metadata = parse(match![1]);
+	expect(metadata.title).toBe(match![2]);
+	expect(metadata.url).toMatch(/^https:\/\/stogas\.ai\/docs/);
+	expect(text).not.toMatch(/<\/?(?:Cards?|Callout|Steps)\b/);
+	return metadata;
+}
+
+function checkReferences(document: Record<string, unknown>) {
+	const walk = (value: unknown) => {
+		if (!value || typeof value !== 'object') return;
+		for (const [key, child] of Object.entries(value)) {
+			if (key === '$ref' && typeof child === 'string' && child.startsWith('#/')) {
+				let target: unknown = document;
+				for (const part of child.slice(2).split('/')) {
+					target = (target as Record<string, unknown>)?.[
+						part.replaceAll('~1', '/').replaceAll('~0', '~')
+					];
+				}
+				expect(target, `Unresolved reference ${child}`).toBeDefined();
+			} else walk(child);
+		}
+	};
+	walk(document);
+}
+
+test('every indexed page exports readable Markdown and complete operation schemas', async ({
+	request
+}) => {
+	const index = await request.get('/llms.txt');
+	expect(index.ok()).toBe(true);
+	const markdownLinks = Array.from(
+		(await index.text()).matchAll(/\]\((https:\/\/stogas\.ai\/llms\.mdx\/[^)]+)\)/g),
+		(m) => new URL(m[1]).pathname
+	);
+	expect(markdownLinks.length).toBeGreaterThan(30);
+	let operations = 0;
+	for (const path of markdownLinks) {
+		const response = await request.get(path);
+		expect(response.status(), path).toBe(200);
+		expect(response.headers()['content-type'], path).toContain('text/markdown');
+		const text = await response.text();
+		const metadata = parseMarkdown(text);
+		const html = await request.get(new URL(metadata.url).pathname);
+		expect(html.status()).toBe(200);
+		expect(await html.text()).toContain(`type="text/markdown" href="https://stogas.ai${path}"`);
+		const block = text.match(/^(`{3,})yaml\n([\s\S]*?)^\1\s*$/m);
+		if (!block) continue;
+		operations++;
+		const document = parse(block[2]);
+		checkReferences(document);
+		expect(Object.keys(document.paths)).toHaveLength(1);
+		const json = await request.get(path.replace(/content\.md$/, 'openapi.json'));
+		expect(json.headers()['content-type']).toContain('application/json');
+		expect(await json.json()).toEqual(document);
+	}
+	expect(operations).toBe(4);
+	const catalog = await request.get('/.well-known/api-catalog');
+	expect(catalog.headers()['content-type']).toContain('application/linkset+json');
+	expect(index.headers().link).toContain('rel="service-desc"');
+	expect((await request.get('/docs/no-such-page')).status()).toBe(404);
+	expect((await request.get('/llms.mdx/docs/no-such-page/content.md')).status()).toBe(404);
+});
+
+for (const path of [
+	'/docs/go',
+	'/docs/reference/security',
+	'/docs/reference/openai-compatible/createChatCompletion'
+]) {
+	test(`page actions use the same readable document on ${path}`, async ({
+		page,
+		context,
+		request
+	}) => {
+		await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+		await page.goto(path);
+		const markdownUrl = await page
+			.locator('link[rel="alternate"][type="text/markdown"]')
+			.getAttribute('href');
+		expect(markdownUrl).toBeTruthy();
+		const resource = new URL(markdownUrl!).pathname;
+		const markdown = await (await request.get(resource)).text();
+		await page.route(`**${resource}`, async (route) => {
+			await new Promise((resolve) => setTimeout(resolve, 300));
+			await route.continue();
+		});
+		await page.getByRole('button', { name: 'Copy Markdown', exact: true }).click();
+		await expect(page.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
+		expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(markdown);
+		await page.getByRole('button', { name: 'Open', exact: true }).click();
+		const resources = page.getByRole('dialog', { name: 'Page resources' });
+		await expect(
+			resources.getByRole('link', { name: 'View as Markdown', exact: true })
+		).toHaveAttribute('href', resource);
+		for (const name of ['Scira AI', 'ChatGPT', 'Grok', 'Claude', 'Cursor']) {
+			const link = resources.getByRole('link', { name: `Open in ${name}`, exact: true });
+			const url = new URL((await link.getAttribute('href'))!);
+			expect(url.searchParams.get(name === 'Cursor' ? 'text' : 'q')).toContain(markdownUrl!);
+			await expect(link).toHaveAttribute('target', '_blank');
+			await expect(link).toHaveAttribute('rel', 'noreferrer noopener');
+		}
+		const github = resources.getByRole('link', { name: 'Open in GitHub', exact: true });
+		await expect(github).toHaveAttribute(
+			'href',
+			new RegExp(
+				`^https://github.com/StogasAI/docs/blob/main/content/${path.includes('createChatCompletion') ? 'openapi/stogas.json' : path.includes('security') ? 'reference/security.mdx' : 'docs/go.mdx'}$`
+			)
+		);
+		if (path.includes('createChatCompletion')) {
+			await expect(
+				resources.getByRole('link', { name: 'View OpenAPI specification', exact: true })
+			).toHaveAttribute('href', resource.replace(/content\.md$/, 'openapi.json'));
+		}
+	});
+}
+
+test('a failed Markdown fetch can be retried without copying an error page', async ({
+	page,
+	context
+}) => {
+	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+	await page.goto('/docs/go');
+	await page.evaluate(() => navigator.clipboard.writeText('existing clipboard'));
+	await page.route(
+		'**/llms.mdx/docs/go/content.md',
+		(route) => route.fulfill({ status: 503, body: 'Unavailable' }),
+		{ times: 1 }
+	);
+	await page.getByRole('button', { name: 'Copy Markdown', exact: true }).click();
+	await expect(
+		page.getByRole('button', { name: 'Copy failed — retry', exact: true })
+	).toBeVisible();
+	expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('existing clipboard');
+	await page.getByRole('button', { name: 'Copy failed — retry', exact: true }).click();
+	await expect(page.getByRole('button', { name: 'Copied', exact: true })).toBeVisible();
+	parseMarkdown(await page.evaluate(() => navigator.clipboard.readText()));
+});
+
+test('the static document declares its native theme before scripts execute', async ({
+	browser,
+	request
+}) => {
+	const html = await (await request.get('/docs/go')).text();
+	expect(html).toContain('<html lang="en" class="dark"');
+	expect(html).toContain('<meta name="darkreader-lock"');
+	const context = await browser.newContext({ javaScriptEnabled: false });
+	try {
+		const page = await context.newPage();
+		await page.goto('/docs/go');
+		await expect(page.locator('html')).toHaveClass('dark');
+		await expect(page.getByRole('heading', { name: 'Go', exact: true })).toBeVisible();
+		await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(18, 18, 18)');
+	} finally {
+		await context.close();
+	}
+});

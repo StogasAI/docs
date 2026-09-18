@@ -1,0 +1,103 @@
+---
+title: Request policies
+description: Let callers add routing filters or sort preferences to one inference request.
+---
+
+Request policies let a caller narrow routing without editing the saved policy. They last for
+one request and must satisfy all saved restrictions. They cannot change budgets or redaction.
+
+## Grant permission
+
+Request policies are off by default. Save this on a service key, or on the grant that issues member keys:
+
+```json title="Saved policy"
+{
+	"version": 1,
+	"routing": {
+		"requestPolicy": "filter"
+	}
+}
+```
+
+| `routing.requestPolicy` | Caller may supply                                                                |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| `deny`                  | No request policy.                                                               |
+| `filter`                | A `where` query, allowed catalog nodes, or both. No `order by`.                  |
+| `filter_and_sort`       | Filters, allowed catalog nodes, and `order by`. A sort-only query is also valid. |
+
+The most restrictive applicable permission wins. An explicit `deny` at organization, grant, or
+key scope blocks request policies below it. An omitted organization setting adds no restriction;
+an omitted member-key setting inherits the grant. Grants and service keys must explicitly opt in.
+See [Scope defaults](/docs/policies/scopes#permission-to-supply-request-policies).
+
+## Add a policy to a request
+
+Send `policy` in the JSON body of `POST /v1/chat/completions`:
+
+```json
+{
+	"model": "gpt-5.5",
+	"messages": [{ "role": "user", "content": "Hello" }],
+	"policy": {
+		"version": 1,
+		"routing": {
+			"query": "where deployment.data.dataHandling.trainingUse == false",
+			"allowedCatalogNodes": { "providers": ["openai"] }
+		}
+	}
+}
+```
+
+The same `policy` object works in `POST /v1/responses`:
+
+```json title="Responses request"
+{
+	"model": "gpt-5.5",
+	"input": "Hello",
+	"policy": {
+		"version": 1,
+		"routing": {
+			"allowedCatalogNodes": { "providers": ["openai"] }
+		}
+	}
+}
+```
+
+Only `version`, `routing.query`, and `routing.allowedCatalogNodes` are accepted. `routing` must
+contain at least one of those two options. The document is limited to 16 KiB as sent and the
+same [query](/docs/policies/routing#query-bounds) and [node-list](/docs/policies/reference#allowed-catalog-nodes)
+bounds as saved policies. There is no policy header.
+
+Stogas consumes the policy before dispatch; it never sends the policy to the provider. The standard
+model and provider selectors remain available even when request policies are disabled. They must
+still satisfy the saved restrictions.
+
+## Add sort preferences
+
+With `filter_and_sort` permission, a caller can prefer lower-priced candidates:
+
+```json title="Chat Completions request"
+{
+	"model": "gpt-5.5",
+	"messages": [{ "role": "user", "content": "Hello" }],
+	"policy": {
+		"version": 1,
+		"routing": {
+			"query": "order by deployment.data.pricing.output_tokens.per_mill_tokens asc"
+		}
+	}
+}
+```
+
+Saved sort fields come first; request fields break remaining ties. A request cannot reverse a
+parent's ordering. See [Sorting](/docs/policies/routing#sorting) and [Pricing fields](/docs/policies/routing-fields#pricing).
+
+## Rejected policies
+
+| Response | Cause                                                                                     | Fix                                                                                |
+| -------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `403`    | Request policies are denied, or the caller used `order by` with only `filter` permission. | Remove the request policy or ask a policy manager to grant the needed permission.  |
+| `400`    | A permitted policy has invalid fields, syntax, types, or bounds.                          | Check the [request document reference](/docs/policies/reference#request-document). |
+
+Do not copy a saved policy containing limits, expiration, access periods, plugins, `fallbacks`,
+`routing.requestPolicy`, or `$schema` into a request. Empty objects and `null` cannot clear parent rules.

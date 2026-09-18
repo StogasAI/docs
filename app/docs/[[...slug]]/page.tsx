@@ -35,13 +35,40 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 	const githubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/${isOpenApiOperation ? 'openapi/stogas.json' : `${isReference ? 'reference' : 'docs'}/${page.path}`}`;
 
 	return (
-		<DocsPage toc={page.data.toc} full={page.data.full} footer={{ className: 'mt-14' }}>
+		<DocsPage
+			tabIndex={-1}
+			toc={page.data.toc}
+			full={page.data.full}
+			footer={{ className: 'mt-14' }}
+		>
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: JSON.stringify({
+						'@context': 'https://schema.org',
+						'@type': 'TechArticle',
+						headline: page.data.title,
+						description: page.data.description,
+						url: new URL(page.url, 'https://stogas.ai').href,
+						inLanguage: 'en',
+						isPartOf: {
+							'@type': 'WebSite',
+							name: 'Stogas documentation',
+							url: 'https://stogas.ai/docs'
+						},
+						publisher: {
+							'@type': 'Organization',
+							name: 'Stogas',
+							url: 'https://stogas.ai',
+							sameAs: ['https://github.com/StogasAI']
+						}
+					}).replaceAll('<', '\\u003c')
+				}}
+			/>
 			<DocsTitle>{page.data.title}</DocsTitle>
 			<DocsDescription className="mb-0">{page.data.description}</DocsDescription>
-			<div className="flex flex-row items-center gap-2 border-b pb-6">
-				<MarkdownCopyButton markdownUrl={markdownUrl}>
-					{isOpenApiOperation ? 'Copy OpenAPI specification' : 'Copy Markdown'}
-				</MarkdownCopyButton>
+			<div className="flex flex-wrap items-center gap-2 pb-4">
+				<MarkdownCopyButton markdownUrl={markdownUrl} />
 				<OpenApiViewOptionsPopover
 					markdownUrl={markdownUrl}
 					jsonUrl={jsonUrl}
@@ -80,7 +107,15 @@ export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): P
 	return {
 		title: page.data.title,
 		description: page.data.description,
+		alternates: {
+			canonical: page.url,
+			types: { 'text/markdown': getPageMarkdownUrl(page).url }
+		},
 		openGraph: {
+			title: page.data.title,
+			description: page.data.description,
+			url: page.url,
+			type: 'article',
 			images: getPageImage(page).url
 		}
 	};

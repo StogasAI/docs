@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'fumadocs-core/link';
 import type { AnchorHTMLAttributes, MouseEvent, PointerEvent } from 'react';
 import { useEffect, useState } from 'react';
 
@@ -130,7 +131,7 @@ export function StogasLink({
 	}, [href]);
 
 	return (
-		<a
+		<Link
 			{...props}
 			href={resolvedHref}
 			onClick={(event) => {

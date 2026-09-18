@@ -1,0 +1,94 @@
+diff --git a/dist/playground/components/server-select.js b/dist/playground/components/server-select.js
+index a25e7de..ab68557 100644
+--- a/dist/playground/components/server-select.js
++++ b/dist/playground/components/server-select.js
+@@ -21,6 +21,8 @@ function ServerSelect(props) {
+ 	}, []);
+ 	if (!servers || servers.length <= 0) return;
+ 	const serverSchema = server ? servers.find((obj) => obj.url === server.url) : null;
++	const resolvedUrl = server ? resolveServerUrl(server.url, server.variables) : "/";
++	const displayUrl = URL.canParse(resolvedUrl) ? new URL(resolvedUrl).href : isMounted ? new URL(resolvedUrl, window.location.origin).href : t("loading...");
+ 	return /* @__PURE__ */ jsxs(Dialog, {
+ 		open,
+ 		onOpenChange: setOpen,
+@@ -34,7 +36,7 @@ function ServerSelect(props) {
+ 				}),
+ 				/* @__PURE__ */ jsx("code", {
+ 					className: "truncate min-w-0 flex-1",
+-					children: isMounted ? new URL(server ? resolveServerUrl(server.url, server.variables) : "/", window.location.origin).href : t("loading...")
++					children: displayUrl
+ 				}),
+ 				/* @__PURE__ */ jsx(EditIcon, { className: "size-4" })
+ 			]
+diff --git a/dist/ui/operation/index.js b/dist/ui/operation/index.js
+index c9a7e41..0a7c28c 100644
+--- a/dist/ui/operation/index.js
++++ b/dist/ui/operation/index.js
+@@ -88,7 +88,7 @@ function Operation({ type = "operation", path, operation, pathItem, method, show
+ 			defaultValue: items[0].value,
+ 			children: [
+ 				/* @__PURE__ */ jsxs("div", {
+-					className: "flex gap-2 items-center justify-between mt-10",
++					className: "flex gap-2 items-center justify-between mt-10 mb-4",
+ 					children: [/* @__PURE__ */ jsx(Heading, {
+ 						id: "request-body",
+ 						depth: headingLevel,
+@@ -436,7 +436,7 @@ function ResponseAccordion({ status, operation }) {
+ 			defaultValue: items[0]?.value,
+ 			children: [/* @__PURE__ */ jsxs(AccordionHeader, { children: [/* @__PURE__ */ jsx(AccordionTrigger, {
+ 				className: "font-mono",
+-				children: status
++				children: /* @__PURE__ */ jsx("span", { "data-response-status": status, children: status })
+ 			}), items.length === 1 ? /* @__PURE__ */ jsx("p", {
+ 				className: "text-fd-muted-foreground not-prose py-2",
+ 				children: items[0].label
+diff --git a/dist/ui/operation/response-tabs.js b/dist/ui/operation/response-tabs.js
+index 4d71f5d..da462c7 100644
+--- a/dist/ui/operation/response-tabs.js
++++ b/dist/ui/operation/response-tabs.js
+@@ -8,7 +8,7 @@ import { useMemo } from "react";
+ import { Fragment as Fragment$1, jsx, jsxs } from "react/jsx-runtime";
+ import { useTranslations } from "@fuma-translate/react";
+ import { AccordionContent, AccordionHeader, AccordionItem, AccordionTrigger, Accordions } from "@fumadocs/api-docs/components/accordion";
+-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
++import { Tab, Tabs, TabsList, TabsTrigger } from "fumadocs-ui/components/tabs";
+ import { sample } from "@fumadocs/api-docs/schema/sample";
+ //#region src/ui/operation/response-tabs.tsx
+ function ResponseTabs({ operation }) {
+@@ -69,8 +69,11 @@ function ResponseTabsDefaultContent({ tabs }) {
+ 	}
+ 	return /* @__PURE__ */ jsx(Tabs, {
+ 		groupId: "fumadocs_openapi_responses",
+-		items: tabs.map((tab) => tab.code),
+-		children: tabs.map((tab) => {
++		defaultValue: tabs[0].code,
++		children: [/* @__PURE__ */ jsx(TabsList, { children: tabs.map((tab) => /* @__PURE__ */ jsx(TabsTrigger, {
++			value: tab.code,
++			children: /* @__PURE__ */ jsx("span", { "data-response-status": tab.code, children: tab.code })
++		}, tab.code)) }), ...tabs.map((tab) => {
+ 			const { examples = [] } = tab;
+ 			let slot = t("Empty");
+ 			if (examples.length > 1) slot = /* @__PURE__ */ jsx(Accordions, {
+@@ -90,7 +93,7 @@ function ResponseTabsDefaultContent({ tabs }) {
+ 				value: tab.code,
+ 				children: slot
+ 			}, tab.code);
+-		})
++		})]
+ 	});
+ }
+ //#endregion
+diff --git a/dist/ui/operation/usage-tabs.js b/dist/ui/operation/usage-tabs.js
+index 378d2f2..dc03977 100644
+--- a/dist/ui/operation/usage-tabs.js
++++ b/dist/ui/operation/usage-tabs.js
+@@ -116,7 +116,8 @@ function UsageTab({ id, lang }) {
+ 	}, [addListener, removeListener]);
+ 	const code = useMemo(() => {
+ 		if (!data) return;
+-		const url = joinURL(server && mounted ? new URL(resolveServerUrl(server.url, server.variables), window.location.origin).href : "https://example.com", pathnameFromRequest(route, data));
++		const baseUrl = server ? resolveServerUrl(server.url, server.variables) : "https://example.com";
++		const url = joinURL(new URL(baseUrl, mounted ? window.location.origin : "https://example.com").href, pathnameFromRequest(route, data));
+ 		if (!codegen) return;
+ 		return codegen.generate({
+ 			...data,

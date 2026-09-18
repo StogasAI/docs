@@ -110,34 +110,94 @@ Errors use an OpenAI-compatible `error` object. Common status codes are:
 |         `413` | Request body too large                     |
 |         `429` | Stogas or provider rate limit              |
 |         `502` | Invalid or unavailable upstream response   |
-|         `503` | No provider route was available            |
+|         `503` | Stogas or provider temporarily unavailable |
 |         `504` | Upstream request timed out                 |
 |         `529` | Provider overloaded                        |
 
 Provider validation messages may be returned when useful. Provider credentials, topology, and internal failures are never exposed.
 
+Use the HTTP status and `error.code` to handle errors in your app. Do not match the message text.
+For example, HTTP `402` with `insufficient_balance` means the organization needs more credit;
+`key_spend_limit`, `grant_spend_limit`, and `organization_spend_limit` identify a spending limit
+at that scope. Adding credit does not raise a spending limit. The `message` explains the error
+in plain text, and `param` names a related request field when known. Stogas errors have stable codes; `param` can be `null`.
+
 ### Request analytics
 
-Requests enter analytics after Stogas authorizes a billing hold. Every admitted request has one
-logical final record, including provider errors, cancellations, and failures with zero cost.
-The record keeps the provider status, a broad error category, usage, cost, and timing; it excludes
-prompts, responses, and raw error messages. An error alone does not determine the charge: usable
-provider-reported usage determines billing within the authorized hold.
+**Analytics → Requests** includes credit, policy, and request-validation rejections once Stogas
+can verify which API key they belong to. The key's **Requests** link opens this same history.
+The key's status badge shows its current settings and limits; an old error does not control it.
 
-Malformed requests, invalid credentials, and billing or key-policy declines before admission do
-not create request records. Known-key billing and policy declines update the key's failure state.
-The key's failure state keeps the latest reason and time, rather than a history of each rejected
-attempt. This also applies when a customer normally runs out of credit. Open **API Keys**, select
-the key, and check **Status → Last failure** for its latest rejection.
+Each request that passes billing authorization keeps its own final record, including provider
+errors, cancellations, and zero-cost outcomes. Before authorization, the first five rejections
+with the same key, endpoint, error code, and HTTP status in a one-second window keep individual
+records. Further repeats in that window share a record on that gateway node. Grouping uses the
+error code, not message text or requested catalog choices. Successful requests and provider errors never enter this grouping.
+
+| Field                      | Meaning                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| `schema_version`           | Record format version; currently `1`. Consumers must check this before interpreting fields. |
+| `request_count`            | Requests represented by this row; `1` for every admitted request.                           |
+| `created_at`               | First rejection time in a group, or the admitted request's billing authorization time.      |
+| `last_request_at`          | Last rejection time in a group; equals `created_at` for an admitted request.                |
+| `stogas_error_code`        | Stogas rejection or processing error; empty when neither occurred.                          |
+| `stogas_error_status_code` | HTTP status for that Stogas error; otherwise `null`.                                        |
+| `provider_attempts`        | Actual provider calls and their results; empty for a rejected request.                      |
+| `stogas_billing_status`    | `rejected` means no billing hold or charge.                                                 |
+
+For example, 99 matching credit rejections in one window produce five individual rows and one row
+with count 94. Add one completed response and the charts show 100 requests and a 1% success rate.
+Charts sum `request_count`; costs and usage
+remain the recorded amounts and must not be multiplied by that count. Rejections add no latency
+samples. Cancelled requests count toward total requests and do not count as successes.
+
+Grouped records keep the first recorded request ID and the first and last times of those repeats.
+They do not keep every repeated request ID or individual arrival time. Rejection records omit the
+requested model and catalog IDs. A group can include different model or provider choices; these
+rejections count toward key and organization totals but cannot be assigned to individual models.
+Time filters place the
+whole group at `created_at`. The Requests column and detail page show when a row represents
+several requests. Exports preserve these same fields.
+
+Delivery is asynchronous. A hard gateway crash can lose rejection counts that have not reached
+storage; a full queue or a sustained storage failure can also leave gaps. Grouped rejection
+history is not a lossless audit of every request. Requests that fail before Stogas can verify a
+key, including invalid credentials and connection-level failures, cannot enter that customer's
+history. Stogas retains no prompt, response, raw error message, or credential in request logs.
+
+### Provider results and Stogas errors
+
+Stogas uses the structured error type, code, and HTTP status that Bifrost returns. It does not
+classify errors by reading their message text. Provider-specific details map to these shared
+categories; an unrecognized failure uses `provider_error`.
+
+| Provider result                                                                    | Meaning                                                     |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `success`                                                                          | The provider completed successfully.                        |
+| `authentication_error`, `permission_error`                                         | The provider rejected the credential or access.             |
+| `over_budget`, `rate_limited`                                                      | Provider credit or rate limit.                              |
+| `invalid_request`, `context_length_exceeded`, `request_too_large`, `invalid_image` | Invalid input or a request limit.                           |
+| `content_filter`                                                                   | The provider blocked or refused the content.                |
+| `timeout`, `connection_error`                                                      | The call timed out or the connection failed.                |
+| `provider_unavailable`, `provider_overloaded`, `model_unavailable`                 | Provider or model availability failure.                     |
+| `invalid_response`                                                                 | The response could not be used.                             |
+| `cancelled`, `unknown`, `provider_error`                                           | Cancelled call, unknown outcome, or other provider failure. |
+
+These categories describe the result, not who caused it. Each attempt also keeps the provider's
+HTTP status when available. Request filters accept these categories, Stogas error codes such as
+`insufficient_balance`, and HTTP error codes such as `402`. `status:success` requires a completed request with no cancellation or Stogas failure. Other provider error filters inspect all attempts,
+including earlier failed attempts when a later call succeeded.
 
 Stogas processing and provider results remain separate. If a provider succeeds but Stogas cannot
-finish pricing or build the response proof, the record retains the provider success and marks
-Stogas processing as failed. A setup failure before provider dispatch has no provider attempt;
-an interrupted provider call with no known result has an unknown outcome. Request status and
-success rate use both Stogas processing and the final provider result. Client logging preferences
-cannot disable accounting records. A handled billing warning does not make a valid response fail:
-if reported costs exceed the authorized hold, Stogas discards the charge and keeps the provider
-result. Discarding the charge does not itself mark Stogas processing as failed.
+finish pricing, encode the response, or build a requested response proof, the record keeps the
+provider's success and the Stogas error. A setup failure before provider dispatch has no provider
+attempt; an interrupted provider call with no known result has an unknown outcome. Successfully
+sending the prompt alone does not mean Stogas completed the response.
+
+An ordinary provider error does not mark Stogas processing as failed. A handled accounting warning
+or a delayed log delivery does not change a valid response into a failure. Usable provider-reported
+usage determines the charge within the authorized hold; an error alone does not determine billing.
+Client logging preferences cannot disable accounting records.
 
 ## Cancellation and billing
 

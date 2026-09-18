@@ -1,0 +1,97 @@
+diff --git a/dist/components/schema/client.js b/dist/components/schema/client.js
+index 1deaf19..3bf9ee4 100644
+--- a/dist/components/schema/client.js
++++ b/dist/components/schema/client.js
+@@ -161,6 +161,8 @@ function ObjectProperty({ name, $type, required, parentPathIndex, ...props }) {
+ 					children: t("Deprecated")
+ 				}),
+ 				/* @__PURE__ */ jsx("button", {
++					type: "button",
++					"aria-label": `${t("Copy Link")}: ${name}`,
+ 					className: cn(buttonVariants({
+ 						size: "icon-xs",
+ 						variant: "ghost"
+@@ -205,6 +207,7 @@ function PathItemBody({ pathIndex, asSchema, tabDepth = 0, objectSearchOverrides
+ 					}),
+ 					/* @__PURE__ */ jsx(SelectTrigger, {
+ 						className: "not-prose w-fit min-w-0 mb-auto *:min-w-0",
++						"aria-label": "Schema type",
+ 						children: /* @__PURE__ */ jsx(SelectValue, {})
+ 					}),
+ 					/* @__PURE__ */ jsx(SelectContent, { children: items.map(({ label, value }) => /* @__PURE__ */ jsx(SelectItem, {
+@@ -239,8 +242,8 @@ function ObjectSearch({ variant = "default", schema, pathIndex, children }) {
+ 	const firstItemRef = useRef(null);
+ 	const t = useTranslations({ note: "schema UI" });
+ 	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
+-		/* @__PURE__ */ jsxs("div", {
+-			className: cn("flex items-center bg-fd-secondary text-fd-secondary-foreground transition-colors", variant === "in-popover" && "sticky top-10 -mx-3 ps-3 border-b focus-within:[&_svg]:text-fd-primary", variant === "default" && "border rounded-md ps-2 shadow-sm focus-within:ring-2 focus-within:ring-fd-ring"),
++		schema.props.length > 1 && /* @__PURE__ */ jsxs("div", {
++			className: cn("flex items-center bg-fd-secondary text-fd-secondary-foreground transition-colors", variant === "in-popover" && "sticky top-10 -mx-3 ps-3 border-b focus-within:[&_svg]:text-fd-primary", variant === "default" && "border rounded-md ps-2 shadow-sm focus-within:ring-2 focus-within:ring-inset focus-within:ring-fd-ring"),
+ 			children: [/* @__PURE__ */ jsx(FilterIcon, { className: "text-fd-muted-foreground size-3.5 transition-colors" }), /* @__PURE__ */ jsx("input", {
+ 				value: search,
+ 				"data-object-search-input": "",
+@@ -261,7 +264,7 @@ function ObjectSearch({ variant = "default", schema, pathIndex, children }) {
+ 		}),
+ 		children,
+ 		/* @__PURE__ */ jsx(Suspense, { children: /* @__PURE__ */ jsx(ObjectSearchContent, {
+-			search: deferredValue,
++			search: schema.props.length > 1 ? deferredValue : "",
+ 			properties: schema.props,
+ 			firstItemRef,
+ 			empty: () => /* @__PURE__ */ jsxs("p", {
+diff --git a/dist/components/schema/index.js b/dist/components/schema/index.js
+index 87a3e82..8f152b9 100644
+--- a/dist/components/schema/index.js
++++ b/dist/components/schema/index.js
+@@ -37,6 +37,8 @@ function generateSchemaUI({ root, renderMarkdown, renderCodeblock, readOnly = fa
+ 	const t = fromTranslations(translations, { note: "schema UI" });
+ 	const refs = {};
+ 	function generateInfoTags(schema) {
++		const literal = schema.const !== void 0 ? schema.const : schema.enum?.length === 1 ? schema.enum[0] : void 0;
++		const literalInType = literal !== void 0 && (literal === null || typeof literal !== "object");
+ 		const inlines = [];
+ 		const blocks = [];
+ 		if (schema.pattern) inlines.push({ node: /* @__PURE__ */ jsx(InlineTag, {
+@@ -71,7 +73,7 @@ function generateSchemaUI({ root, renderMarkdown, renderCodeblock, readOnly = fa
+ 			label: t("Items"),
+ 			children: range
+ 		}) });
+-		if (schema.enum && schema.enum.length > 0) {
++		if (schema.enum && schema.enum.length > 0 && !literalInType) {
+ 			const members = schema.enum.map((value) => JSON.stringify(value, null, 2));
+ 			blocks.push({ node: /* @__PURE__ */ jsx(BlockTag, {
+ 				label: t("Value in"),
+@@ -81,7 +83,7 @@ function generateSchemaUI({ root, renderMarkdown, renderCodeblock, readOnly = fa
+ 				}, i)) })
+ 			}) });
+ 		}
+-		if (schema.default !== void 0) {
++		if (schema.default !== void 0 && (!literalInType || schema.default !== literal)) {
+ 			const defaultCode = JSON.stringify(schema.default, null, 2);
+ 			if (defaultCode.includes("\n")) blocks.push({ node: /* @__PURE__ */ jsx(BlockTag, {
+ 				label: t("Default"),
+diff --git a/dist/components/select-tab.js b/dist/components/select-tab.js
+index aa036de..a526a1f 100644
+--- a/dist/components/select-tab.js
++++ b/dist/components/select-tab.js
+@@ -42,6 +42,7 @@ function SelectTabTrigger({ items, className, placeholder, ...props }) {
+ 		onValueChange: setValue,
+ 		children: [/* @__PURE__ */ jsx(SelectTrigger, {
+ 			className: cn("not-prose w-fit min-w-0 *:min-w-0", className),
++			"aria-label": "Content variant",
+ 			...props,
+ 			children: /* @__PURE__ */ jsx(SelectValue, { placeholder })
+ 		}), /* @__PURE__ */ jsx(SelectContent, { children: items.map(({ label, value }) => /* @__PURE__ */ jsx(SelectItem, {
+diff --git a/dist/schema/to-string.js b/dist/schema/to-string.js
+index 899ccc4..37e6a58 100644
+--- a/dist/schema/to-string.js
++++ b/dist/schema/to-string.js
+@@ -26,6 +26,8 @@ function schemaToString(value, flags = 0) {
+ 		const schema = dereferenceShallow(input);
+ 		if (schema === true) return "any";
+ 		else if (schema === false) return "never";
++		if (schema.const !== void 0 && (schema.const === null || typeof schema.const !== "object")) return JSON.stringify(schema.const);
++		if (schema.enum?.length === 1 && schema.enum[0] === null) return "null";
+ 		if (schema.enum?.length === 1) switch (typeof schema.enum[0]) {
+ 			case "bigint":
+ 			case "boolean":

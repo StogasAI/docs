@@ -11,7 +11,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
 	const page = source.getPage(slug.slice(0, -1));
 	if (!page) notFound();
 
-	return openGraphImage(page.data.title, page.data.description, 'Platform Documentation');
+	return openGraphImage(page.data.title, page.data.description, 'Platform');
 }
 
 export function generateStaticParams() {

@@ -6,6 +6,7 @@ import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { openapiPlugin } from 'fumadocs-openapi/server';
 import { BookOpen, TerminalSquare } from 'lucide-react';
 import React from 'react';
+import { stringify } from 'yaml';
 import {
 	docsContentRoute,
 	docsImageRoute,
@@ -15,7 +16,6 @@ import {
 	referenceRoute
 } from './shared';
 
-// See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
 	baseUrl: docsRoute,
 	source: docs.toFumadocsSource(),
@@ -39,8 +39,8 @@ export const unifiedTree: Root = {
 	children: [
 		{
 			type: 'folder',
-			name: 'Platform Documentation',
-			icon: React.createElement(BookOpen, { className: 'size-4' }),
+			name: 'Platform',
+			icon: React.createElement(BookOpen, { className: 'size-4', 'aria-hidden': true }),
 			root: true,
 			index: docsTree.children.find(
 				(child): child is Item => child.type === 'page' && child.url === docsRoute
@@ -50,7 +50,7 @@ export const unifiedTree: Root = {
 		{
 			type: 'folder',
 			name: 'API Reference',
-			icon: React.createElement(TerminalSquare, { className: 'size-4' }),
+			icon: React.createElement(TerminalSquare, { className: 'size-4', 'aria-hidden': true }),
 			root: true,
 			index: apiTree.children.find(
 				(child): child is Item => child.type === 'page' && child.url === referenceRoute
@@ -187,7 +187,7 @@ function findOperationForPage(page: (typeof source)['$inferPage']) {
 	}
 }
 
-function getOpenApiOperationSpec(page: (typeof source)['$inferPage']) {
+export function getOpenApiOperationSpec(page: (typeof source)['$inferPage']) {
 	if (!page.url.startsWith(referenceRoute)) return;
 
 	const match = findOperationForPage(page);
@@ -244,19 +244,25 @@ export function getOpenApiJsonUrl(page: (typeof source)['$inferPage']) {
 	};
 }
 
-export function getLLMContentType(page: (typeof source)['$inferPage'], format = 'content.md') {
-	return format === 'openapi.json' && isOpenApiOperationPage(page)
-		? 'application/json'
-		: 'text/markdown';
-}
-
 export async function getLLMText(page: (typeof source)['$inferPage']) {
+	const canonical = new URL(page.url, 'https://stogas.ai').href;
+	const metadata = stringify({
+		title: page.data.title,
+		description: page.data.description,
+		url: canonical
+	});
+	const introduction = `---\n${metadata}---\n\n# ${page.data.title}\n\n${page.data.description ?? ''}`;
 	const operationSpec = getOpenApiOperationSpec(page);
-	if (operationSpec) return JSON.stringify(operationSpec, null, '\t');
+	if (operationSpec) {
+		const yaml = stringify(operationSpec, { lineWidth: 0 });
+		// Descriptions can contain their own fenced examples.
+		const fence = '`'.repeat(
+			Math.max(3, ...Array.from(yaml.matchAll(/`+/g), (m) => m[0].length + 1))
+		);
+		return `${introduction}\n\n## OpenAPI\n\n${fence}yaml\n${yaml}${fence}\n`;
+	}
 
 	const processed = await page.data.getText('processed');
 
-	return `# ${page.data.title} (${page.url})
-
-${processed}`;
+	return `${introduction}\n\n${processed.trim()}\n`;
 }

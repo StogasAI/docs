@@ -2,7 +2,7 @@
 
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { Root } from 'fumadocs-core/page-tree';
-import { ExternalLink, LayoutDashboard, Home } from 'lucide-react';
+import { LayoutDashboard, Home } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
@@ -25,50 +25,53 @@ interface LayoutClientProps {
 
 export default function LayoutClient({ children, tree, baseOptions }: LayoutClientProps) {
 	return (
-		<DocsLayout
-			tree={tree}
-			slots={{ themeSwitch: false }}
-			{...baseOptions}
-			sidebar={{
-				defaultOpenLevel: 1,
-				footer: (
-					<div className="border-fd-border/50 mt-1 flex w-full flex-col gap-1 border-t pt-2">
-						{/* Landing page + dashboard links */}
-						<StogasLink
-							href="https://stogas.ai/"
-							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
-						>
-							<Home className="text-fd-primary size-4 shrink-0" />
-							<span className="text-[13px]">Landing Page</span>
-							<ExternalLink className="ml-auto size-3 opacity-30 transition-opacity group-hover:opacity-100" />
-						</StogasLink>
-						<StogasLink
-							href="https://app.stogas.ai/overview"
-							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
-						>
-							<LayoutDashboard className="text-fd-primary size-4 shrink-0" />
-							<span className="text-[13px]">Dashboard</span>
-							<ExternalLink className="ml-auto size-3 opacity-30 transition-opacity group-hover:opacity-100" />
-						</StogasLink>
-
-						{/* GitHub + theme toggle row */}
-						<div className="border-fd-border/60 bg-fd-secondary/50 mt-1 flex items-center rounded-lg border p-0.5">
-							<a
-								href="https://github.com/StogasAI/docs"
-								target="_blank"
-								rel="noreferrer noopener"
-								aria-label="GitHub"
-								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent inline-flex size-8 items-center justify-center rounded-md transition-colors"
+		<>
+			<a href="#nd-page" className="stogas-skip-link">
+				Skip to content
+			</a>
+			<DocsLayout
+				tree={tree}
+				slots={{ themeSwitch: false }}
+				{...baseOptions}
+				sidebar={{
+					defaultOpenLevel: 1,
+					footer: (
+						<div className="mt-1 flex w-full flex-col gap-1 pt-2">
+							{/* Landing page + dashboard links */}
+							<StogasLink
+								href="https://stogas.ai/"
+								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 							>
-								<GithubIcon className="size-4" />
-							</a>
-							<ThemeSwitch className="ms-auto rounded-none border-y-0 border-e-0 px-1 py-0 *:rounded-md" />
+								<Home aria-hidden="true" className="size-4 shrink-0" />
+								<span className="text-[13px]">Landing</span>
+							</StogasLink>
+							<StogasLink
+								href="https://app.stogas.ai/overview"
+								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
+							>
+								<LayoutDashboard aria-hidden="true" className="size-4 shrink-0" />
+								<span className="text-[13px]">Dashboard</span>
+							</StogasLink>
+
+							{/* GitHub + theme toggle row */}
+							<div className="bg-fd-secondary mt-2 flex items-center rounded-lg p-1">
+								<a
+									href="https://github.com/StogasAI/docs"
+									target="_blank"
+									rel="noreferrer noopener"
+									aria-label="Stogas documentation on GitHub"
+									className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent inline-flex size-8 items-center justify-center rounded-md transition-colors"
+								>
+									<GithubIcon className="size-4" />
+								</a>
+								<ThemeSwitch className="ms-auto rounded-none border-y-0 border-e-0 px-1 py-0 *:rounded-md" />
+							</div>
 						</div>
-					</div>
-				)
-			}}
-		>
-			{children}
-		</DocsLayout>
+					)
+				}}
+			>
+				{children}
+			</DocsLayout>
+		</>
 	);
 }

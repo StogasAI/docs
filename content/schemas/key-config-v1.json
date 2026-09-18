@@ -26,7 +26,7 @@
 					"type": "string",
 					"minLength": 1,
 					"maxLength": 4096,
-					"description": "A bounded Stogas routing query. See https://stogas.ai/docs/api-key-configuration."
+					"description": "A bounded Stogas routing query. See https://stogas.ai/docs/policies/routing."
 				},
 				"allowedCatalogNodes": {
 					"type": "object",
@@ -34,11 +34,21 @@
 					"minProperties": 1,
 					"description": "The lists contain at most 64 IDs in total. A candidate must match each list that is present.",
 					"properties": {
-						"authors": { "$ref": "#/$defs/catalogNodeIds" },
-						"models": { "$ref": "#/$defs/catalogNodeIds" },
-						"deployments": { "$ref": "#/$defs/catalogNodeIds" },
-						"routes": { "$ref": "#/$defs/catalogNodeIds" },
-						"providers": { "$ref": "#/$defs/catalogNodeIds" }
+						"authors": {
+							"$ref": "#/$defs/catalogNodeIds"
+						},
+						"models": {
+							"$ref": "#/$defs/catalogNodeIds"
+						},
+						"deployments": {
+							"$ref": "#/$defs/catalogNodeIds"
+						},
+						"routes": {
+							"$ref": "#/$defs/catalogNodeIds"
+						},
+						"providers": {
+							"$ref": "#/$defs/catalogNodeIds"
+						}
 					}
 				},
 				"fallbacks": {
@@ -63,12 +73,30 @@
 			"properties": {
 				"requests": {
 					"type": "object",
-					"additionalProperties": false,
-					"required": ["max", "window"],
-					"properties": {
-						"max": { "type": "integer", "minimum": 1, "maximum": 1000000000000 },
-						"burst": { "type": "integer", "minimum": 1, "maximum": 120 },
-						"window": { "$ref": "#/$defs/requestWindow" }
+					"minProperties": 1,
+					"maxProperties": 8,
+					"propertyNames": {
+						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+					},
+					"additionalProperties": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": ["max", "window"],
+						"properties": {
+							"max": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 1000000000000
+							},
+							"burst": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 120
+							},
+							"window": {
+								"$ref": "#/$defs/requestWindow"
+							}
+						}
 					}
 				},
 				"spend": {
@@ -76,23 +104,71 @@
 					"additionalProperties": false,
 					"minProperties": 1,
 					"properties": {
-						"lifetimeUsd": { "$ref": "#/$defs/usd" },
+						"lifetimeUsd": {
+							"$ref": "#/$defs/usd"
+						},
 						"recurring": {
 							"type": "object",
-							"additionalProperties": false,
-							"required": ["maxUsd", "timeZone", "window"],
-							"properties": {
-								"anchor": { "$ref": "#/$defs/dateTime" },
-								"maxUsd": { "$ref": "#/$defs/usd" },
-								"timeZone": { "$ref": "#/$defs/timeZone" },
-								"window": { "$ref": "#/$defs/window" }
+							"minProperties": 1,
+							"maxProperties": 8,
+							"propertyNames": {
+								"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+							},
+							"additionalProperties": {
+								"type": "object",
+								"additionalProperties": false,
+								"required": ["maxUsd", "timeZone", "window"],
+								"properties": {
+									"anchor": {
+										"$ref": "#/$defs/dateTime"
+									},
+									"maxUsd": {
+										"$ref": "#/$defs/usd"
+									},
+									"timeZone": {
+										"$ref": "#/$defs/timeZone"
+									},
+									"window": {
+										"$ref": "#/$defs/window"
+									}
+								}
 							}
 						}
 					}
+				},
+				"tokens": {
+					"type": "object",
+					"minProperties": 1,
+					"maxProperties": 8,
+					"propertyNames": {
+						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+					},
+					"additionalProperties": {
+						"type": "object",
+						"additionalProperties": false,
+						"properties": {
+							"max": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 1000000000000
+							},
+							"window": {
+								"$ref": "#/$defs/requestWindow"
+							}
+						},
+						"required": ["max", "window"]
+					}
+				},
+				"concurrentRequests": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 10000
 				}
 			}
 		},
-		"expiresAt": { "$ref": "#/$defs/dateTime" },
+		"expiresAt": {
+			"$ref": "#/$defs/dateTime"
+		},
 		"access": {
 			"type": "object",
 			"additionalProperties": false,
@@ -112,14 +188,20 @@
 								"minItems": 1,
 								"maxItems": 7,
 								"uniqueItems": true,
-								"items": { "enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] }
+								"items": {
+									"enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+								}
 							},
-							"start": { "$ref": "#/$defs/time" },
+							"start": {
+								"$ref": "#/$defs/time"
+							},
 							"end": {
 								"$ref": "#/$defs/endTime",
 								"description": "The end must be later than the start. Split an overnight period into two entries."
 							},
-							"timeZone": { "$ref": "#/$defs/timeZone" }
+							"timeZone": {
+								"$ref": "#/$defs/timeZone"
+							}
 						}
 					}
 				}
@@ -130,28 +212,61 @@
 			"additionalProperties": false,
 			"minProperties": 1,
 			"properties": {
-				"stogasPiiRedaction": {
+				"stogasRedaction": {
 					"type": "object",
 					"additionalProperties": false,
 					"minProperties": 1,
 					"properties": {
-						"patterns": {
-							"type": "array",
-							"minItems": 1,
-							"maxItems": 1,
-							"uniqueItems": true,
-							"description": "Built-in patterns to add. Secure default detection remains enabled. ip_address is the only optional built-in in v1.",
-							"items": {
-								"const": "ip_address"
-							}
+						"email_address": {
+							"type": "boolean",
+							"description": "Email address",
+							"x-stogas-group": "Contact"
 						},
-						"customPatterns": {
-							"type": "array",
-							"minItems": 1,
-							"maxItems": 16,
-							"uniqueItems": true,
-							"description": "Bounded RE2 expressions. The expressions use at most 4096 UTF-8 bytes in total and cannot match empty text or redaction placeholders.",
-							"items": { "type": "string", "minLength": 1, "maxLength": 512 }
+						"phone_number": {
+							"type": "boolean",
+							"description": "Formatted phone number, including international",
+							"x-stogas-group": "Contact"
+						},
+						"social_security_number": {
+							"type": "boolean",
+							"description": "U.S. Social Security number",
+							"x-stogas-group": "National and business"
+						},
+						"credit_card_number": {
+							"type": "boolean",
+							"description": "Credit card number",
+							"x-stogas-group": "Bank"
+						},
+						"ip_address": {
+							"type": "boolean",
+							"description": "IPv4 or IPv6 address",
+							"x-stogas-group": "Network"
+						},
+						"api_keys_and_secrets": {
+							"type": "boolean",
+							"description": "API keys, credentials and secrets",
+							"x-stogas-group": "Secrets"
+						},
+						"bank_identifiers": {
+							"type": "boolean",
+							"description": "IBAN and U.S. routing numbers",
+							"x-stogas-group": "Bank"
+						},
+						"national_identifiers": {
+							"type": "boolean",
+							"description": "National, tax and business identifiers",
+							"x-stogas-group": "National and business"
+						},
+						"health_identifiers": {
+							"type": "boolean",
+							"description": "Healthcare and health-insurance identifiers",
+							"x-stogas-group": "Health"
+						},
+						"customPattern": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 512,
+							"description": "One RE2 expression, limited to 512 UTF-8 bytes."
 						}
 					}
 				}
@@ -164,7 +279,9 @@
 			"minItems": 0,
 			"maxItems": 64,
 			"uniqueItems": true,
-			"items": { "$ref": "#/$defs/catalogNodeId" }
+			"items": {
+				"$ref": "#/$defs/catalogNodeId"
+			}
 		},
 		"catalogNodeId": {
 			"type": "string",
@@ -182,8 +299,14 @@
 			"additionalProperties": false,
 			"required": ["count", "unit"],
 			"properties": {
-				"count": { "type": "integer", "minimum": 1, "maximum": 999999 },
-				"unit": { "enum": ["second", "minute", "hour", "day", "week"] }
+				"count": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 999999
+				},
+				"unit": {
+					"enum": ["second", "minute", "hour", "day", "week"]
+				}
 			}
 		},
 		"time": {
@@ -212,8 +335,14 @@
 			"additionalProperties": false,
 			"required": ["count", "unit"],
 			"properties": {
-				"count": { "type": "integer", "minimum": 1, "maximum": 1000 },
-				"unit": { "enum": ["minute", "hour", "day", "week", "month", "year"] }
+				"count": {
+					"type": "integer",
+					"minimum": 1,
+					"maximum": 1000
+				},
+				"unit": {
+					"enum": ["minute", "hour", "day", "week", "month", "year"]
+				}
 			}
 		}
 	}

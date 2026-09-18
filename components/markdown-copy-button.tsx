@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn';
 import { readBoundedResponseText } from '@/lib/http';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
 import { Check, CircleAlert, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const MAX_MARKDOWN_BYTES = 2 * 1024 * 1024;
 
@@ -20,22 +20,28 @@ export function MarkdownCopyButton({
 	const [loading, setLoading] = useState(false);
 	const [copied, setCopied] = useState(false);
 	const [failed, setFailed] = useState(false);
+	const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+	useEffect(() => () => clearTimeout(resetTimer.current), []);
 
 	async function copyMarkdown() {
 		setLoading(true);
 		setFailed(false);
+		setCopied(false);
+		clearTimeout(resetTimer.current);
 		try {
-			const response = await fetch(markdownUrl, {
-				cache: 'no-store',
-				signal: AbortSignal.timeout(10_000)
-			});
-			if (!response.ok) throw new Error(`Failed to fetch markdown: ${response.status}`);
-
-			await navigator.clipboard.writeText(
-				await readBoundedResponseText(response, MAX_MARKDOWN_BYTES)
+			const content = fetch(markdownUrl, { signal: AbortSignal.timeout(10_000) }).then(
+				async (response) => {
+					if (!response.ok) throw new Error(`Failed to fetch markdown: ${response.status}`);
+					return new Blob([await readBoundedResponseText(response, MAX_MARKDOWN_BYTES)], {
+						type: 'text/plain'
+					});
+				}
 			);
+			// Start the clipboard write in the click event, preserving Safari's user activation.
+			await navigator.clipboard.write([new ClipboardItem({ 'text/plain': content })]);
 			setCopied(true);
-			window.setTimeout(() => setCopied(false), 1500);
+			resetTimer.current = setTimeout(() => setCopied(false), 1500);
 		} catch {
 			setFailed(true);
 		} finally {
@@ -50,16 +56,23 @@ export function MarkdownCopyButton({
 			onClick={copyMarkdown}
 			className={cn(
 				buttonVariants({
-					color: 'secondary',
+					variant: 'secondary',
 					size: 'sm',
-					className: '[&_svg]:text-fd-muted-foreground gap-2 [&_svg]:size-3.5'
+					className: '[&_svg]:text-fd-muted-foreground gap-2 border-0 [&_svg]:size-3.5'
 				}),
 				className
 			)}
 			aria-live="polite"
+			aria-busy={loading}
 		>
-			{copied ? <Check /> : failed ? <CircleAlert /> : <Copy />}
-			{copied ? 'Copied' : failed ? 'Copy failed' : children}
+			{copied ? (
+				<Check aria-hidden="true" />
+			) : failed ? (
+				<CircleAlert aria-hidden="true" />
+			) : (
+				<Copy aria-hidden="true" />
+			)}
+			{loading ? 'Copying…' : copied ? 'Copied' : failed ? 'Copy failed — retry' : children}
 		</button>
 	);
 }

@@ -1,0 +1,220 @@
+---
+title: Limits
+description: Set spend caps, request rates, token budgets, and concurrent-request limits.
+---
+
+A request must pass every organization, grant, and key limit that applies to it. Organization and
+grant usage is shared across their keys. Key usage belongs only to that key.
+
+## Choose a limit
+
+| Setting inside `limits` | Controls                                | Maximum definitions per saved scope |
+| ----------------------- | --------------------------------------- | ----------------------------------- |
+| `spend.lifetimeUsd`     | Total Stogas spend.                     | 1                                   |
+| `spend.recurring`       | Spend per repeating period.             | 8                                   |
+| `requests`              | Request refill rate and burst capacity. | 8                                   |
+| `tokens`                | Tokens per fixed period, such as TPM.   | 8                                   |
+| `concurrentRequests`    | Requests authorized at the same time.   | 1                                   |
+
+The eight-entry bounds apply separately to each kind on each organization, grant, and key.
+A member key can therefore be subject to 24 recurring spend caps, 24 request rates, and 24 token
+quotas across its three scopes. A request policy cannot define any limits; it inherits the saved limits.
+
+Names such as `daily` and `monthly` are yours to choose. Use 1–48 lowercase letters, digits,
+underscores, or hyphens, starting with a letter. Each name identifies one counter. JSON order
+does not affect enforcement. Omit limits you do not need.
+
+## Spend allowances
+
+This policy combines a lifetime allowance with daily and monthly budgets:
+
+```json title="policy.json"
+{
+	"version": 1,
+	"limits": {
+		"spend": {
+			"lifetimeUsd": "1000.00",
+			"recurring": {
+				"daily": {
+					"maxUsd": "20.00",
+					"window": { "count": 1, "unit": "day" },
+					"anchor": "2026-09-01T00:00:00Z",
+					"timeZone": "UTC"
+				},
+				"monthly": {
+					"maxUsd": "100.00",
+					"window": { "count": 1, "unit": "month" },
+					"anchor": "2026-09-01T00:00:00Z",
+					"timeZone": "UTC"
+				}
+			}
+		}
+	}
+}
+```
+
+Use USD decimal strings, not JSON numbers. Money belongs inside `limits.spend`, so
+`limits.lifetimeUsd` is invalid. Limits count the Stogas charge, including the Stogas fee for BYOK;
+bills paid directly to a provider are separate. An allowance does not fund your organization balance.
+For all amount and field bounds, see the [policy reference](/docs/policies/reference#limits).
+
+### Holds and settlement
+
+Before dispatch, Stogas reserves an estimate of the request's maximum charge. Each allowance must
+cover settled usage, outstanding holds, and the new hold together. Concurrent requests cannot use
+the same reserved allowance. Settlement records the charge and releases the unused reservation.
+
+The reservation uses buffered input-token estimates and the enforced output maximum. Estimates
+are not a proof of the provider's input-token count. A request may be declined even when its likely
+final charge would fit. Setting a smaller output maximum can reduce the reservation.
+
+### Reset schedules
+
+Recurring spend supports `minute`, `hour`, `day`, `week`, `month`, and `year`, with a
+`window.count` from 1 to 1,000. These are anchored periods, not rolling lookbacks.
+
+`timeZone` is required and accepts an IANA time zone such as `UTC` or `America/New_York`.
+`anchor` sets the schedule; it does not postpone enforcement. Stogas supplies it on the first save
+if omitted, and retains it for that named limit on later saves.
+
+Month and year periods preserve the anchor's local day and time. If that day does not exist,
+the reset uses the month's last day without shifting the original schedule.
+For example, a monthly schedule anchored on January 31 resets on February's last day, then
+March 31. Local schedules follow the time zone's daylight-saving changes; a day need not be
+exactly 24 elapsed hours. Use UTC when you want to avoid those changes.
+
+Usage belongs to the period when the hold was created. Settlement after a reset does not charge
+the new period. Older unresolved holds still reserve allowance until they settle or are released.
+Unused allowance does not carry into the next period.
+
+## Request rates
+
+```json title="policy.json"
+{
+	"version": 1,
+	"limits": {
+		"requests": {
+			"steady": {
+				"max": 120,
+				"window": { "count": 1, "unit": "minute" },
+				"burst": 20
+			},
+			"short-burst": {
+				"max": 5,
+				"window": { "count": 1, "unit": "second" },
+				"burst": 5
+			}
+		}
+	}
+}
+```
+
+Both buckets must have capacity. The first refills at two requests per second and holds up to 20;
+the second refills at five per second and holds up to five. Each authorized request consumes one
+unit from each bucket. Provider failures do not refund those units.
+New buckets start full. A rejected authorization consumes neither request capacity nor a new spend
+or token reservation.
+
+`max / window` defines a continuous refill rate, **not a count that resets at the end of a window**.
+These are token buckets whose units are requests; they are unrelated to model-token quotas.
+
+`max` is an integer from 1 to 1,000,000,000,000. Duration units are `second`, `minute`, `hour`,
+`day`, and `week`, with counts from 1 to 999,999. The resulting refill rate must be between one
+request per century and 60 requests per second. `burst` ranges from 1 to 120; when omitted, it is
+the smaller of `max` and 120.
+
+Every key also has a platform bucket of 60 requests per second with capacity 60, regardless of
+custom limits. There are no fixed-window request counters or sliding-window algorithms to select.
+For example, `max: 60` over one minute with `burst: 10` means one request refills per second and
+up to ten can be sent immediately after enough idle time. It can admit more than 60 requests
+within a particular minute if it began with a full bucket.
+
+## Token quotas
+
+```json title="policy.json"
+{
+	"version": 1,
+	"limits": {
+		"tokens": {
+			"per-minute": { "max": 100000, "window": { "count": 1, "unit": "minute" } },
+			"per-hour": { "max": 1000000, "window": { "count": 1, "unit": "hour" } }
+		},
+		"concurrentRequests": 10
+	}
+}
+```
+
+Tokens use the same hold-and-settle lifecycle as spend. Admission reserves buffered input plus the
+enforced output maximum: the caller's output limit when supplied, otherwise the catalog maximum.
+Provider-hosted tool iterations use the same additional reservation bounds as spend.
+The `per-minute` example is a tokens-per-minute (TPM) quota. Lowering the request's output maximum
+can make a small request fit a quota that would reject the catalog maximum.
+
+Input includes cached reads and cache writes. Output includes reasoning. Each token counts once;
+detail categories are not added again. Settlement uses normalized measured usage. When provider
+usage is unavailable, the full token reservation is charged. A confirmed pre-dispatch failure
+releases the token hold without charging tokens.
+
+`max` is an integer from 1 to 1,000,000,000,000. Token periods use the same duration units and
+count bounds as request rates. Periods align to multiples of their duration since
+`1970-01-01T00:00:00Z`; they have no calendar month, time-zone, or burst setting.
+
+The request's usage belongs to the period when its hold was created. Outstanding holds continue
+to reserve capacity across a reset. This is admission-based quota accounting, not a live count
+of tokens generated during each wall-clock minute. It has the same input-estimation limitations as spend.
+
+## Concurrent requests
+
+`concurrentRequests` limits active authorizations across the selected scope. Streaming and
+non-streaming requests each use one slot. Lowering the limit does not cancel requests already running.
+The value is an integer from 1 to 10,000. This is a ceiling, not a guarantee of that much capacity;
+platform safeguards and provider limits can reject requests earlier.
+
+Normal settlement releases the slot. If a gateway crashes or settlement is unavailable, a bounded
+lease releases it after the request lifetime and final delivery allowance. Financial recovery can
+continue afterward without keeping the slot occupied indefinitely. Slot recovery is conservative,
+so an interrupted request may hold a slot until its lease expires.
+
+## Edit or remove limits
+
+| Change                               | What happens to usage                                                                                                                        |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Change an amount or reorder JSON     | Existing usage is retained.                                                                                                                  |
+| Change a recurring or token schedule | Current-period usage is retained after any ordinary reset that was already due.                                                              |
+| Change a request rate or burst       | Refill at the old rate up to the old capacity, then cap availability at the new capacity. Increasing the burst does not instantly refill it. |
+| Add a named spend or token limit     | Count outstanding reservations from activation; do not reconstruct earlier settled usage.                                                    |
+| Remove or rename a named limit       | Delete its counter. Re-adding it starts a new counter.                                                                                       |
+| Remove or restore a lifetime cap     | Keep the lifetime total, including shared spend from deleted keys.                                                                           |
+
+Lowering a limit below usage blocks new reservations until sufficient allowance is available.
+The key's **Status** page has a card for each configured limit, labeled **Organization**, **Grant**,
+**Key**, or **Platform**. Each card shows that limit's own allowance and usage; shared usage is
+visible to every key owner. The key's lifetime spend appears separately, even without a cap.
+
+All limits must pass. A key with $400 left under its own cap can use only $2 if the shared
+organization cap has $2 left. No scope replaces another scope's limit.
+
+## Blocked requests
+
+| Response | Meaning                                                                                          | Next action                                                                                     |
+| -------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| `402`    | A spend allowance or organization balance cannot cover the hold.                                 | Check shared usage, pending holds, and funds; wait for a reset or adjust the applicable policy. |
+| `429`    | A request bucket, token quota, concurrency limit, or infrastructure safeguard blocked admission. | Check the error's scope and kind; reduce load and use bounded backoff.                          |
+
+Raising a Stogas limit does not change a provider's limits. A policy decline does not trigger an
+attempt against another provider. All applicable checks complete before new allowances are consumed.
+
+The response's `error.code` identifies the cause and scope:
+
+| Cause               | Error codes                                                                          |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| Organization credit | `insufficient_balance`                                                               |
+| Spend cap           | `organization_spend_limit`, `grant_spend_limit`, `key_spend_limit`                   |
+| Request rate        | `organization_rate_limited`, `grant_rate_limited`, `key_rate_limited`                |
+| Token quota         | `organization_token_limit`, `grant_token_limit`, `key_token_limit`                   |
+| Concurrency         | `organization_concurrency_limit`, `grant_concurrency_limit`, `key_concurrency_limit` |
+
+`key_concurrency_limit` can also report the Gateway's admission safeguard. A limit error identifies
+the scope and kind, not a particular named counter; inspect that scope's limits on **Status**.
+Use bounded backoff with jitter for temporary traffic limits. Repeated retries cannot make a
+reservation fit a cap that is too small; lower the output maximum or change the applicable cap.
