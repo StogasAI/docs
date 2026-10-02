@@ -3,7 +3,7 @@ title: Reasoning controls
 description: Select reasoning effort, manual token limits, Pro mode, and service tiers.
 ---
 
-Stogas accepts one portable reasoning scale across providers:
+We accept one portable reasoning scale across providers:
 
 `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
 
@@ -42,7 +42,7 @@ Use the OpenAI-compatible field for the endpoint:
 An effort passes through unchanged when the selected deployment lists that exact value. Another
 positive effort maps to the nearest available positive level, with upward ties. Explicit `none`
 disables optional reasoning and is rejected when reasoning is required. On an optional binary
-deployment, any positive effort means on and `none` means off; Stogas does not pretend that binary
+deployment, any positive effort means on and `none` means off; we do not pretend that binary
 on is a specific effort such as `high`. A required deployment with no selectable level rejects an
 effort because there is no accurate level mapping. Check the selected deployment in the catalog
 when exact provider behavior matters.
@@ -125,10 +125,9 @@ Azure OpenAI has separate Pro and Priority controls:
 | Terra        | Yes | Yes      | Yes               |
 | Sol          | Yes | Yes      | Yes               |
 
-Azure calls its low-latency service tier Priority. Azure deployment IDs use `-priority`; `-fast`
-is a compatibility alias. Pro does not add a price multiplier. A Pro+Priority deployment uses the
-Priority token rates. Priority requests above 272,000 input tokens fall back to standard
-processing and standard long-context rates.
+Azure calls its low-latency service tier Priority. Azure deployment IDs use `-fast`; `-priority`
+is an alias. Pro does not add a price multiplier. A Pro+Priority deployment uses the
+Priority token rates, including the long-context price tier above 272,000 input tokens.
 
 Claude Fast mode is not available through Microsoft Foundry. This applies to both Azure-hosted
 and Anthropic-hosted Claude deployments. Azure Claude deployment choices therefore represent only

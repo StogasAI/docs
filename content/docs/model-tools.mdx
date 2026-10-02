@@ -36,6 +36,11 @@ Chat tool calls and tool results must form a complete adjacent pair in the same 
 Custom Chat calls cannot be replayed through the provider-neutral Chat history shape, so Chat accepts
 only `function` definitions.
 
+Function-calling support does not mean every model supports every tool-choice mode. Provider
+adapters may translate or omit unsupported controls, including changing forced tool selection to
+automatic selection. Applications that depend on a tool call must check the returned calls before
+continuing; a successful response alone does not establish that a tool was selected or executed.
+
 ## Responses API
 
 Responses supports the broader tool surface. Use it when you need hosted web tools or custom tools.
@@ -54,7 +59,7 @@ Chutes does not expose a Responses route.
 ¹ Azure custom tools are available only on OpenAI-format deployments. Azure Claude rejects them
 because the free-form input format is not preserved by its Anthropic translation.
 
-Stogas accepts only provider versions with known wire behavior and cataloged pricing. OpenAI accepts
+We accept only provider versions with known wire behavior and cataloged pricing. OpenAI accepts
 `web_search`, `web_search_2025_08_26`, `web_search_preview`, and
 `web_search_preview_2025_03_11`. Anthropic accepts the cataloged `web_search` and `web_fetch`
 versions shown by the deployment catalog. Unknown future aliases fail closed instead of inheriting a

@@ -1,32 +1,32 @@
 ---
 title: Bring your own provider key
-description: Use an encrypted stored credential or send a provider credential with each request.
+description: Use a stored provider credential or encrypt it with a key your organization controls.
 ---
 
-Bring your own key (BYOK) lets Stogas route a request through your provider account. You still
+Bring your own key (BYOK) lets us route a request through your provider account. You still
 authenticate every request with a Stogas API key. The provider credential only authenticates the
 upstream provider request.
 
 ## Choose a credential method
 
-| Method             | Where the provider secret is supplied | Best for                                        |
-| ------------------ | ------------------------------------- | ----------------------------------------------- |
-| **Stored BYOK**    | Once in the Stogas dashboard          | Services that should not carry provider keys    |
-| **Pass-through**   | On each API request                   | Keeping provider keys out of persistent storage |
-| **Stogas managed** | By Stogas                             | Providers where managed service is available    |
+| Method                 | Secret storage           | Request requirement                     |
+| ---------------------- | ------------------------ | --------------------------------------- |
+| **Stored BYOK**        | Encrypted by us          | Stogas API key                          |
+| **Customer encrypted** | Encrypted on your device | API key and organization encryption key |
+| **Stogas managed**     | Supplied by us           | Stogas API key                          |
 
-Managed service is currently available for Chutes. OpenAI and Anthropic accept stored or
-pass-through credentials. Azure accepts only a stored Microsoft Entra application credential.
+Managed service is available for Chutes. OpenAI, Anthropic and Chutes support customer encryption.
+Azure uses stored Microsoft Entra credentials so we can discover deployments.
 
 ## Store a provider credential
 
 1. Open **BYOK** in the dashboard.
 2. Select **Add** and choose the provider.
 3. Enter a name and the provider credential. For Azure, enter the tenant ID, application client ID,
-   client secret, and the subscription IDs that Stogas may inspect.
+   client secret, and the subscription IDs that we may inspect.
 4. Open a service or member API key and select the stored credential for that provider.
 
-Before saving or replacing a secret, Stogas checks it through authenticated metadata calls, not
+Before saving or replacing a secret, we check it through authenticated metadata calls, not
 paid inference. OpenAI and Anthropic use their model-list operation; Chutes uses its account-quota
 operation. Azure uses its management and model APIs. A rejected credential is not saved. If the
 provider is unavailable or rate-limits the check, try again. A successful check does not guarantee
@@ -35,46 +35,53 @@ quota or access to every model.
 The dashboard never returns the stored secret. You can replace any stored provider credential in
 place. Its stable credential ID, API-key assignments, and analytics history do not change.
 
-## Send a pass-through credential
+## Credential access
 
-Add the provider key to an ordinary authenticated request:
+In a shared organization, open a credential's **Access** action to assign members or roles:
+
+| Permission | Allows |
+| ---------- | ------ |
+| **View** | Read metadata, assignments and policies. |
+| **Use** | View, plus attach the credential to API keys you manage. |
+| **Manage** | View, plus change settings, replace the secret, disable or delete the credential. |
+| **Admin** | Use, Manage, and permission to assign access. |
+
+Use and Manage are independent and can be combined. Creating credentials requires
+organization-wide credential Manage. Provider secrets and encrypted blobs are never returned.
+
+Removing Use prevents new assignments. Existing assignments continue to work, and key managers
+can still reorder or remove them. Disable the credential to stop all its assignments.
+Credential access does not grant access to API keys or inherit from their folders.
+
+## Customer encryption
+
+[Generate and register an organization key](/docs/cli#encrypt-credentials-and-plugins), or use
+the existing `org.key`. Encrypt the provider credential locally:
 
 ```console
-curl https://api.stogas.ai/v1/responses \
-  -H "Authorization: Bearer $STOGAS_API_KEY" \
-  -H "X-Stogas-Upstream-OpenAI-API-Key: $OPENAI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"model":"openai/gpt-5-mini","input":"Hello"}'
+stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
+  --purpose byok/openai --input provider-secret.txt --output credential.json
 ```
 
-| Header                                | Provider  |
-| ------------------------------------- | --------- |
-| `X-Stogas-Upstream-Anthropic-API-Key` | Anthropic |
-| `X-Stogas-Upstream-Chutes-API-Key`    | Chutes    |
-| `X-Stogas-Upstream-OpenAI-API-Key`    | OpenAI    |
+The input file must contain the exact credential, without a trailing newline. Use `byok/openai`,
+`byok/anthropic`, or `byok/chutes` to match the provider.
 
-Do not put the provider key in `Authorization`; that header always contains the Stogas API key.
-The same headers work with Chat Completions and Responses. You can supply at most one key for each
-supported provider on one request.
+1. Open **BYOK → Add → Customer encrypted**, choose the provider, and paste `credential.json`.
+2. Assign the saved credential to an API key. Registration does not contact the provider.
+3. Include the contents of `org.key` under its registered label in `encryption_keys` in each request's JSON body.
 
-Pass-through keys do not constrain catalog routing. Stogas resolves the concrete provider first,
-then uses only that provider's supplied key and discards the other supplied keys. A supplied key
-does not cause a retry, fallback, or reroute after resolution. Pass-through keys are not preflighted;
-the normal upstream request checks the selected key.
+Keep your API key in `Authorization`. Ordinary HTTPS, attested TLS, and binary E2EE are supported;
+[choose your transport before sending the key](/docs/cli#send-the-key-with-a-request).
+We recommend a locally verified transport to protect it from TLS intermediaries. No provider-secret
+header is accepted.
 
-### Name a pass-through credential
-
-A successful pass-through request records a stable 64-character credential ID in analytics. Select
-an unnamed ID to open a prefilled **Pass-through** form, or copy the ID into the BYOK page's **Add**
-form. The dashboard saves only the name, provider, and ID; it does not receive the provider secret,
-probe the provider, or change earlier logs. Earlier requests show the saved name because the ID is
-stable within the organization, workspace, and provider. The ID is a keyed hash, not a hash you
-calculate yourself from the secret.
-
-You can use a named ID for analytics filters or require that exact pass-through credential on an API
-key. Naming an ID does not convert it to a stored credential. To store a secret, create a separate
-stored credential. A saved pass-through ID cannot be edited. When the provider key changes, name
-its new ID separately so old requests remain linked to the original credential.
+The management API returns only credential metadata and a preview, never its encrypted blob or secret.
+API callers can use assigned credentials with the matching registered root. An omitted credential
+root excludes that credential from routing; a wrong supplied root or invalid encrypted content
+fails the request, even when local fallback is enabled. Roots required by applicable encrypted
+policies must also be supplied.
+See [key sharing and rotation](/docs/cli#key-sharing-and-rotation) for the shared trust boundary,
+backups, and replacement procedure.
 
 ## Connect Azure
 
@@ -83,21 +90,21 @@ Grant its service principal read access to the selected subscriptions or narrowe
 and grant **Cognitive Services User** on each model account that it may call. Keep each assignment at
 the narrowest practical scope. Azure role changes can take several minutes to apply.
 
-When you save the credential, Stogas reads Azure Resource Manager to find accessible model accounts,
+When you save the credential, we read Azure Resource Manager to find accessible model accounts,
 locations, deployments, exact model versions, hosting modes, SKUs, and supported Foundry projects.
 It also checks Microsoft Entra access to each trusted model endpoint. Customer deployment names,
 resource IDs, endpoints, and physical resource locations remain private binding data; they do not
 become public catalog nodes.
 
-Azure Instant access is separate from a normal Azure deployment. Stogas discovers supported Instant
+Azure Instant access is separate from a normal Azure deployment. We discover supported Instant
 models through an accessible West US 3 Foundry project and binds the exact versioned model name to
 that project endpoint. Use **Refresh Azure deployments** after you add, remove, or change Azure
 deployments or projects.
 
-Each Stogas API key can select one stored Azure credential. **Unassigned** means that Azure requests
-fail. At request time, Stogas matches the selected catalog deployment to an exact discovered model,
+Each Stogas API key can order stored Azure credentials. An empty list means that Azure requests
+fail. At request time, we match the selected catalog deployment to an exact discovered model,
 version, hosting mode, and deployment type inside that credential. If several Azure resources expose
-the same exact target, the request ID selects one deterministically. Stogas never searches another
+the same exact target, the request ID selects one deterministically. We never search another
 credential, guesses a customer deployment name, or falls back to another provider.
 
 The catalog represents material Azure choices such as Global Standard, US or EU Data Zone Standard,
@@ -108,71 +115,88 @@ whose documented data handling satisfies it; unknown regions do not satisfy a na
 An applicable catalog guarantee of no ordinary-content storage does not require Azure to report a
 storage region. It does not establish a separate zero-data-retention agreement.
 
-## Set the API key credential mode
+## Choose and order credentials
 
-Every service or member API key owns one credential mode per provider. Members with BYOK and
-organization-wide API key management configure it.
+Every service or member API key owns an ordered credential list for each provider. Members with
+BYOK management and management of that key can add, remove, or reorder its choices. An empty list
+disables that provider for the key. New keys start with Stogas-managed Chutes assigned.
 
-| Policy                            | Result                                                               |
-| --------------------------------- | -------------------------------------------------------------------- |
-| **Any credential**                | Use a supplied key. Without one, use managed service when available. |
-| **Managed only**                  | Use Stogas managed service and ignore a supplied key.                |
-| **Stored credential**             | Use the selected encrypted credential and ignore a supplied key.     |
-| **Any pass-through credential**   | Require a supplied key for the provider.                             |
-| **Named pass-through credential** | Require the supplied key to match the selected credential ID.        |
+| Choice                 | Result                                                           |
+| ---------------------- | ---------------------------------------------------------------- |
+| **Stogas managed**     | Use our Chutes account. Do not supply a provider key.            |
+| **Stored credential**  | Use the selected encrypted secret. Do not supply a provider key. |
+| **Customer encrypted** | Unlock the assigned credential with its labeled encryption key.  |
 
-Stogas checks the current credential mode and status when authorizing each request. A missing,
-disabled, or mismatched selected credential blocks the request. Stogas does not switch to another
-credential after a provider rejects it.
+Each candidate includes its own credential policy. A customer-encrypted credential is unavailable
+when the request omits its matching encryption key. Credential order chooses between credentials
+for the same deployment; [routing settings](/docs/policies/routing) choose between deployments.
+For example, put a customer-encrypted Chutes credential before Stogas managed to prefer it when
+its key is supplied.
 
-Azure exposes only **Unassigned** and one named **Stored credential** in this policy picker. It does
-not accept pass-through or Stogas-managed credential modes.
+Only an explicit `routing.fallbacks.maxPreDispatchCandidates` greater than one allows another
+local credential attempt if the first usable choice cannot be prepared. There is no fallback by
+default, and failures after selection, including provider errors, never switch credentials.
+Encrypted plugins open after selection. Missing plugin keys or invalid plugin content reject that
+request, including when another credential could have served the same deployment.
+
+Credential lists and ciphertexts are cached with the API key's policy. Changed generations reject
+stale requests before dispatch and start a refresh. Every authorization checks the exact selected
+assignment, ownership, status, and applicable policy revisions again. Saving a list requires the
+key's current `configGeneration`; a stale save leaves the current list unchanged.
+
+Distinct candidate policies share the [combined policy budgets](/docs/policies/editing#document-rules).
+The complete snapshot also has a 96-MiB memory accounting allowance, charging shared source JSON
+once at eight times its bytes and credential metadata at three times its bytes, plus object
+overhead. `key_configuration_too_large` means the assigned policies or target metadata exceed
+that allowance. Reduce the assignments or their content; retrying the same configuration cannot fix it.
+
+Azure accepts ordered stored credentials with discovered targets. It does not accept
+customer-encrypted or Stogas-managed credentials.
 
 ## Rotate or revoke a credential
 
-- **Replace a stored secret:** Open the credential, choose **Edit**, and replace its secret. Stogas
-  validates the replacement. Its ID, assignments, and analytics history stay the same.
-- **Rotate a pass-through key:** Change the key sent by your application. If an API key requires a
-  named credential, save the new ID and update that assignment before using it.
-- **Disable a stored credential:** New requests assigned to it are blocked.
-- **Disable a named pass-through credential:** New requests using that ID are blocked within its
-  organization, workspace, and provider, including **Any credential** and **Any pass-through
-  credential** modes. A supplied key ignored by **Managed only** or **Stored credential** does not
-  affect that request.
-- **Delete a credential:** Its saved name is removed. Exact assignments stop working. Deleting a
-  pass-through record also removes its block, so open credential modes may accept that key again.
+- **Replace a stored secret:** Open the credential, choose **Edit**, and replace its secret. We
+  validate the replacement. Its ID, assignments, and analytics history stay the same.
+- **Rotate a customer-encrypted credential:** Encrypt the replacement locally and replace the saved
+  encrypted JSON. Its credential ID and assignments remain the same.
+- **Disable a credential:** Block new requests that select it.
+- **Delete a credential:** Remove its assignments first. Its old ID remains in request history.
 
-Keep a pass-through record disabled to block it. To revoke the provider key everywhere, revoke it
-with the provider. Changes do not cancel requests that were already authorized.
+To revoke a provider key everywhere, revoke it with the provider. Keep an old secret valid during
+routine rotation while cached requests finish.
+For urgent revocation, disable the credential first. Changes do not cancel requests that were
+already authorized.
 
 ## Security and billing
 
-- Pass-through secrets are not written to databases or analytics. A request never creates a dashboard
+- Policy and credential management receive ciphertext and a public key identifier. Requests supply
+  the key to the gateway. Transport privacy depends on your chosen connection; see
+  [sending the key](/docs/cli#send-the-key-with-a-request). A fleet restart does not lose customer-held keys.
+- Customer roots and plaintext credentials are not written to databases or analytics. A request never creates a dashboard
   credential row. Only the scoped credential ID is recorded.
 - Provider secrets are used in confidential gateway memory. Chutes also reuses credential-specific
   connection and ticket pools across requests. Each gateway retains at most 2,048 customer pools;
-  idle pools are retired after five minutes, with cleanup every 15 seconds. Active requests and
+  idle pools are retired after five minutes, with bounded cache reuse. Active requests and
   streams keep their pool until they finish. The managed Chutes pool lasts for the gateway process.
 - Azure access tokens are cached separately from client secrets: at most 2,048 tokens per gateway,
   retired after five minutes idle or before their actual expiry. Client-secret SDK objects are not
   retained across token loads. Every inference request still requires current authorization.
-- Azure does not accept pass-through secrets. Its stored Entra application secret and discovered
+- Azure does not accept customer-encrypted credentials. Its stored Entra application secret and discovered
   bindings are used only when that exact credential is assigned to the Stogas API key.
 - Stored secrets are encrypted before database storage. Dashboard responses contain only the name,
   status, and a short preview.
-- BYOK requests reserve and settle 2% of the usage cost calculated from catalog rates, rounded up to the nearest USD
-  atom. API key spend limits and the organization balance use that billed amount.
+- BYOK requests reserve and settle 2% of the usage cost calculated from catalog rates, rounded upward to 36 USD decimal places, against the organization balance. Organization, grant, and key spend limits count the full upstream usage cost, before our fee calculation.
 - The provider bills you separately. Catalog rates do not include your private discounts or capacity
   reservations and are not a statement of your provider invoice.
-- Analytics shows upstream cost and Stogas billed cost separately. Named pass-through IDs and stored
-  credentials are available as filters; unnamed pass-through IDs remain visible as hashes.
+- Analytics shows upstream cost and our billed cost separately. Both credential kinds
+  use their saved UUID in filters and exports; managed requests use `null`.
 
 ## Troubleshooting
 
-- **BYOK credential required:** The selected provider has no managed service, or the API key policy
-  requires stored or pass-through BYOK.
-- **Pass-through BYOK is not allowed:** The credential ID format is invalid, or pass-through was
-  supplied for Azure.
+- **BYOK credential required:** Assign a credential for this provider and supply its matching
+  labeled key if it is customer-encrypted.
+- **Customer-encrypted BYOK is unavailable:** Check the active organization root and the registered
+  credential assigned to your Stogas key, or the provider does not support that credential mode.
 - **Provider authentication or permission error:** Confirm the credential, provider permissions,
   account quota, and model deployment with the provider. For Azure, confirm management read access,
   Cognitive Services User access, and then refresh the credential.

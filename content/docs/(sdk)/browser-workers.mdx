@@ -1,0 +1,78 @@
+---
+title: Browser and Workers
+description: Encrypted inference in browsers and edge runtimes.
+---
+
+## Browser
+
+```console
+npm install stogas openai
+```
+
+Initialize WebAssembly once, then reuse the transport and OpenAI client:
+
+```ts
+import OpenAI from 'openai';
+import init, { StogasTransport } from 'stogas/browser';
+
+await init();
+const transport = await StogasTransport.create();
+const client = new OpenAI(transport.openAIOptions(userProvidedStogasKey));
+const cancellation = new AbortController();
+// Your Cancel button calls cancellation.abort().
+
+try {
+	const stream = await client.chat.completions.create(
+		{
+			model: 'openai/gpt-5-mini',
+			messages: [{ role: 'user', content: 'Say hello in one sentence.' }],
+			stream: true
+		},
+		{ headers: { 'Stogas-Metadata': 'v1' }, signal: cancellation.signal }
+	);
+	for await (const chunk of stream) {
+		console.log(chunk.choices[0]?.delta.content ?? '');
+	}
+} finally {
+	await transport.close();
+}
+```
+
+The transport verifies the gateway before releasing your credentials or prompt. Its reusable E2EE sessions use binary records over HTTPS, so browser connection reuse and load-balancer routing do not change the encryption owner. Session keys stay inside the owning gateway.
+
+With `Stogas-Metadata: v1`, the transport also verifies the final content receipt before completing the response. Consume streams through completion. Standard SSE comments, including our processing keepalive, are ignored by the OpenAI client.
+
+`openAIOptions` disables automatic inference retries. Cancellation ends the request with an error;
+partial output is not verified completion.
+
+Our browser transport uses Fetch and does not require access to the browser's TLS handshake. The same Rust WebAssembly core verifies hardware evidence, published approvals, session setup, and receipts locally.
+
+<Callout type="warn">
+	Each user should provide their own API key. Never ship a shared key in browser assets. E2EE cannot
+	protect secrets from compromised JavaScript running in the same page.
+</Callout>
+
+## Workers
+
+Cloudflare Workers use the Worker entrypoint, which initializes its bundled WebAssembly module:
+
+```ts
+import OpenAI from 'openai';
+import { StogasTransport } from 'stogas/worker';
+
+const transport = await StogasTransport.create();
+try {
+	const client = new OpenAI(transport.openAIOptions(stogasAPIKey));
+	const response = await client.responses.create({
+		model: 'openai/gpt-5-mini',
+		input: 'Say hello.'
+	});
+	console.log(response.output_text);
+} finally {
+	await transport.close();
+}
+```
+
+For a browser Web Worker, use the browser entrypoint and call `await init()` there. Keep a transport only for as long as the runtime permits; a suspended or discarded worker cannot retain a session reliably.
+
+See [JavaScript and TypeScript](/docs/typescript) for connection limits, metadata callbacks, evidence refresh, and offline verification. Unsupported requests fail before sending credentials; transport errors never trigger an automatic inference replay.

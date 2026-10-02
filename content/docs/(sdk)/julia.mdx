@@ -1,0 +1,226 @@
+---
+title: Julia
+description: Use Julia's OpenAI and HTTP clients with the native Stogas verifier.
+---
+
+Use [OpenAI.jl](https://github.com/JuliaML/OpenAI.jl) for ordinary requests and
+[HTTP.jl](https://github.com/JuliaWeb/HTTP.jl) for streaming. Both use the local URL
+provided by the same native Stogas transport. This example uses Julia 1.13 on Linux.
+
+## Install
+
+Download the native verifier archive for your processor from
+[Releases](https://github.com/StogasAI/verifier/releases). Set
+`STOGAS_VERIFIER_LIBRARY` to the full path of its shared library, and set
+`STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
+
+Save this as `Project.toml` in an empty directory:
+
+```toml
+[deps]
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+OpenAI = "e9f21f70-7185-4079-aca2-91159181367c"
+
+[compat]
+HTTP = "=1.11.0"
+JSON = "=1.9.0"
+OpenAI = "=0.13.0"
+julia = "1.13"
+```
+
+Install its dependencies:
+
+```sh
+julia --project=. -e 'using Pkg; Pkg.instantiate()'
+```
+
+## Start the transport
+
+Save this as `transport.jl`. Julia's `ccall` uses our native C ABI directly. The
+helper owns the returned handle and releases it when closed. Keep the library
+loaded for the lifetime of the process.
+
+```julia
+module StogasNative
+using Libdl, JSON
+
+mutable struct Transport
+    library::Ptr{Cvoid}
+    handle::Ptr{Cvoid}
+    base_url::String
+end
+
+function Transport(path; configuration=Dict())
+    library = Libdl.dlopen(path)
+    version = ccall(Libdl.dlsym(library, :stogas_verifier_abi_version), UInt32, ())
+    version == 1 || error("Unsupported verifier ABI")
+    json = JSON.json(configuration)
+    output = Ref{Ptr{Cvoid}}(C_NULL)
+    raw = ccall(Libdl.dlsym(library, :stogas_transport_start), Ptr{UInt8},
+        (Cstring, Csize_t, Ref{Ptr{Cvoid}}), json, ncodeunits(json), output)
+    try
+        raw != C_NULL || error("Unable to start verified transport")
+        result = JSON.parse(unsafe_string(raw))
+        result.ok === true && output[] != C_NULL || error("Unable to start verified transport")
+        return Transport(library, output[], String(result.value.base_url))
+    catch
+        ccall(Libdl.dlsym(library, :stogas_transport_free), Cvoid, (Ptr{Cvoid},), output[])
+        rethrow()
+    finally
+        ccall(Libdl.dlsym(library, :stogas_verifier_string_free), Cvoid, (Ptr{UInt8},), raw)
+    end
+end
+
+function Base.close(transport::Transport)
+    transport.handle == C_NULL && return
+    handle = transport.handle
+    transport.handle = C_NULL
+    ccall(Libdl.dlsym(transport.library, :stogas_transport_close), Cvoid, (Ptr{Cvoid},), handle)
+    ccall(Libdl.dlsym(transport.library, :stogas_transport_free), Cvoid, (Ptr{Cvoid},), handle)
+end
+end
+```
+
+The default uses native attested TLS. Pass
+`configuration=Dict("security"=>"e2ee")` to the constructor for E2EE.
+
+## Read a stream
+
+Save this as `stream.jl`. This reader handles SSE comments and line endings,
+checks errors, and requires the completion marker. It reports an incomplete
+stream if the connection closes early. Automatic retries and redirects are off.
+
+```julia
+using HTTP, JSON
+
+function stream_chat(base, key, model)
+    body = JSON.json(Dict("model"=>model, "stream"=>true,
+        "messages"=>[Dict("role"=>"user", "content"=>"Say hello in one sentence.")]))
+    headers = ["Authorization"=>"Bearer $key", "Content-Type"=>"application/json",
+        "Content-Length"=>string(ncodeunits(body))]
+    HTTP.open("POST", base * "/chat/completions", headers;
+        retry=false, redirect=false, proxy=nothing, readtimeout=45*60) do stream
+        expired = Ref(false)
+        timer = Timer(45*60) do _
+            expired[] = true
+            close(stream)
+        end
+        try
+            write(stream, body)
+            HTTP.closewrite(stream)
+            response = HTTP.startread(stream)
+            200 <= response.status < 300 || error("Request rejected")
+            line, data = UInt8[], UInt8[]
+            after_cr, completed = false, false
+            while !eof(stream)
+                for byte in readavailable(stream)
+                    expired[] && error("Request deadline exceeded")
+                    skip = after_cr && byte == 0x0a
+                    after_cr = byte == 0x0d
+                    skip && continue
+                    byte == 0x0d && (byte = 0x0a)
+                    if byte == 0x0a
+                        if isempty(line) && !isempty(data)
+                            pop!(data) # remove the last joined newline
+                            payload = String(copy(data))
+                            empty!(data)
+                            isvalid(payload) || error("Invalid UTF-8")
+                            completed && error("Data after stream completion")
+                            if payload == "[DONE]"
+                                completed = true
+                            else
+                                event = JSON.parse(payload)
+                                event isa AbstractDict || error("Invalid SSE object")
+                                get(event, "error", nothing) === nothing || error("Stream failed")
+                                for choice in get(event, "choices", [])
+                                    content = get(get(choice, "delta", Dict()), "content", nothing)
+                                    isnothing(content) || print(content)
+                                end
+                                flush(stdout)
+                            end
+                        elseif startswith(String(copy(line)), "data:")
+                            start = length(line) >= 6 && line[6] == 0x20 ? 7 : 6
+                            append!(data, @view line[start:end])
+                            push!(data, 0x0a)
+                            length(data) <= 8*1024*1024 || error("SSE event too large")
+                        end
+                        empty!(line)
+                    else
+                        length(line) < 8*1024*1024 || error("SSE line too large")
+                        push!(line, byte)
+                    end
+                end
+            end
+            completed && isempty(line) && isempty(data) && !expired[] || error("Incomplete stream")
+            HTTP.closeread(stream)
+        finally
+            close(timer)
+        end
+    end
+end
+```
+
+## Send a request
+
+Save this as `main.jl` beside the other files. It streams by default; `--no-stream`
+uses the OpenAI client's ordinary request method. Ctrl+C cancels the request and
+closes the transport.
+
+```julia
+using OpenAI
+include("transport.jl")
+include("stream.jl")
+Base.exit_on_sigint(false) # Let Ctrl+C unwind finally and close the native transport.
+
+function main()
+    transport = nothing
+    try
+        all(arg -> arg == "--no-stream", ARGS) && length(ARGS) <= 1 || error("Invalid arguments")
+        key, model = ENV["STOGAS_API_KEY"], ENV["STOGAS_MODEL"]
+        !isempty(key) && !isempty(model) && !occursin(r"[\r\n]", key) || error("Set key and model")
+        base = get(ENV, "STOGAS_BASE_URL", nothing)
+        if isnothing(base)
+            transport = StogasNative.Transport(ENV["STOGAS_VERIFIER_LIBRARY"])
+            base = transport.base_url
+        end
+        if "--no-stream" in ARGS
+            provider = OpenAI.OpenAIProvider(api_key=key, base_url=base)
+            response = create_chat(provider, model,
+                [Dict("role" => "user", "content" => "Say hello in one sentence.")];
+                http_kwargs = (retry=false, redirect=false, proxy=nothing, readtimeout=45*60))
+            print(response.response[:choices][begin][:message][:content])
+        else
+            stream_chat(base, key, model)
+        end
+        println()
+        return 0
+    catch
+        println(stderr, "Request failed or incomplete. Do not replay automatically.")
+        return 1
+    finally
+        isnothing(transport) || close(transport)
+    end
+end
+exit(main())
+```
+
+Run either mode:
+
+```sh
+julia --project=. main.jl
+julia --project=. main.jl --no-stream
+```
+
+Reuse the transport in a long-running application and close it after its active
+requests finish. A failure can follow partial output; do not replay inference
+automatically. The verifier checks encrypted stream completion before releasing
+the final application event.
+
+For signed response metadata and automatic receipt verification, add
+`"Stogas-Metadata"=>"v1"` to the streaming request headers. For OpenAI.jl, add
+`additional_headers=["Stogas-Metadata"=>"v1"]` to `create_chat`.
+
+`STOGAS_BASE_URL` optionally selects a separately running [verifier CLI](/docs/cli).
+Keep its complete URL, including the path. When set, the example uses that
+transport instead of loading the native library.

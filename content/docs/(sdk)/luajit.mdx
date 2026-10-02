@@ -1,0 +1,188 @@
+---
+title: LuaJIT
+description: Stream requests through the Stogas verifier using LuaJIT FFI.
+---
+
+Use LuaJIT's FFI to run the native verifier in your process, then send requests with
+[Lua-cURL](https://lua-curl.github.io/lcurl/). This example uses LuaJIT 2.1,
+Lua-cURL 0.3.13 and lua-cjson on Linux.
+
+## Install
+
+On Debian or Ubuntu:
+
+```sh
+sudo apt-get install luajit libluajit-5.1-dev lua-cjson luarocks libcurl4-openssl-dev pkg-config
+sudo luarocks --lua-version=5.1 install Lua-cURL 0.3.13-1 LUA_INCDIR=/usr/include/luajit-2.1 \
+  CURL_INCDIR="$(pkg-config --variable=includedir libcurl)" CURL_LIBDIR="$(pkg-config --variable=libdir libcurl)"
+```
+
+Download the Linux native verifier archive for your processor from
+[Releases](https://github.com/StogasAI/verifier/releases). Set
+`STOGAS_VERIFIER_LIBRARY` to the full path of its `.so` file. Set `STOGAS_API_KEY`
+and `STOGAS_MODEL` in your environment.
+
+## Start the transport
+
+Save this as `transport.lua`. It starts the verifier and owns its native handle.
+Call `close()` after your requests finish. The default uses native attested TLS;
+pass `{ security = "e2ee" }` as the second argument to select E2EE.
+
+```lua
+local ffi = require "ffi"
+local json = require "cjson.safe"
+
+ffi.cdef [[
+typedef struct StogasTransport StogasTransport;
+uint32_t stogas_verifier_abi_version(void);
+char *stogas_transport_start(const char *, size_t, StogasTransport **);
+void stogas_transport_close(const StogasTransport *);
+void stogas_transport_free(StogasTransport *);
+void stogas_verifier_string_free(char *);
+]]
+
+return function(library, configuration)
+    local native = ffi.load(library)
+    assert(native.stogas_verifier_abi_version() == 1, "Unsupported native ABI")
+    local config = configuration and assert(json.encode(configuration)) or "{}"
+    local output = ffi.new("StogasTransport *[1]")
+    local raw = native.stogas_transport_start(config, #config, output)
+    local result = raw ~= nil and json.decode(ffi.string(raw)) or nil
+    native.stogas_verifier_string_free(raw)
+    if not result or result.ok ~= true or output[0] == nil or
+       type(result.value) ~= "table" or type(result.value.base_url) ~= "string" then
+        native.stogas_transport_free(output[0])
+        error("Unable to start verified transport")
+    end
+    local handle = ffi.gc(output[0], function(value) native.stogas_transport_free(value) end)
+    return {
+        base_url = result.value.base_url,
+        close = function()
+            if handle ~= nil then
+                ffi.gc(handle, nil)
+                native.stogas_transport_close(handle)
+                native.stogas_transport_free(handle)
+                handle = nil
+            end
+        end,
+    }
+end
+```
+
+## Stream a response
+
+Save this as `main.lua` beside `transport.lua`. It sends one Chat Completions request,
+ignores SSE comments, and reads through the end of the response. A stream error or
+missing completion marker produces a failure even if some text has arrived.
+
+```lua
+package.path = (arg[0]:match("^(.*[/\\])") or "./") .. "?.lua;" .. package.path
+local curl = require "cURL.safe"
+local json = require "cjson.safe"
+json.decode_invalid_numbers(false)
+local start_transport = require "transport"
+
+local transport, http
+local ok = pcall(function()
+    local streaming = arg[1] ~= "--no-stream"
+    assert(not arg[2] and (not arg[1] or not streaming), "Unknown argument")
+    local key, model = os.getenv("STOGAS_API_KEY"), os.getenv("STOGAS_MODEL")
+    assert(key and key ~= "" and not key:find("[\r\n]") and model and model ~= "", "Set key and model")
+    local base = os.getenv("STOGAS_BASE_URL")
+    if not base then
+        transport = start_transport(assert(os.getenv("STOGAS_VERIFIER_LIBRARY")))
+        base = transport.base_url
+    end
+    assert(base:match("^http://127%.0%.0%.1:%d+/"), "Expected the private loopback URL")
+    local pending, data, completed, after_cr = "", {}, false, false
+    local event_bytes, body_bytes, body = 0, 0, {}
+    local function print_content(payload, field)
+        local value = assert(json.decode(payload), "Invalid JSON")
+        assert(type(value) == "table" and not value.error, "Request failed")
+        for _, choice in ipairs(value.choices or {}) do
+            local content = (choice[field] or {}).content
+            if type(content) == "string" then io.write(content) end
+        end
+        io.flush()
+    end
+    local function feed(chunk)
+        if not streaming then
+            body_bytes = body_bytes + #chunk
+            assert(body_bytes <= 32 * 1024 * 1024, "Response too large")
+            body[#body + 1] = chunk
+            return
+        end
+        if after_cr and chunk:sub(1, 1) == "\n" then chunk = chunk:sub(2) end
+        after_cr = chunk:sub(-1) == "\r"
+        chunk = chunk:gsub("\r\n", "\n"):gsub("\r", "\n")
+        pending = pending .. chunk
+        assert(#pending <= 8 * 1024 * 1024, "SSE line too large")
+        while true do
+            local ending = pending:find("\n", 1, true)
+            if not ending then break end
+            local line = pending:sub(1, ending - 1)
+            pending = pending:sub(ending + 1)
+            if line == "" then
+                if #data > 0 then
+                    assert(not completed, "Data after completion")
+                    local payload = table.concat(data, "\n")
+                    if payload == "[DONE]" then completed = true
+                    else print_content(payload, "delta") end
+                end
+                data, event_bytes = {}, 0
+            elseif line == "data" or line:sub(1, 5) == "data:" then
+                local value = line:sub(6):gsub("^ ", "")
+                event_bytes = event_bytes + #value + 1
+                assert(event_bytes <= 8 * 1024 * 1024, "SSE event too large")
+                data[#data + 1] = value
+            end
+        end
+    end
+    http = assert(curl.easy({
+        url = base .. "/chat/completions", proxy = "", followlocation = false,
+        connecttimeout = 15, timeout = 45 * 60, noprogress = false,
+        httpheader = {"Authorization: Bearer " .. key, "Content-Type: application/json"},
+        postfields = assert(json.encode({model = model, stream = streaming,
+            messages = {{role = "user", content = "Say hello in one sentence."}}})),
+        -- A callback also lets Lua handle Ctrl+C during a quiet stream.
+        progressfunction = function() return true end,
+        writefunction = function(chunk)
+            if http:getinfo_response_code() ~= 200 then return nil end
+            if not pcall(feed, chunk) then return nil end
+            return #chunk
+        end,
+    }))
+    assert(http:perform(), "Incomplete HTTP response")
+    assert(http:getinfo_response_code() == 200, "Request rejected")
+    if streaming then assert(completed and pending == "" and #data == 0, "Incomplete stream")
+    else print_content(table.concat(body), "message") end
+end)
+if http then http:close() end
+if transport then transport.close() end
+if not ok then
+    io.stderr:write("Request failed or incomplete. Do not replay automatically.\n")
+    os.exit(1)
+end
+```
+
+```sh
+luajit main.lua
+```
+
+Reuse the transport in a long-running application. Close its active HTTP streams
+before closing the transport. Stopping early is cancellation, not successful
+completion; do not replay a request whose delivery is uncertain.
+
+To request metadata and automatic receipt verification, add the following string
+to the `httpheader` list:
+
+```lua
+"Stogas-Metadata: v1"
+```
+
+`STOGAS_BASE_URL` is optional and points to a separately managed verifier proxy.
+When set, this example does not start an embedded transport. Use the URL returned
+by the [verifier CLI](/docs/sdk-overview), including its path.
+
+Run `luajit main.lua --no-stream` for one completed response. Ctrl+C cancels a
+quiet stream and releases its HTTP connection and native transport.

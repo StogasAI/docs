@@ -1,0 +1,33 @@
+---
+title: Validate proposed policy execution rules
+description: Checks the supplied scoped execution policies without saving or
+  creating a hold. Include organization and key, every applicable folder, grant,
+  role and member, and only the selected credential. Without a decryption key,
+  encrypted plugin sections are reported unchecked. Limits and editing
+  permissions are checked on save.
+full: true
+_openapi:
+  preload:
+    - stogas
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Checks the supplied scoped execution policies without saving or
+          creating a hold. Include organization and key, every applicable
+          folder, grant, role and member, and only the selected credential.
+          Without a decryption key, encrypted plugin sections are reported
+          unchecked. Limits and editing permissions are checked on save.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="stogas" operations={[{ path: '/v1/policies/validate', method: 'post' }]} />
+    </>
+  );
+}

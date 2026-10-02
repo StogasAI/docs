@@ -3,19 +3,23 @@ title: Policies
 description: Set budgets, control traffic, choose providers, and add redaction rules.
 ---
 
-A policy is a JSON document that controls how an API key can be used. Save shared rules on an
-organization or grant, and add restrictions to individual keys. Every request must satisfy all
-policies that apply to it.
+A policy is a JSON document that controls which requests an API key may make, how much it may
+use, and what text reaches a provider. Save shared settings on organizations, folders, grants,
+roles, members and credentials, then add key or request settings. Every request must satisfy
+all applicable requirements.
 
-This policy sets a $10 lifetime spend cap:
+## Start with a policy
+
+This policy requires a no-training declaration and caps lifetime upstream spending at $10:
 
 ```json title="policy.json"
 {
 	"version": 1,
+	"routing": {
+		"filter": "deployment.dataHandling.trainingUse == false"
+	},
 	"limits": {
-		"spend": {
-			"lifetimeUsd": "10.00"
-		}
+		"spend": { "lifetimeUsd": "10" }
 	}
 }
 ```
@@ -23,26 +27,28 @@ This policy sets a $10 lifetime spend cap:
 On an organization, that $10 is shared across all its keys. On a grant, it is shared across the
 grant's member keys. On a key, it applies only to that key. A key cannot override a parent cap.
 
-Only `version` is required. Add the settings you need and leave out the rest.
+Only `version` is required. The smallest policy is `{"version":1}`; omitted settings add no
+restriction at that scope. They do not remove parent restrictions or platform safeguards.
 
-## Write a policy
+[Edit a policy](/docs/policies/editing) explains how to save it.
+[Scopes and inheritance](/docs/policies/scopes) explains shared rules, permissions, and when
+changes take effect.
 
-| Task                                                | Page                                                |
-| --------------------------------------------------- | --------------------------------------------------- |
-| Open the editor, save a change, or fix an error     | [Edit a policy](/docs/policies/editing)             |
-| Understand shared rules and permissions             | [Scopes and inheritance](/docs/policies/scopes)     |
-| Set spend, request, token, or concurrency limits    | [Limits](/docs/policies/limits)                     |
-| Choose models, providers, and deployment properties | [Routing](/docs/policies/routing)                   |
-| Set expiration or deny access at certain times      | [Access periods](/docs/policies/access)             |
-| Let a caller narrow routing for one request         | [Request policies](/docs/policies/request-policies) |
-| Choose redaction presets and a custom pattern       | [Redaction](/docs/policies/plugins)                 |
+## Document fields
 
-## Look up the syntax
+Add the settings you need. Each field links to its examples, accepted values, and behavior.
 
-The [policy reference](/docs/policies/reference) lists every setting, its type, and its default.
-The [routing field reference](/docs/policies/routing-fields) lists every field a query can read.
-Use the [JSON Schema](https://stogas.ai/schemas/key-config-v1.json) for editor completion.
+<PolicyFields section="document" />
 
-A policy restricts an existing credential. It does not create a key, grant membership, enable a
-disabled key, or add funds. See [API keys and grants](/docs/api-keys) for credential management
-and [BYOK](/docs/byok) for provider credentials.
+The same [JSON Schema](/schemas/key-config-v1.json) supplies these field types and editor
+completion. [Document rules](/docs/policies/editing#document-rules) cover validation and size limits.
+
+## Policies for one request
+
+The optional inference-request `policy` field accepts permitted routing, access, input and
+redaction settings, including flat conditional rules. It cannot define shared limits. See
+[Request policies](/docs/policies/request-policies) for permissions and examples.
+
+A policy governs an existing credential. It does not create keys, grant membership, or add funds.
+See [API keys and grants](/docs/api-keys) for credential management and [BYOK](/docs/byok) for
+provider credentials.

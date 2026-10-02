@@ -4,10 +4,10 @@ description: Every field available to routing filters and sort expressions, with
 ---
 
 A routing query reads the catalog chain for each candidate: its author, model, deployment,
-route, and provider. `request` exposes the caller's selector and the token estimates for that
-candidate. These are read-only fields, not settings you assign in policy JSON.
+route, and provider. `request` exposes the caller's selector, route, request time and exact
+incoming JSON byte size. These are read-only fields, not settings you assign in policy JSON.
 
-For example, `where deployment.data.contextWindowTokens >= 128000` keeps deployments with a
+For example, `deployment.contextWindowTokens >= 128000` keeps deployments with a
 context window of at least 128,000 tokens. It does not change their context window.
 
 The tables below list every registered field. Unknown paths are rejected. A registered field
@@ -17,148 +17,80 @@ does not by itself enable a request feature that the Stogas API does not accept.
 
 ## Types
 
-| Type          | Query value                           | Available operations                                                          |
-| ------------- | ------------------------------------- | ----------------------------------------------------------------------------- |
-| `string`      | `'openai'`                            | Equality, ordering, `in`, substring `contains`, `exists`, sorting.            |
-| `integer`     | `128000`                              | Equality, ordering, `in`, `exists`, sorting. No decimal or exponent literals. |
-| `boolean`     | `true` or `false`                     | `==`, `!=`, `in`, `exists`, sorting.                                          |
-| `string_list` | A list field compared with one string | Exact-item `contains` and `exists`. Cannot be sorted.                         |
+| Type          | Example                      | Available operations                                     |
+| ------------- | ---------------------------- | -------------------------------------------------------- |
+| `string`      | `'openai'`                   | Equality, ordering, membership, string methods, sorting. |
+| `integer`     | `128000`                     | CEL integer arithmetic, comparisons and sorting.         |
+| `decimal`     | `decimal('0.001')`           | Exact price comparisons, membership and sorting.         |
+| `boolean`     | `true`                       | Boolean logic, equality and sorting.                     |
+| `string_list` | `deployment.inputModalities` | Membership and CEL list macros.                          |
+| `timestamp`   | `request.time`               | CEL time comparisons and time-zone methods.              |
 
-Strings and IDs are case-sensitive. Dates remain strings; comparison uses their catalog text,
-not date arithmetic. See [Query syntax](/docs/policies/routing#query-syntax) for operators and escaping.
+Use `has(field)` to check presence. IDs and strings are case-sensitive. Catalog dates remain
+strings; request time is a timestamp. See [Query syntax](/docs/policies/routing#query-syntax).
 
 ## Author
 
-| Field                 | Type          | Meaning              |
-| --------------------- | ------------- | -------------------- |
-| `author.id`           | `string`      | Canonical author ID. |
-| `author.data.name`    | `string`      | Display name.        |
-| `author.data.aliases` | `string_list` | Catalog aliases.     |
+<RoutingFields group="author" />
 
 ## Model
 
 Model fields describe the shared model. Use deployment fields when a limit or property differs
 between providers or hosting variants.
 
-| Field                                   | Type          | Meaning                                              |
-| --------------------------------------- | ------------- | ---------------------------------------------------- |
-| `model.id`                              | `string`      | Canonical model ID.                                  |
-| `model.data.name`                       | `string`      | Display name.                                        |
-| `model.data.aliases`                    | `string_list` | Catalog aliases.                                     |
-| `model.data.authorId`                   | `string`      | Author ID.                                           |
-| `model.data.maxOutputTokens`            | `integer`     | Model's catalog output-token maximum.                |
-| `model.data.reasoning`                  | `string`      | Catalog reasoning mode.                              |
-| `model.data.reasoningEfforts`           | `string_list` | Supported reasoning-effort values.                   |
-| `model.data.reasoningMaxTokens.minimum` | `integer`     | Minimum configurable reasoning budget, when defined. |
-| `model.data.reasoningMaxTokens.maximum` | `integer`     | Maximum configurable reasoning budget, when defined. |
-| `model.data.releaseDate`                | `string`      | Catalog release date.                                |
+<RoutingFields group="model" />
 
 ## Deployment
 
-| Field                                        | Type          | Meaning                                                                              |
-| -------------------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
-| `deployment.id`                              | `string`      | Canonical deployment ID. An explicit sort on this field must be final and ascending. |
-| `deployment.data.aliases`                    | `string_list` | Deployment aliases.                                                                  |
-| `deployment.data.modelId`                    | `string`      | Model ID.                                                                            |
-| `deployment.data.routeIds`                   | `string_list` | Routes attached to this deployment.                                                  |
-| `deployment.data.contextWindowTokens`        | `integer`     | Resolved context-window size in tokens.                                              |
-| `deployment.data.maxOutputTokens`            | `integer`     | Resolved output-token maximum.                                                       |
-| `deployment.data.inputModalities`            | `string_list` | Catalog input modalities.                                                            |
-| `deployment.data.outputModalities`           | `string_list` | Catalog output modalities.                                                           |
-| `deployment.data.reasoning`                  | `string`      | Resolved reasoning mode.                                                             |
-| `deployment.data.reasoningEfforts`           | `string_list` | Supported reasoning-effort values.                                                   |
-| `deployment.data.reasoningMaxTokens.minimum` | `integer`     | Minimum configurable reasoning budget, when defined.                                 |
-| `deployment.data.reasoningMaxTokens.maximum` | `integer`     | Maximum configurable reasoning budget, when defined.                                 |
-| `deployment.data.weightPrecision`            | `string`      | Model-weight precision, when disclosed.                                              |
-| `deployment.data.deprecationDate`            | `string`      | Deprecation date, when defined.                                                      |
+<RoutingFields group="deployment" />
 
 ### Capabilities
 
 All fields in this table are Booleans. A `true` value means the resolved catalog deployment
 supports that capability.
 
-| Field                                                  | Type      | Capability                              |
-| ------------------------------------------------------ | --------- | --------------------------------------- |
-| `deployment.data.capabilities.cancellation`            | `boolean` | Cancellation.                           |
-| `deployment.data.capabilities.explicitPromptCaching`   | `boolean` | Explicit prompt caching.                |
-| `deployment.data.capabilities.implicitPromptCaching`   | `boolean` | Implicit prompt caching.                |
-| `deployment.data.capabilities.functionCalling`         | `boolean` | Function calling.                       |
-| `deployment.data.capabilities.parallelFunctionCalling` | `boolean` | Parallel function calls.                |
-| `deployment.data.capabilities.pdfInput`                | `boolean` | PDF input in the underlying deployment. |
-| `deployment.data.capabilities.streaming`               | `boolean` | Streaming output.                       |
-| `deployment.data.capabilities.structuredOutputs`       | `boolean` | Structured output.                      |
-| `deployment.data.capabilities.systemMessages`          | `boolean` | System messages.                        |
-| `deployment.data.capabilities.toolChoice`              | `boolean` | Explicit tool choice.                   |
-| `deployment.data.capabilities.urlContext`              | `boolean` | URL context.                            |
+<RoutingFields group="capabilities" />
 
 ### Data handling
 
 These are the catalog's resolved data-handling properties. A missing disclosure is not a `false`
 value or a guarantee. Require the property explicitly when your application depends on it.
 
-| Field                                             | Type      | Meaning                                                    |
-| ------------------------------------------------- | --------- | ---------------------------------------------------------- |
-| `deployment.data.dataHandling.endToEndEncrypted`  | `boolean` | Catalog declares end-to-end encryption to this deployment. |
-| `deployment.data.dataHandling.processingLocation` | `string`  | Disclosed processing location.                             |
-| `deployment.data.dataHandling.storageLocation`    | `string`  | Disclosed storage location.                                |
-| `deployment.data.dataHandling.retentionDays`      | `integer` | Disclosed retention period in days.                        |
-| `deployment.data.dataHandling.trainingUse`        | `boolean` | Whether data may be used for training.                     |
-| `deployment.data.dataHandling.zeroDataRetention`  | `boolean` | Zero-data-retention declaration.                           |
-| `deployment.data.dataHandling.tee`                | `boolean` | Trusted execution environment declaration.                 |
-| `deployment.data.dataHandling.teeVerified`        | `boolean` | Catalog marks the TEE as verified.                         |
+<RoutingFields group="data-handling" />
+
+Temporary in-memory prompt caching is compatible with zero data retention and is excluded from
+`retentionDays`. Persistent caches are not exempt. Training use is recorded separately; a promise
+not to train does not establish zero retention. These facts apply to the selected offering and
+must not be assumed to cover other provider services or optional features.
 
 ### Upstream deployment details
 
 These fields describe the selected provider deployment. Their availability depends on what the
 catalog records for that provider. They do not expose provider credentials.
 
-| Field                                     | Type      | Meaning                                                         |
-| ----------------------------------------- | --------- | --------------------------------------------------------------- |
-| `deployment.data.upstream.chuteId`        | `string`  | Chutes deployment ID.                                           |
-| `deployment.data.upstream.deploymentType` | `string`  | Upstream deployment type.                                       |
-| `deployment.data.upstream.gpuCount`       | `integer` | Disclosed GPU count; an unspecified zero is treated as missing. |
-| `deployment.data.upstream.hosting`        | `string`  | Hosting variant.                                                |
-| `deployment.data.upstream.inferenceGeo`   | `string`  | Upstream inference geography.                                   |
-| `deployment.data.upstream.model`          | `string`  | Upstream model selector.                                        |
-| `deployment.data.upstream.modelFormat`    | `string`  | Upstream model format.                                          |
-| `deployment.data.upstream.modelVersion`   | `string`  | Upstream model version.                                         |
-| `deployment.data.upstream.reasoningMode`  | `string`  | Upstream reasoning variant.                                     |
-| `deployment.data.upstream.serviceTier`    | `string`  | Service tier.                                                   |
-| `deployment.data.upstream.speed`          | `string`  | Speed variant.                                                  |
+<RoutingFields group="upstream" />
 
 ## Route and provider
 
 A catalog route is a connection between a provider and supported interfaces. Its ID is not the
 HTTP request path. `request.route` below identifies the inference interface instead.
 
-| Field                           | Type          | Meaning                                                                               |
-| ------------------------------- | ------------- | ------------------------------------------------------------------------------------- |
-| `route.id`                      | `string`      | Canonical route ID.                                                                   |
-| `route.data.providerId`         | `string`      | Provider that owns the route.                                                         |
-| `route.data.interfaces`         | `string_list` | Interfaces supported by the route.                                                    |
-| `provider.id`                   | `string`      | Canonical provider ID.                                                                |
-| `provider.data.name`            | `string`      | Display name.                                                                         |
-| `provider.data.aliases`         | `string_list` | Provider aliases.                                                                     |
-| `provider.data.credentialModes` | `string_list` | Catalog-supported credential modes. Does not describe this key's assigned credential. |
+<RoutingFields group="route-provider" />
 
 ## Request
 
-| Field                          | Type      | Meaning                                                                                |
-| ------------------------------ | --------- | -------------------------------------------------------------------------------------- |
-| `request.model`                | `string`  | Model or deployment selector supplied by the caller, before resolving to a catalog ID. |
-| `request.route`                | `string`  | `chat-completions` or `responses`.                                                     |
-| `request.estimatedInputTokens` | `integer` | Buffered input-token estimate used for admission for this candidate.                   |
-| `request.maximumOutputTokens`  | `integer` | Accepted output-token maximum for this candidate.                                      |
+<RoutingFields group="request" />
 
-These token values are estimates and limits, not final usage. Accepted encrypted reasoning replay
-can require reserving the deployment's full input bound because its contents cannot be inspected.
-Do not compare these fields to each other: query comparisons require a literal on the right side.
+`request.route` is `chat-completions` or `responses`. `request.bodyBytes` includes the exact
+incoming JSON, whitespace and request controls before redaction. Token estimates and estimated
+request costs cannot be used by routing or conditional rules. They are computed once after
+selection for reservations and usage diagnostics. See [Request facts](/docs/policies/routing#request-facts-and-context).
 
 ## Pricing
 
-Pricing fields use `deployment.data.pricing.<meter>.<rate>`. They are **integers in USD atoms**:
-one dollar is `1000000000000000000` atoms. This differs from spend settings, which use decimal
-USD strings. A price of $2 per million tokens is the integer `2000000000000000000`.
+Pricing fields use `deployment.pricing.<meter>.<rate>`. Their type is `decimal` and their
+unit is USD per catalog rate unit. For example, `2` means $2 per million tokens when the rate
+is `per_mill_tokens`. Comparisons preserve up to 36 fractional digits without floating point.
 
 For example, this policy keeps deployments whose standard output price is at most $2 per million:
 
@@ -166,14 +98,17 @@ For example, this policy keeps deployments whose standard output price is at mos
 {
 	"version": 1,
 	"routing": {
-		"query": "where deployment.data.pricing.output_tokens.per_mill_tokens <= 2000000000000000000"
+		"filter": "deployment.pricing.output_tokens.per_mill_tokens <= decimal(\"2\")"
 	}
 }
 ```
 
-The comparison uses exact integers even beyond JavaScript's safe-number range because the number
-is part of the query string. A missing rate does not count as zero. The filter above does not
+The comparison stays exact because the decimal literal is part of the query string. A missing rate does not count as zero. The filter above does not
 match deployments that define only context-tiered prices; include the relevant tier explicitly.
+
+For a weighted input/output comparison, use
+[`blended_price(inputWeight, outputWeight, 'rate')`](/docs/policies/routing#blended-price).
+It uses the same explicit rates below, without estimating or selecting a request's context tier.
 
 ### Token meters
 
@@ -190,21 +125,8 @@ Each meter below accepts `per_mill_tokens`, `per_mill_context_lte_272k`, or
 | `output_tokens`               | Output tokens.                                                              |
 | `reasoning_tokens`            | Reasoning tokens; may use the output rate when no separate rate is defined. |
 
-### Call meters
-
-These five meters accept only `per_1k_calls`, the price per thousand calls:
-
-| Meter                                                     | Meaning                                                     |
-| --------------------------------------------------------- | ----------------------------------------------------------- |
-| `anthropic_web_search_calls`                              | Anthropic web search.                                       |
-| `openai_chat_completion_search_model_calls`               | OpenAI Chat Completions search-model calls.                 |
-| `openai_responses_web_search_calls`                       | Responses web search.                                       |
-| `openai_responses_web_search_preview_calls`               | Responses preview web search.                               |
-| `openai_responses_web_search_preview_non_reasoning_calls` | Responses preview web search for the non-reasoning variant. |
-
-`openai_chat_completion_search_preview_model_calls` instead accepts
-`per_1k_search_context_low_calls`, `per_1k_search_context_medium_calls`, or
-`per_1k_search_context_high_calls`. No other meter/rate combinations are valid.
+Only the token meters and rates above are available to routing queries.
+Provider-hosted tool charges are described in [Model tools](/docs/model-tools#provider-hosted-billing).
 
 Pricing fields describe catalog rates, not an all-in request estimate or the amount charged to
 your Stogas balance. Sorting on output price alone does not account for input, caching, tools,

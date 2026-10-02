@@ -1,0 +1,219 @@
+---
+title: Elixir
+description: Use the OpenAI Elixir client with a supervised verifier transport.
+---
+
+Use [OpenaiEx](https://hexdocs.pm/openai_ex/) for ordinary requests and streaming.
+The verifier runs as a child process and supplies the client's local base URL.
+This example uses Elixir 1.18 and Erlang/OTP 27 on Linux.
+
+## Install
+
+Install the [verifier CLI](/docs/cli) and put `stogas` on your `PATH`.
+Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
+
+Save this as `mix.exs` in an empty directory, then run `mix deps.get`:
+
+```elixir
+defmodule StogasExample.MixProject do
+  use Mix.Project
+
+  def project do
+    [app: :stogas_example, version: "0.1.0", elixir: "~> 1.18", deps: [{:openai_ex, "0.9.21"}]]
+  end
+
+  def application, do: [extra_applications: [:logger]]
+end
+```
+
+## Supervise the transport
+
+Save this as `transport.exs`. The helper starts the CLI on an available local
+port, reads its URL and owns its lifetime. The CLI's `--exit-on-stdin-close`
+option closes it when the owning process exits, including after a crash.
+
+```elixir
+defmodule StogasTransport do
+  use GenServer
+
+  def start_link(options \\ []), do: GenServer.start_link(__MODULE__, options, timeout: 20_000)
+  def base_url(pid), do: GenServer.call(pid, :base_url)
+  def close(pid), do: GenServer.stop(pid)
+
+  @impl true
+  def init(options) do
+    Process.flag(:trap_exit, true)
+    executable = Keyword.get(options, :executable) || System.find_executable("stogas")
+    if is_nil(executable), do: raise("Install stogas or provide its executable path")
+
+    args =
+      ["serve", "--listen", "127.0.0.1:0", "--exit-on-stdin-close"] ++
+        Keyword.get(options, :args, [])
+
+    port =
+      Port.open(
+        {:spawn_executable, String.to_charlist(Path.expand(executable))},
+        [:binary, :exit_status, :use_stdio, :hide, {:line, 8192}, {:args, args}]
+      )
+
+    try do
+      base_url = await_url(port, System.monotonic_time(:millisecond) + 18_000)
+      {:ok, %{port: port, base_url: base_url}}
+    catch
+      kind, reason ->
+        if Port.info(port), do: Port.close(port)
+        :erlang.raise(kind, reason, __STACKTRACE__)
+    end
+  end
+
+  defp await_url(port, deadline) do
+    receive do
+      {^port, {:data, {:eol, "OpenAI base URL: " <> url}}} ->
+        %URI{scheme: "http", host: "127.0.0.1", port: port_number} = URI.parse(url)
+        true = port_number > 0
+        url
+
+      {^port, {:data, {:eol, _}}} ->
+        await_url(port, deadline)
+
+      {^port, {:data, {:noeol, _}}} ->
+        raise("Oversized verifier startup output")
+
+      {^port, {:exit_status, _}} ->
+        raise("Verifier startup failed")
+
+      {:EXIT, ^port, _} ->
+        raise("Verifier startup failed")
+    after
+      max(deadline - System.monotonic_time(:millisecond), 0) ->
+        raise("Verifier startup timed out")
+    end
+  end
+
+  @impl true
+  def handle_call(:base_url, _from, state), do: {:reply, state.base_url, state}
+
+  @impl true
+  def handle_info({port, {:data, {:eol, _}}}, %{port: port} = state), do: {:noreply, state}
+  def handle_info({port, _}, %{port: port} = state), do: {:stop, :verifier_stopped, state}
+  def handle_info({:EXIT, port, _}, %{port: port} = state), do: {:stop, :verifier_stopped, state}
+
+  @impl true
+  def terminate(_reason, %{port: port}) do
+    if Port.info(port), do: Port.close(port)
+  end
+
+  @impl true
+  def format_status(status) do
+    # The loopback URL contains a bearer capability; keep it out of crash reports.
+    Map.new(status, fn
+      {key, _} when key in [:state, :message, :log] -> {key, :private}
+      entry -> entry
+    end)
+  end
+end
+```
+
+The default uses native attested TLS. Start with
+`StogasTransport.start_link(args: ["--security", "e2ee"])` for E2EE.
+In an OTP application, place this module in `lib/` and add it to your supervision
+tree. Reuse its transport across requests; restart the transport after an exit,
+but do not automatically replay an interrupted inference.
+
+## Send a request
+
+Save this as `main.exs`. OpenaiEx sends requests through Finch without automatic
+retries, redirects or system proxy settings. The example checks streamed API
+errors as well as HTTP failures.
+
+```elixir
+Code.require_file("transport.exs", __DIR__)
+
+defmodule StogasExample do
+  def run do
+    {transport, base} =
+      case System.get_env("STOGAS_BASE_URL") do
+        nil ->
+          {:ok, pid} = StogasTransport.start_link()
+          {pid, StogasTransport.base_url(pid)}
+
+        url ->
+          {nil, url}
+      end
+
+    try do
+      args = System.argv()
+      true = args in [[], ["--no-stream"]]
+      key = System.fetch_env!("STOGAS_API_KEY")
+      model = System.fetch_env!("STOGAS_MODEL")
+      true = key != "" and model != "" and not String.contains?(key, ["\r", "\n"])
+
+      client =
+        OpenaiEx.new(key)
+        |> OpenaiEx.with_base_url(base)
+        |> OpenaiEx.with_receive_timeout(45 * 60 * 1000)
+        |> OpenaiEx.with_stream_timeout(45 * 60 * 1000)
+
+      request =
+        OpenaiEx.Chat.Completions.new(
+          model: model,
+          messages: [OpenaiEx.ChatMessage.user("Say hello in one sentence.")]
+        )
+
+      if args == ["--no-stream"] do
+        response = OpenaiEx.Chat.Completions.create!(client, request)
+        IO.write(get_in(response, ["choices", Access.at(0), "message", "content"]) || "")
+      else
+        response = OpenaiEx.Chat.Completions.create!(client, request, stream: true)
+
+        response.body_stream
+        |> Stream.flat_map(& &1)
+        |> Enum.each(fn %{data: event} ->
+          if Map.has_key?(event, "error"), do: raise("Stream failed")
+
+          for choice <- Map.get(event, "choices", []) do
+            IO.write(get_in(choice, ["delta", "content"]) || "")
+          end
+        end)
+      end
+
+      IO.puts("")
+    rescue
+      _ ->
+        IO.puts(:stderr, "Request failed or incomplete. Do not replay automatically.")
+        exit({:shutdown, 1})
+    after
+      if transport && Process.alive?(transport), do: StogasTransport.close(transport)
+    end
+  end
+end
+
+StogasExample.run()
+```
+
+Stream a response or receive it as one object:
+
+```sh
+mix run main.exs
+mix run main.exs --no-stream
+```
+
+`STOGAS_BASE_URL` optionally selects an already running verifier CLI. Keep the
+complete printed URL, including its path. When set, the example uses that
+transport instead of starting a child.
+
+For signed response metadata and automatic receipt verification, add
+`OpenaiEx.with_additional_headers([{"Stogas-Metadata", "v1"}])` to the client
+pipeline. The verifier checks authenticated completion before releasing the final
+application event.
+
+## Cancel and close
+
+Run a request in a supervised task when the application needs to cancel it.
+Shut down that task with `Task.shutdown/2`; partial output is incomplete delivery,
+not a successful result. Never retry it automatically. Keep the shared transport
+alive for other requests and close it after those requests finish.
+
+`StogasTransport.close(pid)` closes the parent pipe. The CLI then allows up to
+five seconds for native cleanup. Removing the child from your supervision tree
+has the same effect.

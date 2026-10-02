@@ -1,3 +1,5 @@
+import { i18n, getMessage } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
 import { DocsProvider } from '@/components/docs-provider';
 import './global.css';
 import type { Metadata } from 'next';
@@ -8,7 +10,7 @@ export const metadata: Metadata = {
 		default: 'Stogas',
 		template: '%s | Stogas'
 	},
-	description: 'Documentation for Stogas.ai zero-trust anonymous AI API access.',
+	description: getMessage(messages.description),
 	other: { 'is-agentic-site-type': 'content' },
 	icons: {
 		icon: [
@@ -21,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: LayoutProps<'/'>) {
 	return (
-		<html lang="en" className="dark" suppressHydrationWarning>
+		<html lang={i18n.defaultLanguage} dir="ltr" className="dark" suppressHydrationWarning>
 			<head>
 				{/* Native light/dark themes must not be recolored while the page loads. */}
 				<meta name="darkreader-lock" />

@@ -3,17 +3,31 @@ title: Balance and billing
 description: Add prepaid credit, save billing details, and download receipts.
 ---
 
-On **Balance**, choose Bitcoin or Monero and select **Deposit address**. The estimate shows how much to send for your desired USD credit, including estimated fees. Your final credit uses the exchange rate and fees recorded for the payment.
+On **Balance**, choose Bitcoin or Monero through BTCPay, or select **Choose currency** under CCPayment. For BTCPay, select **Deposit address**. The estimate shows how much to send for your desired USD credit, including estimated fees. Your final credit uses the exchange rate and fees recorded for the payment.
 
-## Making a payment
+Money uses exact decimal USD strings with up to 36 fractional digits. The smallest supported amount is $10⁻³⁶. For example, a rate of $0.001 per million tokens costs exactly $0.000000001 for one token. Each meter combines its usage before rounding the charge upward once; BYOK rounds the 2% fee on the upstream total at the same precision.
+
+See [Request metrics](/docs/request-metrics) for recorded costs, usage, and analytics statistics.
+
+## Paying through BTCPay
 
 Scan the QR code, select **Open wallet**, or copy the address. The QR code and wallet link include the current estimated amount when available. Your wallet's sending fee is separate.
 
 Send only the selected currency on its native blockchain. Check the address and amount in your wallet before sending.
 
-Opening deposit details again returns the same address for your user and currency. Addresses expire after 24 hours; opening the dialog during the final hour gets a replacement. Always open the current deposit details before sending, rather than saving an address for recurring payments.
+Opening deposit details again returns the same address for your user and currency. Deposit instructions expire after 24 hours; opening the dialog during the final hour gets a replacement. Always open the current deposit details before sending, rather than saving an address for recurring payments. Expiry does not invalidate the blockchain address. Already detected payments continue through confirmation; an undetected payment to old instructions may need support to recover.
 
 **Recent payments** shows received payments and their credit status. Credit is added after confirmation. If a payment is missing or needs review, contact [billing@stogas.ai](mailto:billing@stogas.ai) with its currency and transaction reference. Never send wallet keys or recovery phrases.
+
+## Paying through CCPayment
+
+Choose an available coin and network, then enter your desired USD credit. Before you send, the calculator estimates the coin amount, processor service fee, network allowance, and Stogas's 2% fee. Your wallet's sending fee is separate. The estimated USD credit can change with the payment's receipt-time price and actual processor fee.
+
+There is no payment deadline. Each successful payment is credited separately using its receipt-time USD price after the actual processor service fee, the disclosed network allowance, and Stogas's 2% fee. Delayed confirmation, an old estimate, or sending a different amount does not by itself require manual reconciliation. The disclosed network allowance applies to each transfer of that coin to that address; Stogas absorbs differences from later aggregation bills without another debit to your balance.
+
+Use only the selected coin and network. Copy the estimated amount separately: the QR contains only the address. Include the memo or tag whenever shown, and respect the processor's minimum deposit. A wrong network or missing memo may prevent recovery. Check current payment instructions before sending, even when the address is unchanged.
+
+Credit is added only after the processor confirms success and the payment passes verification. **Held for provider review** means CCPayment has withheld the transfer from the available merchant balance. Contact [billing@stogas.ai](mailto:billing@stogas.ai); sending another payment does not release the hold. **Credited · under review** means credit was already recorded but later payment evidence needs investigation. A review does not guarantee a refund or release date. The receipt records the receipt-time price, fees, and credited amount.
 
 ## Billing details
 
@@ -23,7 +37,7 @@ Save billing changes before paying. Each payment keeps the details saved when it
 
 ## Receipts
 
-Once a payment is settled and credited, select **Receipt** in its payment row. The PDF itemizes prepaid AI credit, the Stogas fee, network costs, and any currency-conversion fee. It includes your saved billing details, payment and issue dates, the exchange rate, and the transaction reference.
+Once a payment is settled and credited, select **Receipt** in its payment row. The PDF itemizes prepaid AI credit, our fee, network costs, and any currency-conversion fee. It includes your saved billing details, payment and issue dates, the exchange rate, and the transaction reference.
 
 USD amounts display cents; an attached record preserves exact amounts and payment evidence. The receipt number and customer details stay fixed when downloaded again. Tax collected records the amount actually collected; it does not establish tax exemption.
 

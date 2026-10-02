@@ -3,7 +3,7 @@ title: Quickstart
 description: Send your first request through the Stogas OpenAI-compatible API.
 ---
 
-Stogas provides one API for supported AI models. Existing OpenAI-compatible clients work by changing the base URL.
+We provide one API for supported AI models. Existing OpenAI-compatible clients work by changing the base URL.
 
 ## 1. Create an API key
 
@@ -57,6 +57,18 @@ curl https://api.stogas.ai/v1/models
 
 Normal OpenAI-compatible requests need no Stogas-specific SDK. If you want your application to
 check the gateway and encrypt the connection, continue with [Verify a gateway](/docs/verification).
+
+## Request limits
+
+Inference requests accept a decoded JSON body up to 128 MiB, at most 100,000 entries in
+`messages` or array-valued `input`, and at most 1,000,000 JSON values with 128 levels of
+nesting. Objects, arrays and scalar values count toward the value limit; property names
+and text inside strings do not. Exceeding the body, message or value limit returns HTTP 413.
+The selected provider's body, context and output limits also apply.
+
+The catalog filters deployments using requested features and output/reasoning limits before
+credential preparation and text processing. An incompatible explicitly selected model fails
+instead of being replaced. Provider-specific parameter combinations still receive provider validation.
 
 <Cards>
 	<Card

@@ -1,0 +1,38 @@
+---
+title: Activity
+description: Review changes to your organization, access settings, and policies.
+---
+
+Open **Activity** in your organization to see who changed its settings and when.
+Search member or resource names, filter by event or date, then open **View changes**.
+Changes made through the dashboard and API appear in the same history.
+Names are saved with each event, so renaming or deleting a resource does not erase its context.
+
+## Access
+
+The `activity.read` permission allows viewing and exporting the organization's Activity.
+Request-log access does not grant it. Assign it through your organization's roles.
+
+Activity includes historical setting values. Give this permission only to people who
+should see those settings, even after they change.
+
+## Recorded changes
+
+Activity covers organization and member names, membership, invitations, roles, grants,
+API keys, credentials, and saved policies. A policy edit shows the changed fields and
+their before-and-after values and policy version. Literal dictionaries and custom redaction
+expressions are excluded: their entries show rule counts and whether the rules changed.
+An inherited change is recorded at the scope where it
+was made; it does not create an event for every affected key.
+
+Credential tokens, API-key secrets, invitation codes, and inference content are excluded.
+A secret rotation records the action without the secret. Export events record that an
+export was requested, not whether the file was saved.
+
+## Retention and export
+
+Events are retained for one year. **Export** downloads the filtered history as JSON.
+Narrow the date range if the export is too large.
+
+Activity is operational history. Delivery can be delayed or interrupted, so it is not a
+guaranteed complete compliance record or a backup of every policy version.

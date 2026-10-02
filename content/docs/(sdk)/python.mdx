@@ -1,0 +1,94 @@
+---
+title: Python
+description: Use Stogas from Python.
+---
+
+## Install
+
+```console
+pip install stogas openai
+```
+
+Use the official OpenAI Python client with one reusable Stogas transport.
+
+## Stream with the OpenAI client
+
+```python
+import os
+
+from openai import DefaultHttpxClient, OpenAI
+from stogas import Transport
+
+
+def client(base_url: str, api_key: str) -> OpenAI:
+    return OpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        max_retries=0,
+        http_client=DefaultHttpxClient(
+            trust_env=False, follow_redirects=False, timeout=45 * 60
+        ),
+    )
+
+
+def main() -> None:
+    api_key = os.environ["STOGAS_API_KEY"]
+    model = os.environ["STOGAS_MODEL"]
+    transport = Transport()
+    try:
+        with client(transport.base_url, api_key) as api:
+            with api.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": "Say hello in one sentence."}],
+                stream=True,
+            ) as stream:
+                for chunk in stream:
+                    for choice in chunk.choices:
+                        if choice.delta.content:
+                            print(choice.delta.content, end="", flush=True)
+            print()
+    finally:
+        transport.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+Set `STOGAS_API_KEY` and `STOGAS_MODEL` before running the example. Reuse the transport and client
+for subsequent requests; close them when the application stops.
+
+Press Ctrl+C to cancel; the example closes the stream and transport before propagating the
+interruption. Cancelled or partial output is not verified completion. The client uses OpenAI's
+HTTP client factory, disables redirects and inference retries, and bypasses environment proxies
+for the local transport URL. Its request timeout is 45 minutes; choose a shorter application
+deadline when appropriate.
+
+For a buffered request, use the same client with `stream=False` and read
+`response.choices[0].message.content`. Use the client's normal `responses.create` method for the
+Responses API. See the [runnable example](https://github.com/StogasAI/verifier/tree/main/examples/python-openai).
+
+`Transport()` defaults to native attested TLS and a maximum of four connections. Use
+`Transport(security="e2ee")` for application encryption over HTTPS. Optional `base_url` changes
+the HTTPS origin without changing the trusted evidence authorities. There is no background polling.
+
+Pass `extra_headers={"Stogas-Metadata": "v1"}` to request final metadata and a content receipt.
+The transport checks the receipt before reporting successful completion.
+
+## Offline verification
+
+`EvidenceVerifier` checks evidence supplied by your application without making network requests.
+Its default authority is the compiled production root. `refresh(bundle_bytes)` returns an
+`EvidenceSnapshot`; retain that snapshot while a request is in flight. A failed refresh does not
+destroy it, and authenticated revocations still apply to new verification.
+
+`snapshot.verify_logged_boot(boot_bytes, inclusion_bytes)` returns a `VerifiedBoot` only after
+hardware, release, and transparency checks pass. Its `verify_response(request_sha256, response_bytes)`
+checks a buffered response and its appended receipt. Supply the 32-byte SHA-256 digest of the exact
+request body. `verify_receipt(stogas_bytes, request_sha256, response_sha256)` takes the complete final
+`stogas` object, including its receipt, and separately computed content hashes. These methods return
+JSON bytes; they never send an inference request.
+
+Catch `VerificationError` and inspect its `code` field to distinguish failures without parsing
+error messages. Snapshot and boot objects own their verified state and remain usable after the
+verifier object is released. They cannot be constructed from unverified Python dictionaries.

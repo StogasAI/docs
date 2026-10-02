@@ -1,0 +1,77 @@
+---
+title: F#
+description: Use the OpenAI .NET client and verified transport from F#.
+---
+
+Our .NET package manages verified connections; OpenAI's .NET client provides typed
+requests and responses. This example uses .NET 10. Set `STOGAS_API_KEY` and `STOGAS_MODEL`
+before running it.
+
+## Install
+
+Create an F# console project, then install the packages:
+
+```console
+dotnet new console -lang F#
+dotnet add package Stogas --version 0.1.0-alpha.1
+dotnet add package OpenAI --version 2.14.0
+```
+
+## Stream a response
+
+Replace `Program.fs` with this code and run `dotnet run`:
+
+```fsharp
+open System
+open System.Net.Http
+open System.Threading
+open System.ClientModel
+open System.ClientModel.Primitives
+open OpenAI
+open OpenAI.Chat
+open Stogas
+
+let run () = task {
+    // An explicit URL can use a separately managed verifier CLI.
+    let external = Environment.GetEnvironmentVariable("STOGAS_BASE_URL")
+    use transport = if isNull external then new Transport() else null
+    let baseUrl = if isNull external then transport.BaseUrl else Uri(external)
+    use cancellation = new CancellationTokenSource()
+    Console.CancelKeyPress.Add(fun event -> event.Cancel <- true; cancellation.Cancel())
+    use http = new HttpClient(new SocketsHttpHandler(UseProxy = false, AllowAutoRedirect = false))
+    http.Timeout <- TimeSpan.FromMinutes(45.0)
+    let options = OpenAIClientOptions(
+        Endpoint = baseUrl,
+        Transport = new HttpClientPipelineTransport(http),
+        RetryPolicy = new ClientRetryPolicy(0),
+        NetworkTimeout = TimeSpan.FromMinutes(45.0))
+    let client = ChatClient(
+        Environment.GetEnvironmentVariable("STOGAS_MODEL"),
+        ApiKeyCredential(Environment.GetEnvironmentVariable("STOGAS_API_KEY")), options)
+    let messages: ChatMessage array = [| UserChatMessage("Say hello in one sentence.") |]
+    let updates = client.CompleteChatStreamingAsync(messages, cancellationToken = cancellation.Token)
+    use iterator = updates.GetAsyncEnumerator(cancellation.Token)
+    let mutable reading = true
+    while reading do
+        let! hasNext = iterator.MoveNextAsync()
+        reading <- hasNext
+        if hasNext then
+            for part in iterator.Current.ContentUpdate do Console.Write(part.Text)
+    cancellation.Token.ThrowIfCancellationRequested()
+}
+
+[<EntryPoint>]
+let main _ =
+    run().GetAwaiter().GetResult()
+    0
+```
+
+Reuse the HTTP client and `ChatClient` between requests. Use `CompleteChatAsync` for a buffered
+response. Ctrl-C cancels this example; in a service, pass your request's cancellation token.
+A cancelled or failed stream is incomplete and must not be automatically retried.
+The `use` bindings close the response enumerator and HTTP client before the transport.
+
+The [complete F# example](https://github.com/StogasAI/verifier/tree/main/examples/fsharp-openai)
+pins its dependencies and is tested against HTTP failures, streamed errors and truncated
+responses. To use a separately running [verifier CLI](/docs/cli), set `STOGAS_BASE_URL`
+to its complete printed URL.

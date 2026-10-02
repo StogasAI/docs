@@ -1,3 +1,5 @@
+import { getMessage, i18n } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
 import {
 	getOpenApiJsonUrl,
 	getPageImage,
@@ -25,7 +27,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 	const loader = isReference ? apiSource : source;
 	const slug = isReference ? params.slug?.slice(1) : params.slug;
 
-	const page = loader.getPage(slug);
+	const page = loader.getPage(slug, i18n.defaultLanguage);
 	if (!page) notFound();
 
 	const MDX = page.data.body;
@@ -50,10 +52,10 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 						headline: page.data.title,
 						description: page.data.description,
 						url: new URL(page.url, 'https://stogas.ai').href,
-						inLanguage: 'en',
+						inLanguage: page.locale ?? i18n.defaultLanguage,
 						isPartOf: {
 							'@type': 'WebSite',
-							name: 'Stogas documentation',
+							name: getMessage(messages.documentation),
 							url: 'https://stogas.ai/docs'
 						},
 						publisher: {
@@ -101,7 +103,7 @@ export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): P
 	const loader = isReference ? apiSource : source;
 	const slug = isReference ? params.slug?.slice(1) : params.slug;
 
-	const page = loader.getPage(slug);
+	const page = loader.getPage(slug, i18n.defaultLanguage);
 	if (!page) notFound();
 
 	return {

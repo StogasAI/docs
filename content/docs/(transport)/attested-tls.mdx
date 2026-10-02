@@ -1,0 +1,47 @@
+---
+title: Attested TLS
+description: Verify the gateway during a native TLS connection before sending credentials or content.
+---
+
+Native SDKs use attested TLS by default. A fresh hardware-attested signer binds the connection to
+an approved gateway. The Rust transport verifies the evidence locally before it releases your
+API key or request content.
+
+## Connect from a native runtime
+
+Choose a [language guide](/docs/sdk-overview#choose-your-runtime), or run
+[`stogas serve`](/docs/cli) and point an OpenAI client at its complete capability-protected URL.
+Reuse the transport for subsequent requests and close it when your application shuts down.
+
+The connection uses TLS 1.3 with X25519MLKEM768 hybrid key exchange. The transport requires this
+construction and fails closed when it is unavailable. It does not silently fall back to ordinary
+HTTPS.
+
+## Connection keys
+
+Native TLS uses standard TLS 1.3 key updates alongside normal outgoing traffic. After at least
+a minute and traffic in both directions, the next nonempty write includes an update before
+its application data. The SDK does not wake idle connections, poll the gateway or wait for
+an update acknowledgement before sending data. Updates add small TLS control messages;
+they do not add a full handshake or another payload encryption layer. The one-minute spacing
+limits update frequency, not key lifetime. Protection follows connection key changes,
+rather than each request finishing.
+The native client permits AES-256-GCM and ChaCha20-Poly1305 for 256-bit traffic keys,
+with no AES-128 fallback. It prefers AES when it detects x86 or ARM64 AES-GCM acceleration,
+and ChaCha20 otherwise.
+
+## Browser applications
+
+Browsers and Fetch runtimes do not expose the peer-certificate hooks this mode needs. Use
+[E2EE over HTTPS](/docs/e2ee) with the same verification core instead.
+
+## Scope and failure handling
+
+Attested TLS protects the connection from your client to the verified gateway. The selected model
+provider receives the forwarded request. It does not make the provider's execution independently
+verifiable.
+
+Initial setup performs fresh session attestation; it is not identical in cost to ordinary HTTPS.
+Reusing connections amortizes setup. Disable automatic inference retries: a lost connection after
+submission can leave execution uncertain. See [Gateway verification](/docs/verification) for
+receipts and [the trust model](/docs/confidential-security-model) for hardware and evidence limits.

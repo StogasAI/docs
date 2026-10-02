@@ -1,9 +1,13 @@
 'use client';
 
-import { Custom } from 'fumadocs-openapi/playground/client';
+import { useTranslations } from '@fuma-translate/react';
+import { messages } from '@/lib/messages';
+
+import { Custom } from 'fumadocs-openapi/ui/playground/client';
 import { useEffect, useId, useRef, useState } from 'react';
 
 export function OpenAPIRequestBody() {
+	const t = useTranslations();
 	const { value, setValue } = Custom.useController(['body']);
 	const [text, setText] = useState(() => JSON.stringify(value ?? {}, null, 2));
 	const [error, setError] = useState('');
@@ -22,7 +26,7 @@ export function OpenAPIRequestBody() {
 	return (
 		<div className="flex min-w-0 flex-col gap-2">
 			<label htmlFor={id} className="text-fd-muted-foreground text-sm">
-				Request JSON
+				{t(messages.requestJson)}
 			</label>
 			<textarea
 				ref={input}
@@ -41,13 +45,13 @@ export function OpenAPIRequestBody() {
 					try {
 						const parsed: unknown = JSON.parse(nextText);
 						if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-							message = 'Enter a JSON object for the request body.';
+							message = t(messages.requestObjectRequired);
 						} else {
 							lastValue.current = parsed;
 							setValue(parsed);
 						}
 					} catch {
-						message = 'Enter valid JSON before sending the request.';
+						message = t(messages.requestJsonInvalid);
 					}
 					event.target.setCustomValidity(message);
 					setError(message);

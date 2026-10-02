@@ -1,0 +1,122 @@
+---
+title: Protect requests with the SDK
+description: Add gateway verification and encrypted transport to an OpenAI client.
+---
+
+The Stogas SDK works with the OpenAI client you already use. Before sending a request, it checks the
+selected gateway and opens a protected connection. Session setup verifies current evidence locally;
+the transport does not poll in the background.
+
+<Cards>
+	<Card
+		title="Make a protected request"
+		description="Install the SDK for your language and connect an OpenAI client."
+		href="/docs/typescript"
+	/>
+	<Card
+		title="Understand verification"
+		description="See what the SDK checks before using a gateway."
+		href="/docs/trusted-gateways"
+	/>
+</Cards>
+
+## How it works
+
+<Steps>
+	<Step>
+
+### Check the gateway
+
+The SDK checks the gateway's software, confidential hardware, freshness, and connection keys on
+your device.
+
+    </Step>
+    <Step>
+
+### Connect
+
+It opens a protected connection to a gateway that passed those checks.
+
+    </Step>
+    <Step>
+
+### Request
+
+Your existing OpenAI client sends normal Responses or Chat Completions requests through that
+channel.
+
+    </Step>
+
+</Steps>
+
+## Connection protection
+
+| Mode            | Use it in                                   | Guide                                                     |
+| --------------- | ------------------------------------------- | --------------------------------------------------------- |
+| Attested TLS    | Native runtimes, default                    | [TLS connection and key updates](/docs/attested-tls)      |
+| E2EE over HTTPS | All runtimes; default for browser and Fetch | [Encrypted records, sessions and concurrency](/docs/e2ee) |
+
+Both verify fresh session evidence before releasing credentials or content. Ordinary HTTPS
+remains a compatibility option without gateway attestation. Encryption protects the client-to-gateway
+path; the selected model provider receives the forwarded request.
+
+## Configuration
+
+The transport opens one channel initially and more only when needed, up to `maxConnections`
+(`max_connections` in Python and the C ABI, `MaxConnections` in Go). The default maximum is four.
+Connections may reach the same gateway; this setting does not promise separate machines.
+
+Evidence comes from our compiled R2 origin first, with our independent AWS replica as fallback.
+The transport verifies evidence locally at initialization and performs one bounded recovery when
+setup needs newer evidence. It does not poll in the background. Our gateways monitor their own
+approval and stop admitting work when it is withdrawn. `refreshBundle` (`refresh_bundle` in Rust/Python, `RefreshBundle` in Go) lets an application refresh explicitly. Verified objects are reused when unchanged.
+
+Reuse one transport and close it during graceful shutdown. Native options select the environment,
+security mode, connection maximum and an optional HTTPS origin. The origin override cannot change
+the trusted signing keys or evidence endpoints. Staging requires a staging build.
+
+## OpenAI client integration
+
+Rust, Python, Go, C, Java, .NET, Ruby and Swift bindings run the shared Rust connection engine inside your process. They provide a
+capability-protected loopback URL for your existing OpenAI client. Rust handles fresh attestation,
+TLS or E2EE, evidence recovery, streaming and requested receipt verification.
+
+Other native languages can use the Java/.NET packages, the [verifier CLI](/docs/cli) on the same machine or embed the C ABI.
+The language guides use real client APIs; they do not require a separate Stogas OpenAI client.
+
+Browser, Worker, Node, Bun and Deno integrations provide a managed `fetch` function with the same
+verification core compiled to WebAssembly. E2EE carries binary records without base64 body expansion.
+
+Disable the OpenAI client's automatic retries. The transport can recover setup before submitting
+a request, but a disconnect after submission can leave execution unknown. It never repeats an
+inference automatically.
+
+Send `Stogas-Metadata: v1` to request the final `stogas` metadata. Its receipt signs the exact request
+and response content. The transport verifies that receipt before reporting successful completion.
+Streaming content can arrive before that final check; receipt failure does not undo execution.
+
+## Choose your runtime
+
+| Runtime                                     | Start here                                                      |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| JavaScript, TypeScript, Node, Bun, and Deno | [JavaScript](/docs/javascript) · [TypeScript](/docs/typescript) |
+| Browser and edge Worker                     | [Browser and Workers](/docs/browser-workers)                    |
+| Python                                      | [Python](/docs/python)                                          |
+| Go                                          | [Go](/docs/go)                                                  |
+| Rust                                        | [Rust](/docs/rust)                                              |
+| Ruby                                        | [Ruby](/docs/ruby)                                              |
+| Java and other JVM languages                | [Java](/docs/java)                                              |
+| C#                                          | [.NET](/docs/dotnet)                                            |
+| F#                                          | [F#](/docs/fsharp)                                              |
+| Swift on macOS                              | [Swift](/docs/swift)                                            |
+| Kotlin/JVM                                  | [Kotlin](/docs/kotlin)                                          |
+| Scala                                       | [Scala](/docs/scala)                                            |
+| Clojure                                     | [Clojure](/docs/clojure)                                        |
+| C and C++                                   | [C and C++](/docs/c-cpp)                                        |
+| Other runtimes                              | [More languages](/docs/other-languages)                         |
+
+## Verify evidence directly
+
+The Rust core and its Wasm/C evidence APIs also verify caller-supplied evidence without network
+access. They share the same approval, hardware, transparency and revocation checks used by the
+managed transport.

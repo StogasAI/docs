@@ -1,0 +1,157 @@
+import { expect, test } from '@playwright/test';
+import schema from '../content/schemas/key-config-v1.json';
+import routingRegistry from '../content/schemas/routing-fields.json';
+import navigation from '../content/docs/policies/meta.json';
+
+for (const width of [390, 1440]) {
+	test(`policy topics expose fields and nested constraints at ${width}px`, async ({ page }) => {
+		await page.setViewportSize({ width, height: 950 });
+		await page.goto('/docs/policies');
+		const fieldsTable = page.getByRole('table', { name: 'Policy document fields' });
+		await expect(fieldsTable.getByRole('button')).toHaveCount(0);
+		expect(
+			await fieldsTable.evaluate((table) => table.scrollWidth <= table.parentElement!.clientWidth)
+		).toBe(true);
+		for (const key of Object.keys(schema.properties)) {
+			const row = fieldsTable
+				.getByRole('row')
+				.filter({ has: page.getByRole('link', { name: key, exact: true }) });
+			await expect(row.getByRole('cell').last()).not.toBeEmpty();
+		}
+		await fieldsTable.getByRole('link', { name: 'limits', exact: true }).click();
+		await expect(page).toHaveURL(/\/docs\/policies\/limits$/);
+		const fields = page.locator('[id="policy-fields.requestLimit"]');
+		await fields.getByRole('textbox').fill('window');
+		await fields.getByRole('button', { name: 'object', exact: true }).click();
+		const detail = page.getByRole('dialog');
+		await expect(detail.getByText('count', { exact: true })).toBeVisible();
+		await expect(detail).toContainText('999999');
+		await expect(detail).toContainText('week');
+		await page.keyboard.press('Escape');
+		await page.goto('/docs/policies/plugins');
+		const literal = page.locator('[id="policy-fields.literalRule"]');
+		await expect(literal.getByText('wholeWord?', { exact: true })).toBeVisible();
+		await expect(literal).toContainText('true');
+		await expect(literal).toContainText('256 UTF-8 bytes');
+		await expect(
+			page.locator('[id="policy-fields.input"]').getByText('asciiOnly', { exact: true })
+		).toBeVisible();
+		for (const slug of navigation.pages) {
+			const path = `/docs/policies${slug === 'index' ? '' : `/${slug}`}`;
+			await page.goto(path);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+				path
+			).toBe(true);
+			const duplicateIds = await page.locator('[id]').evaluateAll((elements) => {
+				const ids = elements.map((e) => e.id);
+				return ids.filter((id, i) => ids.indexOf(id) !== i);
+			});
+			expect(duplicateIds, path).toEqual([]);
+		}
+	});
+}
+
+test('policy topics retain complete field exports and working links to their owners', async ({
+	page,
+	request
+}) => {
+	const definitions: Record<string, unknown[]> = {
+		scopes: [schema.properties.delegation, schema.properties.rules.additionalProperties],
+		routing: [schema.properties.routing],
+		limits: [
+			schema.properties.limits.properties.spend.properties.recurring.additionalProperties,
+			schema.properties.limits.properties.requests.additionalProperties,
+			schema.properties.limits.properties.tokens.additionalProperties
+		],
+		access: [schema.properties.access.properties.deny.items],
+		plugins: [
+			schema.properties.plugins.anyOf[0].properties.stogasRedaction!.properties.literals.items,
+			schema.properties.input
+		]
+	};
+	const links = new Set<string>();
+	const anchors = new Map<string, string[]>();
+	for (const slug of navigation.pages) {
+		const path = `/docs/policies${slug === 'index' ? '' : `/${slug}`}`;
+		await page.goto(path);
+		anchors.set(
+			path,
+			await page.locator('[id]').evaluateAll((elements) => elements.map((e) => e.id))
+		);
+		for (const href of await page
+			.locator('#nd-page a[href]')
+			.evaluateAll((elements) => elements.map((e) => (e as HTMLAnchorElement).href))) {
+			const url = new URL(href);
+			if (url.pathname.startsWith('/docs/') || url.pathname === '/docs')
+				links.add(`${url.pathname}${url.hash}`);
+		}
+		const markdownUrl = await page
+			.locator('link[rel="alternate"][type="text/markdown"]')
+			.getAttribute('href');
+		const response = await request.get(new URL(markdownUrl!).pathname);
+		expect(response.ok()).toBe(true);
+		const markdown = await response.text();
+		expect(markdown).not.toMatch(/<(?:PolicyFields|RoutingFields)/);
+		const json = Array.from(markdown.matchAll(/```json[^\n]*\n([\s\S]*?)\n```/g), (m) =>
+			JSON.parse(m[1])
+		);
+		for (const definition of definitions[slug] ?? []) expect(json, path).toContainEqual(definition);
+		if (slug === 'index') {
+			for (const key of Object.keys(schema.properties))
+				expect(markdown).toContain(`[\`${key}\`](/docs/policies`);
+		}
+	}
+	for (const href of links) {
+		const url = new URL(href, 'https://stogas.ai');
+		if (!anchors.has(url.pathname)) {
+			const response = await request.get(url.pathname);
+			expect(response.status(), href).toBe(200);
+			anchors.set(
+				url.pathname,
+				await page.evaluate(
+					(html) =>
+						Array.from(
+							new DOMParser().parseFromString(html, 'text/html').querySelectorAll('[id]'),
+							(e) => e.id
+						),
+					await response.text()
+				)
+			);
+		}
+		if (url.hash)
+			expect(anchors.get(url.pathname), href).toContain(decodeURIComponent(url.hash.slice(1)));
+	}
+	expect((await request.get('/docs/policies/reference')).status()).toBe(404);
+	expect(await (await request.get('/llms-full.txt')).text()).not.toContain(
+		'/docs/policies/reference'
+	);
+});
+
+test('routing field inventories survive Markdown export and query examples are highlighted', async ({
+	page,
+	request
+}) => {
+	await page.goto('/docs/policies/routing-fields');
+	const alternate = await page
+		.locator('link[rel="alternate"][type="text/markdown"]')
+		.getAttribute('href');
+	const response = await request.get(new URL(alternate!).pathname);
+	expect(response.ok()).toBe(true);
+	const markdown = await response.text();
+	expect(markdown).not.toContain('<RoutingFields');
+	for (const name of Object.keys(routingRegistry.fields)) expect(markdown).toContain(`\`${name}\``);
+	await page.setViewportSize({ width: 390, height: 950 });
+	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+	await expect(page.getByRole('table').getByRole('button')).toHaveCount(0);
+	await expect(
+		page
+			.getByRole('table', { name: 'request routing fields' })
+			.locator('code')
+			.filter({ hasText: /^chat-completions$/ })
+	).toBeVisible();
+	await page.goto('/docs/policies/routing');
+	const example = page.locator('pre').filter({ hasText: "provider.id in ['openai', 'chutes']" });
+	await expect(example.locator('[style*="--shiki-"]').first()).toBeVisible();
+	await expect(example).toContainText('deployment.capabilities.streaming == true');
+});

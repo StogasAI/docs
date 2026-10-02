@@ -84,8 +84,6 @@ metadata but removed; Stogas owns upstream identity fields.
 - The current public surface accepts text content only.
 - Chat accepts only exact `function` tool definitions. Assistant tool calls must be followed by one adjacent result for every call ID in the same stateless request.
 - Responses client tool calls must include valid JSON-object function arguments and one matching output in the same input. Custom calls and encrypted reasoning history are accepted only on the OpenAI-format deployments that preserve them.
-- `stream: true` uses the endpoint's normal Server-Sent Events format.
-- Direct Chat Completions and Responses requests have a 60-minute lifecycle. A healthy stream can use that full period. Stogas closes a downstream connection only when a socket write makes no progress for five minutes or when final delivery reaches five minutes past the request deadline.
 - OpenAI `max_tokens` is accepted as an alias for `max_completion_tokens` on Chat Completions.
 - Sampling values are preserved without gateway-owned numeric ranges or combination rules. The selected provider decides which values and combinations its current model accepts.
 - `task_budget` is available only on direct Anthropic Opus 4.7+, Fable 5, and Mythos 5 deployments. It requires `type: "tokens"`, a `total` of at least 20,000, and an optional `remaining` from zero through `total`. Azure Claude does not support it.
@@ -97,6 +95,25 @@ metadata but removed; Stogas owns upstream identity fields.
 - Provider-specific cache controls and hosted tools are accepted only where the catalog can route and bill them correctly.
 
 See [Model Tools](/docs/model-tools) for supported function, custom, and provider-hosted tools.
+
+## Streaming
+
+Set `stream: true` to receive Server-Sent Events (SSE). Use your SDK's stream iterator or an
+SSE parser. Comments such as `: STOGAS PROCESSING` keep a quiet stream open; they are not JSON
+or generated output. Chat Completions ends with `data: [DONE]`; Responses uses its named events.
+
+Errors before streaming starts use the normal HTTP status and JSON error body. Once headers have
+been sent, an error arrives within the stream. An HTTP `200` alone does not mean generation finished.
+
+The verified transport validates encrypted completion before exposing the final application event.
+With `Stogas-Metadata: v1`, it also verifies the final receipt. Cancelling or losing a stream before
+completion does not count as a verified success. Disable automatic inference retries: a disconnected
+request may already have run.
+
+Requests have a 60-minute lifecycle. Healthy streams can use that period, including quiet model
+processing. A response write that cannot make progress for one minute ends the affected response;
+final delivery has one minute beyond the request deadline. Keep reading or explicitly close a stream
+you no longer need.
 
 ## Errors
 
@@ -134,16 +151,14 @@ with the same key, endpoint, error code, and HTTP status in a one-second window 
 records. Further repeats in that window share a record on that gateway node. Grouping uses the
 error code, not message text or requested catalog choices. Successful requests and provider errors never enter this grouping.
 
-| Field                      | Meaning                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------- |
-| `schema_version`           | Record format version; currently `1`. Consumers must check this before interpreting fields. |
-| `request_count`            | Requests represented by this row; `1` for every admitted request.                           |
-| `created_at`               | First rejection time in a group, or the admitted request's billing authorization time.      |
-| `last_request_at`          | Last rejection time in a group; equals `created_at` for an admitted request.                |
-| `stogas_error_code`        | Stogas rejection or processing error; empty when neither occurred.                          |
-| `stogas_error_status_code` | HTTP status for that Stogas error; otherwise `null`.                                        |
-| `provider_attempts`        | Actual provider calls and their results; empty for a rejected request.                      |
-| `stogas_billing_status`    | `rejected` means no billing hold or charge.                                                 |
+| Field               | Meaning                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `schema_version`    | Record format version; currently `1`. Consumers must check this before interpreting fields. |
+| `request_count`     | Requests represented by this row; `1` for every admitted request.                           |
+| `created_at`        | First rejection time in a group, or the admitted request's billing authorization time.      |
+| `last_request_at`   | Last rejection time in a group; equals `created_at` for an admitted request.                |
+| `error`             | Rejection or gateway error as `{code, status}`; `null` when absent.                         |
+| `provider_attempts` | Actual provider calls and their results; empty for a rejected request.                      |
 
 For example, 99 matching credit rejections in one window produce five individual rows and one row
 with count 94. Add one completed response and the charts show 100 requests and a 1% success rate.
@@ -194,7 +209,7 @@ provider's success and the Stogas error. A setup failure before provider dispatc
 attempt; an interrupted provider call with no known result has an unknown outcome. Successfully
 sending the prompt alone does not mean Stogas completed the response.
 
-An ordinary provider error does not mark Stogas processing as failed. A handled accounting warning
+An ordinary provider error stays in `provider_attempts`; it does not create a gateway `error`. A handled accounting warning
 or a delayed log delivery does not change a valid response into a failure. Usable provider-reported
 usage determines the charge within the authorized hold; an error alone does not determine billing.
 Client logging preferences cannot disable accounting records.

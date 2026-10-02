@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from '@fuma-translate/react';
+import { messages } from '@/lib/messages';
+
 import { cn } from '@/lib/cn';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from 'fumadocs-ui/components/ui/popover';
@@ -118,54 +121,57 @@ export function OpenApiViewOptionsPopover({
 	githubUrl: string;
 	className?: string;
 }) {
+	const t = useTranslations();
 	const items = useMemo(() => {
-		const q = `Read ${new URL(markdownUrl, 'https://stogas.ai')}, I want to ask questions about it.`;
+		const q = t(messages.askAboutPage, {
+			variables: { url: new URL(markdownUrl, 'https://stogas.ai').href }
+		});
 
 		return [
 			{
-				title: 'Open in GitHub',
+				title: t(messages.openGithub),
 				href: githubUrl,
 				icon: <GithubIcon />
 			},
 			{
-				title: 'View as Markdown',
+				title: t(messages.viewMarkdown),
 				href: markdownUrl,
 				icon: <TextIcon aria-hidden="true" />
 			},
 			jsonUrl
 				? {
-						title: 'View OpenAPI specification',
+						title: t(messages.viewOpenapi),
 						href: jsonUrl,
 						icon: <FileJson aria-hidden="true" />
 					}
 				: null,
 			{
-				title: 'Open in Scira AI',
+				title: t(messages.openScira),
 				href: `https://scira.ai/?${new URLSearchParams({ q })}`,
 				icon: <SciraIcon />
 			},
 			{
-				title: 'Open in ChatGPT',
+				title: t(messages.openChatgpt),
 				href: `https://chatgpt.com/?${new URLSearchParams({ hints: 'search', q })}`,
 				icon: <OpenAIIcon />
 			},
 			{
-				title: 'Open in Grok',
+				title: t(messages.openGrok),
 				href: `https://grok.com/?${new URLSearchParams({ q })}`,
 				icon: <GrokIcon />
 			},
 			{
-				title: 'Open in Claude',
+				title: t(messages.openClaude),
 				href: `https://claude.ai/new?${new URLSearchParams({ q })}`,
 				icon: <AnthropicIcon />
 			},
 			{
-				title: 'Open in Cursor',
+				title: t(messages.openCursor),
 				href: `https://cursor.com/link/prompt?${new URLSearchParams({ text: q })}`,
 				icon: <CursorIcon />
 			}
 		].filter((item): item is ViewOptionItem => item !== null);
-	}, [githubUrl, jsonUrl, markdownUrl]);
+	}, [githubUrl, jsonUrl, markdownUrl, t]);
 
 	return (
 		<Popover>
@@ -176,11 +182,11 @@ export function OpenApiViewOptionsPopover({
 					className
 				)}
 			>
-				Open
+				{t(messages.open)}
 				<ChevronDown aria-hidden="true" className="text-fd-muted-foreground size-3.5" />
 			</PopoverTrigger>
 			<PopoverContent
-				aria-label="Page resources"
+				aria-label={t(messages.pageResources)}
 				className="bg-fd-popover flex flex-col border-0 backdrop-blur-none"
 			>
 				{items.map((item) => (

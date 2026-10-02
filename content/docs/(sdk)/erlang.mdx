@@ -1,0 +1,286 @@
+---
+title: Erlang
+description: Use Erlang HTTP requests with a supervised verifier transport.
+---
+
+Use [Gun](https://hex.pm/packages/gun) for HTTP and the verifier CLI for attestation.
+The verifier supplies a private local URL and reuses its verified gateway connections.
+This example uses Erlang/OTP 27 or later and Rebar3 on Linux.
+
+## Install
+
+Install the [verifier CLI](/docs/cli) and put `stogas` on your `PATH`.
+Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
+Create an empty directory with a `src` subdirectory and these files.
+
+`rebar.config`:
+
+```erlang
+{erl_opts, [debug_info, warnings_as_errors]}.
+{deps, [{gun, "2.6.0"}]}.
+{escript_name, 'stogas-example'}.
+{escript_main_app, stogas_example}.
+{escript_incl_apps, [gun, cowlib]}.
+```
+
+`src/stogas_example.app.src`:
+
+```erlang
+{application, stogas_example, [
+    {description, "OpenAI-compatible HTTP through the Stogas verifier"},
+    {vsn, "0.1.0"},
+    {applications, [kernel, stdlib, gun]},
+    {modules, []}
+]}.
+```
+
+## Supervise the transport
+
+Save this as `src/stogas_transport.erl`. It owns the verifier child process.
+Closing the owner also closes the verifier's input pipe, which starts graceful
+cleanup. Keep the returned URL private: it contains a local access token.
+
+```erlang
+-module(stogas_transport).
+-behaviour(gen_server).
+-export([start_link/0, start_link/1, base_url/1, close/1]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, format_status/1]).
+
+start_link() -> start_link(#{}).
+start_link(Options) -> gen_server:start_link(?MODULE, Options, [{timeout, 20000}]).
+base_url(Pid) -> gen_server:call(Pid, base_url).
+close(Pid) -> gen_server:stop(Pid).
+
+init(Options) ->
+    process_flag(trap_exit, true),
+    Executable = maps:get(executable, Options, os:find_executable("stogas")),
+    false =:= Executable andalso error(verifier_not_installed),
+    Args = ["serve", "--listen", "127.0.0.1:0", "--exit-on-stdin-close"] ++
+        maps:get(args, Options, []),
+    Port = open_port({spawn_executable, filename:absname(Executable)},
+        [binary, exit_status, use_stdio, hide, {line, 8192}, {args, Args}]),
+    try await_url(Port, erlang:monotonic_time(millisecond) + 18000) of
+        Url -> {ok, #{port => Port, base_url => Url}}
+    catch Class:Reason:Stack ->
+        close_port(Port),
+        erlang:raise(Class, Reason, Stack)
+    end.
+
+await_url(Port, Deadline) ->
+    receive
+        {Port, {data, {eol, <<"OpenAI base URL: ", Url/binary>>}}} ->
+            #{scheme := <<"http">>, host := <<"127.0.0.1">>, port := Number} = uri_string:parse(Url),
+            true = Number > 0,
+            Url;
+        {Port, {data, {eol, _}}} -> await_url(Port, Deadline);
+        {Port, {data, {noeol, _}}} -> error(oversized_verifier_output);
+        {Port, {exit_status, _}} -> error(verifier_start_failed);
+        {'EXIT', Port, _} -> error(verifier_start_failed)
+    after max(Deadline - erlang:monotonic_time(millisecond), 0) ->
+        error(verifier_start_timeout)
+    end.
+
+handle_call(base_url, _From, State) -> {reply, maps:get(base_url, State), State}.
+handle_cast(_Message, State) -> {noreply, State}.
+handle_info({Port, {data, {eol, _}}}, #{port := Port} = State) -> {noreply, State};
+handle_info({Port, _}, #{port := Port} = State) -> {stop, verifier_stopped, State};
+handle_info({'EXIT', Port, _}, #{port := Port} = State) -> {stop, verifier_stopped, State}.
+terminate(_Reason, #{port := Port}) -> close_port(Port).
+
+close_port(Port) ->
+    case erlang:port_info(Port) of
+        undefined -> ok;
+        _ -> erlang:port_close(Port)
+    end.
+
+format_status(Status) ->
+    % The private loopback URL is a bearer capability; omit it from crash reports.
+    maps:map(fun
+        (state, _) -> private;
+        (message, _) -> private;
+        (log, _) -> private;
+        (_, Value) -> Value
+    end, Status).
+```
+
+In an OTP application, add `stogas_transport` to your supervision tree and reuse
+it across requests. Native attested TLS is the default. To use E2EE, start it with
+`stogas_transport:start_link(#{args => ["--security", "e2ee"]})`.
+
+## Send requests and streams
+
+Save this as `src/stogas_example.erl`. The request is ordinary OpenAI-compatible
+JSON. Gun does not follow redirects, and `retry => 0` disables reconnection.
+The example reads streamed events with Cowlib, Gun's HTTP support library.
+It requires both the application completion marker and complete HTTP delivery.
+
+```erlang
+-module(stogas_example).
+-export([main/1, request/4]).
+
+main(Args) ->
+    {ok, _} = application:ensure_all_started(gun),
+    {Transport, Base} = case os:getenv("STOGAS_BASE_URL") of
+        false ->
+            {ok, Pid} = stogas_transport:start_link(),
+            {Pid, stogas_transport:base_url(Pid)};
+        Value -> {undefined, list_to_binary(Value)}
+    end,
+    Result = try
+        Stream = case Args of [] -> true; ["--no-stream"] -> false end,
+        request(Base, env("STOGAS_API_KEY"), env("STOGAS_MODEL"), Stream),
+        io:nl(),
+        0
+    catch _:_ ->
+        io:put_chars(standard_error, "Request failed or incomplete. Do not replay automatically.\n"),
+        1
+    after
+        case Transport of
+            undefined -> ok;
+            _ -> stogas_transport:close(Transport)
+        end
+    end,
+    halt(Result).
+
+env(Name) ->
+    Value = list_to_binary(os:getenv(Name)),
+    true = byte_size(Value) > 0,
+    nomatch = binary:match(Value, [<<"\r">>, <<"\n">>]),
+    Value.
+
+request(Base, Key, Model, Stream) ->
+    #{scheme := <<"http">>, host := <<"127.0.0.1">>, port := Port, path := Path} =
+        uri_string:parse(Base),
+    {ok, Connection} = gun:open({127, 0, 0, 1}, Port,
+        #{transport => tcp, protocols => [http], retry => 0}),
+    try
+        {ok, http} = gun:await_up(Connection),
+        Body = json:encode(#{model => Model, stream => Stream,
+            messages => [#{role => <<"user">>, content => <<"Say hello in one sentence.">>}]}),
+        Ref = gun:post(Connection, <<Path/binary, "/chat/completions">>, [
+            {<<"authorization">>, <<"Bearer ", Key/binary>>},
+            {<<"content-type">>, <<"application/json">>}
+        ], Body),
+        Deadline = erlang:monotonic_time(millisecond) + 45 * 60 * 1000,
+        try
+            {response, nofin, 200, _Headers} = await(Connection, Ref, Deadline),
+            case Stream of
+                true -> stream(Connection, Ref, Deadline, cow_sse:init(), false);
+                false ->
+                    Response = json:decode(body(Connection, Ref, Deadline, <<>>)),
+                    false = maps:is_key(<<"error">>, Response),
+                    [Choice | _] = maps:get(<<"choices">>, Response),
+                    print_content(maps:get(<<"message">>, Choice))
+            end
+        after
+            gun:cancel(Connection, Ref)
+        end
+    after
+        gun:close(Connection)
+    end.
+
+await(Connection, Ref, Deadline) ->
+    Monitor = monitor(process, Connection),
+    try
+        receive
+            cancel -> error(cancelled);
+            {gun_response, Connection, Ref, Fin, Status, Headers} ->
+                {response, Fin, Status, Headers};
+            {gun_data, Connection, Ref, Fin, Data} -> {data, Fin, Data};
+            {gun_trailers, Connection, Ref, Headers} -> {trailers, Headers};
+            {gun_inform, Connection, Ref, _, _} -> await(Connection, Ref, Deadline);
+            {gun_error, Connection, Ref, _} -> error(connection_failed);
+            {gun_error, Connection, _} -> error(connection_failed);
+            {gun_down, Connection, _, _, _} -> error(connection_failed);
+            {'DOWN', Monitor, process, Connection, _} -> error(connection_failed)
+        after max(Deadline - erlang:monotonic_time(millisecond), 0) ->
+            error(request_timeout)
+        end
+    after
+        demonitor(Monitor, [flush])
+    end.
+
+body(Connection, Ref, Deadline, Acc) ->
+    case await(Connection, Ref, Deadline) of
+        {data, Fin, Data} when byte_size(Acc) + byte_size(Data) =< 32 * 1024 * 1024 ->
+            Next = <<Acc/binary, Data/binary>>,
+            case Fin of fin -> Next; nofin -> body(Connection, Ref, Deadline, Next) end;
+        {trailers, _} -> Acc;
+        _ -> error(incomplete_response)
+    end.
+
+stream(Connection, Ref, Deadline, Parser, Done) ->
+    case await(Connection, Ref, Deadline) of
+        {data, Fin, Data} ->
+            {Next, Completed} = events(Data, Parser, Done),
+            case Fin of
+                fin when Completed -> ok;
+                fin -> error(incomplete_stream);
+                nofin -> stream(Connection, Ref, Deadline, Next, Completed)
+            end;
+        {trailers, _} when Done -> ok;
+        _ -> error(incomplete_stream)
+    end.
+
+events(Data, Parser, Done) ->
+    case cow_sse:parse(Data, Parser) of
+        {more, Next} -> {Next, Done};
+        {event, #{data := Payload}, Next} ->
+            false = Done,
+            case iolist_to_binary(Payload) of
+                <<"[DONE]">> -> events(<<>>, Next, true);
+                Json ->
+                    Event = json:decode(Json),
+                    false = maps:is_key(<<"error">>, Event),
+                    lists:foreach(fun(Choice) ->
+                        print_content(maps:get(<<"delta">>, Choice, #{}))
+                    end, maps:get(<<"choices">>, Event, [])),
+                    events(<<>>, Next, false)
+            end;
+        {event, _, Next} -> events(<<>>, Next, Done)
+    end.
+
+print_content(Message) ->
+    case maps:get(<<"content">>, Message, null) of
+        null -> ok;
+        Content when is_binary(Content) -> io:put_chars(Content)
+    end.
+```
+
+Build and run:
+
+```sh
+rebar3 escriptize
+_build/default/bin/stogas-example
+```
+
+For an ordinary response:
+
+```sh
+_build/default/bin/stogas-example --no-stream
+```
+
+Add `{<<"stogas-metadata">>, <<"v1">>}` to the request headers to request signed
+[response metadata](/docs/verification). The verifier checks the receipt before releasing
+completion. Read the returned `stogas` object when your application needs the metadata.
+
+## Cancel and close
+
+Run each request in its own process. Sending `cancel` interrupts a quiet stream as
+well as an active one, closes its HTTP connection and raises `cancelled`. For example:
+
+```erlang
+{Request, Monitor} = spawn_monitor(fun() ->
+    try stogas_example:request(BaseUrl, ApiKey, Model, true)
+    catch error:cancelled -> exit(cancelled)
+    end
+end),
+Request ! cancel,
+receive
+    {'DOWN', Monitor, process, Request, cancelled} -> ok
+end.
+```
+
+Cancellation does not mean the provider did no work. Treat partial output as
+incomplete and do not replay automatically. At application shutdown, call
+`stogas_transport:close(Transport)` or stop its supervisor.

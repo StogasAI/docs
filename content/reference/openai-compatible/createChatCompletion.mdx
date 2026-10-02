@@ -26,9 +26,8 @@ export default function Layout(props) {
     <>
       {props.children}
       <Callout type="info" title="Application E2EE">
-        This endpoint accepts standard OpenAI-compatible JSON and Stogas E2EE framing on the same path.
-        Use the managed transport for E2EE. Do not make the encrypted envelope. Request and response
-        types do not change after decryption. See <a href="/docs/reference/security#application-e2ee">Application E2EE</a> and <a href="/docs/reference/provider-behavior">Compatibility Notes</a>.
+        Use the managed transport to send this request with E2EE. Your request and response types
+        stay the same; the transport handles encryption and verification. See <a href="/docs/reference/security#application-e2ee">Application E2EE</a> and <a href="/docs/reference/provider-behavior">Compatibility Notes</a>.
       </Callout>
 
       <OpenAPIPage document="stogas" operations={[{ path: '/v1/chat/completions', method: 'post' }]} />

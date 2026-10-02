@@ -1,54 +1,53 @@
 ---
 title: Request policies
-description: Let callers add routing filters or sort preferences to one inference request.
+description: Add permitted restrictions and default overrides to one inference request.
 ---
 
-Request policies let a caller narrow routing without editing the saved policy. They last for
-one request and must satisfy all saved restrictions. They cannot change budgets or redaction.
+A request policy lasts for one inference request. It uses the saved policy syntax for permitted
+routing, scheduled access, input restrictions and redaction. It can replace defaults, but it
+cannot remove required restrictions.
+
+Request policies cannot define persistent spend, request-rate, token or concurrency counters,
+register encryption roots, or delegate permission. This includes stricter limits and limits
+inside conditional rules. Save them on the relevant resource instead. The complete
+[scope differences](/docs/policies/scopes#scope-differences) also distinguish permissions,
+document size, root registration and rule syntax.
 
 ## Grant permission
 
-Request policies are off by default. Save this on a service key, or on the grant that issues member keys:
+Request policies require an explicit allowance in at least one applicable saved policy.
+All explicit allowances intersect; omission adds no restriction. Use `true` to permit every
+request-supported section, `false` to deny them, or a list of section paths:
 
 ```json title="Saved policy"
 {
 	"version": 1,
-	"routing": {
-		"requestPolicy": "filter"
+	"delegation": {
+		"request": ["routing.filter", "routing.sort", "plugins.stogasRedaction"]
 	}
 }
 ```
 
-| `routing.requestPolicy` | Caller may supply                                                                |
-| ----------------------- | -------------------------------------------------------------------------------- |
-| `deny`                  | No request policy.                                                               |
-| `filter`                | A `where` query, allowed catalog nodes, or both. No `order by`.                  |
-| `filter_and_sort`       | Filters, allowed catalog nodes, and `order by`. A sort-only query is also valid. |
-
-The most restrictive applicable permission wins. An explicit `deny` at organization, grant, or
-key scope blocks request policies below it. An omitted organization setting adds no restriction;
-an omitted member-key setting inherits the grant. Grants and service keys must explicitly opt in.
-See [Scope defaults](/docs/policies/scopes#permission-to-supply-request-policies).
+That example permits filters, sort preferences and plaintext redaction. It does not permit
+allowed-node lists or other unlisted settings. A broader path such as `routing` permits that
+whole section. Rules require permission for every setting they contain, whether or not their
+condition would match this request. See [Delegation](/docs/policies/scopes#permission-to-edit-saved-policies).
 
 ## Add a policy to a request
 
-Send `policy` in the JSON body of `POST /v1/chat/completions`:
+Send `policy` in the JSON body of Chat Completions or Responses:
 
-```json
+```json title="Chat Completions request"
 {
 	"model": "gpt-5.5",
-	"messages": [{ "role": "user", "content": "Hello" }],
+	"messages": [{ "role": "user", "content": "Contact alice@example.com" }],
 	"policy": {
 		"version": 1,
-		"routing": {
-			"query": "where deployment.data.dataHandling.trainingUse == false",
-			"allowedCatalogNodes": { "providers": ["openai"] }
-		}
+		"routing": { "filter": "provider.id == 'openai'" },
+		"plugins": { "stogasRedaction": { "email_address": true } }
 	}
 }
 ```
-
-The same `policy` object works in `POST /v1/responses`:
 
 ```json title="Responses request"
 {
@@ -57,47 +56,34 @@ The same `policy` object works in `POST /v1/responses`:
 	"policy": {
 		"version": 1,
 		"routing": {
-			"allowedCatalogNodes": { "providers": ["openai"] }
+			"sort": [{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" }]
 		}
 	}
 }
 ```
 
-Only `version`, `routing.query`, and `routing.allowedCatalogNodes` are accepted. `routing` must
-contain at least one of those two options. The document is limited to 16 KiB as sent and the
-same [query](/docs/policies/routing#query-bounds) and [node-list](/docs/policies/reference#allowed-catalog-nodes)
-bounds as saved policies. There is no policy header.
+A request sort replaces sort defaults and must agree with every required saved ordering.
+Required saved filters and redaction still apply. Conditional rules use the same
+[pre-selection facts](/docs/policies/routing#request-facts-and-context).
 
-Stogas consumes the policy before dispatch; it never sends the policy to the provider. The standard
-model and provider selectors remain available even when request policies are disabled. They must
-still satisfy the saved restrictions.
+## Request document
 
-## Add sort preferences
+The document requires `version: 1` and is limited to **16 KiB as sent**, including whitespace.
+The saved [expression and node-list bounds](/docs/policies/routing) also apply. There is no policy
+header. `enabled` and expiration remain resource settings; `limits`, `delegation` and `encryption`
+are rejected, including inside rules.
 
-With `filter_and_sort` permission, a caller can prefer lower-priced candidates:
+For permitted encrypted plugins, supply their registered roots in the request's `encryption_keys`
+map. The policy cannot register a new root. Empty settings can replace defaults only; they never
+clear required restrictions from another policy.
 
-```json title="Chat Completions request"
-{
-	"model": "gpt-5.5",
-	"messages": [{ "role": "user", "content": "Hello" }],
-	"policy": {
-		"version": 1,
-		"routing": {
-			"query": "order by deployment.data.pricing.output_tokens.per_mill_tokens asc"
-		}
-	}
-}
-```
-
-Saved sort fields come first; request fields break remaining ties. A request cannot reverse a
-parent's ordering. See [Sorting](/docs/policies/routing#sorting) and [Pricing fields](/docs/policies/routing-fields#pricing).
+The gateway consumes `policy` before dispatch and does not send it to the provider. Standard
+model and provider selectors remain available when request policies are disabled, subject to
+the saved restrictions.
 
 ## Rejected policies
 
-| Response | Cause                                                                                     | Fix                                                                                |
-| -------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `403`    | Request policies are denied, or the caller used `order by` with only `filter` permission. | Remove the request policy or ask a policy manager to grant the needed permission.  |
-| `400`    | A permitted policy has invalid fields, syntax, types, or bounds.                          | Check the [request document reference](/docs/policies/reference#request-document). |
-
-Do not copy a saved policy containing limits, expiration, access periods, plugins, `fallbacks`,
-`routing.requestPolicy`, or `$schema` into a request. Empty objects and `null` cannot clear parent rules.
+| Response | Cause                                                                                | Fix                                                        |
+| -------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `403`    | A supplied section lacks permission.                                                 | Remove it or ask a policy manager to change the allowance. |
+| `400`    | Invalid syntax, unsupported fields, conflicting required orders, or exceeded bounds. | Correct the document or make its required ordering agree.  |

@@ -1,0 +1,51 @@
+---
+title: Members and roles
+description: Manage organization membership, assign permissions and connect roles to grants.
+---
+
+Open **Members** in an external organization to manage its members, roles and invitations. Roles
+grant organization permissions and can be assigned View, Use, Manage, or Admin on particular folders, grants and
+service keys or provider credentials. A [grant](/docs/grants) separately controls which member keys a person may create.
+Personal organizations have no collaborative roles, grants or invitations.
+
+## Invite a member
+
+Create an invitation from the **Invites** tab. Choose its expiry and permitted uses,
+then share the invitation link. Delete an unused invitation to stop further joins; this does
+not remove members who already joined. Joining assigns the organization's current default role.
+
+## Assign roles
+
+Create a role from the **Roles** tab and select its permissions. Assign roles from the member
+list, individually or to a selection. Keep administrative permissions limited to the people
+who need them. The role list shows the permissions and member count directly.
+
+A role can have no organization-wide permissions and still grant access to assigned resources.
+Adding a member gives them all of that role's resource rights, including management; removing the
+role removes that source of access. Use on a grant or its folder lets members create their own keys.
+
+Member managers can grant organization permissions they hold. New API-key or credential rights also
+require Admin at the matching scope, including organization-wide grants. Existing recipient access
+may be preserved.
+Role-management permission allows broader delegation. The final role manager cannot leave or be
+removed while another member remains.
+
+## Connect roles to grants
+
+Link a role on the **Grants** page. Members with that role can use the grant, subject to their
+permissions and its key allowance. A direct member assignment remains independent of their roles.
+The grant's [assignment rules](/docs/grants#create-and-assign-a-grant) own what happens when access
+changes.
+
+## Remove access
+
+Removing a member's last route to a grant deletes their member keys under that grant. Another
+role, direct assignment, folder, or organization permission that grants Use preserves those keys. Restoring the role does not restore
+deleted keys. Review the affected keys before confirming a role or membership removal.
+
+For a reversible pause, disable the grant or an individual API key instead. Removing service-key
+access preserves the key. Rotate its secret to revoke copies they may hold.
+
+Voluntary departure preserves outstanding invitations. Administrative removal revokes invitations
+created by that member. The last member's departure deletes the organization and its active resources;
+financial history is retained.

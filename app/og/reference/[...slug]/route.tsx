@@ -1,3 +1,5 @@
+import { getMessage } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
 import { openGraphImage } from '@/lib/og-image';
 import { apiSource } from '@/lib/source';
 import { notFound } from 'next/navigation';
@@ -11,7 +13,11 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/reference
 	const page = apiSource.getPage(slug.slice(0, -1));
 	if (!page) notFound();
 
-	return openGraphImage(page.data.title, page.data.description, 'API Reference');
+	return openGraphImage(
+		page.data.title,
+		page.data.description,
+		getMessage(messages.apiReference, page.locale)
+	);
 }
 
 export function generateStaticParams() {

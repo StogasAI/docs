@@ -1,3 +1,5 @@
+import { getMessage as t } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
 import { apiSource, getPageMarkdownUrl, source } from '@/lib/source';
 
 export const revalidate = false;
@@ -13,25 +15,25 @@ export function GET() {
 			.join('\n');
 
 	return new Response(
-		`# Stogas documentation
+		`# ${t(messages.documentation)}
 
-> Stogas is a verifiable, OpenAI-compatible AI gateway. Use it to access models through one API, manage access and spending, and verify the software serving requests.
+> ${t(messages.llmsSummary)}
 
-Inference requests use https://api.stogas.ai and a bearer API key from https://app.stogas.ai. The model and catalog endpoints are public. Existing OpenAI clients work with Stogas; verification and encrypted requests use the Stogas SDKs.
+${t(messages.llmsAccess)}
 
-## Platform
+## ${t(messages.platform)}
 
 ${entries(source.getPages())}
 
-## API reference
+## ${t(messages.llmsApiReference)}
 
 ${entries(apiSource.getPages())}
 
-## Machine-readable resources
+## ${t(messages.machineResources)}
 
-- [OpenAPI specification](https://stogas.ai/openapi.json): Complete API contract. Each operation's Markdown page includes its scoped OpenAPI YAML.
-- [API catalog](https://stogas.ai/.well-known/api-catalog): API and documentation discovery.
-- [All documentation](https://stogas.ai/llms-full.txt): Complete Markdown text in one file.
+- [${t(messages.openapiSpecification)}](https://stogas.ai/openapi.json): ${t(messages.openapiDescription)}
+- [${t(messages.apiCatalog)}](https://stogas.ai/.well-known/api-catalog): ${t(messages.apiCatalogDescription)}
+- [${t(messages.allDocumentation)}](https://stogas.ai/llms-full.txt): ${t(messages.allDocumentationDescription)}
 `,
 		{ headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
 	);

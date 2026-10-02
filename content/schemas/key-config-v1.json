@@ -1,349 +1,1906 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
-	"$id": "https://stogas.ai/schemas/key-config-v1.json",
-	"title": "Stogas API key configuration v1",
-	"description": "Structural editor schema for API key configuration. Save-time validation also checks query grammar, IANA time zones, RE2 safety, cross-field limits, and the 16384-byte canonical UTF-8 document limit. Unknown properties are rejected.",
 	"type": "object",
-	"additionalProperties": false,
-	"required": ["version"],
 	"properties": {
 		"$schema": {
+			"type": "string",
 			"const": "https://stogas.ai/schemas/key-config-v1.json"
 		},
-		"version": {
-			"const": 1
-		},
-		"routing": {
+		"encryption": {
 			"type": "object",
-			"additionalProperties": false,
-			"minProperties": 1,
 			"properties": {
-				"requestPolicy": {
-					"enum": ["deny", "filter", "filter_and_sort"],
-					"description": "Permission for request-level routing policies. A child cannot increase its parent's permission. Grants and service keys deny request policies unless they explicitly permit them."
-				},
-				"query": {
-					"type": "string",
-					"minLength": 1,
-					"maxLength": 4096,
-					"description": "A bounded Stogas routing query. See https://stogas.ai/docs/policies/routing."
-				},
-				"allowedCatalogNodes": {
-					"type": "object",
-					"additionalProperties": false,
+				"keys": {
 					"minProperties": 1,
-					"description": "The lists contain at most 64 IDs in total. A candidate must match each list that is present.",
-					"properties": {
-						"authors": {
-							"$ref": "#/$defs/catalogNodeIds"
-						},
-						"models": {
-							"$ref": "#/$defs/catalogNodeIds"
-						},
-						"deployments": {
-							"$ref": "#/$defs/catalogNodeIds"
-						},
-						"routes": {
-							"$ref": "#/$defs/catalogNodeIds"
-						},
-						"providers": {
-							"$ref": "#/$defs/catalogNodeIds"
-						}
-					}
-				},
-				"fallbacks": {
 					"type": "object",
-					"additionalProperties": false,
-					"required": ["maxPreDispatchCandidates"],
-					"properties": {
-						"maxPreDispatchCandidates": {
-							"type": "integer",
-							"minimum": 1,
-							"maximum": 3,
-							"description": "Maximum candidates that Stogas may check before one provider call starts. This does not retry an upstream request."
-						}
+					"propertyNames": {
+						"type": "string",
+						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+					},
+					"additionalProperties": {
+						"type": "string",
+						"pattern": "^[0-9a-f]{64}$"
 					}
 				}
-			}
+			},
+			"required": [
+				"keys"
+			],
+			"additionalProperties": false,
+			"description": "Customer encryption key identifiers by label. Organization scope only; never include the keys themselves."
+		},
+		"delegation": {
+			"type": "object",
+			"properties": {
+				"folders": {
+					"anyOf": [
+						{
+							"anyOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"maxItems": 13,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"access",
+											"input",
+											"limits",
+											"plugins",
+											"plugins.stogasRedaction",
+											"plugins.encrypted",
+											"routing",
+											"routing.filter",
+											"routing.sort",
+											"routing.allowedCatalogNodes",
+											"routing.fallbacks",
+											"delegation",
+											"encryption"
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"default": {
+									"anyOf": [
+										{
+											"type": "boolean"
+										},
+										{
+											"maxItems": 13,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"plugins",
+													"plugins.stogasRedaction",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.fallbacks",
+													"delegation",
+													"encryption"
+												]
+											}
+										}
+									],
+									"description": "Permission for IDs without an exception."
+								},
+								"exceptions": {
+									"minProperties": 1,
+									"type": "object",
+									"propertyNames": {
+										"type": "string",
+										"allOf": [
+											{
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+											},
+											{
+												"pattern": "^[0-9a-f-]+$"
+											}
+										]
+									},
+									"additionalProperties": {
+										"anyOf": [
+											{
+												"type": "boolean"
+											},
+											{
+												"maxItems": 13,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"enum": [
+														"access",
+														"input",
+														"limits",
+														"plugins",
+														"plugins.stogasRedaction",
+														"plugins.encrypted",
+														"routing",
+														"routing.filter",
+														"routing.sort",
+														"routing.allowedCatalogNodes",
+														"routing.fallbacks",
+														"delegation",
+														"encryption"
+													]
+												}
+											}
+										]
+									}
+								}
+							},
+							"required": [
+								"default",
+								"exceptions"
+							],
+							"additionalProperties": false
+						}
+					]
+				},
+				"grants": {
+					"anyOf": [
+						{
+							"anyOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"maxItems": 13,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"access",
+											"input",
+											"limits",
+											"plugins",
+											"plugins.stogasRedaction",
+											"plugins.encrypted",
+											"routing",
+											"routing.filter",
+											"routing.sort",
+											"routing.allowedCatalogNodes",
+											"routing.fallbacks",
+											"delegation",
+											"encryption"
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"default": {
+									"anyOf": [
+										{
+											"type": "boolean"
+										},
+										{
+											"maxItems": 13,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"plugins",
+													"plugins.stogasRedaction",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.fallbacks",
+													"delegation",
+													"encryption"
+												]
+											}
+										}
+									],
+									"description": "Permission for IDs without an exception."
+								},
+								"exceptions": {
+									"minProperties": 1,
+									"type": "object",
+									"propertyNames": {
+										"type": "string",
+										"allOf": [
+											{
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+											},
+											{
+												"pattern": "^[0-9a-f-]+$"
+											}
+										]
+									},
+									"additionalProperties": {
+										"anyOf": [
+											{
+												"type": "boolean"
+											},
+											{
+												"maxItems": 13,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"enum": [
+														"access",
+														"input",
+														"limits",
+														"plugins",
+														"plugins.stogasRedaction",
+														"plugins.encrypted",
+														"routing",
+														"routing.filter",
+														"routing.sort",
+														"routing.allowedCatalogNodes",
+														"routing.fallbacks",
+														"delegation",
+														"encryption"
+													]
+												}
+											}
+										]
+									}
+								}
+							},
+							"required": [
+								"default",
+								"exceptions"
+							],
+							"additionalProperties": false
+						}
+					]
+				},
+				"roles": {
+					"anyOf": [
+						{
+							"anyOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"maxItems": 13,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"access",
+											"input",
+											"limits",
+											"plugins",
+											"plugins.stogasRedaction",
+											"plugins.encrypted",
+											"routing",
+											"routing.filter",
+											"routing.sort",
+											"routing.allowedCatalogNodes",
+											"routing.fallbacks",
+											"delegation",
+											"encryption"
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"default": {
+									"anyOf": [
+										{
+											"type": "boolean"
+										},
+										{
+											"maxItems": 13,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"plugins",
+													"plugins.stogasRedaction",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.fallbacks",
+													"delegation",
+													"encryption"
+												]
+											}
+										}
+									],
+									"description": "Permission for IDs without an exception."
+								},
+								"exceptions": {
+									"minProperties": 1,
+									"type": "object",
+									"propertyNames": {
+										"type": "string",
+										"allOf": [
+											{
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+											},
+											{
+												"pattern": "^[0-9a-f-]+$"
+											}
+										]
+									},
+									"additionalProperties": {
+										"anyOf": [
+											{
+												"type": "boolean"
+											},
+											{
+												"maxItems": 13,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"enum": [
+														"access",
+														"input",
+														"limits",
+														"plugins",
+														"plugins.stogasRedaction",
+														"plugins.encrypted",
+														"routing",
+														"routing.filter",
+														"routing.sort",
+														"routing.allowedCatalogNodes",
+														"routing.fallbacks",
+														"delegation",
+														"encryption"
+													]
+												}
+											}
+										]
+									}
+								}
+							},
+							"required": [
+								"default",
+								"exceptions"
+							],
+							"additionalProperties": false
+						}
+					]
+				},
+				"members": {
+					"anyOf": [
+						{
+							"anyOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"maxItems": 13,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"access",
+											"input",
+											"limits",
+											"plugins",
+											"plugins.stogasRedaction",
+											"plugins.encrypted",
+											"routing",
+											"routing.filter",
+											"routing.sort",
+											"routing.allowedCatalogNodes",
+											"routing.fallbacks",
+											"delegation",
+											"encryption"
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"default": {
+									"anyOf": [
+										{
+											"type": "boolean"
+										},
+										{
+											"maxItems": 13,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"plugins",
+													"plugins.stogasRedaction",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.fallbacks",
+													"delegation",
+													"encryption"
+												]
+											}
+										}
+									],
+									"description": "Permission for IDs without an exception."
+								},
+								"exceptions": {
+									"minProperties": 1,
+									"type": "object",
+									"propertyNames": {
+										"type": "string",
+										"allOf": [
+											{
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+											},
+											{
+												"pattern": "^[0-9a-f-]+$"
+											}
+										]
+									},
+									"additionalProperties": {
+										"anyOf": [
+											{
+												"type": "boolean"
+											},
+											{
+												"maxItems": 13,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"enum": [
+														"access",
+														"input",
+														"limits",
+														"plugins",
+														"plugins.stogasRedaction",
+														"plugins.encrypted",
+														"routing",
+														"routing.filter",
+														"routing.sort",
+														"routing.allowedCatalogNodes",
+														"routing.fallbacks",
+														"delegation",
+														"encryption"
+													]
+												}
+											}
+										]
+									}
+								}
+							},
+							"required": [
+								"default",
+								"exceptions"
+							],
+							"additionalProperties": false
+						}
+					]
+				},
+				"credentials": {
+					"anyOf": [
+						{
+							"anyOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"maxItems": 13,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"access",
+											"input",
+											"limits",
+											"plugins",
+											"plugins.stogasRedaction",
+											"plugins.encrypted",
+											"routing",
+											"routing.filter",
+											"routing.sort",
+											"routing.allowedCatalogNodes",
+											"routing.fallbacks",
+											"delegation",
+											"encryption"
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"default": {
+									"anyOf": [
+										{
+											"type": "boolean"
+										},
+										{
+											"maxItems": 13,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"plugins",
+													"plugins.stogasRedaction",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.fallbacks",
+													"delegation",
+													"encryption"
+												]
+											}
+										}
+									],
+									"description": "Permission for IDs without an exception."
+								},
+								"exceptions": {
+									"minProperties": 1,
+									"type": "object",
+									"propertyNames": {
+										"type": "string",
+										"allOf": [
+											{
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+											},
+											{
+												"pattern": "^[0-9a-f-]+$"
+											}
+										]
+									},
+									"additionalProperties": {
+										"anyOf": [
+											{
+												"type": "boolean"
+											},
+											{
+												"maxItems": 13,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"enum": [
+														"access",
+														"input",
+														"limits",
+														"plugins",
+														"plugins.stogasRedaction",
+														"plugins.encrypted",
+														"routing",
+														"routing.filter",
+														"routing.sort",
+														"routing.allowedCatalogNodes",
+														"routing.fallbacks",
+														"delegation",
+														"encryption"
+													]
+												}
+											}
+										]
+									}
+								}
+							},
+							"required": [
+								"default",
+								"exceptions"
+							],
+							"additionalProperties": false
+						}
+					]
+				},
+				"keys": {
+					"anyOf": [
+						{
+							"anyOf": [
+								{
+									"type": "boolean"
+								},
+								{
+									"maxItems": 13,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"access",
+											"input",
+											"limits",
+											"plugins",
+											"plugins.stogasRedaction",
+											"plugins.encrypted",
+											"routing",
+											"routing.filter",
+											"routing.sort",
+											"routing.allowedCatalogNodes",
+											"routing.fallbacks",
+											"delegation",
+											"encryption"
+										]
+									}
+								}
+							]
+						},
+						{
+							"type": "object",
+							"properties": {
+								"default": {
+									"anyOf": [
+										{
+											"type": "boolean"
+										},
+										{
+											"maxItems": 13,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"plugins",
+													"plugins.stogasRedaction",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.fallbacks",
+													"delegation",
+													"encryption"
+												]
+											}
+										}
+									],
+									"description": "Permission for IDs without an exception."
+								},
+								"exceptions": {
+									"minProperties": 1,
+									"type": "object",
+									"propertyNames": {
+										"type": "string",
+										"allOf": [
+											{
+												"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+											},
+											{
+												"pattern": "^[0-9a-f-]+$"
+											}
+										]
+									},
+									"additionalProperties": {
+										"anyOf": [
+											{
+												"type": "boolean"
+											},
+											{
+												"maxItems": 13,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"enum": [
+														"access",
+														"input",
+														"limits",
+														"plugins",
+														"plugins.stogasRedaction",
+														"plugins.encrypted",
+														"routing",
+														"routing.filter",
+														"routing.sort",
+														"routing.allowedCatalogNodes",
+														"routing.fallbacks",
+														"delegation",
+														"encryption"
+													]
+												}
+											}
+										]
+									}
+								}
+							},
+							"required": [
+								"default",
+								"exceptions"
+							],
+							"additionalProperties": false
+						}
+					]
+				},
+				"request": {
+					"anyOf": [
+						{
+							"type": "boolean"
+						},
+						{
+							"maxItems": 13,
+							"type": "array",
+							"items": {
+								"type": "string",
+								"enum": [
+									"access",
+									"input",
+									"plugins",
+									"plugins.stogasRedaction",
+									"plugins.encrypted",
+									"routing",
+									"routing.filter",
+									"routing.sort",
+									"routing.allowedCatalogNodes",
+									"routing.fallbacks"
+								]
+							}
+						}
+					]
+				}
+			},
+			"additionalProperties": false,
+			"minProperties": 1,
+			"description": "Allow whole policies or named sections. Saved policy edits are allowed by default; request policies require an explicit permission. Organization policies control all owned resources; folder policies control their grants and keys; grant policies control their keys. Permissions intersect."
+		},
+		"access": {
+			"type": "object",
+			"properties": {
+				"deny": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"days": {
+								"minItems": 1,
+								"maxItems": 7,
+								"type": "array",
+								"items": {
+									"type": "string",
+									"enum": [
+										"mon",
+										"tue",
+										"wed",
+										"thu",
+										"fri",
+										"sat",
+										"sun"
+									]
+								},
+								"uniqueItems": true
+							},
+							"end": {
+								"type": "string",
+								"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+								"description": "The end must be later than the start. Split an overnight period into two entries."
+							},
+							"start": {
+								"type": "string",
+								"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+							},
+							"timeZone": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 64,
+								"pattern": "^[A-Za-z0-9_+\\-/]+$",
+								"description": "An IANA time zone name, such as America/New_York or UTC."
+							}
+						},
+						"required": [
+							"days",
+							"end",
+							"start",
+							"timeZone"
+						],
+						"additionalProperties": false
+					}
+				}
+			},
+			"required": [
+				"deny"
+			],
+			"additionalProperties": false
+		},
+		"input": {
+			"type": "object",
+			"properties": {
+				"asciiOnly": {
+					"type": "boolean",
+					"description": "Reject non-ASCII decoded text in redaction-scanned input fields before redaction. Any parent requirement wins."
+				}
+			},
+			"required": [
+				"asciiOnly"
+			],
+			"additionalProperties": false
 		},
 		"limits": {
 			"type": "object",
-			"additionalProperties": false,
-			"minProperties": 1,
 			"properties": {
-				"requests": {
-					"type": "object",
-					"minProperties": 1,
-					"maxProperties": 8,
-					"propertyNames": {
-						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-					},
-					"additionalProperties": {
-						"type": "object",
-						"additionalProperties": false,
-						"required": ["max", "window"],
-						"properties": {
-							"max": {
-								"type": "integer",
-								"minimum": 1,
-								"maximum": 1000000000000
-							},
-							"burst": {
-								"type": "integer",
-								"minimum": 1,
-								"maximum": 120
-							},
-							"window": {
-								"$ref": "#/$defs/requestWindow"
-							}
-						}
-					}
-				},
-				"spend": {
-					"type": "object",
-					"additionalProperties": false,
-					"minProperties": 1,
-					"properties": {
-						"lifetimeUsd": {
-							"$ref": "#/$defs/usd"
-						},
-						"recurring": {
-							"type": "object",
-							"minProperties": 1,
-							"maxProperties": 8,
-							"propertyNames": {
-								"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-							},
-							"additionalProperties": {
-								"type": "object",
-								"additionalProperties": false,
-								"required": ["maxUsd", "timeZone", "window"],
-								"properties": {
-									"anchor": {
-										"$ref": "#/$defs/dateTime"
-									},
-									"maxUsd": {
-										"$ref": "#/$defs/usd"
-									},
-									"timeZone": {
-										"$ref": "#/$defs/timeZone"
-									},
-									"window": {
-										"$ref": "#/$defs/window"
-									}
-								}
-							}
-						}
-					}
-				},
-				"tokens": {
-					"type": "object",
-					"minProperties": 1,
-					"maxProperties": 8,
-					"propertyNames": {
-						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-					},
-					"additionalProperties": {
-						"type": "object",
-						"additionalProperties": false,
-						"properties": {
-							"max": {
-								"type": "integer",
-								"minimum": 1,
-								"maximum": 1000000000000
-							},
-							"window": {
-								"$ref": "#/$defs/requestWindow"
-							}
-						},
-						"required": ["max", "window"]
-					}
+				"lifetimeTokens": {
+					"type": "integer",
+					"minimum": 0,
+					"maximum": 1000000000000
 				},
 				"concurrentRequests": {
 					"type": "integer",
 					"minimum": 1,
 					"maximum": 10000
-				}
-			}
-		},
-		"expiresAt": {
-			"$ref": "#/$defs/dateTime"
-		},
-		"access": {
-			"type": "object",
-			"additionalProperties": false,
-			"required": ["deny"],
-			"properties": {
-				"deny": {
-					"type": "array",
-					"minItems": 1,
-					"maxItems": 16,
-					"items": {
+				},
+				"requests": {
+					"minProperties": 1,
+					"maxProperties": 5,
+					"type": "object",
+					"propertyNames": {
+						"type": "string",
+						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+					},
+					"additionalProperties": {
 						"type": "object",
-						"additionalProperties": false,
-						"required": ["days", "start", "end", "timeZone"],
 						"properties": {
-							"days": {
-								"type": "array",
-								"minItems": 1,
-								"maxItems": 7,
-								"uniqueItems": true,
-								"items": {
-									"enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
-								}
+							"burst": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 120
 							},
-							"start": {
-								"$ref": "#/$defs/time"
+							"max": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 1000000000000
 							},
-							"end": {
-								"$ref": "#/$defs/endTime",
-								"description": "The end must be later than the start. Split an overnight period into two entries."
+							"window": {
+								"type": "object",
+								"properties": {
+									"count": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 999999
+									},
+									"unit": {
+										"type": "string",
+										"enum": [
+											"second",
+											"minute",
+											"hour",
+											"day",
+											"week"
+										]
+									}
+								},
+								"required": [
+									"count",
+									"unit"
+								],
+								"additionalProperties": false
+							}
+						},
+						"required": [
+							"max",
+							"window"
+						],
+						"additionalProperties": false
+					}
+				},
+				"tokens": {
+					"minProperties": 1,
+					"maxProperties": 5,
+					"type": "object",
+					"propertyNames": {
+						"type": "string",
+						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+					},
+					"additionalProperties": {
+						"type": "object",
+						"properties": {
+							"max": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 1000000000000
 							},
-							"timeZone": {
-								"$ref": "#/$defs/timeZone"
+							"unit": {
+								"type": "string",
+								"enum": [
+									"tokens",
+									"stt"
+								],
+								"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
+							},
+							"window": {
+								"type": "object",
+								"properties": {
+									"count": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 999999
+									},
+									"unit": {
+										"type": "string",
+										"enum": [
+											"second",
+											"minute",
+											"hour",
+											"day",
+											"week"
+										]
+									}
+								},
+								"required": [
+									"count",
+									"unit"
+								],
+								"additionalProperties": false
+							}
+						},
+						"required": [
+							"max",
+							"window"
+						],
+						"additionalProperties": false
+					}
+				},
+				"spend": {
+					"type": "object",
+					"properties": {
+						"lifetimeUsd": {
+							"type": "string",
+							"maxLength": 49,
+							"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+							"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
+						},
+						"recurring": {
+							"minProperties": 1,
+							"maxProperties": 5,
+							"type": "object",
+							"propertyNames": {
+								"type": "string",
+								"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+							},
+							"additionalProperties": {
+								"type": "object",
+								"properties": {
+									"anchor": {
+										"type": "string",
+										"format": "date-time",
+										"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+										"allOf": [
+											{
+												"pattern": "^(?!0000-)"
+											}
+										]
+									},
+									"maxUsd": {
+										"type": "string",
+										"maxLength": 49,
+										"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+										"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
+									},
+									"timeZone": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 64,
+										"pattern": "^[A-Za-z0-9_+\\-/]+$",
+										"description": "An IANA time zone name, such as America/New_York or UTC."
+									},
+									"window": {
+										"type": "object",
+										"properties": {
+											"count": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 1000
+											},
+											"unit": {
+												"type": "string",
+												"enum": [
+													"minute",
+													"hour",
+													"day",
+													"week",
+													"month",
+													"year"
+												]
+											}
+										},
+										"required": [
+											"count",
+											"unit"
+										],
+										"additionalProperties": false
+									}
+								},
+								"required": [
+									"maxUsd",
+									"timeZone",
+									"window"
+								],
+								"additionalProperties": false
 							}
 						}
-					}
+					},
+					"additionalProperties": false,
+					"minProperties": 1
 				}
-			}
-		},
-		"plugins": {
-			"type": "object",
+			},
 			"additionalProperties": false,
 			"minProperties": 1,
-			"properties": {
-				"stogasRedaction": {
+			"description": "At most 5 named limits total per saved policy, shared across spending windows, request buckets, and token windows. Lifetime spending, lifetime tokens, and concurrency are separate. Request-time policies cannot define limits."
+		},
+		"plugins": {
+			"anyOf": [
+				{
 					"type": "object",
-					"additionalProperties": false,
-					"minProperties": 1,
 					"properties": {
-						"email_address": {
-							"type": "boolean",
-							"description": "Email address",
-							"x-stogas-group": "Contact"
-						},
-						"phone_number": {
-							"type": "boolean",
-							"description": "Formatted phone number, including international",
-							"x-stogas-group": "Contact"
-						},
-						"social_security_number": {
-							"type": "boolean",
-							"description": "U.S. Social Security number",
-							"x-stogas-group": "National and business"
-						},
-						"credit_card_number": {
-							"type": "boolean",
-							"description": "Credit card number",
-							"x-stogas-group": "Bank"
-						},
-						"ip_address": {
-							"type": "boolean",
-							"description": "IPv4 or IPv6 address",
-							"x-stogas-group": "Network"
-						},
-						"api_keys_and_secrets": {
-							"type": "boolean",
-							"description": "API keys, credentials and secrets",
-							"x-stogas-group": "Secrets"
-						},
-						"bank_identifiers": {
-							"type": "boolean",
-							"description": "IBAN and U.S. routing numbers",
-							"x-stogas-group": "Bank"
-						},
-						"national_identifiers": {
-							"type": "boolean",
-							"description": "National, tax and business identifiers",
-							"x-stogas-group": "National and business"
-						},
-						"health_identifiers": {
-							"type": "boolean",
-							"description": "Healthcare and health-insurance identifiers",
-							"x-stogas-group": "Health"
-						},
-						"customPattern": {
-							"type": "string",
-							"minLength": 1,
-							"maxLength": 512,
-							"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+						"stogasRedaction": {
+							"type": "object",
+							"properties": {
+								"email_address": {
+									"type": "boolean",
+									"description": "Email address",
+									"x-stogas-group": "Contact"
+								},
+								"phone_number": {
+									"type": "boolean",
+									"description": "Formatted phone number, including international",
+									"x-stogas-group": "Contact"
+								},
+								"social_security_number": {
+									"type": "boolean",
+									"description": "U.S. Social Security number",
+									"x-stogas-group": "National and business"
+								},
+								"credit_card_number": {
+									"type": "boolean",
+									"description": "Credit card number",
+									"x-stogas-group": "Bank"
+								},
+								"ip_address": {
+									"type": "boolean",
+									"description": "IPv4 or IPv6 address",
+									"x-stogas-group": "Network"
+								},
+								"api_keys_and_secrets": {
+									"type": "boolean",
+									"description": "API keys, credentials and secrets",
+									"x-stogas-group": "Secrets"
+								},
+								"bank_identifiers": {
+									"type": "boolean",
+									"description": "IBAN and U.S. routing numbers",
+									"x-stogas-group": "Bank"
+								},
+								"national_identifiers": {
+									"type": "boolean",
+									"description": "National, tax and business identifiers",
+									"x-stogas-group": "National and business"
+								},
+								"health_identifiers": {
+									"type": "boolean",
+									"description": "Healthcare and health-insurance identifiers",
+									"x-stogas-group": "Health"
+								},
+								"customPattern": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 512,
+									"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+								},
+								"literals": {
+									"minItems": 1,
+									"maxItems": 1000,
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"values": {
+												"minItems": 1,
+												"maxItems": 1000,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 256,
+													"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
+												},
+												"description": "Plain text strings, each at most 256 UTF-8 bytes. Settings apply to every value."
+											},
+											"ignoreCase": {
+												"type": "boolean",
+												"description": "Ignore ASCII letter case",
+												"default": false
+											},
+											"wholeWord": {
+												"type": "boolean",
+												"description": "Require Unicode word boundaries",
+												"default": true
+											},
+											"fuzzy": {
+												"type": "boolean",
+												"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
+												"default": false
+											}
+										},
+										"required": [
+											"values"
+										],
+										"additionalProperties": false
+									},
+									"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+								}
+							},
+							"additionalProperties": false,
+							"description": "An empty object adds no redaction and replaces redaction defaults. Required redaction from other policies still applies."
 						}
+					},
+					"additionalProperties": false,
+					"minProperties": 1
+				},
+				{
+					"type": "object",
+					"properties": {
+						"encrypted": {
+							"type": "object",
+							"properties": {
+								"version": {
+									"type": "number",
+									"const": 1
+								},
+								"keyId": {
+									"type": "string",
+									"pattern": "^[0-9a-f]{64}$"
+								},
+								"salt": {
+									"type": "string",
+									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+								},
+								"nonce": {
+									"type": "string",
+									"pattern": "^[A-Za-z0-9_-]{16}$"
+								},
+								"blob": {
+									"type": "string",
+									"minLength": 22,
+									"maxLength": 349547,
+									"pattern": "^[A-Za-z0-9_-]+$"
+								}
+							},
+							"required": [
+								"version",
+								"keyId",
+								"salt",
+								"nonce",
+								"blob"
+							],
+							"additionalProperties": false
+						}
+					},
+					"required": [
+						"encrypted"
+					],
+					"additionalProperties": false
+				}
+			]
+		},
+		"routing": {
+			"type": "object",
+			"properties": {
+				"allowedCatalogNodes": {
+					"type": "object",
+					"properties": {
+						"authors": {
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 128,
+								"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+							},
+							"uniqueItems": true
+						},
+						"deployments": {
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 128,
+								"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+							},
+							"uniqueItems": true
+						},
+						"models": {
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 128,
+								"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+							},
+							"uniqueItems": true
+						},
+						"providers": {
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 128,
+								"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+							},
+							"uniqueItems": true
+						},
+						"routes": {
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 128,
+								"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+							},
+							"uniqueItems": true
+						}
+					},
+					"additionalProperties": false,
+					"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
+				},
+				"fallbacks": {
+					"type": "object",
+					"properties": {
+						"maxPreDispatchCandidates": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 3,
+							"description": "Maximum candidates that may be checked before one provider call starts. This does not retry an upstream request."
+						}
+					},
+					"required": [
+						"maxPreDispatchCandidates"
+					],
+					"additionalProperties": false
+				},
+				"filter": {
+					"type": "string",
+					"minLength": 1,
+					"x-stogas-maxBytes": 16384,
+					"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
+				},
+				"sort": {
+					"maxItems": 3,
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"by": {
+								"type": "string",
+								"minLength": 1,
+								"x-stogas-maxBytes": 16384,
+								"description": "A typed CEL expression. Prices use decimal(\"...\") for exact values."
+							},
+							"direction": {
+								"type": "string",
+								"enum": [
+									"asc",
+									"desc"
+								]
+							}
+						},
+						"required": [
+							"by",
+							"direction"
+						],
+						"additionalProperties": false
 					}
 				}
+			},
+			"additionalProperties": false,
+			"minProperties": 1
+		},
+		"rules": {
+			"minProperties": 1,
+			"description": "Unordered named rules. Names identify conditional counters and never give precedence.",
+			"type": "object",
+			"propertyNames": {
+				"type": "string",
+				"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+			},
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"access": {
+						"type": "object",
+						"properties": {
+							"deny": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"days": {
+											"minItems": 1,
+											"maxItems": 7,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"mon",
+													"tue",
+													"wed",
+													"thu",
+													"fri",
+													"sat",
+													"sun"
+												]
+											},
+											"uniqueItems": true
+										},
+										"end": {
+											"type": "string",
+											"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+											"description": "The end must be later than the start. Split an overnight period into two entries."
+										},
+										"start": {
+											"type": "string",
+											"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+										},
+										"timeZone": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64,
+											"pattern": "^[A-Za-z0-9_+\\-/]+$",
+											"description": "An IANA time zone name, such as America/New_York or UTC."
+										}
+									},
+									"required": [
+										"days",
+										"end",
+										"start",
+										"timeZone"
+									],
+									"additionalProperties": false
+								}
+							}
+						},
+						"required": [
+							"deny"
+						],
+						"additionalProperties": false
+					},
+					"input": {
+						"type": "object",
+						"properties": {
+							"asciiOnly": {
+								"type": "boolean",
+								"description": "Reject non-ASCII decoded text in redaction-scanned input fields before redaction. Any parent requirement wins."
+							}
+						},
+						"required": [
+							"asciiOnly"
+						],
+						"additionalProperties": false
+					},
+					"limits": {
+						"type": "object",
+						"properties": {
+							"lifetimeTokens": {
+								"type": "integer",
+								"minimum": 0,
+								"maximum": 1000000000000
+							},
+							"concurrentRequests": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 10000
+							},
+							"requests": {
+								"minProperties": 1,
+								"maxProperties": 5,
+								"type": "object",
+								"propertyNames": {
+									"type": "string",
+									"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+								},
+								"additionalProperties": {
+									"type": "object",
+									"properties": {
+										"burst": {
+											"type": "integer",
+											"minimum": 1,
+											"maximum": 120
+										},
+										"max": {
+											"type": "integer",
+											"minimum": 1,
+											"maximum": 1000000000000
+										},
+										"window": {
+											"type": "object",
+											"properties": {
+												"count": {
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 999999
+												},
+												"unit": {
+													"type": "string",
+													"enum": [
+														"second",
+														"minute",
+														"hour",
+														"day",
+														"week"
+													]
+												}
+											},
+											"required": [
+												"count",
+												"unit"
+											],
+											"additionalProperties": false
+										}
+									},
+									"required": [
+										"max",
+										"window"
+									],
+									"additionalProperties": false
+								}
+							},
+							"tokens": {
+								"minProperties": 1,
+								"maxProperties": 5,
+								"type": "object",
+								"propertyNames": {
+									"type": "string",
+									"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+								},
+								"additionalProperties": {
+									"type": "object",
+									"properties": {
+										"max": {
+											"type": "integer",
+											"minimum": 1,
+											"maximum": 1000000000000
+										},
+										"unit": {
+											"type": "string",
+											"enum": [
+												"tokens",
+												"stt"
+											],
+											"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
+										},
+										"window": {
+											"type": "object",
+											"properties": {
+												"count": {
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 999999
+												},
+												"unit": {
+													"type": "string",
+													"enum": [
+														"second",
+														"minute",
+														"hour",
+														"day",
+														"week"
+													]
+												}
+											},
+											"required": [
+												"count",
+												"unit"
+											],
+											"additionalProperties": false
+										}
+									},
+									"required": [
+										"max",
+										"window"
+									],
+									"additionalProperties": false
+								}
+							},
+							"spend": {
+								"type": "object",
+								"properties": {
+									"lifetimeUsd": {
+										"type": "string",
+										"maxLength": 49,
+										"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+										"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
+									},
+									"recurring": {
+										"minProperties": 1,
+										"maxProperties": 5,
+										"type": "object",
+										"propertyNames": {
+											"type": "string",
+											"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+										},
+										"additionalProperties": {
+											"type": "object",
+											"properties": {
+												"anchor": {
+													"type": "string",
+													"format": "date-time",
+													"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+													"allOf": [
+														{
+															"pattern": "^(?!0000-)"
+														}
+													]
+												},
+												"maxUsd": {
+													"type": "string",
+													"maxLength": 49,
+													"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+													"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
+												},
+												"timeZone": {
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 64,
+													"pattern": "^[A-Za-z0-9_+\\-/]+$",
+													"description": "An IANA time zone name, such as America/New_York or UTC."
+												},
+												"window": {
+													"type": "object",
+													"properties": {
+														"count": {
+															"type": "integer",
+															"minimum": 1,
+															"maximum": 1000
+														},
+														"unit": {
+															"type": "string",
+															"enum": [
+																"minute",
+																"hour",
+																"day",
+																"week",
+																"month",
+																"year"
+															]
+														}
+													},
+													"required": [
+														"count",
+														"unit"
+													],
+													"additionalProperties": false
+												}
+											},
+											"required": [
+												"maxUsd",
+												"timeZone",
+												"window"
+											],
+											"additionalProperties": false
+										}
+									}
+								},
+								"additionalProperties": false,
+								"minProperties": 1
+							}
+						},
+						"additionalProperties": false,
+						"minProperties": 1,
+						"description": "At most 5 named limits total per saved policy, shared across spending windows, request buckets, and token windows. Lifetime spending, lifetime tokens, and concurrency are separate. Request-time policies cannot define limits."
+					},
+					"plugins": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"stogasRedaction": {
+										"type": "object",
+										"properties": {
+											"email_address": {
+												"type": "boolean",
+												"description": "Email address",
+												"x-stogas-group": "Contact"
+											},
+											"phone_number": {
+												"type": "boolean",
+												"description": "Formatted phone number, including international",
+												"x-stogas-group": "Contact"
+											},
+											"social_security_number": {
+												"type": "boolean",
+												"description": "U.S. Social Security number",
+												"x-stogas-group": "National and business"
+											},
+											"credit_card_number": {
+												"type": "boolean",
+												"description": "Credit card number",
+												"x-stogas-group": "Bank"
+											},
+											"ip_address": {
+												"type": "boolean",
+												"description": "IPv4 or IPv6 address",
+												"x-stogas-group": "Network"
+											},
+											"api_keys_and_secrets": {
+												"type": "boolean",
+												"description": "API keys, credentials and secrets",
+												"x-stogas-group": "Secrets"
+											},
+											"bank_identifiers": {
+												"type": "boolean",
+												"description": "IBAN and U.S. routing numbers",
+												"x-stogas-group": "Bank"
+											},
+											"national_identifiers": {
+												"type": "boolean",
+												"description": "National, tax and business identifiers",
+												"x-stogas-group": "National and business"
+											},
+											"health_identifiers": {
+												"type": "boolean",
+												"description": "Healthcare and health-insurance identifiers",
+												"x-stogas-group": "Health"
+											},
+											"customPattern": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 512,
+												"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+											},
+											"literals": {
+												"minItems": 1,
+												"maxItems": 1000,
+												"type": "array",
+												"items": {
+													"type": "object",
+													"properties": {
+														"values": {
+															"minItems": 1,
+															"maxItems": 1000,
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 256,
+																"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
+															},
+															"description": "Plain text strings, each at most 256 UTF-8 bytes. Settings apply to every value."
+														},
+														"ignoreCase": {
+															"type": "boolean",
+															"description": "Ignore ASCII letter case",
+															"default": false
+														},
+														"wholeWord": {
+															"type": "boolean",
+															"description": "Require Unicode word boundaries",
+															"default": true
+														},
+														"fuzzy": {
+															"type": "boolean",
+															"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
+															"default": false
+														}
+													},
+													"required": [
+														"values"
+													],
+													"additionalProperties": false
+												},
+												"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+											}
+										},
+										"additionalProperties": false,
+										"description": "An empty object adds no redaction and replaces redaction defaults. Required redaction from other policies still applies."
+									}
+								},
+								"additionalProperties": false,
+								"minProperties": 1
+							},
+							{
+								"type": "object",
+								"properties": {
+									"encrypted": {
+										"type": "object",
+										"properties": {
+											"version": {
+												"type": "number",
+												"const": 1
+											},
+											"keyId": {
+												"type": "string",
+												"pattern": "^[0-9a-f]{64}$"
+											},
+											"salt": {
+												"type": "string",
+												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+											},
+											"nonce": {
+												"type": "string",
+												"pattern": "^[A-Za-z0-9_-]{16}$"
+											},
+											"blob": {
+												"type": "string",
+												"minLength": 22,
+												"maxLength": 349547,
+												"pattern": "^[A-Za-z0-9_-]+$"
+											}
+										},
+										"required": [
+											"version",
+											"keyId",
+											"salt",
+											"nonce",
+											"blob"
+										],
+										"additionalProperties": false
+									}
+								},
+								"required": [
+									"encrypted"
+								],
+								"additionalProperties": false
+							}
+						]
+					},
+					"routing": {
+						"type": "object",
+						"properties": {
+							"allowedCatalogNodes": {
+								"type": "object",
+								"properties": {
+									"authors": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true
+									},
+									"deployments": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true
+									},
+									"models": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true
+									},
+									"providers": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true
+									},
+									"routes": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true
+									}
+								},
+								"additionalProperties": false,
+								"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
+							},
+							"fallbacks": {
+								"type": "object",
+								"properties": {
+									"maxPreDispatchCandidates": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 3,
+										"description": "Maximum candidates that may be checked before one provider call starts. This does not retry an upstream request."
+									}
+								},
+								"required": [
+									"maxPreDispatchCandidates"
+								],
+								"additionalProperties": false
+							},
+							"filter": {
+								"type": "string",
+								"minLength": 1,
+								"x-stogas-maxBytes": 16384,
+								"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
+							},
+							"sort": {
+								"maxItems": 3,
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"by": {
+											"type": "string",
+											"minLength": 1,
+											"x-stogas-maxBytes": 16384,
+											"description": "A typed CEL expression. Prices use decimal(\"...\") for exact values."
+										},
+										"direction": {
+											"type": "string",
+											"enum": [
+												"asc",
+												"desc"
+											]
+										}
+									},
+									"required": [
+										"by",
+										"direction"
+									],
+									"additionalProperties": false
+								}
+							}
+						},
+						"additionalProperties": false,
+						"minProperties": 1
+					},
+					"when": {
+						"type": "string",
+						"minLength": 1,
+						"x-stogas-maxBytes": 16384,
+						"description": "Apply these settings when this CEL condition matches the candidate. Omission means always."
+					},
+					"mode": {
+						"type": "string",
+						"enum": [
+							"required",
+							"default"
+						],
+						"description": "Required settings always combine. Defaults apply only to settings without an active requirement."
+					}
+				},
+				"additionalProperties": false
 			}
+		},
+		"version": {
+			"type": "number",
+			"const": 1
 		}
 	},
-	"$defs": {
-		"catalogNodeIds": {
-			"type": "array",
-			"minItems": 0,
-			"maxItems": 64,
-			"uniqueItems": true,
-			"items": {
-				"$ref": "#/$defs/catalogNodeId"
-			}
-		},
-		"catalogNodeId": {
-			"type": "string",
-			"minLength": 1,
-			"maxLength": 128,
-			"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-		},
-		"dateTime": {
-			"type": "string",
-			"format": "date-time",
-			"pattern": "^(?!0000-)"
-		},
-		"requestWindow": {
-			"type": "object",
-			"additionalProperties": false,
-			"required": ["count", "unit"],
-			"properties": {
-				"count": {
-					"type": "integer",
-					"minimum": 1,
-					"maximum": 999999
-				},
-				"unit": {
-					"enum": ["second", "minute", "hour", "day", "week"]
-				}
-			}
-		},
-		"time": {
-			"type": "string",
-			"pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
-		},
-		"endTime": {
-			"type": "string",
-			"pattern": "^(?:(?:[01][0-9]|2[0-3]):[0-5][0-9]|24:00)$"
-		},
-		"timeZone": {
-			"type": "string",
-			"minLength": 1,
-			"maxLength": 64,
-			"pattern": "^[A-Za-z0-9_+\\-/]+$",
-			"description": "An IANA time zone name, such as America/New_York or UTC."
-		},
-		"usd": {
-			"type": "string",
-			"maxLength": 64,
-			"pattern": "^0*(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{1,18})?|1000000000000(?:\\.0{1,18})?)$",
-			"description": "A non-negative decimal amount with at most 18 decimal places."
-		},
-		"window": {
-			"type": "object",
-			"additionalProperties": false,
-			"required": ["count", "unit"],
-			"properties": {
-				"count": {
-					"type": "integer",
-					"minimum": 1,
-					"maximum": 1000
-				},
-				"unit": {
-					"enum": ["minute", "hour", "day", "week", "month", "year"]
-				}
-			}
-		}
-	}
+	"required": [
+		"version"
+	],
+	"additionalProperties": false,
+	"$id": "https://stogas.ai/schemas/key-config-v1.json",
+	"title": "Stogas policy v1",
+	"description": "Structural editor schema for saved resource policies (organization, folder, grant, role, member, credential, key). Scope controls root registration and delegation targets. Save-time validation checks readable fields, including query grammar, IANA time zones, RE2 safety and cross-field limits. Encrypted plugins are validated at execution. The 262144-byte content limit counts decoded plugin plaintext; storage allows bounded base64 overhead. Unknown properties are rejected."
 }

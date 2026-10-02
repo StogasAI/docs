@@ -10,36 +10,44 @@ const test = base.extend({
 	}
 });
 
-test('API examples arrive highlighted with the real URL before hydration', async ({ page }) => {
-	let releaseScripts!: () => void;
-	const scripts = new Promise<void>((resolve) => {
-		releaseScripts = resolve;
-	});
-	await page.route('**/*.js', async (route) => {
-		await scripts;
-		await route.continue();
-	});
+test('API samples are formatted and highlighted with JavaScript disabled', async ({ browser }) => {
+	const context = await browser.newContext({ javaScriptEnabled: false });
 	try {
-		await page.goto('/docs/reference/openai-compatible/createChatCompletion', {
-			waitUntil: 'commit'
-		});
-		const examples = page.locator('.stogas-api-operation-examples');
-		await expect(examples.locator('pre [style*="--shiki-"]').first()).toBeVisible();
-		await expect(examples.locator('pre').first()).toContainText(
-			'https://api.stogas.ai/v1/chat/completions'
-		);
-		await expect(page.getByRole('button', { name: /Server URL/ })).toContainText(
-			'https://api.stogas.ai/'
-		);
-		await expect(page.getByText('loading...', { exact: true })).toHaveCount(0);
+		const page = await context.newPage();
+		for (const endpoint of [
+			'openai-compatible/createChatCompletion',
+			'openai-compatible/createResponse',
+			'catalog/listModels',
+			'catalog/getCatalog'
+		]) {
+			await page.goto(`/docs/reference/${endpoint}`);
+			const examples = page.locator('.stogas-api-operation-examples');
+			const blocks = examples.locator('pre:visible');
+			expect(await blocks.count()).toBeGreaterThanOrEqual(2);
+			for (const block of await blocks.all()) {
+				await expect(block.locator('[style*="--shiki-"]').first()).toBeVisible();
+				const text = await block.textContent();
+				if (text?.startsWith('{') || text?.startsWith('['))
+					expect(text).toBe(JSON.stringify(JSON.parse(text), null, 2));
+			}
+			await expect(blocks.first()).toContainText('https://api.stogas.ai/');
+			await expect(page.getByRole('button', { name: /Server URL/ })).toContainText(
+				'https://api.stogas.ai/'
+			);
+			await expect(page.getByText('loading...', { exact: true })).toHaveCount(0);
+		}
 	} finally {
-		releaseScripts();
+		await context.close();
 	}
-	await page.waitForLoadState('load');
-	await page.getByRole('tab', { name: 'JavaScript', exact: true }).click();
-	await expect(
-		page.getByRole('tabpanel', { name: 'JavaScript', exact: true }).locator('pre')
-	).toContainText('fetch(');
+});
+
+test('switching sample languages preserves highlighting', async ({ page }) => {
+	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
+	for (const name of ['JavaScript', 'Go', 'Python', 'Java', 'C#', 'Rust', 'cURL']) {
+		await page.getByRole('tab', { name, exact: true }).click();
+		const sample = page.getByRole('tabpanel', { name, exact: true }).locator('pre');
+		await expect(sample.locator('[style*="--shiki-"]').first()).toBeVisible();
+	}
 });
 
 test('defaults to dark, preserves light preference, and supports keyboard access', async ({
@@ -104,24 +112,24 @@ test('API reference controls and code remain accessible in both themes', async (
 test('static search finds guides and API reference, with keyboard navigation', async ({ page }) => {
 	await page.goto('/docs');
 	await page.keyboard.press('Control+k');
-	const search = page.getByRole('textbox', { name: 'Search documentation' });
+	const search = page.getByRole('combobox', { name: 'Search documentation' });
 	await search.fill('Quickstart');
 	await expect(
 		page
 			.getByRole('dialog')
-			.getByRole('button', { name: /Quickstart/ })
+			.getByRole('option', { name: /Quickstart/ })
 			.first()
 	).toBeVisible();
 	await search.fill('Compatibility Notes');
 	await expect(
 		page
 			.getByRole('dialog')
-			.getByRole('button', { name: /Compatibility Notes/ })
+			.getByRole('option', { name: /Compatibility Notes/ })
 			.first()
 	).toBeVisible();
 	const result = page
 		.getByRole('dialog')
-		.getByRole('button', { name: /Compatibility Notes/ })
+		.getByRole('option', { name: /Compatibility Notes/ })
 		.first();
 	expect(
 		(
@@ -146,9 +154,9 @@ test('JSON copy controls clear native scrollbars and response status tabs stay u
 	const shortExample = page.getByRole('tabpanel', { name: 'cURL', exact: true });
 	const shortCopy = shortExample.getByRole('button', { name: 'Copy Text', exact: true });
 	await expect(async () => {
-		const viewportRight = await shortExample.getByRole('region').evaluate(
-			(element) => element.getBoundingClientRect().left + element.clientWidth
-		);
+		const viewportRight = await shortExample
+			.getByRole('region')
+			.evaluate((element) => element.getBoundingClientRect().left + element.clientWidth);
 		const button = await shortCopy.boundingBox();
 		expect(button).not.toBeNull();
 		expect(viewportRight - button!.x - button!.width).toBeCloseTo(8, 0);
@@ -287,7 +295,46 @@ test('narrow layouts, reduced motion, and forced colors keep content reachable',
 	}
 	await expect(page.getByRole('textbox', { name: 'Request JSON' })).toBeVisible();
 	await page.keyboard.press('Control+k');
-	await expect(page.getByRole('textbox', { name: 'Search documentation' })).toBeFocused();
+	await expect(page.getByRole('combobox', { name: 'Search documentation' })).toBeFocused();
 	await page.keyboard.press('Escape');
 	await expect(page.getByRole('dialog')).toHaveCount(0);
+});
+
+test('keeps English routes and search when the browser prefers another language', async ({
+	browser
+}) => {
+	const context = await browser.newContext({ locale: 'fr-FR' });
+	try {
+		const page = await context.newPage();
+		await page.goto('/docs');
+		await expect(page).toHaveURL(/\/docs$/);
+		await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+		await expect(page.getByRole('link', { name: 'Skip to content' })).toHaveCount(1);
+		await expect(page.getByRole('button', { name: /language/i })).toHaveCount(0);
+		await page.keyboard.press('Control+k');
+		await page.getByRole('combobox', { name: 'Search documentation' }).fill('billing');
+		await expect(
+			page
+				.getByRole('dialog')
+				.getByRole('option', { name: /billing/i })
+				.first()
+		).toBeVisible();
+	} finally {
+		await context.close();
+	}
+});
+
+test('SDK folder exposes separate JavaScript and TypeScript guides', async ({ page }) => {
+	await page.goto('/docs');
+	const sidebar = page.locator('#nd-sidebar');
+	const folder = sidebar.getByRole('button', { name: 'SDKs', exact: true });
+	await expect(folder).toHaveAttribute('aria-expanded', 'false');
+	await folder.click();
+	await expect(folder).toHaveAttribute('aria-expanded', 'true');
+	await sidebar.getByRole('link', { name: 'JavaScript', exact: true }).click();
+	await expect(page).toHaveURL(/\/docs\/javascript$/);
+	await expect(page.getByRole('heading', { name: 'JavaScript', exact: true })).toBeVisible();
+	await sidebar.getByRole('link', { name: 'TypeScript', exact: true }).click();
+	await expect(page).toHaveURL(/\/docs\/typescript$/);
+	await expect(page.getByRole('heading', { name: 'TypeScript', exact: true })).toBeVisible();
 });

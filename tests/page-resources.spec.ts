@@ -40,16 +40,20 @@ test('every indexed page exports readable Markdown and complete operation schema
 	);
 	expect(markdownLinks.length).toBeGreaterThan(30);
 	let operations = 0;
+	const canonicalUrls = new Set<string>();
 	for (const path of markdownLinks) {
 		const response = await request.get(path);
 		expect(response.status(), path).toBe(200);
 		expect(response.headers()['content-type'], path).toContain('text/markdown');
 		const text = await response.text();
 		const metadata = parseMarkdown(text);
+		canonicalUrls.add(metadata.url);
 		const html = await request.get(new URL(metadata.url).pathname);
 		expect(html.status()).toBe(200);
-		expect(await html.text()).toContain(`type="text/markdown" href="https://stogas.ai${path}"`);
-		const block = text.match(/^(`{3,})yaml\n([\s\S]*?)^\1\s*$/m);
+		const documentHtml = await html.text();
+		expect(documentHtml).toContain(`type="text/markdown" href="https://stogas.ai${path}"`);
+		expect(documentHtml).toContain(`<link rel="canonical" href="${metadata.url}"`);
+		const block = text.match(/^## OpenAPI\n\n(`{3,})yaml\n([\s\S]*?)^\1\s*$/m);
 		if (!block) continue;
 		operations++;
 		const document = parse(block[2]);
@@ -60,6 +64,17 @@ test('every indexed page exports readable Markdown and complete operation schema
 		expect(await json.json()).toEqual(document);
 	}
 	expect(operations).toBe(4);
+	const sitemap = await request.get('/docs/sitemap.xml');
+	expect(sitemap.status()).toBe(200);
+	expect(sitemap.headers()['content-type']).toContain('application/xml');
+	const sitemapUrls = Array.from(
+		(await sitemap.text()).matchAll(/<loc>([^<]+)<\/loc>/g),
+		(m) => m[1]
+	);
+	expect(sitemapUrls.sort()).toEqual([...canonicalUrls].sort());
+	expect(await (await request.get('/robots.txt')).text()).toContain(
+		'Sitemap: https://stogas.ai/docs/sitemap.xml'
+	);
 	const catalog = await request.get('/.well-known/api-catalog');
 	expect(catalog.headers()['content-type']).toContain('application/linkset+json');
 	expect(index.headers().link).toContain('rel="service-desc"');
@@ -107,9 +122,7 @@ for (const path of [
 		const github = resources.getByRole('link', { name: 'Open in GitHub', exact: true });
 		await expect(github).toHaveAttribute(
 			'href',
-			new RegExp(
-				`^https://github.com/StogasAI/docs/blob/main/content/${path.includes('createChatCompletion') ? 'openapi/stogas.json' : path.includes('security') ? 'reference/security.mdx' : 'docs/go.mdx'}$`
-			)
+			`https://github.com/StogasAI/docs/blob/main/content/${path.includes('createChatCompletion') ? 'openapi/stogas.json' : path.includes('security') ? 'reference/security.mdx' : 'docs/(sdk)/go.mdx'}`
 		);
 		if (path.includes('createChatCompletion')) {
 			await expect(
@@ -146,7 +159,8 @@ test('the static document declares its native theme before scripts execute', asy
 	request
 }) => {
 	const html = await (await request.get('/docs/go')).text();
-	expect(html).toContain('<html lang="en" class="dark"');
+	expect(html).toMatch(/<html\b[^>]*lang="en"/);
+	expect(html).toMatch(/<html\b[^>]*class="dark"/);
 	expect(html).toContain('<meta name="darkreader-lock"');
 	const context = await browser.newContext({ javaScriptEnabled: false });
 	try {

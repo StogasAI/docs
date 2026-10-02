@@ -1,174 +1,83 @@
 ---
 title: How gateway verification works
-description: How a Stogas client decides which gateways it can safely use.
+description: Software approvals, fresh attestation and locally verified evidence.
 ---
 
-Before sending a protected request, a Stogas client downloads a public trust bundle. It verifies
-the bundle locally and accepts only gateways that prove they are running approved software inside
-genuine confidential-computing hardware.
+The SDK checks a gateway before sending your API key or prompt. It verifies evidence locally using
+the same Rust core in native packages and browser WebAssembly.
 
-```text
-https://evidence.stogas.ai/bundles/latest.json
-https://evidence2.stogas.ai/bundles/latest.json
+## What is checked
+
+- The root-signed key manifest and online-signed complete approval manifest.
+- Build provenance and signatures for approved gateway releases and catalogs.
+- Our signed, transparently logged hardware policy.
+- AMD certificate chains, ARK-signed product CRLs, and SEV-SNP reports.
+- The report's guest privilege level, launch measurement, hardware security state and key binding.
+- A fresh client challenge bound to the session, with inclusion of the gateway's exact boot record.
+
+TLS, response-signing, and E2EE public keys have separate purposes. The gateway retains private keys
+inside the confidential VM. A valid public boot record alone does not authenticate a live connection.
+
+The hardware policy selects physical chips and minimum firmware and security requirements. The
+launch policy bundled with each gateway release fixes that build's expected VM settings, including
+guest privileges and debug/migration restrictions. The verifier checks the actual report against
+both policies and the release's expected software measurement. A boot's original hardware-policy
+reference cannot override current hardware requirements.
+
+During a hardware update, the policy can allow several configurations for the same chip, such as
+SMT enabled or disabled with different firmware minimums. A quote must meet all requirements of
+one allowed configuration. After the update, removing the old configuration withdraws its approval.
+
+Gateways use the same Rust core at startup and roughly every two minutes to recheck their logged
+boot against current approvals, hardware policy and collateral. Required expiry closes admission
+between polls. Session establishment obtains fresh hardware attestation.
+
+## Current evidence and history
+
+The current bundle contains allowed releases, catalogs, key authorization, hardware policy and
+necessary collateral. It contains no current node list. Boot evidence travels with the handshake;
+public history retains immutable boot and release records for later inspection.
+
+Rotating an online signing key does not change a release's identity. Refreshing a revocation list
+does not change the original boot quote or require it to be logged again. Live checks use current
+collateral; expired archived copies do not permanently invalidate a boot record.
+
+## Search Rekor directly
+
+The root-signed key manifest associates each online signing key with a Rekor submission public
+key. Save that public key in PEM format as `stogas-rekor-public.pem`, then use
+[Rekor's CLI](https://docs.sigstore.dev/logging/cli/):
+
+```console
+rekor-cli search --rekor_server https://rekor.sigstore.dev --pki-format x509 --public-key stogas-rekor-public.pem
+rekor-cli get --rekor_server https://rekor.sigstore.dev --uuid <entry-uuid>
 ```
 
-The first endpoint is delivered by Cloudflare from R2. The second is an independent AWS
-CloudFront distribution backed by a private S3 bucket. Official managed clients choose one at
-random for each refresh and try the other after a network, HTTP, verification, or non-advancing
-snapshot failure.
+Search each key used during the period you want to inspect. Use the submission public key from
+the verified key manifest; it cannot be derived from the ML-DSA public key. No private key is
+needed for a search. Each online signing identity has its own submission key; routine renewal
+of its authorization keeps that submission key unchanged.
 
-Neither CDN is trusted. After retrieval, verification is entirely local: the verifier does not
-contact GitHub, AMD, Sigstore, drand, or Stogas while deciding whether to accept the bytes.
+Rekor's search index is best effort. An empty result does not prove that no entry exists. Saved
+inclusion proofs remain independently verifiable without the index or Trust Center. A search
+result proves neither current approval nor document authorship: verify the complete document's
+ML-DSA signature and its exact digest against the logged entry.
 
-## Independent delivery
+## Updates
 
-Each bundle is written to both object stores. A destination advances its `latest.json` alias only
-after accepting that bundle's immutable version. A transient failure at one store does not prevent
-the other from publishing, and the next one-minute cycle repairs freshness with a new bundle.
+The SDK loads evidence at initialization, reuses verified objects and performs bounded recovery
+when setup needs updated evidence. R2 is preferred; a failed or lagging response can fall through
+to AWS. Invalid evidence never becomes trusted because a server returned HTTP 200 or 304.
 
-The mutable alias normally remains at an edge for no more than five seconds. An origin error is
-not hidden by an added stale-cache interval, so the client can try the independent origin. The
-verifier still applies the complete cryptographic policy. A failed refresh can retain an earlier
-accepted bundle only until its authenticated expiry. If both official origins return verified
-empty candidates, managed transports replace an earlier non-empty bundle with an explicit
-unavailable-fleet state and stop protected requests.
-
-## What the trust bundle proves
-
-The bundle contains:
-
-- the current and optional next immutable catalog proof, each with a GitHub Actions build
-  attestation and a Stogas approval signature binding the same manifest and artifact hashes;
-- approved gateway releases and their build records;
-- AMD certificate chains, ARK-signed product CRLs, and SEV-SNP reports for each gateway;
-- one hardware document with grouped exact processor IDs, CPUID, TCB floor, mitigation requirements,
-  platform requirements, a Stogas DSSE signature, and a Rekor v1 proof;
-- one independent grouped launch-policy document inside each gateway release; a gateway's exact chip
-  ID must occur in one group in each file, and the files do not refer to each other;
-- recent drand evidence;
-- each gateway's quote-bound TLS, response-signing, and E2EE public keys; and
-- an expiration time.
-
-The bundle has no outer signature. Its body SHA-256 identifies the exact bytes and detects
-corruption, while each release, hardware policy, node, certificate, and drand claim verifies to its own embedded
-cryptographic root.
-
-Stogas release signatures authorize the gateway and catalog manifests. They do not prove that
-Stogas performed the independent rebuilds used in its release checks.
-
-The verifier returns the gateways that are safe to use as `nodes`. Older or unusable records may
-appear as `excluded_nodes`, but they never authorize a connection.
-
-A bundle can verify successfully with no trusted `nodes`. This state grants no connection trust,
-so managed transports report the fleet as unavailable and do not route through it. They keep the
-verified state active and retry both evidence origins every four to eight seconds so a recovered
-fleet is acquired promptly.
-
-An empty candidate from only one official origin cannot displace an active non-empty bundle. The
-transport checks the other origin and retries the disagreement after four to eight seconds. A
-caller-selected custom evidence URL is intentionally single-origin and cannot use this safeguard.
-
-## Freshness rules
-
-The verifier applies three separate time limits:
-
-| Check            | Rule                                                                        | Why it matters                                            |
-| ---------------- | --------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Bundle creation  | No more than three minutes behind or one minute ahead of the client's clock | Rejects a delayed, replayed, or implausibly future bundle |
-| Gateway evidence | The drand round is no more than two minutes older than bundle creation      | Requires recent evidence from every accepted gateway      |
-| Bundle expiry    | No more than 15 minutes after creation                                      | Sets a hard deadline for an accepted bundle               |
-
-Bundle creation time cannot grant trust by itself. The client clock bounds it, and every accepted
-gateway's quote-bound drand round constrains it.
-
-Every accepted gateway certificate and required AMD certificate or revocation list remains valid
-through the bundle's complete actual lifetime. That lifetime is at most 15 minutes and may end
-sooner at one of those validity deadlines. It does not mean clients should wait 15 minutes before
-checking for an update.
-
-The transport reuses only exact active bytes and otherwise requires a fully verified snapshot with
-a later creation time. Sequence remains useful operational metadata, but it is not signed and never
-controls client activation. This prevents one corrupted mirror from pinning a client to an inflated
-sequence. No ordering field can detect an attacker who freezes one snapshot, so every changed
-candidate receives all cryptographic, creation-time, and expiry checks; those checks cannot be
-limited to the first bundle after startup.
-
-The hardware-policy schema versions its file format. The signed document has no ordering counter.
-Each verified bundle carries the complete policy that applies to that bundle.
+Our gateway VMs monitor approvals and close new admission when their release is withdrawn.
+They let admitted requests finish during routine updates. The SDK has no background polling task;
+applications can request an explicit refresh.
 
 ## Keep the client clock accurate
 
-Bundle verification uses the client's wall clock. Keep automatic time synchronization enabled and
-monitor it as part of host health:
+Certificate and revocation validity checks use the client clock. Keep operating-system time
+synchronization enabled. Containers use their host's clock; browsers use the device clock.
+Do not bypass verification or invent a clock offset when evidence fails its validity checks.
 
-- On Linux servers and virtual machines, run `chronyd` with several independent sources. Use NTS
-  where the sources and operating environment support it. Permit large clock steps only during
-  early boot, then gate application readiness with `chronyc waitsync` and monitor `chronyc tracking`.
-- Containers and Kubernetes pods use the host clock. Configure and monitor synchronization on each
-  node instead of installing a separate time daemon in each container.
-- Desktop, mobile, and browser clients use the operating-system clock. Keep automatic date and time
-  enabled. If verification reports that a bundle is from the future or unexpectedly old, report a
-  clock error instead of applying an application-specific offset.
-- Managed serverless runtimes use the provider's host clock. An offline application that supplies a
-  time to an embedded verifier must obtain it from a trustworthy synchronized clock.
-
-See the [chrony FAQ](https://chrony-project.org/faq.html),
-[`chrony.conf` reference](https://chrony-project.org/doc/4.7/chrony.conf.html), and
-[`chronyc` reference](https://chrony-project.org/doc/4.7/chronyc.html) for source authentication,
-startup stepping, status, and readiness controls.
-
-## Keeping verification current
-
-Managed transports use a five-minute target with ±10% jitter by default and make another attempt
-before the active bundle expires. Applications can choose any positive whole-second target or
-request an immediate refresh. More frequent polling normally provides newer evidence without
-changing any verification or expiry rule.
-
-If the downloaded bytes have not changed, the transport reuses the existing verified result. A
-failed update can keep using the last accepted bundle only until that bundle expires. A verified
-empty replacement confirmed through both official origins is not a failed update: it becomes the
-active unavailable state and cannot use the previous trust set.
-
-Native attested TLS also requests one immediate verified refresh after an exact certificate or
-public-key pin mismatch. It retries the connection once only if the accepted bundle changes. The
-failed TLS handshake sent no request bytes, and other connection failures do not use this retry.
-
-## Verifying a response later
-
-Every response can include a compact receipt:
-
-- request it with `Stogas-Receipt: v1`;
-- non-streaming responses add a final top-level `stogas` object;
-- streams add a `: stogas {...}` SSE comment before `[DONE]`, `response.completed`, or
-  `response.incomplete`.
-
-The `stogas.response-proof.v1` result signs the request ID, canonical creation time, and node ID;
-hashes of the exact request and response; catalog digest, sequence, and ordered selection IDs;
-settled meter pricing and totals; timing; and the encrypted-connection transcript when E2EE is used. The
-signing key is already bound to the verified node by its SEV-SNP report. The result does not repeat
-the quote, AMD collateral, catalog approval, or release proof.
-
-For an active bundle, the verifier also requires the receipt's catalog digest to match one verified
-catalog approval. The five IDs preserve the gateway's exact request resolution. To check that each
-ID is a member of that catalog graph, fetch and cache the immutable runtime catalog by digest.
-Catalog identity is request-time state and does not have to match the catalog that was active when
-the gateway first joined the fleet. Before dispatch, the gateway requires the selected catalog to
-match its current quote snapshot. It makes one quote refresh after a catalog change and fails closed
-if the values still differ.
-
-Reuse the verifier that accepted the active bundle:
-
-```ts
-const receipt = verifier.verify_response_proof(requestBytes, responseBytes, e2eeTranscriptSHA256);
-```
-
-The verifier calculates the request and response hashes again from the bytes you provide. A browser
-can use `start_response_proof`, `write`, and `finish` to keep only a running response hash. Write all
-SSE bytes except the Stogas comment and include the terminal frame. For an older response, download its node
-record and catalog approval from the Trust Center and use `verify_historical_response_proof`. The
-public lookup uses only `node_id` and catalog sequence. It never receives the private request or
-response. When E2EE is enabled, also keep the locally calculated
-`X-Stogas-E2EE-Transcript-SHA256` response header.
-
-The Trust Center history separates node admissions, gateway releases, and catalog releases. Opening
-a record downloads its exact public evidence and verifies it locally before display.
+See the [security model](/docs/confidential-security-model) for transport guarantees and provider
+boundaries, and the [SDK guide](/docs/sdk-overview) for connection reuse and safe error handling.

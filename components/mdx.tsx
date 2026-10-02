@@ -5,6 +5,8 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import type { MDXComponents } from 'mdx/types';
 import { OpenAPIPage } from './openapi-page';
 import { StogasLink } from './stogas-link';
+import { RoutingFields } from './routing-fields';
+import { PolicyFields } from './policy-fields';
 
 export function getMDXComponents(components?: MDXComponents) {
 	return {
@@ -12,6 +14,8 @@ export function getMDXComponents(components?: MDXComponents) {
 		Accordion,
 		Accordions,
 		OpenAPIPage,
+		PolicyFields,
+		RoutingFields,
 		Step,
 		Steps,
 		Tab,

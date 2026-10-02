@@ -1,0 +1,258 @@
+---
+title: Dart
+description: Use the OpenAI Dart client with the native Stogas verifier.
+---
+
+Use the [OpenAI Dart client](https://pub.dev/packages/openai_dart) for typed
+requests and streaming. The Stogas native library verifies the connection and
+exposes a local URL for the client. This example uses Dart 3.13 and runs on Linux.
+
+## Install
+
+Download the native verifier archive for your processor from
+[Releases](https://github.com/StogasAI/verifier/releases). Set
+`STOGAS_VERIFIER_LIBRARY` to the full path of its shared library. Set
+`STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
+
+Save this as `pubspec.yaml` in an empty directory, then run `dart pub get`:
+
+```yaml
+name: stogas_dart_example
+publish_to: none
+environment:
+  sdk: '>=3.12.0 <4.0.0'
+dependencies:
+  ffi: 2.1.5
+  http: 1.6.0
+  openai_dart: 9.0.0
+```
+
+## Start the transport
+
+Save this as `transport.dart`. It calls the existing native library through
+[Dart FFI](https://dart.dev/interop/c-interop) and releases each native allocation.
+The default uses native attested TLS. Pass `{'security': 'e2ee'}` as the second
+constructor argument to use E2EE.
+
+```dart
+import 'dart:convert';
+import 'dart:ffi';
+import 'package:ffi/ffi.dart';
+
+final class _Handle extends Opaque {}
+
+// Keep this object alive until all requests finish. Always close it in finally.
+final class StogasTransport {
+  final DynamicLibrary _library;
+  Pointer<_Handle> _handle = nullptr;
+  late final void Function(Pointer<_Handle>) _close = _library
+      .lookupFunction<
+        Void Function(Pointer<_Handle>),
+        void Function(Pointer<_Handle>)
+      >('stogas_transport_close');
+  late final void Function(Pointer<_Handle>) _free = _library
+      .lookupFunction<
+        Void Function(Pointer<_Handle>),
+        void Function(Pointer<_Handle>)
+      >('stogas_transport_free');
+  late final String baseUrl;
+
+  StogasTransport(
+    String libraryPath, [
+    Map<String, Object?> configuration = const {},
+  ]) : _library = DynamicLibrary.open(libraryPath) {
+    final version = _library.lookupFunction<Uint32 Function(), int Function()>(
+      'stogas_verifier_abi_version',
+    );
+    if (version() != 1) throw StateError('Unsupported verifier ABI');
+    final start = _library
+        .lookupFunction<
+          Pointer<Utf8> Function(
+            Pointer<Uint8>,
+            UintPtr,
+            Pointer<Pointer<_Handle>>,
+          ),
+          Pointer<Utf8> Function(Pointer<Uint8>, int, Pointer<Pointer<_Handle>>)
+        >('stogas_transport_start');
+    final stringFree = _library
+        .lookupFunction<
+          Void Function(Pointer<Utf8>),
+          void Function(Pointer<Utf8>)
+        >('stogas_verifier_string_free');
+    final configurationJson = jsonEncode(configuration);
+    final input = configurationJson.toNativeUtf8();
+    final output = calloc<Pointer<_Handle>>();
+    Pointer<Utf8> raw = nullptr;
+    try {
+      raw = start(input.cast(), utf8.encode(configurationJson).length, output);
+      _handle = output.value;
+      final result = raw == nullptr ? null : jsonDecode(raw.toDartString());
+      if (_handle == nullptr ||
+          result is! Map ||
+          result['ok'] != true ||
+          result['value'] is! Map ||
+          result['value']['base_url'] is! String) {
+        throw StateError('Unable to start verified transport');
+      }
+      baseUrl = result['value']['base_url'] as String;
+    } catch (_) {
+      close();
+      rethrow;
+    } finally {
+      stringFree(raw);
+      calloc.free(output);
+      malloc.free(input);
+    }
+  }
+
+  void close() {
+    if (_handle == nullptr) return;
+    final handle = _handle;
+    _handle = nullptr;
+    _close(handle);
+    _free(handle);
+  }
+}
+```
+
+## Send a request
+
+Save this as `main.dart` beside `transport.dart`. It uses the normal typed OpenAI
+request object, disables automatic inference retries and closes the transport
+when the client finishes. Press Ctrl+C to cancel.
+
+```dart
+import 'dart:async';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+import 'package:openai_dart/openai_dart.dart';
+import 'transport.dart';
+
+// The verifier returns a local capability URL. Keep redirects and system proxies off.
+final class LocalClient extends http.BaseClient {
+  final _client = IOClient(HttpClient()..findProxy = (_) => 'DIRECT');
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    request.followRedirects = false;
+    return _client.send(request);
+  }
+
+  @override
+  void close() => _client.close();
+}
+
+Future<void> main(List<String> args) async {
+  StogasTransport? transport;
+  OpenAIClient? client;
+  LocalClient? httpClient;
+  Timer? deadline;
+  StreamSubscription<ProcessSignal>? interrupt;
+  final cancelled = Completer<void>();
+  void cancel() {
+    if (!cancelled.isCompleted) cancelled.complete();
+  }
+
+  try {
+    if (args.isNotEmpty && (args.length != 1 || args.single != '--no-stream')) {
+      throw StateError('Usage: dart run main.dart [--no-stream]');
+    }
+    final key = Platform.environment['STOGAS_API_KEY'];
+    final model = Platform.environment['STOGAS_MODEL'];
+    if (key == null ||
+        key.isEmpty ||
+        key.contains(RegExp(r'[\r\n]')) ||
+        model == null ||
+        model.isEmpty) {
+      throw StateError('Set STOGAS_API_KEY and STOGAS_MODEL');
+    }
+    var baseUrl = Platform.environment['STOGAS_BASE_URL'];
+    if (baseUrl == null) {
+      transport = StogasTransport(
+        Platform.environment['STOGAS_VERIFIER_LIBRARY']!,
+      );
+      baseUrl = transport.baseUrl;
+    }
+    httpClient = LocalClient();
+    client = OpenAIClient(
+      config: OpenAIConfig(
+        authProvider: ApiKeyProvider(key),
+        baseUrl: baseUrl,
+        retryPolicy: const RetryPolicy(maxRetries: 0),
+        timeout: const Duration(minutes: 45),
+      ),
+      httpClient: httpClient,
+      streamClientFactory: LocalClient.new,
+    );
+    deadline = Timer(const Duration(minutes: 45), cancel);
+    interrupt = ProcessSignal.sigint.watch().listen((_) => cancel());
+    final request = ChatCompletionCreateRequest(
+      model: model,
+      messages: [ChatMessage.user('Say hello in one sentence.')],
+    );
+    if (args.contains('--no-stream')) {
+      final response = await client.chat.completions.create(
+        request,
+        abortTrigger: cancelled.future,
+      );
+      stdout.write(response.text ?? '');
+    } else {
+      final stream = client.chat.completions.createStream(
+        request,
+        abortTrigger: cancelled.future,
+      );
+      await for (final event in stream) {
+        stdout.write(event.textDelta ?? '');
+      }
+    }
+    if (cancelled.isCompleted) throw StateError('Request cancelled');
+    stdout.writeln();
+  } catch (_) {
+    stderr.writeln(
+      'Request failed or incomplete. Do not replay automatically.',
+    );
+    exitCode = 1;
+  } finally {
+    deadline?.cancel();
+    await interrupt?.cancel();
+    client?.close();
+    httpClient?.close();
+    transport?.close();
+  }
+}
+```
+
+Stream the response:
+
+```sh
+dart run main.dart
+```
+
+Or receive the complete response:
+
+```sh
+dart run main.dart --no-stream
+```
+
+Reuse the transport and client in a long-running application. An error or
+cancellation can happen after some output arrives; do not replay that request
+automatically. The verifier checks encrypted stream completion before releasing
+the final application event.
+
+For response metadata and automatic receipt verification, add this to `OpenAIConfig`:
+
+```dart
+defaultHeaders: const {'Stogas-Metadata': 'v1'},
+```
+
+`STOGAS_BASE_URL` optionally selects a separately running [verifier CLI](/docs/sdk-overview).
+Keep its complete URL, including the path. When this variable is set, the example
+does not start an embedded transport.
+
+## Flutter
+
+The native bridge can be embedded in a Flutter desktop application on a supported
+native platform. Package the verifier library with the application and close the
+transport after its requests finish. This example does not provide Android or iOS
+binaries. Flutter Web cannot use `dart:ffi`; use the [browser transport](/docs/browser-workers)
+through JavaScript interoperability.

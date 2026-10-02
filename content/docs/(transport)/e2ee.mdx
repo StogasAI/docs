@@ -1,0 +1,65 @@
+---
+title: E2EE over HTTPS
+description: Carry encrypted requests through ordinary HTTPS while verifying their gateway locally.
+---
+
+Browser and Fetch integrations use binary end-to-end encryption over HTTPS. A fresh attested
+session binds its encryption keys to an approved gateway. HTTPS carries the encrypted records;
+the outer TLS connection is not the proof of which gateway handles them.
+
+## Connect from an application
+
+Follow [Browser and Workers](/docs/browser-workers) or the
+[JavaScript](/docs/javascript) and [TypeScript](/docs/typescript) guides. Native SDKs can also select
+`e2ee`. Reuse one transport across requests and close it at application shutdown.
+
+The verifier requires the selected hybrid construction and fails closed when it is unavailable.
+Records are binary, without base64 expansion of request bodies. Responses stream as they arrive.
+Native uploads stream; browser uploads use a replayable ciphertext body to accommodate Fetch limits.
+
+Browser and Fetch runtimes use WebCrypto AES-256-GCM when available, with a portable Rust
+fallback when the service or algorithm is unavailable. The first incoming record is
+authenticated in Rust so concurrent requests update shared session state atomically. Each direction's WebCrypto key is
+imported once and is non-exportable. Rust owns the session secrets, counters and record rules;
+an authentication failure always closes the request. WebCrypto provides no explicit key-erasure
+operation, so releasing a browser key does not guarantee immediate erasure from memory.
+
+## Session keys and concurrency
+
+E2EE combines an X25519 Double Ratchet with a sparse post-quantum ratchet using ML-KEM Braid.
+Both advance independent message keys for request and response starts; HKDF combines them before
+one AES-256-GCM encryption pass. Fresh DH and KEM secrets enter during normal bidirectional traffic.
+Later chain state cannot recreate erased earlier message keys. A request that arrives ahead of another causes the gateway to keep the missing request's
+individual key for up to one minute, within a 4,096-number window. Once admitted, an upload or
+response keeps its normal deadline; this one-minute wait does not limit inference duration.
+The client retains bounded delayed reply keys for requests awaiting their first response and
+discards the cache when the last such request completes or is cancelled.
+The SDK manages numbering, concurrent requests and session renewal automatically.
+Under gateway memory pressure, fully idle E2EE sessions can be reclaimed after one minute;
+sessions with unfinished requests remain available. The next attempt on a reclaimed session
+can fail. The SDK then retires that session so later requests establish a fresh one; it never
+automatically repeats submitted inference.
+
+This protects past encryption keys after the chain advances and those keys are erased. It does
+not promise that every plaintext or temporary key copy has vanished from process memory. Theft
+of current session state can be followed by recovery as fresh DH and KEM secrets are exchanged, provided
+the attacker has lost endpoint access and messages are delivered honestly. Recovery takes several
+messages; it is not guaranteed after each request or during one-way traffic.
+
+The default sends each available KEM component in full. For constrained links, `ratchetBytes`
+(JavaScript) or `ratchet_bytes` (Rust/Python) selects an even chunk size from 32 through 1,152 bytes.
+The setup authenticates this choice. Smaller chunks spread recovery across more messages; this
+option limits KEM piece bytes, not the complete record header. Native CLI users can set
+`--ratchet-bytes` with `--security e2ee`.
+
+## Scope and failure handling
+
+Encryption ends inside the attested gateway. The model provider receives the forwarded request;
+this mode does not hide it from that provider or independently verify provider execution.
+
+A fresh session needs attestation and cryptographic setup. Reuse amortizes that work; it does not
+make a cold connection cost the same as ordinary HTTPS. Disable automatic inference retries:
+a connection loss after submission can leave execution uncertain.
+
+[Gateway verification](/docs/verification) covers receipts and evidence checks. The
+[trust model](/docs/confidential-security-model) states the hardware and evidence assumptions.

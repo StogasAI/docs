@@ -1,3 +1,5 @@
+import { getMessage, i18n, type Locale } from './i18n';
+import { messages } from './messages';
 import { docs, reference } from 'collections/server';
 import spec from '@/content/openapi/stogas.json';
 import type { Item, Root } from 'fumadocs-core/page-tree';
@@ -18,47 +20,51 @@ import {
 
 export const source = loader({
 	baseUrl: docsRoute,
+	i18n,
 	source: docs.toFumadocsSource(),
 	plugins: [lucideIconsPlugin()]
 });
 
 export const apiSource = loader({
 	baseUrl: referenceRoute,
+	i18n,
 	source: reference.toFumadocsSource(),
 	plugins: [lucideIconsPlugin(), openapiPlugin()]
 });
 
-const docsTree = source.getPageTree();
-const apiTree = apiSource.getPageTree();
+export function getUnifiedTree(locale: Locale = i18n.defaultLanguage): Root {
+	const docsTree = source.getPageTree(locale);
+	const apiTree = apiSource.getPageTree(locale);
 
-// Unified tree with root folders — enables native Fumadocs sidebar tabs (dropdown picker).
-// Each child folder has root: true, which getLayoutTabs reads to build the tab list.
-// Only the active tab's pages are visible in the sidebar.
-export const unifiedTree: Root = {
-	name: 'Docs',
-	children: [
-		{
-			type: 'folder',
-			name: 'Platform',
-			icon: React.createElement(BookOpen, { className: 'size-4', 'aria-hidden': true }),
-			root: true,
-			index: docsTree.children.find(
-				(child): child is Item => child.type === 'page' && child.url === docsRoute
-			),
-			children: docsTree.children
-		},
-		{
-			type: 'folder',
-			name: 'API Reference',
-			icon: React.createElement(TerminalSquare, { className: 'size-4', 'aria-hidden': true }),
-			root: true,
-			index: apiTree.children.find(
-				(child): child is Item => child.type === 'page' && child.url === referenceRoute
-			),
-			children: apiTree.children
-		}
-	]
-};
+	// Unified tree with root folders — enables native Fumadocs sidebar tabs (dropdown picker).
+	// Each child folder has root: true, which getLayoutTabs reads to build the tab list.
+	// Only the active tab's pages are visible in the sidebar.
+	return {
+		name: getMessage(messages.docs, locale),
+		children: [
+			{
+				type: 'folder',
+				name: getMessage(messages.platform, locale),
+				icon: React.createElement(BookOpen, { className: 'size-4', 'aria-hidden': true }),
+				root: true,
+				index: docsTree.children.find(
+					(child): child is Item => child.type === 'page' && child.url === docsRoute
+				),
+				children: docsTree.children
+			},
+			{
+				type: 'folder',
+				name: getMessage(messages.apiReference, locale),
+				icon: React.createElement(TerminalSquare, { className: 'size-4', 'aria-hidden': true }),
+				root: true,
+				index: apiTree.children.find(
+					(child): child is Item => child.type === 'page' && child.url === referenceRoute
+				),
+				children: apiTree.children
+			}
+		]
+	};
+}
 
 export function getPageImage(page: (typeof source)['$inferPage']) {
 	const isReference = page.url.startsWith(referenceRoute);
@@ -248,6 +254,7 @@ export async function getLLMText(page: (typeof source)['$inferPage']) {
 	const canonical = new URL(page.url, 'https://stogas.ai').href;
 	const metadata = stringify({
 		title: page.data.title,
+		language: page.locale ?? i18n.defaultLanguage,
 		description: page.data.description,
 		url: canonical
 	});

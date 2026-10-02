@@ -1,166 +1,241 @@
 ---
 title: Routing
-description: Choose permitted models and providers, filter deployment properties, and order the matches.
+description: Filter eligible deployments with CEL and choose a complete ordering.
 ---
 
-Use `allowedCatalogNodes` to allow specific catalog IDs. Use `query` to filter deployment
-properties or order the choices that remain. You can combine both.
-
-This policy permits OpenAI or Chutes, but only where the catalog says request data is not used
-for training:
+Use `routing.allowedCatalogNodes` for exact catalog IDs, `routing.filter` for a CEL condition,
+and `routing.sort` to order the candidates that remain. These settings apply together.
 
 ```json title="policy.json"
 {
 	"version": 1,
 	"routing": {
-		"query": "where deployment.data.dataHandling.trainingUse == false",
-		"allowedCatalogNodes": {
-			"providers": ["openai", "chutes"]
-		}
+		"allowedCatalogNodes": { "providers": ["openai", "chutes"] },
+		"filter": "deployment.dataHandling.trainingUse == false"
 	}
 }
 ```
 
-Each possible deployment is a **candidate**. It must satisfy the request's model and provider
-selectors and every applicable policy. A filter can narrow those choices; it cannot add a model
-or provider that the caller did not request.
+Each possible deployment is a **candidate**. Its provider must have an eligible credential.
+The request's model or deployment selector, service tier, interface and output-token limit narrow
+the choices before their complete policies apply. An encrypted credential with no matching
+supplied root is ineligible. A policy cannot widen an explicit request selector. Other
+provider-specific parameters are validated against the selected deployment; they are not
+automatic routing preferences.
 
-## Query syntax
+Selection has three separate inputs:
 
-A query has an optional `where` filter followed by an optional `order by` clause. At least one
-must be present. For example:
+| Input | What it decides |
+| --- | --- |
+| Deployment filters | Which deployment and credential pairs are eligible, including their privacy and location requirements. |
+| Deployment ordering | Which eligible deployment to choose first: a policy sort, or the request's provider order when it resolves the choice. |
+| Ordered credential assignments | Which eligible credential to prepare first for the chosen deployment. |
 
-```text
-where provider.id in ['openai', 'chutes']
-  and deployment.data.capabilities.streaming == true
-order by deployment.data.pricing.output_tokens.per_mill_tokens asc
-```
+An ineligible pair is filtered out without consuming a preparation attempt. A local credential
+preparation failure consumes an attempt and can advance only with the explicit allowance below.
+Credential preference never chooses between two deployments and cannot override either one's policy.
 
-Inside JSON, put the whole query in `routing.query`. Single-quoted query values avoid escaping
-double quotes: `"query": "where provider.id == 'openai'"`.
+Several deployments may satisfy the same privacy requirements. Keep all matching deployments
+eligible, then order them. For example, require zero retention in the filter and sort by price;
+there is no need to weaken privacy checks or write a filter that happens to match exactly one ID.
+Catalog data-handling fields describe the resolved deployment and route, including inherited facts.
 
-| Operator             | Meaning                                                    | Example expression                                   |
-| -------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
-| `==`, `!=`           | Equal or unequal; strings, integers, and Booleans          | `provider.id == 'openai'`                            |
-| `<`, `<=`, `>`, `>=` | Numeric order for integers; lexical order for strings      | `deployment.data.contextWindowTokens >= 128000`      |
-| `in`                 | A scalar equals one item in a nonempty list                | `provider.id in ['openai', 'chutes']`                |
-| `contains`           | A substring in a string, or an exact item in a string list | `deployment.data.reasoningEfforts contains 'high'`   |
-| `exists(field)`      | The field has a value                                      | `exists(deployment.data.deprecationDate)`            |
-| `not`                | Negate an expression                                       | `not (provider.id == 'openai')`                      |
-| `and`, `or`          | Combine expressions                                        | `provider.id == 'openai' or provider.id == 'chutes'` |
+For Chat Completions and Responses, `model` is optional. Omission considers all compatible
+active deployments. A model slug limits selection to that model; a deployment slug pins that
+deployment. Empty or null selectors are invalid. If several deployments remain without an order
+that chooses one, the request returns `model_ambiguous` with usable deployment selectors.
+There is no automatic preference for the model author's provider.
 
-`not` binds first, then `and`, then `or`. Parentheses change the order. Use `not (field in [...])`
-for exclusion; `not in` is not a separate operator. List values must have the field's type and
-must be unique. A string-list field supports only `contains` or `exists`, not whole-list equality.
+## Routing settings
 
-Keywords are case-insensitive; field names and string values are case-sensitive. Strings can use
-single or double quotes. Inside a query string, only its quote character and backslash can be
-escaped. JSON escaping is a separate outer layer. Integers can be negative but cannot use decimals
-or exponent notation. Booleans are unquoted `true` and `false`.
-
-The left side of a comparison is a registered field; the right side is a literal or an `in` list.
-There is no field-to-field comparison, automatic type conversion, arithmetic, regex operator,
-`select`, script execution, current-time function, or function other than `exists`.
-
-### Missing values
-
-Only a filter result of `true` permits a candidate. A comparison with a missing value is unknown,
-including `!=`; negating it is still unknown. Empty strings and absent catalog values count as
-missing. Use `exists` when absence itself matters:
-
-```text title="Allow an absent or explicitly false training-use disclosure"
-where not exists(deployment.data.dataHandling.trainingUse)
-  or deployment.data.dataHandling.trainingUse == false
-```
-
-That example deliberately permits missing disclosure. If your application requires a no-training
-declaration, use only `deployment.data.dataHandling.trainingUse == false`.
-
-With combined expressions, a true branch makes `or` true even if another branch is unknown.
-A false branch makes `and` false. Otherwise, unknown values remain unknown.
-
-### Sorting
-
-Use `order by field asc` for ascending order or `desc` for descending order. Direction defaults
-to `asc`; comma-separated fields break ties from left to right. Missing values always sort last.
-Numbers sort numerically, strings lexically, and Booleans as `false` before `true` in ascending order.
-
-Organization sort fields come first, then grant, key, and permitted request sort fields.
-Repeated fields keep the parent's direction. Stogas finally uses `deployment.id asc` for a stable
-choice. If you explicitly include that field, it must be last and ascending; it leaves no ties
-for a child policy to reorder.
-
-Without a policy sort, the caller's provider order is preserved. Without either order, Stogas
-prefers the model author's provider when usable. If that still leaves an ambiguous choice, the
-request fails with valid provider-qualified selectors for the caller to choose from.
-
-### Query bounds
-
-| Item                                                       | Maximum per query        |
-| ---------------------------------------------------------- | ------------------------ |
-| Query length                                               | 4,096 Unicode characters |
-| Expression nodes, including comparisons and logical groups | 64                       |
-| Nesting depth                                              | 12                       |
-| Items in an `in` list                                      | 32                       |
-| Explicit sort fields                                       | 4                        |
-| One string literal                                         | 1,024 UTF-8 bytes        |
-
-The [routing field reference](/docs/policies/routing-fields) lists every field and type, including
-all pricing meters. Pricing comparisons use integer USD atoms, not decimal dollar amounts.
-
-## Deployment selection
-
-A model selector starts with each provider's default deployment. A filter or explicit sort can
-select a compatible geography or hosting variant. It cannot cross the selected service tier or
-reasoning mode. A deployment selector stays pinned to that exact deployment.
-
-Catalog facts describe the candidate, not measured live performance. There are no recent-latency
-or live-health fields in the query language.
+<PolicyFields section="routing" />
 
 ## Allowed catalog nodes
 
-Use `allowedCatalogNodes` when exact IDs are clearer than a query:
+Supported lists are `authors`, `models`, `deployments`, `routes`, and `providers`. They share the
+[policy size limits](/docs/policies/editing#document-rules) without a separate ID-count cap.
+Use unique canonical IDs matching `^[a-z0-9][a-z0-9._:-]{0,127}$`. Names, aliases, wildcards, and
+HTTP paths are not IDs here.
 
-```json
+Every present list must match. Required lists intersect across applicable policies. Omission
+adds no restriction; `"providers": []` permits no providers. An empty `allowedCatalogNodes`
+object replaces default lists while preserving other required lists. IDs absent from the active
+catalog cannot match.
+
+## Query syntax
+
+Filters use [Common Expression Language](https://cel.dev/), or CEL. For example:
+
+```cel
+provider.id in ['openai', 'chutes'] && deployment.capabilities.streaming == true
+```
+
+Put the expression in `routing.filter`. JSON requires escaping inner double quotes;
+single-quoted CEL strings are often easier to read.
+
+| Expression                                                            | Meaning                                     |
+| --------------------------------------------------------------------- | ------------------------------------------- |
+| `provider.id == 'openai'`                                             | Compare a string.                           |
+| `deployment.contextWindowTokens >= 128000`                            | Compare an integer.                         |
+| `deployment.pricing.output_tokens.per_mill_tokens <= decimal('2.50')` | Compare an exact catalog price.             |
+| `'image' in deployment.inputModalities`                               | Test list membership.                       |
+| `model.name.contains('mini')`                                         | Test a substring.                           |
+| `has(deployment.deprecationDate)`                                     | Test field presence.                        |
+| `deployment.inputModalities.exists(m, m == 'text')`                   | Test whether any list element matches.      |
+| `request.time.getHours('UTC') < 18`                                   | Read the request time in a named time zone. |
+
+Use `&&`, `||`, and `!` for AND, OR, and NOT. Parentheses control grouping. CEL supports typed
+arithmetic, field comparisons, list operations and conditional expressions; it cannot perform
+network calls or execute application code. Unknown fields and incorrect types are rejected.
+Dynamic field access cannot bypass the registered field types.
+
+Prices require `decimal('...')`, with up to 36 fractional digits, rather than a floating-point
+number. Exact prices support comparisons, membership and sorting; arithmetic on these values
+is not exposed. Use `blended_price` for a weighted price. Integer values use CEL's signed
+64-bit range. Names and strings are case-sensitive.
+
+## Missing values
+
+A filter permits a candidate only when it returns `true`. Missing facts produce an unknown value;
+negating an unknown comparison does not make it true. To deliberately accept a missing disclosure:
+
+```cel
+!has(deployment.dataHandling.trainingUse) || deployment.dataHandling.trainingUse == false
+```
+
+Use only `deployment.dataHandling.trainingUse == false` when the declaration is required.
+A true branch can resolve `||` despite an unknown branch; a false branch can resolve `&&`.
+Otherwise the result remains unknown. A [conditional rule](/docs/policies/scopes#conditional-rules)
+with an unknown condition rejects evaluation instead of silently omitting its restrictions.
+
+## Sorting
+
+A sort is an ordered array of up to three criteria: one main criterion and two tie breakers.
+Each criterion requires a scalar CEL expression in `by` and `direction: "asc"` or `"desc"`.
+Missing values sort last in either direction. Strings sort lexically, numbers numerically,
+and Booleans as false before true when ascending. Lists cannot be sorted.
+
+```json title="Prefer lower output prices"
 {
 	"version": 1,
 	"routing": {
-		"allowedCatalogNodes": {
-			"models": ["gpt-5"],
-			"providers": ["openai"]
+		"sort": [
+			{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" },
+			{ "by": "deployment.contextWindowTokens", "direction": "desc" }
+		]
+	}
+}
+```
+
+Top-level settings are required. All active required sort orders must agree on the complete
+ordering; a child cannot append criteria or choose an incompatible order. Conflicts reject the
+combination. Role order and rule names never decide which policy wins.
+
+To supply a replaceable preference, put the sort in a rule with `mode: "default"`:
+
+```json title="Default organization ordering"
+{
+	"version": 1,
+	"rules": {
+		"prefer_lower_price": {
+			"mode": "default",
+			"routing": {
+				"sort": [{ "by": "blended_price(3, 1, 'per_mill_tokens')", "direction": "asc" }]
+			}
 		}
 	}
 }
 ```
 
-A candidate must match every list that is present. The supported lists are `authors`, `models`,
-`deployments`, `routes`, and `providers`, with at most 64 IDs in total. Use canonical catalog IDs;
-names and aliases are not resolved here. See the [ID format](/docs/policies/reference#allowed-catalog-nodes).
+An applicable required sort replaces sort defaults. This includes an explicit `"sort": []`,
+which adds no ordering while preserving other required orders. When only defaults apply, their
+orders must agree too. Candidate-dependent sorts must define one consistent ordering across
+all remaining candidates.
 
-Omitting a list adds no restriction. An empty list, such as `"providers": []`, denies all candidates.
-Parent and child lists intersect: a parent allowing OpenAI and Chutes plus a child allowing
-OpenAI and Anthropic leaves only OpenAI. IDs no longer in the active catalog cannot match.
+After an explicit sort, deployment ID breaks any remaining tie deterministically. Without a
+policy sort, the request's explicit provider order applies. Equal-rank deployments still require
+a deployment selector or sort; neither catalog iteration order nor fallback allowance resolves
+that ambiguity.
+
+To prohibit descendant policy sorting, the organization must exclude `routing.sort` from its
+delegation to all six saved resource types and from `delegation.request`, and suppress its own
+sort defaults. `"sort": []` alone only replaces defaults: it does not prohibit another required
+sort. With sorting prohibited, requests still need a deployment selector or an unambiguous
+provider order. See [Delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for section permissions.
+
+## Blended price
+
+`blended_price(inputWeight, outputWeight, 'rate')` returns an exact weighted catalog price in
+USD per million total tokens. For a 3:1 input/output ratio, it is `(3 × input price + output price) / 4`.
+An input price of $1/million and output price of $9/million therefore gives $3/million blended.
+
+```cel
+blended_price(3, 1, 'per_mill_tokens') < decimal('5')
+```
+
+All three arguments must be constants. Each weight is an integer from 0 to 9,007,199,254,740,991;
+at least one must be positive. The rate is `per_mill_tokens`, `per_mill_context_lte_272k`, or
+`per_mill_context_gt_272k`. Equivalent ratios produce the same exact value. A zero weight ignores
+that meter. A missing participating rate produces an unknown result; zero is a valid price.
+
+This comparison does not estimate request cost, output length, cache hits, tools or provider fees.
+It never chooses a context price tier from a token estimate. To require both context tiers below $5:
+
+```cel
+blended_price(3, 1, 'per_mill_context_lte_272k') < decimal('5') &&
+blended_price(3, 1, 'per_mill_context_gt_272k') < decimal('5')
+```
+
+To allow flat pricing or two acceptable context tiers:
+
+```cel
+blended_price(3, 1, 'per_mill_tokens') < decimal('5') ||
+(blended_price(3, 1, 'per_mill_context_lte_272k') < decimal('5') &&
+ blended_price(3, 1, 'per_mill_context_gt_272k') < decimal('5'))
+```
+
+Prices remain exact even for repeating fractions. See the [field reference](/docs/policies/routing-fields#pricing)
+for individual token prices and [spend limits](/docs/policies/limits#spend-allowances) for usage budgets.
+
+## Request facts and context
+
+Routing can read `request.model`, `request.route`, `request.time`, and `request.bodyBytes`.
+Body bytes are the exact incoming JSON size, including whitespace and request controls, before
+redaction. The [field reference](/docs/policies/routing-fields) lists the full catalog inventory.
+
+Token estimates and estimated total request costs are unavailable to routing and rule conditions.
+After selection, redaction and the selected model's tokenizer run once. The resulting estimate
+feeds reservations, token limits and the `estimated_input_tokens` usage meter. Redaction can
+increase token count. Provider context admission remains authoritative; a large local estimate
+does not truncate the request, weaken redaction, or choose another deployment.
+
+## Query bounds
+
+Each CEL expression is limited to 16 KiB of UTF-8 source and 10,000 runtime cost units.
+Conditions, filters and sorting share a compilation budget of 4,096 parsed expression nodes
+per source and 8,192 across distinct applicable sources. Operators, values and field accesses
+count toward that budget; repeated identical expressions in one source compile once.
+All conditions, filters and sort evaluations share 100,000 units per request. Exceeding the
+allowance rejects the request before a hold. These units bound evaluator work, not elapsed time.
+The [document bounds](/docs/policies/editing#document-rules) also apply.
 
 ## Candidate checks
 
-By default, Stogas prepares one candidate. This policy allows up to three local candidate checks:
+There are **no fallback attempts by default**. The gateway prepares one selected candidate. Invalid encryption keys or encrypted content always
+stop the request, including when local fallback is enabled.
+To allow another local credential attempt, explicitly raise `maxPreDispatchCandidates`:
 
 ```json title="policy.json"
 {
 	"version": 1,
-	"routing": {
-		"fallbacks": { "maxPreDispatchCandidates": 3 }
-	}
+	"routing": { "fallbacks": { "maxPreDispatchCandidates": 3 } }
 }
 ```
 
-`maxPreDispatchCandidates` accepts 1, 2, or 3. The smallest explicit value across saved scopes
-wins; omission adds no restriction unless every scope omits it, in which case the default is one.
+The accepted values are 1, 2 and 3, including the first candidate. Required values combine by
+minimum; defaults apply only when no requirement supplies that setting. Fallback allowance does
+not select an order. A failed local credential preparation can advance within the allowance.
 
-Stogas can try preparing the next candidate if the current one cannot be prepared locally,
-such as when a provider-specific request shape is incompatible. Once hold authorization starts,
-there is no second candidate. Balance and policy declines do not trigger a fallback.
-
-This setting never retries a provider call. After dispatch, the client receives the provider result
-or error and decides whether to retry. One client request can create at most one provider attempt
-and one request log through this setting.
+Redaction, tokenization and authorization begin only after a credential is selected. Failures
+from those stages do not select another candidate. Once dispatch begins, the provider result is
+final for this request. Context errors and budget declines never trigger an automatic retry.

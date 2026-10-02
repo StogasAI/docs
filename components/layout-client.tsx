@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from '@fuma-translate/react';
+import { messages } from '@/lib/messages';
+
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { Root } from 'fumadocs-core/page-tree';
 import { LayoutDashboard, Home } from 'lucide-react';
@@ -24,14 +27,15 @@ interface LayoutClientProps {
 }
 
 export default function LayoutClient({ children, tree, baseOptions }: LayoutClientProps) {
+	const t = useTranslations();
 	return (
 		<>
 			<a href="#nd-page" className="stogas-skip-link">
-				Skip to content
+				{t(messages.skipToContent)}
 			</a>
 			<DocsLayout
 				tree={tree}
-				slots={{ themeSwitch: false }}
+				slots={{ themeSwitch: false, languageSelect: false }}
 				{...baseOptions}
 				sidebar={{
 					defaultOpenLevel: 1,
@@ -43,14 +47,14 @@ export default function LayoutClient({ children, tree, baseOptions }: LayoutClie
 								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 							>
 								<Home aria-hidden="true" className="size-4 shrink-0" />
-								<span className="text-[13px]">Landing</span>
+								<span className="text-[13px]">{t(messages.landing)}</span>
 							</StogasLink>
 							<StogasLink
 								href="https://app.stogas.ai/overview"
 								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 							>
 								<LayoutDashboard aria-hidden="true" className="size-4 shrink-0" />
-								<span className="text-[13px]">Dashboard</span>
+								<span className="text-[13px]">{t(messages.dashboard)}</span>
 							</StogasLink>
 
 							{/* GitHub + theme toggle row */}
@@ -59,7 +63,7 @@ export default function LayoutClient({ children, tree, baseOptions }: LayoutClie
 									href="https://github.com/StogasAI/docs"
 									target="_blank"
 									rel="noreferrer noopener"
-									aria-label="Stogas documentation on GitHub"
+									aria-label={t(messages.githubDocumentation)}
 									className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent inline-flex size-8 items-center justify-center rounded-md transition-colors"
 								>
 									<GithubIcon className="size-4" />

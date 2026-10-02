@@ -1,0 +1,211 @@
+---
+title: Request metrics
+description: Understand recorded usage, prices, tool calls, timing, and outcomes.
+---
+
+## Request history
+
+Open **Analytics → Requests** and select a request to inspect its timing, provider attempts,
+usage, cost, and plugin results.
+
+The gateway node links to its verified transparency history, including its boot signing
+key, gateway launch policy and hardware policy. Receipt verification uses the exact boot
+identified by the response receipt. Request logs do not duplicate that key or evidence.
+Published gateway versions link to their GitHub release. Expand **Catalog** for the
+historical configuration identified by the request's chain hash.
+
+The header shows the request outcome. Each provider attempt retains its own result:
+a provider can succeed before a later gateway failure. Grouped rejections show their
+count and exact time range. Empty usage and provider-attempt sections are omitted.
+
+In the raw log, `policy_versions` records the loaded API configuration revisions for
+routing, access and limits. These counters do not identify launch or hardware policies.
+
+Response mode is **Streaming** or **Non-streaming**. The log's `request_type` already
+encodes this distinction: `chat_completion_stream` or `responses_stream` for streaming,
+and `chat_completion_request` or `responses_request` for non-streaming requests.
+
+## Overview statistics
+
+The overview combines one configurable trend with per-request statistics and token and
+cost totals. Select a metric, chart type, and supported statistic: total or rate, arithmetic
+average, minimum, maximum, p50, p95, or p99. The statistics table includes the observed
+range and eligible sample count; selecting a metric opens its average trend.
+
+For a bounded time range, additive totals also offer **Average / hour** and
+**Average / day**. These divide the total by elapsed time, including idle periods.
+Chart buckets use their overlap with the selected range, so partial hours and days
+keep the correct denominator. Per-request averages remain a separate statistic.
+Expand **Data** beneath the chart for unabridged totals, each interval's numbers,
+and the metric's available statistics. Interval timestamps are UTC.
+
+Percentiles are approximate and use individual requests with a known value. The sample
+count shows how many requests qualify; missing values and grouped rejection records do
+not become zero-valued samples. Timing and speed require successful, non-cancelled
+requests. Time to first token also requires observed streaming output.
+
+Generation speed divides generated tokens by full request duration. Its overall value is
+weighted by duration; its arithmetic average and percentiles describe individual request speeds. Selecting a
+chart interval opens that exact range in Requests.
+
+## Breakdowns
+
+In **Analytics → Overview**, change **Group by** to compare API keys, grants, members,
+models, final providers, request types, or outcomes. Choose a ranking metric, direction,
+and number of groups, then select **Apply**. Choose metrics for the table or use bars for
+the ranking metric. Duration and first-token columns show per-request averages.
+
+The table returns up to 100 groups. Its total always covers all matching requests, including
+groups outside the displayed ranking. Requests counts recorded requests, including grouped
+rejections; retries do not add requests. Spending remains the recorded charge, counted once.
+These counts are analytics, not authoritative admission or quota counters.
+
+Select a named group to open its requests within the same time range and filters. Model
+filters use `model:` with a model ID; suggestions include current catalog names. Model
+breakdowns combine revisions of the same model. **Final provider** groups each request once;
+`provider:` matches any attempt, while `final_provider:` matches only the last attempt.
+
+Your grouping, ranking, metrics, presentation, filters, and timespan are remembered in this
+browser. Access is checked on every query. Queries have execution and memory limits; narrow
+the timespan or filters if a query cannot finish. A failed query does not return partial totals.
+
+## Meters and cost
+
+The request log and the optional signed `stogas` response object use the same `meters`.
+Each entry contains a quantity. Priced entries also contain a rate key, the USD price for
+that rate, and the resulting USD charge. Quantities and money are decimal strings.
+
+```json
+{
+	"input_tokens": {
+		"quantity": "1000",
+		"rateKey": "per_mill_tokens",
+		"rateUsd": "2",
+		"usd": "0.002"
+	},
+	"total_tokens": {
+		"quantity": "1500"
+	}
+}
+```
+
+A published free price is `"0"`. An informational count omits all three pricing fields. Missing
+quantities are unknown; they are not zero. Sum the available meter charges to recover
+the recorded upstream cost. Totals are never charged again.
+
+| Meter                                                        | Meaning                                                                                                                              |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `input_tokens`                                               | Ordinary input tokens, excluding separately counted cache reads and writes.                                                          |
+| `cached_input_tokens`                                        | Tokens read from the provider's prompt cache.                                                                                        |
+| `cache_write_input_tokens`                                   | Cache-write tokens without a reported duration, excluding the duration-specific counts.                                              |
+| `cache_write_5m_input_tokens`, `cache_write_1h_input_tokens` | Tokens written for the stated cache duration. One request can contain both.                                                          |
+| `output_tokens`                                              | Output tokens excluding separately reported reasoning.                                                                               |
+| `reasoning_tokens`                                           | Reported reasoning tokens.                                                                                                           |
+| `input_text_bytes`                                           | Decoded UTF-8 request text after redaction, before provider conversion. Always unpriced.                                              |
+| `estimated_input_tokens`                                     | Local input estimate after redaction, including framing and the safety buffer, capped at the deployment context. Always unpriced.    |
+| `total_input_tokens`                                         | Usable observed input, including cache reads and writes once.                                                                        |
+| `total_output_tokens`                                        | Usable observed output, including reasoning once.                                                                                    |
+| `total_tokens`                                               | Input plus output, when both totals are known.                                                                                       |
+| `total_cache_write_tokens`                                   | All reported cache writes, with each duration counted once.                                                                          |
+| `hosted_tool_calls`                                          | Distinct provider-hosted calls exposed in the response, including visible failures.                                                  |
+| `client_tool_calls`                                          | Distinct function or custom-tool calls returned for your application to handle. This does not confirm execution by your application. |
+
+Priced tool meters retain the provider's supported tool and rate, such as
+`anthropic_web_search_calls` with `per_1k_calls`. Their quantities can differ from the
+visible hosted-call total: a provider can report a failed call without charging for it.
+Repeated stream updates and the final response count the same call only once. Tool results
+you send as input do not count as new calls.
+
+`input_text_bytes` counts text values, including tool descriptions and argument strings.
+It excludes JSON syntax, property names, protocol identifiers, and protected reasoning replay.
+Equivalent literal and JSON-escaped text has the same count. Use it to compare input size
+across tokenizer families; it does not measure the provider's complete rendered prompt.
+The dashboard displays this as **Input STT**, dividing bytes by four without per-request
+rounding. [Input STT quotas](/docs/policies/limits#input-stt) use the same quantity for successful
+billable requests. Request records retain the exact integer byte count.
+
+Compare `estimated_input_tokens` with `total_input_tokens` for the same `catalog_chain_hash`
+to check local estimation against provider usage. Opaque reasoning contributes one estimated
+token per encoded byte, alongside the visible-text estimate. This is a conservative heuristic,
+not a provider-guaranteed count. Context-capped estimates do not measure tokenizer drift above
+that cap; the recorded gateway version identifies the estimator implementation. Provider-hosted
+tools can introduce additional input after this estimate. Their reservation can exceed the
+recorded estimate without another local tokenizer pass.
+
+The estimate limits reservations, not provider context admission. Redaction can increase token
+counts; providers check their own context limits on the transformed request. The gateway never
+truncates input or weakens redaction to make an estimated count fit.
+
+Priced quantities explain the bill; informational meters preserve estimates and usable reported usage.
+Token limits use `total_tokens`;
+when that total is unavailable, the original token reservation remains counted. Requests
+that never reach a provider consume no token allowance.
+
+Four request-wide amounts accompany the meters:
+
+- `upstream_cost_usd`: the recorded provider cost.
+- `billed_cost_usd`: the amount charged to your Stogas balance, which differs for BYOK.
+- `cache_read_savings_usd`: savings compared with ordinary input at the applicable rate.
+- `cache_write_overhead_usd`: the extra write cost compared with ordinary input.
+
+Cache savings and overhead use the request's applied rates. Null means unavailable;
+`"0"` means known zero. A cache write costing $1.25 instead of $1 of ordinary input has
+$0.25 overhead, not $1.25.
+
+## Catalog history
+
+`catalog_version` identifies the approved catalog used for the request. The resolved
+`catalog_chain_hash` identifies its exact author, model, deployment, route and provider
+settings. Request details retain those historical settings when the live catalog changes.
+The chain supplies catalog node identities without repeating their array in every log.
+The separate `node_id` identifies the gateway VM that handled the request.
+
+## Timing
+
+Request duration starts when the gateway's inference handler receives the decoded request
+body. It ends when the gateway captures the final request record.
+
+The `performance` object records `total_ms`, `provider_ms` and nullable `ttft_ms`.
+Provider time spans execution and retries, including any upstream connection setup
+and time between attempts. For streams, it also includes response backpressure;
+it does not measure model compute alone. The remaining time covers gateway
+preparation and final response processing.
+
+Overview charts and request details use the same provider time.
+Provider attempts retain their own durations so you can inspect retries and
+fallbacks. Their sum can be shorter than `provider_ms` because it excludes time
+between attempts.
+
+Total duration excludes the client's connection and TLS handshake, request upload and body
+decoding, final response transmission, and asynchronous settlement. It is not end-to-end client
+latency. Connection setup is reused across requests and is not reported as a separate request
+stage. Measure client-side elapsed time when you need the full user-visible latency.
+
+For streaming requests, **time to first token** runs from the same request start until the
+response writer accepts the first generated token-bearing output. It includes admission and
+any retries before that output. Unary requests and streams without generated token-bearing
+output have no time-to-first-token value.
+
+The timing bar spans total request duration. Its marker shows the first generated
+output; **Response** is the remaining interval after that marker. Provider duration
+overlaps these intervals and is listed separately.
+
+## Outcomes and billing
+
+Provider outcome, response delivery, cancellation and the recorded charge describe different parts of a request. A
+provider error does not mean the gateway failed to process the request. An error can still have
+billable usage, and a stream can return output before failing.
+
+## Redaction
+
+The **Stogas redaction** section shows replaced items and scan/replacement duration in microseconds.
+This duration is already included in admission time. Zero replacements means the scan found
+no matches; missing metrics mean execution was not recorded. Loading or compiling the policy
+is not part of the plugin's scan duration.
+
+Disabled redaction emits no plugin entry. Request details omit absent redaction and
+empty usage sections. Failed requests with recorded usage still retain their charges.
+
+Filter requests with `redaction:redacted`, `redaction:no_matches`, or
+`redaction:not_recorded`. See [redaction metrics](/docs/policies/plugins#limits-of-detection)
+for the recorded fields and privacy boundaries.

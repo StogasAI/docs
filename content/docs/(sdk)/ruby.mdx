@@ -1,0 +1,76 @@
+---
+title: Ruby
+description: Use the OpenAI Ruby client through verified transport.
+---
+
+The Stogas gem owns protected connections; the official OpenAI gem provides the API
+client. Set `STOGAS_API_KEY` and `STOGAS_MODEL` before running the example.
+
+## Install
+
+Use Ruby 3.3 or later.
+
+```console
+gem install stogas --version 0.1.0.alpha.1
+gem install openai --version 0.94.0
+```
+
+## Stream a response
+
+```ruby
+# frozen_string_literal: true
+require "openai"
+require "stogas"
+
+def stogas_client(base_url, api_key, http)
+  OpenAI::Client.new(
+    base_url: base_url,
+    api_key: api_key,
+    max_retries: 0,
+    timeout: 45 * 60,
+    http_client: http
+  )
+end
+
+def local_http
+  OpenAI::NetHTTPClient.new do |connection|
+    connection.ignore_eof = false
+    connection.proxy_from_env = false
+    connection.proxy_address = nil
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  # An explicit URL can also use a separately managed verifier CLI.
+  transport = Stogas::Transport.new unless ENV.key?("STOGAS_BASE_URL")
+  http = local_http
+  stream = nil
+  begin
+    client = stogas_client(ENV.fetch("STOGAS_BASE_URL") { transport.base_url }, ENV.fetch("STOGAS_API_KEY"), http)
+    stream = client.chat.completions.stream_raw(
+      model: ENV.fetch("STOGAS_MODEL"),
+      messages: [{role: "user", content: "Say hello in one sentence."}]
+    )
+    stream.each do |chunk|
+      chunk.choices.each { |choice| print(choice.delta.content) if choice.delta.content }
+    end
+  ensure
+    stream&.close
+    http.close
+    transport&.close
+  end
+end
+```
+
+Reuse the client and HTTP pool between requests. For a buffered response, use
+`client.chat.completions.create` with the same model and messages. The example disables
+SDK retries and ambient HTTP proxies. `ignore_eof = false` makes truncated HTTP responses
+raise an error. The transport shares reusable protected connections across requests.
+
+Ctrl-C interrupts this program and runs cleanup. If you stop reading a stream early,
+close it and treat the result as incomplete; do not automatically send the request again.
+Close the HTTP client before closing the transport, as shown above.
+
+The [complete example](https://github.com/StogasAI/verifier/tree/main/examples/ruby-openai)
+uses the official Ruby client. Set `STOGAS_BASE_URL` to the complete printed URL
+if you prefer running the [verifier CLI](/docs/cli) separately.

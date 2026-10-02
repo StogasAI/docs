@@ -3,38 +3,43 @@ title: Edit a policy
 description: Open the policy editor, save a change, and resolve validation errors.
 ---
 
-Open a policy editor at the scope you want to change. Organization, grant, and key policies use
+Open a policy editor at the scope you want to change. All saved policies use
 the same JSON format. Do not add a scope or resource ID inside the document.
 
 ## Open the editor
 
-| Scope        | Where to edit                                   | Who can edit                                                                                                    |
-| ------------ | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Organization | Open **Organization policy** from **API Keys**. | Members with organization-wide API key management.                                                              |
-| Grant        | Open the grant from **Grants**.                 | Members with organization-wide API key management.                                                              |
-| API key      | Open the key, then **Settings**.                | Members with organization-wide API key management, or the key owner when the grant permits member key settings. |
+| Scope          | Where to edit                                                                          | Who can edit                                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Organization   | Open **Organization policy** from **API Keys**.                                        | Members with organization-wide API key management.                                                               |
+| Folder         | Open **Manage folders**, then the folder's **Policy** action.                          | The folder's managers or organization-wide API key managers.                                                     |
+| Grant          | Open the grant from **Grants**, then **Settings**.                                     | The grant's managers, its folder's managers, or organization-wide API key managers.                              |
+| Member or role | Open **Members**, choose the **Members** or **Roles** tab, then **Policy** on the row. | Members with organization-wide API key management.                                                               |
+| Credential     | Open **BYOK**, then the credential's **Policy** action.                                | Members with credential management.                                                                              |
+| API key        | Open the key, then **Settings**.                                                       | The key's managers, inherited folder or grant managers, organization-wide API key managers, or its member owner. |
 
-A member key owner also needs permission to manage their own keys.
+Member owners manage their own keys. Parent policies may restrict
+which sections any manager can edit. Organization-wide key readers can inspect saved policies;
+credential readers can inspect credential policies. Reading does not reveal stored credentials.
 See [Scopes and inheritance](/docs/policies/scopes) before changing a shared policy.
 
 ## Set a lifetime spend limit
 
-This complete policy limits the scope to $10 in lifetime Stogas charges:
+This complete policy limits the scope to $10 in lifetime upstream usage at catalog rates:
 
 ```json title="policy.json"
 {
 	"version": 1,
 	"limits": {
 		"spend": {
-			"lifetimeUsd": "10.00"
+			"lifetimeUsd": "10"
 		}
 	}
 }
 ```
 
 The `spend` object is required. `limits.lifetimeUsd` is not a valid field.
-Use a decimal string for money, such as `"10.00"`, rather than the JSON number `10`.
-For other settings, use the [policy reference](/docs/policies/reference).
+Use a decimal string for money, such as `"10"`, rather than the JSON number `10`.
+Use the [document fields](/docs/policies#document-fields) to find other settings.
 
 Saving at organization scope makes the limit shared across all organization keys. Saving on a key
 limits only that key. Existing lifetime spend and pending requests count toward the allowance;
@@ -44,9 +49,19 @@ setting a limit does not start a new lifetime counter.
 
 1. Start from the saved policy and edit the fields you want to change.
 2. Use **Format JSON** if needed. Formatting changes layout, not policy validity.
-3. Save the policy. Stogas validates it together with the policies that apply to affected keys.
+3. Save the policy. We check its readable settings and the policies that apply at this resource.
+   [Encrypted plugins](/docs/policies/plugins#encrypted-plugins) are checked before inference.
 4. On an API key, review its effective policy and **Status** to check the resulting restrictions
    and usage.
+
+Required sort orders must agree. A parent save preserves child sources and revisions, so an
+existing child can become invalid. Its source and the conflict remain readable for repair.
+A successful save updates matching sources in cached dashboard previews. A stale revision
+rejects the save and keeps the draft available to copy before reloading.
+
+Encrypted sections show their key identifier and byte count. Expand **Show encrypted blob**
+to inspect a ciphertext value. **Copy JSON** always copies the complete saved source, including
+collapsed ciphertext.
 
 Suggestions appear as you type, with or without opening quotation marks. Use the arrow keys
 and **Enter**, or select a suggestion. The editor inserts the JSON quotes and preserves an
@@ -54,7 +69,8 @@ existing value when you replace a field name. **Esc** dismisses suggestions with
 the draft; **Ctrl + Space** opens them again.
 
 Suggestions include policy fields, preset flags, enum values, time zones, and catalog IDs.
-Inside `routing.query`, they include registered fields, typed operators, and values from the
+Inside routing expressions, they include registered fields, `blended_price` and its explicit rates,
+operators, and values from the
 loaded catalog. Catalog availability does not prevent manual editing or change policy validation.
 Enter your own amounts, dates, limit names, and custom expressions.
 
@@ -62,47 +78,89 @@ Enter your own amounts, dates, limit names, and custom expressions.
 The keyboard button lists these shortcuts.
 
 A save replaces that scope's complete policy, not just the fields in your draft.
-Parent changes leave each child's saved policy and manual enabled state intact.
+Enabled state and expiration are resource settings. Changing them leaves the policy and its revision unchanged. Clearing a policy preserves these settings. Disabling any applicable resource blocks new requests immediately.
 
-Changes that tighten a policy cannot authorize a new request using an older policy.
+A live revision check rejects an outdated policy before its request is dispatched.
 Already-authorized requests retain their reservation. See
 [When changes take effect](/docs/policies/scopes#when-changes-take-effect).
 
-## Remove a setting
+## Check execution before saving
 
-Delete the field from the JSON. Do not set it to `null`, and remove any object left empty.
-For example, removing the last spend setting also means removing `spend` and `limits`.
+Optionally call `POST /v1/policies/validate` with your API key in `Authorization: Bearer ...`.
+Include the organization and key, every applicable folder, grant, role and member, and only the selected credential. Each entry has a `scope`, optional resource `id`, and `config`. Use `null` or `{ "version": 1 }` for an empty config; omit inapplicable scopes.
 
-To remove every optional setting at this scope, save:
-
-```json
+```json title="Request body"
 {
-	"version": 1
+	"policySources": [
+		{ "scope": "organization", "config": { "version": 1 } },
+		{ "scope": "key", "config": { "version": 1 } }
+	]
 }
 ```
 
-Parent restrictions and platform safeguards still apply. Removing a spend limit does not reset
-lifetime spend. Recurring limits have separate
-[accounting rules](/docs/policies/limits#edit-or-remove-limits).
+For [encrypted plugins](/docs/policies/plugins#encrypted-plugins), include the required labeled
+roots in `encryption_keys` in the same body to check their contents. The endpoint accepts the same transports as inference;
+[choose the transport before sending your key](/docs/cli#send-the-key-with-a-request).
 
-## Resolve a validation error
+| Result              | Meaning                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `status: "valid"`   | All supplied execution rules passed validation.                                                     |
+| `status: "partial"` | Some encrypted sections remain unchecked because their roots were not supplied.                     |
+| Error               | A supplied key is malformed, cannot open the encrypted content, or the execution rules are invalid. |
 
-| Problem                                         | What to check                                                                                                    |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Invalid JSON                                    | Use double-quoted property names and strings. Remove comments and trailing commas.                               |
-| An invalid or unrecognized field under `limits` | Put money limits under `limits.spend` and request rates under `limits.requests`.                                 |
-| A setting has the wrong type                    | Keep money as strings and counts as numbers; use the exact types in the reference.                               |
-| An empty object is rejected                     | Omit an unused section instead of saving `"limits": {}`.                                                         |
-| A routing expression is rejected                | Check the [operators](/docs/policies/routing#query-syntax) and [field reference](/docs/policies/routing-fields). |
-| A draft is valid but cannot be saved            | Check parent restrictions, combined pattern limits, time zones, and your current permissions.                    |
-| The saved version changed                       | Keep a copy of your draft, reload the saved policy, and reapply the changes you still want.                      |
+The response includes `scope: "execution"` and an `uncheckedPlugins` list identifying any
+unchecked sources by scope, optional ID and rule name where applicable. Include distinct IDs
+for multiple roles. Plaintext rules and every encrypted section with a supplied root are checked,
+including conditional sections that would be inactive for a particular inference request.
 
-A conflict does not overwrite someone else's save. **Reload saved policy** replaces the current
-draft, so copy any work you want to keep first.
+This endpoint saves nothing and creates no billing hold. It checks the proposed combination;
+it does not guarantee that later policy changes will work or replace save-time checks for limits,
+editing permissions, and revision conflicts. See the
+[API reference](/docs/reference/gateway/validatePolicy) for the request and response schema.
+
+## Read inherited policies
+
+Anyone who can inspect a key can read all policies that apply to it. The detail response
+includes each source in `policies`, its revision, the combined `effectiveConfig`, and its
+`configDigest`. Key lists omit policy bodies and the combined digest.
+
+Plaintext inherited settings are visible to key readers. Encrypt sensitive plugin settings
+before saving them if these readers must see only ciphertext. Encrypted sources remain in
+`policies` exactly as stored; `uncheckedPlugins` identifies sections that the preview cannot
+decrypt. The gateway checks them when supplied with the matching customer key.
+
+Previews show each encrypted blob's byte count. Choose **Show encrypted blob** to expand one.
+**Copy JSON** always copies the complete saved source, including ciphertext that is collapsed.
+
+Editing follows the resource's management permissions and any restrictions imposed by parent
+policies. Reading an inherited source does not grant permission to change it.
+
+An organization can supply decryption keys through its own trusted service. A client that
+actually receives a raw decryption key can decrypt the corresponding contents.
+See [Encrypted plugins](/docs/policies/plugins#encrypted-plugins).
+
+## Document rules
+
+Only `version: 1` is required. Omit unused settings; an empty policy is stored without a body.
+Unknown fields, duplicate JSON keys, invalid expressions and unsupported scope permissions are
+rejected. Scope and identity come from the resource. Membership assignments, enabled state and
+expiration remain resource settings.
+
+A saved source is limited to 256 KiB of canonical UTF-8 JSON. Encrypted plugin contents count
+by their decoded size, with a separate bound for the stored envelope. A combined
+configuration and its readable preview each have a 512-KiB budget. Identical source settings and
+plugin sections share the configuration budget. Encrypted sections count their decoded content
+size; independently encrypted copies count separately because their contents are unknown. Expressions,
+redaction work and database counters also have the bounds described on their topic pages.
+The same combined size and expression budgets apply across distinct credential policies examined
+by one request. Shared content counts once; exceeding a budget rejects the request rather than
+silently removing a routing candidate. `policy_work_limit_exceeded` means this combined budget
+was exceeded; reduce distinct policy content or expressions across the assigned credentials.
+A request policy has the smaller [16-KiB wire limit](/docs/policies/request-policies#request-document).
 
 ## Use an external editor
 
-Add the optional `$schema` field for structural checks in editors that support JSON Schema:
+Add the public schema URL for field completion in a JSON-aware editor:
 
 ```json
 {
@@ -111,6 +169,5 @@ Add the optional `$schema` field for structural checks in editors that support J
 }
 ```
 
-A saved source can contain at most 16 KiB of canonical JSON. Stogas stores normalized JSON;
-comments are not accepted and formatting is not retained. Schema checks do not replace save-time
-validation of routing, time zones, and custom patterns.
+The schema checks document structure. Saving also checks CEL types, parent permissions,
+combined rules and current revisions. Encrypted contents require the matching root for execution validation.

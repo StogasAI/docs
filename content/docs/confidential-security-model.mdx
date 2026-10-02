@@ -1,112 +1,106 @@
 ---
 title: Security and trust model
-description: The detailed guarantees and limits of Stogas gateway verification.
+description: The guarantees and limits of our confidential gateway connections.
 ---
 
-Stogas runs each API gateway inside an AMD SEV-SNP confidential virtual machine. The surrounding
-host can stop or delay the gateway, but the hardware is designed to prevent it from reading the
-gateway's memory, private keys, provider credentials, or plaintext requests.
+Our gateways run the complete request path inside AMD SEV-SNP confidential virtual machines.
+The hardware protects guest memory from the host. The host can still stop, delay or observe traffic
+patterns; attestation does not prevent denial of service or eliminate hardware vulnerabilities.
 
-## The verification chain
+A gateway's configured region is an operator declaration delivered during encrypted startup.
+Regions use country codes, with state codes for US locations, such as `FR` or `US-VA`.
+AMD attestation identifies hardware and its security state; it does not prove geographical location.
 
-1. **Release provenance:** GitHub Actions and Stogas independently authorize the same public source, IGVM hash, launch policy, and SNP measurement.
-2. **Hardware attestation:** AMD-signed SNP evidence proves an approved measurement booted on genuine hardware at an accepted security version.
-3. **Workload binding:** SNP report data binds the TLS key, public certificate hashes, and application keys to that measured guest. The quote-bound signing key signs the active catalog in every heartbeat and the catalog used in every response receipt.
-4. **Freshness:** every trusted node's signed drand round is at most two minutes older than the locally accepted bundle creation time. The verifier clock separately rejects delayed, future-dated, or expired bundles.
+## Verification chain
 
-No root of trust is accepted from the downloaded bundle. The verifier ships the AMD, Sigstore, drand, and Stogas release roots it trusts.
-Because the freshness checks use the local wall clock, follow the
-[client clock guidance](/docs/verification#keep-the-client-clock-accurate) for servers,
-containers, browsers, and managed runtimes.
+The SDK starts with compiled Stogas, Sigstore and hardware-vendor authorities. Downloaded evidence
+cannot replace those roots.
 
-## Request path
+1. Our root authorizes an online signing key. Separate keys and build profiles keep staging
+   from authorizing production.
+2. The online key signs a complete approval manifest selecting gateway releases, catalogs and the
+   hardware policy. It cannot authorize itself or another signing key.
+3. Build evidence links approved artifacts to their public source and workflow. GitHub attests both
+   the IGVM and manifest. Our countersignature records approval of the same manifest.
+4. AMD evidence authenticates the guest measurement, hardware identity, security state and bound
+   keys. Vendor certificate chains and signed revocation lists are checked locally.
+5. Fresh session attestation binds the client's challenge to the protected connection. The session
+   also commits to the gateway's logged boot evidence.
 
-Verification and evidence publication happen outside the inference request path. Once a bundle is active, requests use the normal OpenAI-compatible endpoints. This avoids a live dependency on GitHub, Sigstore, Rekor, AMD KDS, drand, or the evidence service for each model request.
+Our release signatures use the `stogas signed document v1` purpose label and canonical manifest
+contents. A release identity hashes its unsigned manifest, so key rotation does not turn unchanged
+software into a different release. Online-key changes require a root-signed key manifest.
+The root-signed authorization expires after 30 days and is renewed before expiry. A newer verified
+manifest can retire a key sooner; a publisher hiding that update can replay the older authorization
+only until its signed deadline. Renewal does not change gateway identities or invalidate historical receipts.
 
-The managed native SDK transport additionally checks that the upstream TLS connection presents a certificate hash and public key belonging to the same verified node.
+Signatures prove authorization and provenance. They do not prove that an independent rebuild took
+place or that approved source has no vulnerabilities.
 
-If that exact pin check fails, the native transport immediately verifies the latest bundle and
-retries once only when the accepted bundle changes. The failed TLS handshake sends no inference
-request bytes. Network, WebPKI, and other TLS failures are not retried automatically.
+## Native attested TLS
 
-Browser and optional native E2EE encrypt the complete inner inference request once under a random content key, then wrap that key independently to every node in the verified bundle. The request E2EE media type selects this mode before the gateway reads the body. Outer credentials have no authority in E2EE mode. Random L4 routing therefore requires no session affinity or plaintext-aware intermediary. The selected guest decrypts inside confidential memory and encrypts response metadata, body or SSE records, errors, and an authenticated terminal record.
+The native SDK verifies fresh hardware evidence carried in the TLS certificate and checks the TLS
+handshake signature. No credentials or inference content leave the client before that succeeds.
+The profile requires TLS 1.3 with X25519MLKEM768 and an ML-DSA-65 handshake signature.
+Unsupported peers fail closed.
 
-The outer request exposes only the normal destination, inference endpoint, E2EE protocol version, random request ID, bundle hash, short acceptance deadline, recipient key wraps, ciphertext length, and network timing. One ciphertext contains the API key, complete OpenAI request body, relevant content negotiation, optional provider credential, and receipt preference. The encrypted response contains its status, safe response headers, body or SSE records, and terminal state. This keeps routing, freshness checks, and recipient selection outside the ciphertext while keeping credentials and inference semantics inside it.
+Fresh ephemeral session keys provide forward secrecy. A byte-for-byte relay can carry the encrypted
+connection without reading it. The measured gateway constructs attestations from its own connection
+state; it does not expose an endpoint that attests arbitrary caller-provided values.
 
-The E2EE wire is version 1. Encrypted responses start with
-`STGE || 0x01 || nonce[12]`. The nonce is public random data, not a secret. It is the base AES-GCM
-nonce; each implicit record sequence is XORed into its final eight bytes and bound with the request
-transcript in authenticated data. Each record contains only a four-byte ciphertext length and the
-ciphertext. Record 0 contains metadata, later non-empty records contain body bytes, and the first
-authenticated empty record terminates the response. The client rejects truncation. Later outer bytes
-are ignored because they cannot change the authenticated response. The random nonce prevents reuse if
-the same encrypted request can produce responses on more than one verified node.
+## E2EE over HTTPS
 
-The same signed response receipt, `stogas.response-proof.v1`, travels inside the encrypted response when `Stogas-Receipt: v1` is selected. E2EE does not introduce a second proof format. The receipt binds the request ID, canonical creation time, node ID, hashes of the exact plaintext request and response bytes, catalog digest and ordered selection IDs, settled pricing, timing, and the E2EE transcript when present. Active-bundle verification requires the exact node and catalog to be in the accepted bundle. AEAD protects the live exchange; the node signature remains the durable receipt. Encrypted request IDs are claimed once before provider execution to reject replay.
+Browser APIs do not let browser JavaScript inspect the certificate used by `fetch`. Our Fetch SDK
+therefore verifies a fresh application handshake and encrypts directly to the selected gateway.
+Native applications can select the same E2EE mode.
 
-## Release authorization
+The hybrid X-Wing setup establishes reusable session secrets. Directional keys and record counters
+protect binary request and response records, including API keys, provider credentials, status,
+headers and streaming content. The gateway alone owns those session secrets. Replays, duplicate
+starts, modified records, missing terminal records and trailing bytes fail verification.
 
-The production Stogas release public key is:
+The L7 load balancer sees the outer connection and an opaque owner identifier. It cannot decrypt
+inner credentials or prompts. Connection loss may require a new session; it does not justify
+repeating an inference that may already have executed.
 
-```text
-MCowBQYDK2VwAyEAByVn3LvWVbf3YkokMZPvir70vcDu0nNflgXoM0Y8aQU=
-```
+## Quantum protection
 
-Gateway and catalog releases use one evidence format:
+Native attested TLS requires hybrid TLS 1.3 support. E2EE supplies its own inner hybrid key exchange,
+independent of whether outer HTTPS uses TLS 1.2 or TLS 1.3. Both combine classical and post-quantum
+key establishment. Classical-only HTTPS remains vulnerable to future decryption of recorded traffic
+by a sufficiently capable quantum adversary.
 
-- `schema`: `stogas.release-evidence.v1`, identifying the envelope format;
-- `manifest`: the release identity, artifact hashes, and applicable policy;
-- `signature`: the Stogas approval, containing `key_id` and an Ed25519 `signature`;
-- `attested_builds`: the build provenance, currently one GitHub Actions Sigstore bundle.
+Stogas root authorizations, approvals, hardware policies, release countersignatures and receipts use
+ML-DSA-65. Rekor records a SHA-512 commitment to each logged signed document using a classical
+submission key; that key cannot authorize a Stogas document. AMD attestation, GitHub build proofs,
+Rekor's own signatures and ordinary HTTPS certificates retain their external cryptographic assumptions.
+The complete verification chain therefore cannot be described as quantum-safe.
 
-Stogas signs `stogas signed document v1\n` followed by compact, recursively key-sorted manifest JSON without a trailing newline. The manifest's signed `schema` is `stogas.gateway.release.v1` or `stogas.catalog.release.v1`. Manifest files add one newline, which is included in their GitHub-attested hash. The outer schema versions the evidence packaging; the signed manifest schema authenticates the independently published release document's type and format. Unsupported envelope versions are rejected.
+## Evidence and availability
 
-The fleet entrypoint, `bundles/latest.json`, uses the outer schema `stogas.confidential-bundle-envelope.v1` with `body` and `body_sha256`. Its body retains `stogas.confidential-bundle.v1`. The checksum identifies the body bytes; trust comes from the individual proofs inside them.
+The current bundle contains signed decisions and supporting evidence, rather than a changing list
+of live nodes. The SDK prefers our R2 origin and can recover from our independent AWS replica.
+It verifies locally and reuses unchanged objects. A validly signed revocation constrains affected
+nodes even if another part of the update cannot be installed.
 
-The gateway build measures the completed IGVM with `igvmmeasure --check-kvm gateway.igvm measure`, then records its launch measurement and SHA-256 hash in the manifest. GitHub attests both the IGVM and manifest. The launch policies are embedded in that manifest and need no separate signature or attestation. The offline verifier compares each SNP report with the authenticated manifest measurement and the policy for its exact chip ID.
+Our gateways check approved releases regularly and stop accepting requests if their release is
+withdrawn. The SDK refreshes evidence when needed, without background polling. Fleet updates allow
+active requests to finish and establish fresh connections for new work. Temporary failed downloads
+do not erase usable evidence; expired required evidence cannot authorize new work.
 
-For catalogs, GitHub attests the manifest and both runtime and public artifact hashes. Stogas rebuilds the tagged source and signs the same manifest after matching the results. Its signature proves approval; the current evidence does not prove that Stogas independently rebuilt either release. The verifier checks the pinned GitHub source and workflow identities as well as both signatures.
+Revocation freshness is bounded by AMD's signed CRL validity. A publisher can withhold a newer CRL
+until the older one expires. Once a client learns an authentic revocation, a lagging replica cannot
+restore the revoked identity.
 
-The global hardware document remains separate. Stogas signs it as Ed25519 DSSE and publishes that signed envelope to public Rekor v1. The bundle carries the complete inclusion proof for offline verification. This records an operator policy decision, which has no build to attest. Hardware and launch policies do not refer to each other. GitHub's build-log entry records GitHub's attestation, not the later Stogas approval signature.
+## Receipts and provider boundaries
 
-Production verification rejects the separate staging signing key and staging build placeholders. Staging verification also accepts production releases. A staging placeholder binds the same artifact and manifest hashes and still requires a valid Stogas signature.
+The same signed response receipt is available through `Stogas-Metadata: v1` in either confidential
+mode. One signature covers the exact request and response hashes and the canonical `stogas`
+metadata, excluding the receipt itself. This includes usage, routing and any provider-specific fields. A receipt does not prove that a client-verified confidential connection was used.
 
-## Availability
+Ordinary HTTPS relies on our routing and TLS endpoint. After-the-fact receipts and public boot
+history do not add the connection confidentiality supplied by attested TLS or E2EE.
 
-A verified bundle can contain older records kept for recovery. The verifier reports them separately and never adds them to the trusted set.
-
-A valid bundle can therefore have an empty trusted set. Managed transports treat it as an explicit
-unavailable-fleet state: they stop protected requests and poll both evidence origins every four to
-eight seconds. When a non-empty bundle is active, both official origins must return verified empty
-candidates before they can replace it. The transport does not retain the older trust set after that
-replacement.
-
-When no previously routable gateway still has fresh evidence, a verified replacement can restore
-server capacity before the next bundle is published. The first recovery bundle fixes that initial
-cohort. Later gateways still wait until every unexpired client trust set can authenticate them.
-Clients do not trust the replacement early: they must verify the recovery bundle before connecting.
-
-Bundles are delivered through independent Cloudflare/R2 and AWS CloudFront/S3 origins. Managed
-clients select an origin randomly and fail over to the other when delivery or verification fails.
-Both origins carry the same public evidence; neither origin can create trust because every bundle
-is checked locally against roots shipped with the verifier.
-
-The verifier fails closed after bundle expiry. Confidential verification can authenticate a reachable gateway, but it cannot prevent a network, host, or service outage.
-
-## What is not proven
-
-Confidential verification does not:
-
-- prove that reviewed code has no vulnerabilities;
-- hide traffic timing or destination metadata;
-- hide ciphertext length;
-- make an upstream AI provider confidential unless that provider offers its own verified confidential execution;
-- prevent the host or operator from stopping service;
-- let browser JavaScript inspect the certificate used by `fetch`;
-- protect API keys from malicious same-origin browser script.
-
-The v1 E2EE recipient profile uses HPKE with the hybrid MLKEM768-X25519 (X-Wing) KEM, HKDF-SHA-256, and AES-256-GCM. The same suite protects Control-to-guest secret release. Stogas does not claim complete post-quantum security: AMD SNP, drand, WebPKI, Sigstore, and existing signing keys still depend on classical cryptography.
-
-The public gateway listener uses TLS 1.3 and offers hybrid ML-KEM key exchange first while retaining classical fallback for standard clients. Managed native transports require X25519MLKEM768 with no classical fallback. E2EE protects application payloads when a browser or other standard client negotiates classical TLS. These controls do not make the complete attestation trust chain post-quantum.
-
-The recipient key exists only in one guest generation and is destroyed when that guest stops. Because v1 uses a non-interactive static HPKE recipient key, compromise of that key while the generation is alive could expose requests recorded for that generation; v1 does not claim interactive forward secrecy.
+The gateway enforces each provider's supported verification and encryption. A gateway receipt does
+not prove an upstream model ran in a TEE. Provider evidence varies; we return only useful information
+that the selected provider actually supplies.

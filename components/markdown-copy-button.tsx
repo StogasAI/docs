@@ -1,5 +1,8 @@
 'use client';
 
+import { useTranslations } from '@fuma-translate/react';
+import { messages } from '@/lib/messages';
+
 import { cn } from '@/lib/cn';
 import { readBoundedResponseText } from '@/lib/http';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
@@ -10,13 +13,14 @@ const MAX_MARKDOWN_BYTES = 2 * 1024 * 1024;
 
 export function MarkdownCopyButton({
 	markdownUrl,
-	children = 'Copy Markdown',
+	children,
 	className
 }: {
 	markdownUrl: string;
 	children?: string;
 	className?: string;
 }) {
+	const t = useTranslations();
 	const [loading, setLoading] = useState(false);
 	const [copied, setCopied] = useState(false);
 	const [failed, setFailed] = useState(false);
@@ -72,7 +76,13 @@ export function MarkdownCopyButton({
 			) : (
 				<Copy aria-hidden="true" />
 			)}
-			{loading ? 'Copying…' : copied ? 'Copied' : failed ? 'Copy failed — retry' : children}
+			{loading
+				? t(messages.copying)
+				: copied
+					? t(messages.copied)
+					: failed
+						? t(messages.copyFailed)
+						: (children ?? t(messages.copyMarkdown))}
 		</button>
 	);
 }

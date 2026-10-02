@@ -1,3 +1,5 @@
+import { getMessage } from '@/lib/i18n';
+import { messages } from '@/lib/messages';
 import { source } from '@/lib/source';
 import { openGraphImage } from '@/lib/og-image';
 import { notFound } from 'next/navigation';
@@ -11,7 +13,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
 	const page = source.getPage(slug.slice(0, -1));
 	if (!page) notFound();
 
-	return openGraphImage(page.data.title, page.data.description, 'Platform');
+	return openGraphImage(
+		page.data.title,
+		page.data.description,
+		getMessage(messages.platform, page.locale)
+	);
 }
 
 export function generateStaticParams() {

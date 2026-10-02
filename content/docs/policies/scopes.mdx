@@ -1,93 +1,254 @@
 ---
 title: Scopes and inheritance
-description: Understand which policies apply and how their restrictions and shared limits combine.
+description: Understand applicable policies, required settings, defaults and conditional rules.
 ---
 
-Every request must satisfy every applicable policy. A child policy adds restrictions; it cannot
-remove a parent's restriction. This is an intersection, not a last-setting-wins merge.
+The same JSON format applies to organizations, folders, grants, roles, members, provider
+credentials and API keys. A permitted request policy adds settings for one request. Scope comes
+from where a document is saved, not a field inside it.
 
-| Key type    | Policies that apply                                              |
-| ----------- | ---------------------------------------------------------------- |
-| Service key | Organization and key, plus any permitted request policy.         |
-| Member key  | Organization, grant, and key, plus any permitted request policy. |
+| Key type    | Applicable saved policies                                                                                                  |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Service key | Organization, its folder if any, selected provider credential, and key.                                                    |
+| Member key  | Organization, its grant's folder if any, grant, owning member, every assigned role, selected provider credential, and key. |
 
-The document has the same shape at each saved scope. Its scope comes from where you save it.
+A service key's viewers and managers do not add their personal or role policies to inference.
+Every role assigned to a member applies to that member's keys, regardless of which role grants
+access. Each candidate uses its own credential policy; unrelated credentials do not contribute
+redaction or budgets to the selected request.
+
+## Scope differences
+
+Scope restricts which fields the common format accepts. Permission from a parent never enables
+a field that the target scope does not support.
+
+| Scope               | `limits` | Register `encryption.keys` | Saved-policy delegation targets                       | `delegation.request` |
+| ------------------- | -------- | -------------------------- | ----------------------------------------------------- | -------------------- |
+| Organization        | Yes      | Yes                        | Folders, grants, roles, members, credentials and keys | Yes                  |
+| Folder              | Yes      | No                         | Its grants and keys                                   | Yes                  |
+| Grant               | Yes      | No                         | Its member keys                                       | Yes                  |
+| Role                | Yes      | No                         | None                                                  | Yes                  |
+| Member              | Yes      | No                         | None                                                  | Yes                  |
+| Provider credential | Yes      | No                         | None                                                  | Yes                  |
+| API key             | Yes      | No                         | None                                                  | Yes                  |
+| Request             | No       | No                         | None                                                  | No                   |
+
+All eight scopes support `access`, `input`, `routing`, plaintext or encrypted `plugins`, and
+flat named `rules`, subject to their applicable permissions. In particular, a permitted request
+policy can set `input.asciiOnly` and use encrypted plugins whose roots are already registered.
+Only the organization registers root identifiers; no policy contains the roots themselves.
+A managed-provider assignment has no separate credential resource or credential policy.
+
+These other differences also apply:
+
+- A saved source has a **256-KiB content limit**; a request policy has a **16-KiB wire limit**,
+  including whitespace and ciphertext. Both retain the shared expression and redaction bounds.
+  See [Document rules](/docs/policies/editing#document-rules).
+- Saved policy edits default to allowed within resource management permissions. Request policies
+  need at least one explicit allowance, and every explicit allowance must permit the supplied
+  sections. `delegation.request: true` permits only request-supported sections.
+- Saved delegation targets can use resource-ID exceptions. `delegation.request` cannot: a
+  request policy has no saved resource ID.
+- Top-level settings are required. Only rules accept `when` and `mode`. Rules cannot contain
+  `version`, `$schema`, `rules`, `delegation` or `encryption`; a rule containing `limits` cannot
+  use `mode: "default"`. Request rules cannot contain limits, even behind a false condition.
+- All limits belong to saved resources. Top-level lifetime and concurrency settings do not use
+  an additional counter slot; those settings inside one rule share one slot. Every saved scope
+  has the same five-slot allowance. See [Limits](/docs/policies/limits#choose-a-limit).
+- Scope, identity, enabled state, expiration, membership, access assignments and ordered credential
+  lists are resource settings, outside every policy document. A request policy cannot alter them.
+- Effective previews are read-only output: their scoped limits, rule arrays and unchecked-plugin
+  markers are not the saved source format. Edit a source document, not the effective preview.
 
 ## Shared limits
 
-Organization limits count usage across all organization keys. Grant limits count usage across
-all keys under that grant, including keys owned by different members. Key limits count only
-that key's usage.
+Every applicable limit is checked separately. Organization budgets are shared by all its keys;
+folder, grant, role, member and credential budgets count requests using those resources. A key
+budget counts only that key. Matching conditional limits count only their matching requests.
 
-For example, an organization can have a $1,000 monthly budget, a grant a $200 monthly budget,
-and a member key a $10 daily budget. A request must fit all three. Other keys can use the
-organization and grant allowances too, so the member key may be blocked before it spends $10.
+For example, an organization may allow $1,000 monthly, a grant $200 monthly, and a key $10 daily.
+A request must fit all three. Other keys may exhaust a shared allowance before this key spends $10.
+The same limit name at two scopes still identifies two independent counters.
 
-Counters remain separate even when two scopes use the same limit name. All key owners can see
-the shared usage, holds, and remaining allowances that apply to their keys. See [Limits](/docs/policies/limits).
+These are persistent counters shared by the requests using a saved resource. A request policy
+cannot create a spend, request-rate, token or concurrency counter, even for a stricter allowance.
+Set that allowance on a saved resource; ordinary output-token parameters still bound one request.
 
-## How settings combine
+Key readers can see all shared usage and reservations that apply to their keys.
+See [Limits](/docs/policies/limits) for counter behavior and bounds.
 
-| Setting                                       | Effective behavior                                                                                                      |
-| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Routing filters                               | Every scope's filter must match.                                                                                        |
-| Allowed catalog nodes                         | Intersect each list. An empty list permits no candidates.                                                               |
-| Sort order                                    | Apply parent fields first, then child fields as tie-breakers. A repeated field keeps the parent's direction.            |
-| Expiration                                    | Use the earliest timestamp.                                                                                             |
-| Deny periods                                  | Apply every period; remove exact duplicates.                                                                            |
-| Redaction                                     | Combine enabled presets and custom expressions; remove duplicates. Use defaults only if no scope configures the plugin. |
-| Candidate checks before authorization         | Use the smallest explicit maximum; the default is one.                                                                  |
-| Spend, request, token, and concurrency limits | Check every limit separately against its scope's shared or individual usage.                                            |
-| Permission to supply a request policy         | Use the most restrictive permission, with the scope defaults below.                                                     |
+## Required settings and defaults
 
-Omitting a setting does not remove a parent's restriction. For allowed-node lists, omission
-means no added restriction, while an empty list means no matching candidates.
-A parent sort ending in `deployment.id asc` leaves no ties for a child to reorder.
+Top-level settings and rules with omitted `mode` are **required**. `mode: "required"` is explicit
+but equivalent. Put replaceable settings in a rule with `mode: "default"`.
 
-## Permission to supply request policies
+Defaults apply only when no active requirement supplies that setting. Settings are the same
+units used by delegation: `access`, `input`, each routing field, and the redaction plugin.
+Plaintext and encrypted redaction belong to the same unit. Replacing a default filter does not
+replace a default sort, and replacing defaults never removes another required setting.
 
-`routing.requestPolicy` controls whether a caller may supply a routing policy in an inference
-request. Its values are `deny`, `filter`, and `filter_and_sort`.
+| Setting               | How active requirements combine                                                         |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| Routing filters       | Every filter must match.                                                                |
+| Allowed catalog nodes | Intersect each present list. An empty list permits no candidates.                       |
+| Sort order            | Complete orders must agree, with at most three criteria.                                |
+| Deny periods          | Apply every distinct period.                                                            |
+| Redaction             | Combine presets, literals and patterns over the original text.                          |
+| ASCII-only input      | Required when any applicable requirement enables it.                                    |
+| Candidate allowance   | Use the smallest explicit value; absent configuration permits only the first candidate. |
+| Limits                | Check and reserve every applicable counter independently.                               |
 
-| Saved scope  | When `routing.requestPolicy` is omitted                 |
-| ------------ | ------------------------------------------------------- |
-| Organization | Adds no restriction to the permission granted below it. |
-| Grant        | Does not permit request policies.                       |
-| Service key  | Does not permit request policies.                       |
-| Member key   | Inherits its grant's permission.                        |
+Where only defaults apply, they combine by the same rules. Conflicting default sorts reject the
+combination. No role order, rule order or resource ID grants precedence. Shared limits must be
+required and cannot use `mode: "default"`.
 
-A grant must explicitly permit request policies for its member keys. A service key must explicitly
-permit them for itself. An organization can reduce either permission; a member key can reduce
-its grant's permission. An explicit `deny` at any applicable scope wins.
+An explicit neutral value replaces defaults for that setting: `input.asciiOnly: false`,
+`access.deny: []`, `routing.filter: "true"`, `routing.sort: []`, `routing.allowedCatalogNodes: {}`,
+or `plugins.stogasRedaction: {}`. These values add no restriction of their own and preserve
+requirements from other policies. Omission leaves applicable defaults in place.
 
-See [Request policies](/docs/policies/request-policies) for examples and accepted request fields.
+See [Sorting](/docs/policies/routing#sorting) for complete-order agreement and ambiguity.
 
-## Member key settings
+## Conditional rules
 
-A grant's **Member key settings** switch controls whether its assigned members may edit their own
-key policies. This is separate from `routing.requestPolicy`, which controls what an inference
-request may contain.
+Add optional named rules when settings should depend on request or catalog facts:
 
-Organization-wide API key managers can edit the policies of member keys regardless of that switch.
-Allowing a member to edit a key never lets that member bypass organization or grant restrictions.
+```json title="policy.json"
+{
+	"version": 1,
+	"rules": {
+		"working_hours": {
+			"when": "request.time.getHours('UTC') >= 9 && request.time.getHours('UTC') < 17",
+			"limits": { "spend": { "lifetimeUsd": "100" } }
+		},
+		"redact_openai": {
+			"when": "provider.id == 'openai'",
+			"plugins": { "stogasRedaction": { "email_address": true } }
+		},
+		"prefer_context": {
+			"mode": "default",
+			"routing": {
+				"sort": [{ "by": "deployment.contextWindowTokens", "direction": "desc" }]
+			}
+		}
+	}
+}
+```
+
+`when` is a Boolean CEL expression; omission means always. Rules are flat and unordered.
+They can contain access, input, limits, plugins and routing, but cannot nest rules, register
+roots or delegate authority. Names use 1–48 lowercase letters, digits, underscores or hyphens,
+starting with a letter; `constructor` and `prototype` are reserved. Names identify conditional
+counters and never set priority. A matching rule activates its settings directly; no separate
+rule or limit reference is needed, and rules cannot invoke other rules.
+
+Conditions run before redaction, tokenization and authorization. They can read the same facts as
+[routing filters](/docs/policies/routing#request-facts-and-context), but cannot inspect mutable
+budgets, provider responses, token estimates or their own plugin output. Unknown conditions
+reject evaluation; use `has(...)` when absence has a deliberate meaning.
+
+Only the selected candidate's active plugins transform the body. Its matching limits enter the
+same atomic authorization as all unconditional limits. Editing a condition starts new counters;
+formatting-only edits and amount changes retain usage. Already admitted requests keep the exact
+counter identities they reserved. See [Conditional limits](/docs/policies/limits#conditional-limits).
+
+<PolicyFields section="rule" />
+
+## Permission to edit saved policies
+
+`delegation` controls which policy sections may be saved on owned resources. It does not grant
+resource access. The actor must still have management authority.
+
+| Saved scope       | May restrict these saved resources                     |
+| ----------------- | ------------------------------------------------------ |
+| Organization      | Folders, grants, roles, members, credentials and keys. |
+| Folder            | Its grants and keys.                                   |
+| Grant             | Its member keys.                                       |
+| Every saved scope | The request-policy sections it permits.                |
+
+Use `true` for all sections, `false` for none, or a section-path list such as
+`["limits", "routing.filter"]`. Saved edits default to allowed. All applicable parent permissions
+intersect, including for organization administrators. Request policies need at least one explicit
+allowance, and all explicit request permissions intersect.
+
+<PolicyFields section="delegation" />
+
+### ID exceptions
+
+For saved resources, an object supplies a default and explicit resource-ID exceptions:
+
+```json
+{
+	"version": 1,
+	"delegation": {
+		"keys": {
+			"default": false,
+			"exceptions": { "0195ef30-7b1a-7000-8000-000000000001": ["routing.filter"] }
+		}
+	}
+}
+```
+
+New exception IDs must exist within the parent's scope. Each parent resolves its own permission
+for that ID; an exception cannot bypass another parent's denial. Changing a default preserves
+exceptions. Deleted-resource entries remain inert, and adding a removed entry again requires a
+current resource. Request permission has no ID exceptions.
+
+### Removing prohibited settings
+
+A delegation change that would prohibit existing child settings requires a review of the affected
+resources before saving. Confirming that exact change clears their policies atomically. It preserves
+resource names, enabled state, expiration and existing lifetime usage. A stale review must be repeated.
+
+Delegation does not prevent routine lifecycle actions. Empty child policies can be created while
+policy edits are prohibited. To permit a specific child under a denying default, create it empty,
+add its ID exception, then save its permitted settings.
 
 ## Saved and effective policies
 
-The saved policy is the source you edit at one scope. The effective policy combines all applicable
-sources. Its limits appear under `organization`, `grant`, and `key` to keep their counters distinct.
-Do not paste that effective limit structure back into a source editor.
+The saved policy is the source at one resource. An effective preview combines readable requirements
+and retains conditional rules with their source scope, ID and name. Conditions remain deferred
+because an editor has no particular inference request to evaluate. Encrypted plugin contents stay
+opaque; the gateway checks them with the supplied roots.
 
-A parent save validates and updates all affected keys together. It does not erase a child's source
-policy or change whether a key is manually enabled.
+Every authorized resource reader can inspect its applicable sources. Plaintext inherited contents
+are visible. Use [encrypted plugins](/docs/policies/plugins#encrypted-plugins) where readers should
+receive ciphertext. Reading a source does not grant permission to change it.
 
-Stogas keeps the current policy and counters, not an archive of every previous policy.
+A save checks the edited source and its applicable combination. Parent saves preserve child sources
+and revisions; they do not compile every descendant. A later conflict stays readable in the affected
+resource so its manager can repair it. Concurrent edits return a revision conflict and preserve the
+local draft. Successful dashboard saves update matching sources in locally cached previews.
+
+Request history records the saved policy versions used for that request. Parent changes advance
+only that parent's revision. Versions do not retain the old contents or prove execution.
+
+## Request order
+
+1. Authenticate, admit resource use, and load the saved policies and credential metadata.
+2. Narrow compatible deployments and credentials; apply each candidate's rules, filters and ordering.
+3. Prepare the selected credential, then check ASCII requirements and redact its input once.
+4. Run the selected model's tokenizer once. Reserve spend, tokens and concurrency against every applicable counter in one authorization.
+5. Dispatch once. Settle usage against the admitted counter identities and release unused reservations.
+
+A candidate is a deployment paired with one assigned credential, so its provider is already
+known before the final selection. Candidates from several providers can remain in the set.
+For each pair, the gateway combines the common scopes, that credential's policy and the permitted
+request policy, evaluates its conditions, and applies the resulting restrictions. A filter
+removing a pair is an eligibility decision, not a failed provider attempt. Credential order
+breaks ties for the same deployment; it does not override a required deployment sort.
+
+A rejected limit consumes no other counter's allowance. Processing still consumes gateway capacity.
+See [Limits](/docs/policies/limits) and [Redaction](/docs/policies/plugins#scan-cost-and-rejected-requests).
 
 ## When changes take effect
 
-New authorizations check the current saved policy. If a Gateway has an older cached policy,
-the request can receive `503` with code `key_configuration_changed`; retry with bounded backoff.
-The Gateway discards that cached policy and loads the new one on the next request.
+Every new authorization checks live ownership, enabled state, expiration, limits and policy revisions.
+Disabling an applicable resource blocks new authorization; a child cannot re-enable its parent.
+Already admitted requests continue against their original reservation.
 
-Tightening a policy cannot authorize new requests under the old permissions. After you relax a
-restriction, an older cached policy can still reject requests for up to 30 seconds. Changes do not
-cancel requests already authorized. The dashboard refreshes affected key status after a save.
+Gateways cache immutable compiled sources. A successful live check extends that exact snapshot
+for three minutes. A revision mismatch rejects before dispatch and starts a shared background
+refresh. After three minutes without confirmation, the next request fetches a current snapshot.
+Unchanged sources and matchers remain reusable within the memory budget. Every request still
+supplies the roots needed by its encrypted content; roots are never cached.

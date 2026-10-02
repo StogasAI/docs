@@ -1,0 +1,119 @@
+---
+title: Go
+description: Use Stogas from Go.
+---
+
+## Install
+
+```console
+go get github.com/StogasAI/verifier/go
+go get github.com/openai/openai-go/v3
+```
+
+Use the official OpenAI Go client with the Stogas cgo binding. Tagged Stogas releases include the native Rust library.
+
+## Stream with the OpenAI client
+
+```go
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
+
+	stogas "github.com/StogasAI/verifier/go"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
+)
+
+func client(baseURL, apiKey string) (openai.Client, *http.Client) {
+	network := http.DefaultTransport.(*http.Transport).Clone()
+	network.Proxy = nil // The managed transport URL is local and must bypass proxies.
+	httpClient := &http.Client{
+		Transport:     network,
+		Timeout:       45 * time.Minute,
+		CheckRedirect: func(*http.Request, []*http.Request) error { return errors.New("redirects are disabled") },
+	}
+	return openai.NewClient(
+		option.WithAPIKey(apiKey), option.WithBaseURL(baseURL),
+		option.WithMaxRetries(0), option.WithHTTPClient(httpClient),
+	), httpClient
+}
+
+func run(ctx context.Context) error {
+	key, model := os.Getenv("STOGAS_API_KEY"), os.Getenv("STOGAS_MODEL")
+	if key == "" || model == "" {
+		return errors.New("STOGAS_API_KEY and STOGAS_MODEL are required")
+	}
+	transport, err := stogas.NewTransport(stogas.TransportOptions{})
+	if err != nil {
+		return err
+	}
+	defer transport.Close()
+	baseURL, err := transport.BaseURL()
+	if err != nil {
+		return err
+	}
+	api, network := client(baseURL, key)
+	defer network.CloseIdleConnections()
+	stream := api.Chat.Completions.NewStreaming(ctx, openai.ChatCompletionNewParams{
+		Model:    model,
+		Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Say hello in one sentence.")},
+	})
+	defer stream.Close()
+	for stream.Next() {
+		for _, choice := range stream.Current().Choices {
+			fmt.Print(choice.Delta.Content)
+		}
+	}
+	if err := stream.Err(); err != nil {
+		return err
+	}
+	fmt.Println()
+	return nil
+}
+
+func main() {
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	if err := run(ctx); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+```
+
+Set `STOGAS_API_KEY` and `STOGAS_MODEL` before running the example. Reuse the transport and client
+for subsequent requests; close them when the application stops.
+
+Ctrl+C cancels the request context. Check `stream.Err()` before treating the stream as complete;
+closing it early does not verify delivery. The client disables redirects and inference retries
+and bypasses proxies for the local transport URL. Its request timeout is 45 minutes.
+
+For a buffered request, use `api.Chat.Completions.New(ctx, params)` and read
+`response.Choices[0].Message.Content`. The same client supports `api.Responses.New`.
+See the [runnable example](https://github.com/StogasAI/verifier/tree/main/examples/go-openai).
+
+Zero-valued transport options select native attested TLS and at most four connections.
+Use `Security: "e2ee"` for application encryption over HTTPS. `BaseURL` changes only the HTTPS
+origin; evidence authorities remain compiled into the package. `RefreshBundle()` is explicit.
+
+Add `option.WithHeader("Stogas-Metadata", "v1")` to a request to receive final metadata and
+an automatically verified content receipt.
+
+## Offline verification
+
+Use `NewEvidence` with an explicit environment, then `Refresh` with evidence bytes. Keep the
+returned snapshot while verifying a boot or saved receipt, and close both handles when finished.
+The snapshot remains usable after its owner is closed.
+
+`VerifyLoggedBoot` checks the archived boot and its inclusion proof. `VerifyReceipt` takes the
+complete final `stogas` object and SHA-256 hashes you computed from the exact request and response
+content. One signature covers both hashes and the canonical metadata, excluding the receipt
+itself. It does not establish when inference ran.
+These calls perform no network requests.

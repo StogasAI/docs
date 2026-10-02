@@ -1,24 +1,23 @@
 ---
-title: Access periods
-description: Expire access at a specific time or block requests during a weekly schedule.
+title: Access and expiration
+description: Enable or disable a scope, expire access, or block requests on a weekly schedule.
 ---
 
-Time restrictions apply together with the organization's, grant's, and key's other rules.
-They do not change whether a key is manually enabled.
+Enabled state and expiration belong to the resource. `access.deny` belongs to its policy. Every applicable resource must be enabled and unexpired for a new request to proceed.
+
+## Enable or disable access
+
+Set the resource's `enabled` setting to `false` to stop new requests. It defaults to `true`. A child cannot override a disabled parent. The dashboard's switch changes this setting without changing the policy or its revision.
+
+Disabling a resource does not cancel requests already authorized. Clearing its policy preserves its enabled state.
 
 ## Set an expiration
 
-```json title="policy.json"
-{
-	"version": 1,
-	"expiresAt": "2026-12-01T00:00:00Z"
-}
-```
+Set the resource's `expiresAt` setting to an absolute timestamp, such as `2026-12-01T00:00:00Z`. Set it to `null` to remove that resource's expiration.
 
-Use an absolute timestamp with an offset. The earliest expiration across applicable scopes wins.
-Removing a key's expiration does not remove an organization or grant expiration.
-Once all applicable expiration restrictions are removed, an otherwise enabled key can be used again.
-At the expiration instant, new requests are blocked. Requests already authorized are not cancelled.
+The earliest expiration across applicable resources applies. Removing a key's expiration does not remove an inherited expiration. Once every applicable expiration is removed, an otherwise enabled key can be used again. At the expiration instant, new requests are blocked; requests already authorized continue.
+
+Clearing a policy preserves the resource's expiration. Policy documents reject `enabled` and `expiresAt`.
 
 ## Deny periods
 
@@ -47,6 +46,10 @@ if all other policies allow them. Use `00:00` to `24:00` to deny an entire day.
 Outside the deny periods, this setting adds no restriction. To allow only business hours, deny
 the hours outside that schedule and deny weekends. There is no separate `allow` schedule.
 
+Each entry under `access.deny` accepts:
+
+<PolicyFields section="accessPeriod" />
+
 ## Overnight periods
 
 A period cannot cross midnight. Split Friday 20:00 through Saturday 08:00 into two entries:
@@ -72,6 +75,18 @@ IANA time zones apply their daylight-saving rules. A repeated local hour is chec
 the deny period on both occurrences; a skipped local hour never occurs. Use UTC for a schedule
 that does not shift with daylight saving.
 
-Each saved policy allows at most 16 deny periods. All organization, grant, and key periods
-apply together, so up to 48 can apply to a member key. Request policies cannot change expiration
-or deny periods. See the [field reference](/docs/policies/reference#access) for exact bounds.
+All applicable required deny periods apply together. Periods share the
+[policy byte budget](/docs/policies/editing#document-rules); each needs one to seven unique days.
+Omit `access` to add no periods. An empty `deny` array replaces default periods without
+removing other required periods. A permitted request policy can add periods;
+it cannot change a key's expiration.
+
+### Timestamps and time zones
+
+`expiresAt` and recurring `anchor` values are ISO 8601 timestamps with `Z` or an explicit offset,
+for example `2026-12-01T00:00:00Z` or `2026-12-01T09:00:00+09:00`. Local times without an offset
+and year zero are invalid. Saved timestamps are normalized to UTC with millisecond precision.
+
+`timeZone` accepts a recognized IANA name such as `UTC`, `America/New_York`, or `Europe/Berlin`.
+Names are 1–64 characters using letters, digits, `_`, `+`, `-`, or `/`. The timestamp's offset
+identifies an instant; the time zone determines the local schedule and its daylight-saving rules.

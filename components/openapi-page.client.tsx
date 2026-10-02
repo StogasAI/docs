@@ -1,17 +1,21 @@
 'use client';
 
+import { Schema } from './api/schema';
 import { codeUsages } from '@/lib/openapi-code-usage';
-import { createOpenAPIPage, type OpenAPIPageProps_Spec } from 'fumadocs-openapi/ui';
+import { createOpenAPIPageBase } from 'fumadocs-openapi/ui/base';
+import type { OpenAPIPageProps_Spec } from 'fumadocs-openapi/ui';
+import { apiShiki } from '@/lib/api-highlight';
 import { OpenAPIRequestBody } from './openapi-request-body';
-import { DefaultCollapsiblePanel } from 'fumadocs-openapi/playground/client';
+import { DefaultCollapsiblePanel } from 'fumadocs-openapi/ui/playground/client';
 import { codeThemes } from '@/lib/highlight';
 import { OpenAPICodeBlock } from './openapi-code-block';
 
-const Page = createOpenAPIPage({
+const Page = createOpenAPIPageBase({
+	shiki: apiShiki,
 	codeUsages,
 	shikiOptions: { themes: codeThemes },
 	generateTypeScriptDefinitions: false,
-	components: { CodeBlock: OpenAPICodeBlock },
+	components: { CodeBlock: OpenAPICodeBlock, SchemaUI: Schema },
 	content: {
 		renderOperationLayout: (slots) => (
 			<div className="stogas-api-operation-layout">

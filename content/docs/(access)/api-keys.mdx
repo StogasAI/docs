@@ -1,0 +1,121 @@
+---
+title: API keys
+description: Create, rotate and manage service keys and member keys.
+---
+
+We offer two API key types and one access control:
+
+| Resource        | Purpose                                                                   |
+| --------------- | ------------------------------------------------------------------------- |
+| **Service key** | A credential for an organization-owned server, application, or CI job     |
+| **Member key**  | A credential that one member creates and owns through an assigned grant   |
+| **Grant**       | Permission for selected members to create a limited number of member keys |
+
+A grant is not an API key. It has no secret and cannot call the inference API.
+In the dashboard Playground, a member selects a usable API key directly. The dashboard does not
+reveal its secret.
+
+## Service keys
+
+A service key belongs to the organization. Use one for work that must continue independently of one
+member, such as a production service, deployment, or CI job.
+
+Organization-wide API key managers and folder managers can create service keys in their scope.
+Assign members or roles these permissions on a service key, grant, or folder:
+
+| Permission | Allows                                                                         |
+| ---------- | ------------------------------------------------------------------------------ |
+| **View**   | Read settings, policies, and usage.                                            |
+| **Use**    | View, plus retrieve a service-key secret or create personal keys from a grant. |
+| **Manage** | View, plus configure, rotate, disable, or delete the resource.                 |
+| **Admin**  | Use, Manage, and permission to assign access.                                  |
+
+Use and Manage can be assigned together. Manage alone cannot reveal a secret or grant access to
+someone else. Folder permissions apply to its grants and keys. Grant permissions apply to its
+member-key settings; each member's secret and inference access remain theirs alone.
+
+**Reveal secret** retrieves the current service-key secret when you have Use. Creation and rotation
+also return the secret only with Use. Removing access takes effect in the dashboard immediately;
+rotate the key to revoke copies someone already holds. Access assignments do not change the key's
+owner or add assignees' member and role policies to its requests. Personal organizations have no
+shared access assignments.
+
+## Grants
+
+[Grants](/docs/grants) let selected members create their own keys under shared restrictions.
+Grant assignment, key allowances and revocation live on the separate **Grants** page.
+
+## Member keys
+
+A member key is a normal inference credential owned by one member under one grant. A member can give
+each key a separate name, rotate its secret, disable it, or delete it. Administrators can see and
+manage all organization keys, including member keys. A disabled key or grant does not prevent an
+authorized secret rotation; rotation leaves the enabled state unchanged.
+
+**Allow key policy edits by default** edits the default permission in `delegation.keys` and
+preserves any [ID exceptions](/docs/policies/scopes#id-exceptions). Each key's editor applies
+its own ID against organization, folder and grant permissions, including for managers.
+Disabling edits to existing child policies requires reviewing and confirming their removal.
+The parent's restrictions remain enforced after those child policies are cleared.
+Renaming, rotating, enabling, disabling, and deleting keys remain governed by existing permissions.
+Request policies have their [own permission](/docs/policies/request-policies#grant-permission).
+
+## Folders
+
+Folders group service keys and grants within an organization. Each resource can belong to one
+folder; member keys follow their grant's folder. Use the folder filter on **API keys** or **Grants**,
+and **Manage folders** to create, rename, or delete a folder. Set a resource's folder in its settings.
+Folder managers can manage that folder, its grants and all contained keys. Admin permits assigning
+access. Moving a service key or grant requires Admin on both the source and destination folder.
+Moving to or from the organization root requires organization-wide API resource Admin.
+
+A move changes inherited folder policies and shared limits while preserving key identities and
+secrets. Deleting a folder keeps its keys and grants at the organization root; deleting a non-empty
+folder therefore also requires organization-wide API resource Admin. Folders cannot nest. Each organization
+supports up to 1,000 folders; names must be unique regardless of case.
+
+## Key status
+
+Open a key to view **Overview**: enabled state, lifetime and recurring spend, pending holds,
+remaining allowance, reset times, request capacity, lifecycle dates, and the last admission failure.
+Counters reflect the displayed update time; refill timing assumes no further requests. Shared
+organization and grant allowances apply separately from per-key counters.
+
+The enabled switch saves immediately. **Settings** contains the name, policy, and secret actions;
+**Credentials** contains provider assignments. Changing status does not save an unfinished settings draft.
+
+## Policies
+
+Each usable key can have these optional controls in one versioned JSON document:
+
+- catalog filters and sorting;
+- an allowed set of catalog node IDs;
+- explicitly permitted local credential fallbacks before provider dispatch;
+- access deny periods;
+- multiple request rates and burst capacities;
+- lifetime and recurring spend limits;
+- token quotas and concurrent-request limits; and
+- additional PII redaction patterns.
+
+Every request must satisfy its applicable policies and the organization balance. Start with
+[Edit a policy](/docs/policies/editing), or see [Scopes and inheritance](/docs/policies/scopes)
+to understand which restrictions and shared allowances apply.
+For private redaction rules, see [encrypted plugins](/docs/policies/plugins#encrypted-plugins).
+
+## Provider credentials
+
+Every service or member key owns an ordered credential list for each provider. Configuring these
+lists requires Manage on that key. Adding a credential also requires Use on the credential.
+Reordering or removing existing assignments needs only key Manage. Empty lists disable the provider.
+
+New keys start with managed credentials for every provider that supports them, currently Chutes.
+Other provider lists start empty. OpenAI and Anthropic need stored or customer-encrypted
+credentials. Azure accepts stored credentials with discovered targets. Credential order chooses
+between usable credentials for the same deployment; the routing policy selects the deployment.
+A missing encryption key excludes its customer-encrypted credential. Another local preparation
+attempt requires explicit fallback. A wrong supplied encryption key or invalid encrypted content
+stops the request even when fallback is enabled; provider errors never trigger another credential.
+
+See [Bring your own provider key](/docs/byok) to order credentials, encrypt a provider credential,
+connect Azure, or rotate and revoke credentials. Customer-encrypted credentials must be registered
+and assigned to the accompanying Stogas key. Unknown or unassigned credentials are rejected.

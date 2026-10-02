@@ -37,60 +37,44 @@ Do not expose a privileged API key in public browser code. Use a narrowly limite
 
 ## Limits
 
-| Input                     |   Limit |
-| ------------------------- | ------: |
-| Decoded JSON request body | 128 MiB |
-| Encoded E2EE envelope     | 128 MiB |
-| Decoded E2EE ciphertext   |  94 MiB |
+Requests have a 128-MiB decoded JSON ceiling. Binary E2EE applies the same payload ceiling with
+separately bounded framing and authentication overhead. It does not wrap keys for the entire fleet
+or base64-encode the body. Compressed bodies are measured after decompression.
 
-The ciphertext and complete encoded envelope have independent limits. Base64 encoding and one key-wrap record per verified node use envelope space, so the maximum usable ciphertext decreases as the verified fleet grows. There is no fixed fleet-recipient policy cap. Compressed requests are measured after decompression. The gateway does not impose a token-count limit; the selected model and provider enforce their context and request limits. This permits current one-million-token models and does not preclude future two-million-token models when their valid JSON fits within the body limit.
 
-## Transport security
+The gateway also checks the selected model's context limits and the organization's policy.
+The default platform allowance is shared across the organization, including requests from different
+API keys. See [limits](/docs/policies/limits).
 
-The public OpenAI-compatible API accepts TLS 1.2 only with ECDHE-AEAD cipher suites. It prefers TLS 1.3 and hybrid ML-KEM key exchange while retaining classical key exchange for standard HTTPS clients.
+## Confidential transport
 
-Native Stogas managed transports in `tls` or `both` mode require TLS 1.3 with X25519MLKEM768, WebPKI, and a certificate and public key from the active verified bundle. They never fall back to classical key exchange. Use `e2ee` mode when the client or network path cannot use hybrid TLS. E2EE uses ordinary WebPKI HTTPS because the verified application envelope supplies hybrid post-quantum confidentiality.
+Native attested TLS requires TLS 1.3 with X25519MLKEM768. Ordinary HTTPS and E2EE outer carriage
+support hardened TLS 1.2 and TLS 1.3. E2EE provides its own hybrid protection inside outer HTTPS.
 
-## Application E2EE
+Use a managed Stogas transport. It establishes a fresh verified session, then sends encrypted
+credentials, request metadata and body records to the owning gateway. Responses, errors and SSE
+content remain encrypted until the client verifies them. Only the owner can decrypt the session;
+a new session can use another gateway without moving conversation state.
 
-Stogas application E2EE protects the API key, request body, response body, streamed events, and response errors between the client and the verified confidential gateway process. It uses the same `/v1/chat/completions` and `/v1/responses` paths as ordinary OpenAI-compatible requests.
+Record ordering, replay protection and an authenticated terminal record prevent a truncated or
+modified exchange from reporting successful completion. The client rejects unexpected trailing
+bytes. The SDK never repeats an inference after an ambiguous disconnect.
 
-Use a Stogas managed transport or SDK. Applications should not construct the wire envelope directly.
+See the [security model](/docs/confidential-security-model) and [SDK guide](/docs/sdk-overview).
 
-The outer request `Content-Type` selects E2EE mode. Its body is the envelope object itself, with no extra wrapper field. The gateway ignores any outer credential in this mode and uses only the credential in the authenticated ciphertext. Ordinary JSON mode continues to use its outer credential. The same E2EE media type identifies the encrypted response.
-
-For each request, the client:
-
-1. verifies the current public trust bundle locally;
-2. encrypts the API key and request once with a fresh content key;
-3. wraps that key to every eligible node in the verified bundle; and
-4. sends one opaque request that any eligible relay can route without reading the prompt.
-
-One authenticated ciphertext contains the credential, complete OpenAI JSON body, and negotiated options. Outside it are only the version, request ID and deadline, verified-bundle hash, recipient key wraps, and ciphertext. Responses, SSE events, and the final proof remain encrypted until they reach the client.
-
-The response receipt binds the exact request bytes, response bytes, complete active catalog through its digest, resolved author/model/deployment/route/provider IDs, and E2EE transcript. The managed transport requires the digest to match a verified catalog approval in the same trust state used to encrypt the request.
-
-The E2EE wire is version 1 and uses HPKE with the hybrid MLKEM768-X25519 (X-Wing) KEM, HKDF-SHA-256, and AES-256-GCM. An encrypted response uses one public random nonce and a stream of length-prefixed authenticated records: metadata, body bytes, then an empty terminal record. Record order is authenticated and not repeated on the wire. The authenticated terminal is authoritative, so later outer bytes are ignored. This gives the encrypted payload hybrid post-quantum confidentiality, but the complete attestation and signature chain still has classical dependencies.
-
-See the [security and trust model](/docs/confidential-security-model) for detailed guarantees and
-[Verify a gateway](/docs/verification) for the practical setup.
-
-## Signed request fields
-
-Request the bounded signed result with:
+## Optional metadata
 
 ```http
-Stogas-Receipt: v1
+Stogas-Metadata: v1
 ```
 
-The result contains `request_id`, canonical UTC-millisecond `created_at`, `node_id`, and four groups:
+This single option requests a final `stogas` object containing useful usage, routing and available
+provider information, plus a content receipt. Standard API `usage` remains available independently.
+A buffered response appends the object to JSON. A stream carries it in a `: stogas {...}` SSE comment
+before its terminal marker. Ordinary SSE parsers can ignore the comment.
 
-- `catalog`: digest, sequence, and ordered author/model/deployment/route/provider `selection_ids`;
-- `pricing`: the settled meter bag, total Stogas cost, and optional BYOK provider cost;
-- `timing`: total, provider, and optional request-level TTFT milliseconds;
-- `proof`: request, response, and optional E2EE transcript SHA-256 values plus the node signature.
-
-A buffered response adds a final top-level `stogas` object. A stream puts the same raw compact JSON
-in a `: stogas {...}` SSE comment before `[DONE]`, `response.completed`, or `response.incomplete`.
-The comment is not part of
-the response hash; the terminal frame is. The gateway does not add raw request or response content.
+The nested `receipt` uses `stogas.receipt.v1` and contains `boot_sha256`, `request_sha256`,
+`response_sha256` and `signature`. One signature covers the request hash, response hash and
+SHA-256 of the RFC 8785 canonical `stogas` object with its top-level `receipt` removed. Metadata
+and keepalive comments are excluded from the response hash; the endpoint's terminal frame is
+included. The managed SDK checks requested receipts automatically.
