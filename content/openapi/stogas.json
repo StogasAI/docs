@@ -49,9 +49,7 @@
 		"/v1/catalog": {
 			"get": {
 				"operationId": "getCatalog",
-				"tags": [
-					"Catalog"
-				],
+				"tags": ["Catalog"],
 				"summary": "Catalog",
 				"description": "Returns the active public gateway catalog used for model discovery, aliases, routing, and prices.",
 				"security": [],
@@ -92,9 +90,7 @@
 		"/v1/models": {
 			"get": {
 				"operationId": "listModels",
-				"tags": [
-					"Catalog"
-				],
+				"tags": ["Catalog"],
 				"summary": "List Models",
 				"description": "Returns an OpenAI-compatible list of catalog model IDs accepted by the gateway.",
 				"security": [],
@@ -133,9 +129,7 @@
 		"/v1/chat/completions": {
 			"post": {
 				"operationId": "createChatCompletion",
-				"tags": [
-					"OpenAI-compatible"
-				],
+				"tags": ["OpenAI-compatible"],
 				"summary": "Chat Completions",
 				"description": "Create an OpenAI-compatible chat completion. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
 				"parameters": [
@@ -216,9 +210,7 @@
 		"/v1/responses": {
 			"post": {
 				"operationId": "createResponse",
-				"tags": [
-					"OpenAI-compatible"
-				],
+				"tags": ["OpenAI-compatible"],
 				"summary": "Responses",
 				"description": "Create an OpenAI-compatible Responses API response. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
 				"parameters": [
@@ -295,9 +287,7 @@
 			"post": {
 				"operationId": "validatePolicy",
 				"summary": "Validate proposed policy execution rules",
-				"tags": [
-					"Gateway"
-				],
+				"tags": ["Gateway"],
 				"security": [
 					{
 						"bearerAuth": []
@@ -311,9 +301,7 @@
 							"schema": {
 								"type": "object",
 								"additionalProperties": false,
-								"required": [
-									"policySources"
-								],
+								"required": ["policySources"],
 								"properties": {
 									"policySources": {
 										"type": "array",
@@ -322,10 +310,7 @@
 										"items": {
 											"type": "object",
 											"additionalProperties": false,
-											"required": [
-												"scope",
-												"config"
-											],
+											"required": ["scope", "config"],
 											"properties": {
 												"scope": {
 													"enum": [
@@ -344,10 +329,7 @@
 													"maxLength": 64
 												},
 												"config": {
-													"type": [
-														"object",
-														"null"
-													]
+													"type": ["object", "null"]
 												}
 											}
 										}
@@ -378,29 +360,20 @@
 							"application/json": {
 								"schema": {
 									"type": "object",
-									"required": [
-										"scope",
-										"status",
-										"uncheckedPlugins"
-									],
+									"required": ["scope", "status", "uncheckedPlugins"],
 									"properties": {
 										"scope": {
 											"const": "execution"
 										},
 										"status": {
-											"enum": [
-												"valid",
-												"partial"
-											]
+											"enum": ["valid", "partial"]
 										},
 										"uncheckedPlugins": {
 											"type": "array",
 											"items": {
 												"type": "object",
 												"additionalProperties": false,
-												"required": [
-													"scope"
-												],
+												"required": ["scope"],
 												"properties": {
 													"scope": {
 														"enum": [
@@ -483,9 +456,7 @@
 				"in": "header",
 				"schema": {
 					"type": "string",
-					"enum": [
-						"v1"
-					]
+					"enum": ["v1"]
 				},
 				"description": "Set to `v1` for the final Stogas metadata, including a signed request/response content receipt. Omit to leave normal responses unchanged."
 			}
@@ -674,17 +645,12 @@
 			"RequestRoutingPolicy": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": [
-					"version",
-					"routing"
-				],
+				"required": ["version", "routing"],
 				"description": "Optional, at most 16 KiB. Requires saved delegation.request permission. Intersects saved policies and is never forwarded upstream. Forbidden policies return 403 and invalid permitted policies return 400.",
 				"properties": {
 					"version": {
 						"type": "integer",
-						"enum": [
-							1
-						]
+						"enum": [1]
 					},
 					"routing": {
 						"type": "object",
@@ -737,13 +703,7 @@
 			},
 			"CatalogResponse": {
 				"type": "object",
-				"required": [
-					"schema",
-					"sequence",
-					"runtimeDigest",
-					"publicDigest",
-					"graph"
-				],
+				"required": ["schema", "sequence", "runtimeDigest", "publicDigest", "graph"],
 				"properties": {
 					"schema": {
 						"type": "string",
@@ -770,10 +730,7 @@
 			},
 			"ModelListResponse": {
 				"type": "object",
-				"required": [
-					"object",
-					"data"
-				],
+				"required": ["object", "data"],
 				"properties": {
 					"object": {
 						"type": "string",
@@ -789,12 +746,7 @@
 			},
 			"ModelObject": {
 				"type": "object",
-				"required": [
-					"id",
-					"object",
-					"created",
-					"owned_by"
-				],
+				"required": ["id", "object", "created", "owned_by"],
 				"properties": {
 					"id": {
 						"type": "string",
@@ -827,17 +779,11 @@
 								"type": "string"
 							},
 							"code": {
-								"type": [
-									"string",
-									"null"
-								],
+								"type": ["string", "null"],
 								"description": "A code for handling a specific error in your app. May be absent or null when only a broad error type is available. Do not match message text."
 							},
 							"param": {
-								"type": [
-									"string",
-									"null"
-								],
+								"type": ["string", "null"],
 								"description": "The request field related to the error, when known."
 							}
 						}
@@ -855,14 +801,10 @@
 						"additionalProperties": false,
 						"anyOf": [
 							{
-								"required": [
-									"only"
-								]
+								"required": ["only"]
 							},
 							{
-								"required": [
-									"order"
-								]
+								"required": ["order"]
 							}
 						],
 						"properties": {
@@ -892,9 +834,7 @@
 				"type": "object",
 				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API. Unknown top-level fields are accepted for SDK compatibility, ignored, and never forwarded upstream.",
 				"additionalProperties": true,
-				"required": [
-					"messages"
-				],
+				"required": ["messages"],
 				"properties": {
 					"policy": {
 						"$ref": "#/components/schemas/RequestRoutingPolicy"
@@ -974,9 +914,7 @@
 						"description": "Text-only MVP: when present, this must be exactly [\"text\"]. Image and audio modalities are rejected before upstream dispatch.",
 						"items": {
 							"type": "string",
-							"enum": [
-								"text"
-							]
+							"enum": ["text"]
 						}
 					},
 					"n": {
@@ -1006,10 +944,7 @@
 					"prompt_cache_retention": {
 						"type": "string",
 						"description": "Legacy OpenAI retention control for models before GPT-5.6, and Azure retention policy. GPT-5.6 OpenAI requests should use `prompt_cache_options.ttl`; current Azure GPT-5.6 deployments accept only `24h`.",
-						"enum": [
-							"in_memory",
-							"24h"
-						]
+						"enum": ["in_memory", "24h"]
 					},
 					"prompt_cache_options": {
 						"type": "object",
@@ -1017,16 +952,11 @@
 						"properties": {
 							"mode": {
 								"type": "string",
-								"enum": [
-									"implicit",
-									"explicit"
-								]
+								"enum": ["implicit", "explicit"]
 							},
 							"ttl": {
 								"type": "string",
-								"enum": [
-									"30m"
-								]
+								"enum": ["30m"]
 							}
 						},
 						"additionalProperties": false
@@ -1037,21 +967,14 @@
 						"properties": {
 							"type": {
 								"type": "string",
-								"enum": [
-									"ephemeral"
-								]
+								"enum": ["ephemeral"]
 							},
 							"ttl": {
 								"type": "string",
-								"enum": [
-									"5m",
-									"1h"
-								]
+								"enum": ["5m", "1h"]
 							}
 						},
-						"required": [
-							"type"
-						],
+						"required": ["type"],
 						"additionalProperties": false
 					},
 					"reasoning": {
@@ -1065,15 +988,7 @@
 							"effort": {
 								"type": "string",
 								"description": "Canonical Stogas effort. Unsupported positive values map to the nearest deployment level, with upward ties; `none` is rejected when reasoning cannot be disabled.",
-								"enum": [
-									"none",
-									"minimal",
-									"low",
-									"medium",
-									"high",
-									"xhigh",
-									"max"
-								]
+								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"display": {
 								"type": "string"
@@ -1089,15 +1004,7 @@
 					"reasoning_effort": {
 						"type": "string",
 						"description": "Compatibility shortcut for `reasoning.effort`.",
-						"enum": [
-							"none",
-							"minimal",
-							"low",
-							"medium",
-							"high",
-							"xhigh",
-							"max"
-						]
+						"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 					},
 					"reasoning_max_tokens": {
 						"type": "integer",
@@ -1142,15 +1049,7 @@
 					"service_tier": {
 						"type": "string",
 						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
-						"enum": [
-							"auto",
-							"default",
-							"fast",
-							"flex",
-							"priority",
-							"standard",
-							"standard_only"
-						]
+						"enum": ["auto", "default", "fast", "flex", "priority", "standard", "standard_only"]
 					},
 					"stream_options": {
 						"type": "object",
@@ -1189,10 +1088,7 @@
 						"description": "Sampling temperature. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
 					},
 					"tool_choice": {
-						"type": [
-							"string",
-							"object"
-						],
+						"type": ["string", "object"],
 						"description": "Tool choice. Chat Completions accepts `auto`, `none`, `required`, or an exact `{type:\"function\",function:{name}}` selector for a declared function."
 					},
 					"tools": {
@@ -1216,17 +1112,11 @@
 						"description": "Nucleus sampling control. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
 					},
 					"safety_identifier": {
-						"type": [
-							"string",
-							"null"
-						],
+						"type": ["string", "null"],
 						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream safety identity from the authenticated API key."
 					},
 					"user": {
-						"type": [
-							"string",
-							"null"
-						],
+						"type": ["string", "null"],
 						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream user identity from the authenticated API key."
 					},
 					"verbosity": {
@@ -1241,17 +1131,11 @@
 						"properties": {
 							"search_context_size": {
 								"type": "string",
-								"enum": [
-									"low",
-									"medium",
-									"high"
-								]
+								"enum": ["low", "medium", "high"]
 							},
 							"user_location": {
 								"type": "object",
-								"required": [
-									"type"
-								],
+								"required": ["type"],
 								"properties": {
 									"type": {
 										"const": "approximate"
@@ -1340,13 +1224,7 @@
 						"$ref": "#/components/schemas/StogasMetadata"
 					}
 				},
-				"required": [
-					"id",
-					"object",
-					"created",
-					"model",
-					"choices"
-				],
+				"required": ["id", "object", "created", "model", "choices"],
 				"example": {
 					"id": "8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7",
 					"object": "chat.completion",
@@ -1373,9 +1251,7 @@
 				"type": "object",
 				"additionalProperties": false,
 				"description": "Exact text-only Chat history item. Tool call IDs must be unique and every assistant call must have one adjacent tool result.",
-				"required": [
-					"role"
-				],
+				"required": ["role"],
 				"properties": {
 					"name": {
 						"type": "string",
@@ -1383,13 +1259,7 @@
 					},
 					"role": {
 						"type": "string",
-						"enum": [
-							"system",
-							"user",
-							"assistant",
-							"tool",
-							"developer"
-						]
+						"enum": ["system", "user", "assistant", "tool", "developer"]
 					},
 					"content": {
 						"$ref": "#/components/schemas/ChatMessageContent"
@@ -1441,20 +1311,10 @@
 					"finish_reason": {
 						"type": "string",
 						"description": "Reason why the model stopped generating",
-						"enum": [
-							"stop",
-							"length",
-							"tool_calls",
-							"content_filter",
-							"error"
-						]
+						"enum": ["stop", "length", "tool_calls", "content_filter", "error"]
 					}
 				},
-				"required": [
-					"index",
-					"message",
-					"finish_reason"
-				]
+				"required": ["index", "message", "finish_reason"]
 			},
 			"ChatUsage": {
 				"type": "object",
@@ -1476,11 +1336,7 @@
 						"$ref": "#/components/schemas/PromptTokenDetails"
 					}
 				},
-				"required": [
-					"prompt_tokens",
-					"completion_tokens",
-					"total_tokens"
-				]
+				"required": ["prompt_tokens", "completion_tokens", "total_tokens"]
 			},
 			"ChatMessageContent": {
 				"description": "Message content as either a string or an array of content blocks.",
@@ -1499,11 +1355,7 @@
 			"ChatToolCall": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": [
-					"id",
-					"type",
-					"function"
-				],
+				"required": ["id", "type", "function"],
 				"properties": {
 					"index": {
 						"type": "integer",
@@ -1515,17 +1367,12 @@
 					},
 					"type": {
 						"type": "string",
-						"enum": [
-							"function"
-						]
+						"enum": ["function"]
 					},
 					"function": {
 						"type": "object",
 						"additionalProperties": false,
-						"required": [
-							"name",
-							"arguments"
-						],
+						"required": ["name", "arguments"],
 						"properties": {
 							"name": {
 								"type": "string"
@@ -1541,23 +1388,16 @@
 			"ChatFunctionTool": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": [
-					"type",
-					"function"
-				],
+				"required": ["type", "function"],
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"function"
-						]
+						"enum": ["function"]
 					},
 					"function": {
 						"type": "object",
 						"additionalProperties": false,
-						"required": [
-							"name"
-						],
+						"required": ["name"],
 						"properties": {
 							"name": {
 								"type": "string",
@@ -1586,9 +1426,7 @@
 				"properties": {
 					"role": {
 						"type": "string",
-						"enum": [
-							"assistant"
-						]
+						"enum": ["assistant"]
 					},
 					"content": {
 						"$ref": "#/components/schemas/ChatMessageContent",
@@ -1602,22 +1440,16 @@
 						}
 					}
 				},
-				"required": [
-					"role"
-				]
+				"required": ["role"]
 			},
 			"ChatContentBlock": {
 				"type": "object",
 				"description": "Text-only chat content block accepted by Stogas.",
-				"required": [
-					"type"
-				],
+				"required": ["type"],
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"text"
-						]
+						"enum": ["text"]
 					},
 					"text": {
 						"type": "string"
@@ -1636,9 +1468,7 @@
 				"type": "object",
 				"description": "OpenAI-compatible Responses API request fields parsed by the Stogas HTTP API. Unknown top-level fields are accepted for SDK compatibility, ignored, and never forwarded upstream.",
 				"additionalProperties": true,
-				"required": [
-					"input"
-				],
+				"required": ["input"],
 				"properties": {
 					"policy": {
 						"$ref": "#/components/schemas/RequestRoutingPolicy"
@@ -1735,10 +1565,7 @@
 					"prompt_cache_retention": {
 						"type": "string",
 						"description": "Legacy OpenAI retention control for models before GPT-5.6, and Azure retention policy. GPT-5.6 OpenAI requests should use `prompt_cache_options.ttl`; current Azure GPT-5.6 deployments accept only `24h`.",
-						"enum": [
-							"in_memory",
-							"24h"
-						]
+						"enum": ["in_memory", "24h"]
 					},
 					"reasoning": {
 						"type": "object",
@@ -1747,15 +1574,7 @@
 							"effort": {
 								"type": "string",
 								"description": "Canonical Stogas effort. Unsupported positive values map to the nearest deployment level, with upward ties; `none` is rejected when reasoning cannot be disabled.",
-								"enum": [
-									"none",
-									"minimal",
-									"low",
-									"medium",
-									"high",
-									"xhigh",
-									"max"
-								]
+								"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 							},
 							"summary": {
 								"type": "string"
@@ -1775,15 +1594,7 @@
 					"service_tier": {
 						"type": "string",
 						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
-						"enum": [
-							"auto",
-							"default",
-							"fast",
-							"flex",
-							"priority",
-							"standard",
-							"standard_only"
-						]
+						"enum": ["auto", "default", "fast", "flex", "priority", "standard", "standard_only"]
 					},
 					"stream_options": {
 						"type": "object",
@@ -1850,10 +1661,7 @@
 						"description": "Nucleus sampling control. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
 					},
 					"tool_choice": {
-						"type": [
-							"string",
-							"object"
-						],
+						"type": ["string", "object"],
 						"description": "Exact tool choice. OpenAI-format deployments accept `auto`, `none`, `required`, named function/custom selectors, exact declared hosted selectors, or `{type:\"allowed_tools\",mode:\"auto\"|\"required\",tools:[...]}`. Anthropic-format deployments accept only the string modes or a named function selector."
 					},
 					"tools": {
@@ -1868,17 +1676,11 @@
 						"type": "string"
 					},
 					"safety_identifier": {
-						"type": [
-							"string",
-							"null"
-						],
+						"type": ["string", "null"],
 						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream safety identity from the authenticated API key."
 					},
 					"user": {
-						"type": [
-							"string",
-							"null"
-						],
+						"type": ["string", "null"],
 						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream user identity from the authenticated API key."
 					},
 					"prompt_cache_options": {
@@ -1887,16 +1689,11 @@
 						"properties": {
 							"mode": {
 								"type": "string",
-								"enum": [
-									"implicit",
-									"explicit"
-								]
+								"enum": ["implicit", "explicit"]
 							},
 							"ttl": {
 								"type": "string",
-								"enum": [
-									"30m"
-								]
+								"enum": ["30m"]
 							}
 						},
 						"additionalProperties": false
@@ -1914,35 +1711,20 @@
 						"properties": {
 							"type": {
 								"type": "string",
-								"enum": [
-									"ephemeral"
-								]
+								"enum": ["ephemeral"]
 							},
 							"ttl": {
 								"type": "string",
-								"enum": [
-									"5m",
-									"1h"
-								]
+								"enum": ["5m", "1h"]
 							}
 						},
-						"required": [
-							"type"
-						],
+						"required": ["type"],
 						"additionalProperties": false
 					},
 					"reasoning.effort": {
 						"type": "string",
 						"description": "Compatibility shortcut for `reasoning.effort`.",
-						"enum": [
-							"none",
-							"minimal",
-							"low",
-							"medium",
-							"high",
-							"xhigh",
-							"max"
-						]
+						"enum": ["none", "minimal", "low", "medium", "high", "xhigh", "max"]
 					},
 					"encryption_keys": {
 						"type": "object",
@@ -1976,9 +1758,7 @@
 					},
 					"object": {
 						"type": "string",
-						"enum": [
-							"response"
-						],
+						"enum": ["response"],
 						"description": "The object type, which is always `response`."
 					},
 					"created_at": {
@@ -1986,28 +1766,15 @@
 						"description": "Unix timestamp of response creation."
 					},
 					"completed_at": {
-						"type": [
-							"integer",
-							"null"
-						],
+						"type": ["integer", "null"],
 						"description": "Unix timestamp of response completion."
 					},
 					"status": {
 						"type": "string",
-						"enum": [
-							"completed",
-							"failed",
-							"in_progress",
-							"cancelled",
-							"queued",
-							"incomplete"
-						]
+						"enum": ["completed", "failed", "in_progress", "cancelled", "queued", "incomplete"]
 					},
 					"error": {
-						"type": [
-							"object",
-							"null"
-						],
+						"type": ["object", "null"],
 						"properties": {
 							"code": {
 								"type": "string"
@@ -2018,10 +1785,7 @@
 						}
 					},
 					"incomplete_details": {
-						"type": [
-							"object",
-							"null"
-						],
+						"type": ["object", "null"],
 						"properties": {
 							"reason": {
 								"type": "string"
@@ -2047,10 +1811,7 @@
 						"type": "boolean"
 					},
 					"conversation": {
-						"type": [
-							"object",
-							"null"
-						],
+						"type": ["object", "null"],
 						"properties": {
 							"id": {
 								"type": "string"
@@ -2064,23 +1825,13 @@
 						}
 					},
 					"instructions": {
-						"type": [
-							"string",
-							"array",
-							"null"
-						]
+						"type": ["string", "array", "null"]
 					},
 					"max_output_tokens": {
-						"type": [
-							"integer",
-							"null"
-						]
+						"type": ["integer", "null"]
 					},
 					"max_tool_calls": {
-						"type": [
-							"integer",
-							"null"
-						]
+						"type": ["integer", "null"]
 					},
 					"metadata": {
 						"type": "object"
@@ -2089,41 +1840,24 @@
 						"type": "boolean"
 					},
 					"previous_response_id": {
-						"type": [
-							"string",
-							"null"
-						]
+						"type": ["string", "null"]
 					},
 					"prompt_cache_key": {
-						"type": [
-							"string",
-							"null"
-						]
+						"type": ["string", "null"]
 					},
 					"prompt_cache_retention": {
-						"type": [
-							"string",
-							"null"
-						]
+						"type": ["string", "null"]
 					},
 					"prompt_cache_options": {
-						"type": [
-							"object",
-							"null"
-						],
+						"type": ["object", "null"],
 						"properties": {
 							"mode": {
 								"type": "string",
-								"enum": [
-									"implicit",
-									"explicit"
-								]
+								"enum": ["implicit", "explicit"]
 							},
 							"ttl": {
 								"type": "string",
-								"enum": [
-									"30m"
-								]
+								"enum": ["30m"]
 							}
 						},
 						"additionalProperties": false
@@ -2132,16 +1866,10 @@
 						"type": "object"
 					},
 					"safety_identifier": {
-						"type": [
-							"string",
-							"null"
-						]
+						"type": ["string", "null"]
 					},
 					"service_tier": {
-						"type": [
-							"string",
-							"null"
-						]
+						"type": ["string", "null"]
 					},
 					"store": {
 						"type": "boolean"
@@ -2153,10 +1881,7 @@
 						"type": "object"
 					},
 					"tool_choice": {
-						"type": [
-							"string",
-							"object"
-						]
+						"type": ["string", "object"]
 					},
 					"tools": {
 						"type": "array",
@@ -2180,14 +1905,7 @@
 						"$ref": "#/components/schemas/StogasMetadata"
 					}
 				},
-				"required": [
-					"id",
-					"object",
-					"created_at",
-					"model",
-					"output",
-					"status"
-				],
+				"required": ["id", "object", "created_at", "model", "output", "status"],
 				"example": {
 					"id": "8ee3487c-e5b1-4fe0-9dd6-84bc23ddd5f7",
 					"object": "response",
@@ -2244,12 +1962,7 @@
 					},
 					"role": {
 						"type": "string",
-						"enum": [
-							"assistant",
-							"user",
-							"system",
-							"developer"
-						]
+						"enum": ["assistant", "user", "system", "developer"]
 					},
 					"content": {
 						"$ref": "#/components/schemas/ResponsesMessageContent"
@@ -2320,18 +2033,11 @@
 						}
 					},
 					"cost": {
-						"type": [
-							"number",
-							"null"
-						],
+						"type": ["number", "null"],
 						"description": "Upstream inference cost when available."
 					}
 				},
-				"required": [
-					"input_tokens",
-					"output_tokens",
-					"total_tokens"
-				]
+				"required": ["input_tokens", "output_tokens", "total_tokens"]
 			},
 			"ResponsesMessageContent": {
 				"description": "Responses message content as either a string or an array of content blocks.",
@@ -2349,9 +2055,7 @@
 			},
 			"ResponsesContentBlock": {
 				"type": "object",
-				"required": [
-					"type"
-				],
+				"required": ["type"],
 				"properties": {
 					"type": {
 						"type": "string",
@@ -2411,20 +2115,11 @@
 					},
 					"status": {
 						"type": "string",
-						"enum": [
-							"completed",
-							"in_progress",
-							"incomplete"
-						]
+						"enum": ["completed", "in_progress", "incomplete"]
 					},
 					"role": {
 						"type": "string",
-						"enum": [
-							"assistant",
-							"user",
-							"system",
-							"developer"
-						]
+						"enum": ["assistant", "user", "system", "developer"]
 					},
 					"content": {
 						"$ref": "#/components/schemas/ResponsesRequestMessageContent"
@@ -2476,17 +2171,11 @@
 				"type": "object",
 				"additionalProperties": false,
 				"description": "Text-only Responses content block accepted by Stogas.",
-				"required": [
-					"type"
-				],
+				"required": ["type"],
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"input_text",
-							"output_text",
-							"refusal"
-						]
+						"enum": ["input_text", "output_text", "refusal"]
 					},
 					"text": {
 						"type": "string"
@@ -2509,14 +2198,10 @@
 				"properties": {
 					"mode": {
 						"type": "string",
-						"enum": [
-							"explicit"
-						]
+						"enum": ["explicit"]
 					}
 				},
-				"required": [
-					"mode"
-				],
+				"required": ["mode"],
 				"additionalProperties": false
 			},
 			"AnthropicCacheControl": {
@@ -2524,21 +2209,14 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"ephemeral"
-						]
+						"enum": ["ephemeral"]
 					},
 					"ttl": {
 						"type": "string",
-						"enum": [
-							"5m",
-							"1h"
-						]
+						"enum": ["5m", "1h"]
 					}
 				},
-				"required": [
-					"type"
-				],
+				"required": ["type"],
 				"additionalProperties": false
 			},
 			"AnthropicTaskBudget": {
@@ -2547,9 +2225,7 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"tokens"
-						]
+						"enum": ["tokens"]
 					},
 					"total": {
 						"type": "integer",
@@ -2560,10 +2236,7 @@
 						"minimum": 0
 					}
 				},
-				"required": [
-					"type",
-					"total"
-				],
+				"required": ["type", "total"],
 				"additionalProperties": false
 			},
 			"AnthropicContextManagement": {
@@ -2588,9 +2261,7 @@
 						}
 					}
 				},
-				"required": [
-					"edits"
-				],
+				"required": ["edits"],
 				"additionalProperties": false
 			},
 			"AnthropicClearThinkingEdit": {
@@ -2598,31 +2269,23 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"clear_thinking_20251015"
-						]
+						"enum": ["clear_thinking_20251015"]
 					},
 					"keep": {
 						"oneOf": [
 							{
 								"type": "string",
-								"enum": [
-									"all"
-								]
+								"enum": ["all"]
 							},
 							{
 								"type": "object",
 								"properties": {
 									"type": {
 										"type": "string",
-										"enum": [
-											"all"
-										]
+										"enum": ["all"]
 									}
 								},
-								"required": [
-									"type"
-								],
+								"required": ["type"],
 								"additionalProperties": false
 							},
 							{
@@ -2630,27 +2293,20 @@
 								"properties": {
 									"type": {
 										"type": "string",
-										"enum": [
-											"thinking_turns"
-										]
+										"enum": ["thinking_turns"]
 									},
 									"value": {
 										"type": "integer",
 										"minimum": 1
 									}
 								},
-								"required": [
-									"type",
-									"value"
-								],
+								"required": ["type", "value"],
 								"additionalProperties": false
 							}
 						]
 					}
 				},
-				"required": [
-					"type"
-				],
+				"required": ["type"],
 				"additionalProperties": false
 			},
 			"AnthropicClearToolUsesEdit": {
@@ -2658,9 +2314,7 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"clear_tool_uses_20250919"
-						]
+						"enum": ["clear_tool_uses_20250919"]
 					},
 					"clear_at_least": {
 						"oneOf": [
@@ -2702,9 +2356,7 @@
 						"$ref": "#/components/schemas/AnthropicContextEditTrigger"
 					}
 				},
-				"required": [
-					"type"
-				],
+				"required": ["type"],
 				"additionalProperties": false
 			},
 			"AnthropicCompactEdit": {
@@ -2712,15 +2364,10 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"compact_20260112"
-						]
+						"enum": ["compact_20260112"]
 					},
 					"instructions": {
-						"type": [
-							"string",
-							"null"
-						]
+						"type": ["string", "null"]
 					},
 					"pause_after_compaction": {
 						"type": "boolean"
@@ -2736,9 +2383,7 @@
 						]
 					}
 				},
-				"required": [
-					"type"
-				],
+				"required": ["type"],
 				"additionalProperties": false
 			},
 			"AnthropicInputTokenCount": {
@@ -2746,19 +2391,14 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"input_tokens"
-						]
+						"enum": ["input_tokens"]
 					},
 					"value": {
 						"type": "integer",
 						"minimum": 0
 					}
 				},
-				"required": [
-					"type",
-					"value"
-				],
+				"required": ["type", "value"],
 				"additionalProperties": false
 			},
 			"AnthropicToolUseCount": {
@@ -2766,19 +2406,14 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"tool_uses"
-						]
+						"enum": ["tool_uses"]
 					},
 					"value": {
 						"type": "integer",
 						"minimum": 0
 					}
 				},
-				"required": [
-					"type",
-					"value"
-				],
+				"required": ["type", "value"],
 				"additionalProperties": false
 			},
 			"AnthropicContextEditTrigger": {
@@ -2786,20 +2421,14 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"input_tokens",
-							"tool_uses"
-						]
+						"enum": ["input_tokens", "tool_uses"]
 					},
 					"value": {
 						"type": "integer",
 						"minimum": 0
 					}
 				},
-				"required": [
-					"type",
-					"value"
-				],
+				"required": ["type", "value"],
 				"additionalProperties": false
 			},
 			"AnthropicCompactionTrigger": {
@@ -2807,19 +2436,14 @@
 				"properties": {
 					"type": {
 						"type": "string",
-						"enum": [
-							"input_tokens"
-						]
+						"enum": ["input_tokens"]
 					},
 					"value": {
 						"type": "integer",
 						"minimum": 50000
 					}
 				},
-				"required": [
-					"type",
-					"value"
-				],
+				"required": ["type", "value"],
 				"additionalProperties": false
 			},
 			"AnthropicToolNameArray": {
@@ -2914,11 +2538,7 @@
 					"catalog": {
 						"type": "object",
 						"additionalProperties": false,
-						"required": [
-							"chain_hash",
-							"version",
-							"selection_ids"
-						],
+						"required": ["chain_hash", "version", "selection_ids"],
 						"properties": {
 							"chain_hash": {
 								"type": "string",
@@ -2962,10 +2582,7 @@
 					"timing": {
 						"type": "object",
 						"additionalProperties": false,
-						"required": [
-							"total_ms",
-							"provider_ms"
-						],
+						"required": ["total_ms", "provider_ms"],
 						"properties": {
 							"total_ms": {
 								"type": "integer",
@@ -2996,9 +2613,7 @@
 						"additionalProperties": {
 							"type": "object",
 							"additionalProperties": false,
-							"required": [
-								"quantity"
-							],
+							"required": ["quantity"],
 							"properties": {
 								"quantity": {
 									"type": "string",
@@ -3028,29 +2643,19 @@
 									"not": {
 										"anyOf": [
 											{
-												"required": [
-													"rateKey"
-												]
+												"required": ["rateKey"]
 											},
 											{
-												"required": [
-													"rateUsd"
-												]
+												"required": ["rateUsd"]
 											},
 											{
-												"required": [
-													"usd"
-												]
+												"required": ["usd"]
 											}
 										]
 									}
 								},
 								{
-									"required": [
-										"rateKey",
-										"rateUsd",
-										"usd"
-									]
+									"required": ["rateKey", "rateUsd", "usd"]
 								}
 							]
 						}
@@ -3068,19 +2673,13 @@
 						"description": "Canonical exact USD, with at most 36 fractional digits."
 					},
 					"cache_read_savings_usd": {
-						"type": [
-							"string",
-							"null"
-						],
+						"type": ["string", "null"],
 						"maxLength": 77,
 						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
 						"description": "Canonical exact USD, with at most 36 fractional digits."
 					},
 					"cache_write_overhead_usd": {
-						"type": [
-							"string",
-							"null"
-						],
+						"type": ["string", "null"],
 						"maxLength": 77,
 						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
 						"description": "Canonical exact USD, with at most 36 fractional digits."
@@ -3091,13 +2690,7 @@
 			"StogasReceipt": {
 				"type": "object",
 				"additionalProperties": false,
-				"required": [
-					"schema",
-					"boot_sha256",
-					"request_sha256",
-					"response_sha256",
-					"signature"
-				],
+				"required": ["schema", "boot_sha256", "request_sha256", "response_sha256", "signature"],
 				"properties": {
 					"schema": {
 						"type": "string",

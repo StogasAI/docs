@@ -27,7 +27,7 @@ export function Schema({ client, ...options }: SchemaUIOptions) {
 	const translations = useTranslations().translations;
 	const generated = useMemo(
 		() => generateSchemaUI({ ...options, translations }),
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by the options
+		// Keep the selected branch keyed by the available options.
 		[
 			options.root,
 			options.readOnly,

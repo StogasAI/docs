@@ -39,7 +39,7 @@ test('every indexed page exports readable Markdown and complete operation schema
 		(m) => new URL(m[1]).pathname
 	);
 	expect(markdownLinks.length).toBeGreaterThan(30);
-	let operations = 0;
+	const operations: string[] = [];
 	const canonicalUrls = new Set<string>();
 	for (const path of markdownLinks) {
 		const response = await request.get(path);
@@ -55,15 +55,27 @@ test('every indexed page exports readable Markdown and complete operation schema
 		expect(documentHtml).toContain(`<link rel="canonical" href="${metadata.url}"`);
 		const block = text.match(/^## OpenAPI\n\n(`{3,})yaml\n([\s\S]*?)^\1\s*$/m);
 		if (!block) continue;
-		operations++;
 		const document = parse(block[2]);
+		for (const pathItem of Object.values(document.paths)) {
+			for (const operation of Object.values(pathItem as Record<string, unknown>)) {
+				if (operation && typeof operation === 'object' && 'operationId' in operation) {
+					operations.push(String(operation.operationId));
+				}
+			}
+		}
 		checkReferences(document);
 		expect(Object.keys(document.paths)).toHaveLength(1);
 		const json = await request.get(path.replace(/content\.md$/, 'openapi.json'));
 		expect(json.headers()['content-type']).toContain('application/json');
 		expect(await json.json()).toEqual(document);
 	}
-	expect(operations).toBe(4);
+	expect(operations.sort()).toEqual([
+		'createChatCompletion',
+		'createResponse',
+		'getCatalog',
+		'listModels',
+		'validatePolicy'
+	]);
 	const sitemap = await request.get('/docs/sitemap.xml');
 	expect(sitemap.status()).toBe(200);
 	expect(sitemap.headers()['content-type']).toContain('application/xml');
