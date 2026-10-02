@@ -331,7 +331,7 @@ checks that can reject a request before a balance reservation.
 | Remove or restore a lifetime cap     | Keep lifetime spending and tokens, including shared usage from deleted keys.                                                                 |
 
 Lowering a limit below usage blocks new reservations until sufficient allowance is available.
-The key's **Status** page has a card for each configured limit, labeled **Organization**, **Grant**,
+The key's **Overview** page has a card for each configured limit, labeled **Organization**, **Grant**,
 **Key**, or **Platform**. Each card shows that limit's own allowance and usage; shared usage is
 visible to every key owner. The key's lifetime spend appears separately, even without a cap.
 
@@ -363,7 +363,7 @@ The response's `error.code` identifies the cause and scope:
 | Network safeguard   | `ip_rate_limit_exceeded`                                                             |
 | Gateway capacity    | `gateway_capacity_exceeded`                                                          |
 
-A limit error identifies the scope and kind, not a particular named counter; inspect that scope's limits on **Status**.
+A limit error identifies the scope and kind, not a particular named counter; inspect that scope's limits on **Overview**.
 Use bounded backoff with jitter for temporary traffic limits. Repeated retries cannot make a
 reservation fit a cap that is too small; lower the output maximum or change the applicable cap.
 

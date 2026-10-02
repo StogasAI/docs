@@ -7,7 +7,15 @@ We provide one API for supported AI models. Existing OpenAI-compatible clients w
 
 ## 1. Create an API key
 
-Create a key in the [Stogas dashboard](https://app.stogas.ai), then export it:
+Open the [Stogas dashboard](https://app.stogas.ai) and select the organization that will own the key.
+If it is inactive, open **Balance** and add at least $1 in credited funds to activate it.
+See [Billing](/docs/billing) for payment fees and when credit becomes available.
+
+Create an API key. Under its **Credentials** tab, select **Stogas managed** for Chutes.
+New keys start with this assignment. OpenAI, Anthropic and Azure require your own
+[provider credential](/docs/byok), assigned to the key before use.
+
+Copy the key and export it:
 
 ```console
 export STOGAS_API_KEY="your-key"
@@ -18,12 +26,16 @@ member-assigned key.
 
 ## 2. Send a request
 
+These examples use the Chutes deployment `chutes-mistral-nemo-instruct-2407`.
+The key must be enabled, have available funds and allowance, and permit this deployment
+under its [effective policy](/docs/policies).
+
 ```console
 curl https://api.stogas.ai/v1/chat/completions \
   -H "Authorization: Bearer $STOGAS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "openai/gpt-5-mini",
+    "model": "chutes-mistral-nemo-instruct-2407",
     "messages": [{"role": "user", "content": "Say hello in one sentence."}]
   }'
 ```
@@ -39,7 +51,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="openai/gpt-5-mini",
+    model="chutes-mistral-nemo-instruct-2407",
     messages=[{"role": "user", "content": "Say hello in one sentence."}],
 )
 print(response.choices[0].message.content)
