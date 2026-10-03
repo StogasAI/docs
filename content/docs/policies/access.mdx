@@ -25,7 +25,6 @@ This policy blocks new requests before 08:00 on weekdays in New York:
 
 ```json
 {
-	"version": 1,
 	"access": {
 		"deny": [
 			{
@@ -56,11 +55,20 @@ A period cannot cross midnight. Split Friday 20:00 through Saturday 08:00 into t
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"access": {
 		"deny": [
-			{ "days": ["fri"], "start": "20:00", "end": "24:00", "timeZone": "UTC" },
-			{ "days": ["sat"], "start": "00:00", "end": "08:00", "timeZone": "UTC" }
+			{
+				"days": ["fri"],
+				"start": "20:00",
+				"end": "24:00",
+				"timeZone": "UTC"
+			},
+			{
+				"days": ["sat"],
+				"start": "00:00",
+				"end": "08:00",
+				"timeZone": "UTC"
+			}
 		]
 	}
 }

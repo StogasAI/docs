@@ -16,8 +16,9 @@ not remove members who already joined. Joining assigns the organization's curren
 
 ## Assign roles
 
-Create a role from the **Roles** tab and select its permissions. Assign roles from the member
-list, individually or to a selection. Keep administrative permissions limited to the people
+Create a role from the **Roles** tab. Choose organization permissions and add resources with
+View, Use, Manage, or Admin. Search resources by name; only selected resources appear in the role.
+Assign roles from the member list, individually or to a selection. Keep administrative permissions limited to the people
 who need them. The role list shows the permissions and member count directly.
 
 Analytics permissions cover request logs and usage; Activity covers organization audit events.
@@ -32,18 +33,21 @@ may be preserved.
 Role-management permission allows creating and editing roles with permissions the manager does not hold. The final role manager cannot leave or be
 removed while another member remains.
 
-## Connect roles to grants
+## Scope a role to resources
 
-Link a role on the **Grants** page. Members with that role can use the grant, subject to their
-permissions and its key allowance. A direct member assignment remains independent of their roles.
-The grant's [assignment rules](/docs/grants#create-and-assign-a-grant) own what happens when access
-changes.
+In the role editor, add a folder, grant, service key, or provider credential and choose its permissions.
+Folder rights cover contained grants and keys; grant rights cover member-key settings. Member-key
+secrets and inference use remain owner-only. Credentials have no folder inheritance.
+
+A role can combine organization permissions and different permissions on selected resources.
+For grant access, select **Use** on the grant or its folder. Members receive that access through
+their assigned roles. Shared access has no individual member exceptions.
 
 ## Remove access
 
 Removing a member's last route to a grant deletes their member keys under that grant. Another
-role, direct assignment, folder, or organization permission that grants Use preserves those keys. Restoring the role does not restore
-deleted keys. Review the affected keys before confirming a role or membership removal.
+role, folder, or organization permission that grants Use preserves those keys. Restoring the role does not restore
+deleted keys. Check the access being removed before confirming a role or membership removal.
 
 For a reversible pause, disable the grant or an individual API key instead. Removing service-key
 access preserves the key. Rotate its secret to revoke copies they may hold.

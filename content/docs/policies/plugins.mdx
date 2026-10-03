@@ -14,7 +14,6 @@ This example redacts email addresses, banking and healthcare identifiers, and em
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"plugins": {
 		"stogasRedaction": {
 			"email_address": true,
@@ -86,13 +85,22 @@ as `.` or `*` has no special meaning. Matches become `<CUSTOM_PII>`.
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"plugins": {
 		"stogasRedaction": {
 			"literals": [
-				{ "values": ["Project Aurora", "Project Borealis"], "ignoreCase": true, "fuzzy": true },
-				{ "values": ["InternalCodename"] },
-				{ "values": ["internal.example.com"], "ignoreCase": true, "wholeWord": false }
+				{
+					"values": ["Project Aurora", "Project Borealis"],
+					"ignoreCase": true,
+					"fuzzy": true
+				},
+				{
+					"values": ["InternalCodename"]
+				},
+				{
+					"values": ["internal.example.com"],
+					"ignoreCase": true,
+					"wholeWord": false
+				}
 			]
 		}
 	}
@@ -138,7 +146,6 @@ For custom-only redaction, set just `customPattern`. Use alternation to match mo
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"plugins": {
 		"stogasRedaction": {
 			"customPattern": "\\b(?:EMP-[0-9]{6}|ACCT-[A-Z]{2}-[0-9]{8})\\b"
@@ -184,7 +191,7 @@ are repaired. Its saved source remains available for editing.
 To reject non-ASCII prompt text instead of redacting it, set the separate input restriction:
 
 ```json title="policy.json"
-{ "version": 1, "input": { "asciiOnly": true } }
+{ "input": { "asciiOnly": true } }
 ```
 
 `input` requires the Boolean `asciiOnly`. Omit the object or set `asciiOnly: false` to add no
@@ -405,7 +412,6 @@ The resulting policy has this shape:
 
 ```jsonc title="Policy shape (replace placeholders)"
 {
-	"version": 1,
 	"plugins": {
 		"encrypted": {
 			"version": 1,

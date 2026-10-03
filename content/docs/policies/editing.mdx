@@ -28,7 +28,6 @@ This complete policy limits the scope to $10 in lifetime upstream usage at catal
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"limits": {
 		"spend": {
 			"lifetimeUsd": "10"
@@ -87,13 +86,19 @@ Already-authorized requests retain their reservation. See
 ## Check execution before saving
 
 Optionally call `POST /v1/policies/validate` with your API key in `Authorization: Bearer ...`.
-Include the organization and key, every applicable folder, grant, role and member, and only the selected credential. Each entry has a `scope`, optional resource `id`, and `config`. Use `null` or `{ "version": 1 }` for an empty config; omit inapplicable scopes.
+Include the organization and key, every applicable folder, grant, role and member, and only the selected credential. Each entry has a `scope`, optional resource `id`, and `config`. Use `null` for an empty config; omit inapplicable scopes.
 
 ```json title="Request body"
 {
 	"policySources": [
-		{ "scope": "organization", "config": { "version": 1 } },
-		{ "scope": "key", "config": { "version": 1 } }
+		{
+			"scope": "organization",
+			"config": null
+		},
+		{
+			"scope": "key",
+			"config": null
+		}
 	]
 }
 ```
@@ -141,7 +146,7 @@ See [Encrypted plugins](/docs/policies/plugins#encrypted-plugins).
 
 ## Document rules
 
-Only `version: 1` is required. Omit unused settings; an empty policy is stored without a body.
+Use `null` to clear a policy. An empty object `{}` or a document containing only `$schema` is also stored and returned as `null`. Omit unused settings; policies have no required metadata fields.
 Unknown fields, duplicate JSON keys, invalid expressions and unsupported scope permissions are
 rejected. Scope and identity come from the resource. Membership assignments, enabled state and
 expiration remain resource settings.
@@ -164,8 +169,7 @@ Add the public schema URL for field completion in a JSON-aware editor:
 
 ```json
 {
-	"$schema": "https://stogas.ai/schemas/key-config-v1.json",
-	"version": 1
+	"$schema": "https://stogas.ai/schemas/key-config-v1.json"
 }
 ```
 

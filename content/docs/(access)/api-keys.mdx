@@ -21,14 +21,14 @@ A service key belongs to the organization. Use one for work that must continue i
 member, such as a production service, deployment, or CI job.
 
 Organization-wide API key managers and folder managers can create service keys in their scope.
-Assign members or roles these permissions on a service key, grant, or folder:
+In **Members → Roles**, add a service key, grant, or folder with these permissions:
 
 | Permission | Allows                                                                         |
 | ---------- | ------------------------------------------------------------------------------ |
 | **View**   | Read settings, policies, and usage.                                            |
 | **Use**    | View, plus retrieve a service-key secret or create personal keys from a grant. |
 | **Manage** | View, plus configure, rotate, disable, or delete the resource.                 |
-| **Admin**  | Use, Manage, and permission to assign access.                                  |
+| **Admin**  | Use, Manage, and authority to assign existing roles within that scope.         |
 
 Use and Manage can be assigned together. Manage alone cannot reveal a secret or grant access to
 someone else. Folder permissions apply to its grants and keys. Grant permissions apply to its
@@ -43,7 +43,7 @@ shared access assignments.
 ## Grants
 
 [Grants](/docs/grants) let selected members create their own keys under shared restrictions.
-Grant assignment, key allowances and revocation live on the separate **Grants** page.
+Grant settings and key allowances live on the **Grants** page. Configure access in **Members → Roles**.
 
 ## Member keys
 
@@ -65,8 +65,8 @@ Request policies have their [own permission](/docs/policies/request-policies#gra
 Folders group service keys and grants within an organization. Each resource can belong to one
 folder; member keys follow their grant's folder. Use the folder filter on **API keys** or **Grants**,
 and **Manage folders** to create, rename, or delete a folder. Set a resource's folder in its settings.
-Folder managers can manage that folder, its grants and all contained keys. Admin permits assigning
-access. Moving a service key or grant requires Admin on both the source and destination folder.
+Folder managers can manage that folder, its grants and all contained keys. Member managers also
+need Admin on the resource when assigning roles that introduce access. Moving a service key or grant requires Admin on both the source and destination folder.
 Moving to or from the organization root requires organization-wide API resource Admin.
 
 A move changes inherited folder policies and shared limits while preserving key identities and
@@ -86,7 +86,7 @@ The enabled switch saves immediately. **Settings** contains the name, policy, an
 
 ## Policies
 
-Each usable key can have these optional controls in one versioned JSON document:
+Each usable key can have these optional controls in one JSON document:
 
 - catalog filters and sorting;
 - an allowed set of catalog node IDs;

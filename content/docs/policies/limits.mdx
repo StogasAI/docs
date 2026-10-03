@@ -39,11 +39,15 @@ Put limits in a [named rule](/docs/policies/scopes#conditional-rules) to count m
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"rules": {
 		"openai_budget": {
 			"when": "provider.id == 'openai'",
-			"limits": { "spend": { "lifetimeUsd": "100" }, "concurrentRequests": 2 }
+			"limits": {
+				"spend": {
+					"lifetimeUsd": "100"
+				},
+				"concurrentRequests": 2
+			}
 		}
 	}
 }
@@ -66,20 +70,25 @@ This policy combines a lifetime allowance with daily and monthly budgets:
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"limits": {
 		"spend": {
 			"lifetimeUsd": "1000",
 			"recurring": {
 				"daily": {
 					"maxUsd": "20",
-					"window": { "count": 1, "unit": "day" },
+					"window": {
+						"count": 1,
+						"unit": "day"
+					},
 					"anchor": "2026-09-01T00:00:00Z",
 					"timeZone": "UTC"
 				},
 				"monthly": {
 					"maxUsd": "100",
-					"window": { "count": 1, "unit": "month" },
+					"window": {
+						"count": 1,
+						"unit": "month"
+					},
 					"anchor": "2026-09-01T00:00:00Z",
 					"timeZone": "UTC"
 				}
@@ -133,17 +142,22 @@ Use `limits.requests` to control the rate of new requests and the burst allowed 
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"limits": {
 		"requests": {
 			"steady": {
 				"max": 120,
-				"window": { "count": 1, "unit": "minute" },
+				"window": {
+					"count": 1,
+					"unit": "minute"
+				},
 				"burst": 20
 			},
 			"short-burst": {
 				"max": 5,
-				"window": { "count": 1, "unit": "second" },
+				"window": {
+					"count": 1,
+					"unit": "second"
+				},
 				"burst": 5
 			}
 		}
@@ -181,11 +195,22 @@ Use `limits.tokens` to cap combined input and output tokens in one or more fixed
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"limits": {
 		"tokens": {
-			"per-minute": { "max": 100000, "window": { "count": 1, "unit": "minute" } },
-			"per-hour": { "max": 1000000, "window": { "count": 1, "unit": "hour" } }
+			"per-minute": {
+				"max": 100000,
+				"window": {
+					"count": 1,
+					"unit": "minute"
+				}
+			},
+			"per-hour": {
+				"max": 1000000,
+				"window": {
+					"count": 1,
+					"unit": "hour"
+				}
+			}
 		},
 		"concurrentRequests": 10
 	}
@@ -247,7 +272,6 @@ Parent limits still apply.
 
 ```json
 {
-	"version": 1,
 	"limits": {
 		"lifetimeTokens": 1000000
 	}

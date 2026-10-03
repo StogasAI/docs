@@ -21,7 +21,6 @@ request-supported section, `false` to deny them, or a list of section paths:
 
 ```json title="Saved policy"
 {
-	"version": 1,
 	"delegation": {
 		"request": ["routing.filter", "routing.sort", "plugins.stogasRedaction"]
 	}
@@ -40,11 +39,21 @@ Send `policy` in the JSON body of Chat Completions or Responses:
 ```json title="Chat Completions request"
 {
 	"model": "gpt-5.5",
-	"messages": [{ "role": "user", "content": "Contact alice@example.com" }],
+	"messages": [
+		{
+			"role": "user",
+			"content": "Contact alice@example.com"
+		}
+	],
 	"policy": {
-		"version": 1,
-		"routing": { "filter": "provider.id == 'openai'" },
-		"plugins": { "stogasRedaction": { "email_address": true } }
+		"routing": {
+			"filter": "provider.id == 'openai'"
+		},
+		"plugins": {
+			"stogasRedaction": {
+				"email_address": true
+			}
+		}
 	}
 }
 ```
@@ -54,9 +63,13 @@ Send `policy` in the JSON body of Chat Completions or Responses:
 	"model": "gpt-5.5",
 	"input": "Hello",
 	"policy": {
-		"version": 1,
 		"routing": {
-			"sort": [{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" }]
+			"sort": [
+				{
+					"by": "deployment.pricing.output_tokens.per_mill_tokens",
+					"direction": "asc"
+				}
+			]
 		}
 	}
 }
@@ -68,7 +81,7 @@ Required saved filters and redaction still apply. Conditional rules use the same
 
 ## Request document
 
-The document requires `version: 1` and is limited to **16 KiB as sent**, including whitespace.
+The document contains only the settings being supplied and is limited to **16 KiB as sent**, including whitespace.
 The saved [expression and node-list bounds](/docs/policies/routing) also apply. There is no policy
 header. `enabled` and expiration remain resource settings; `limits`, `delegation` and `encryption`
 are rejected, including inside rules.

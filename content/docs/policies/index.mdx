@@ -14,12 +14,13 @@ This policy requires a no-training declaration and caps lifetime upstream spendi
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"routing": {
 		"filter": "deployment.dataHandling.trainingUse == false"
 	},
 	"limits": {
-		"spend": { "lifetimeUsd": "10" }
+		"spend": {
+			"lifetimeUsd": "10"
+		}
 	}
 }
 ```
@@ -27,7 +28,7 @@ This policy requires a no-training declaration and caps lifetime upstream spendi
 On an organization, that $10 is shared across all its keys. On a grant, it is shared across the
 grant's member keys. On a key, it applies only to that key. A key cannot override a parent cap.
 
-Only `version` is required. The smallest policy is `{"version":1}`; omitted settings add no
+Use `null` when no policy is configured. An empty object `{}` is saved as `null`; omitted settings add no
 restriction at that scope. They do not remove parent restrictions or platform safeguards.
 
 [Edit a policy](/docs/policies/editing) explains how to save it.

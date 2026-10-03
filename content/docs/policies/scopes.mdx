@@ -50,7 +50,7 @@ These other differences also apply:
 - Saved delegation targets can use resource-ID exceptions. `delegation.request` cannot: a
   request policy has no saved resource ID.
 - Top-level settings are required. Only rules accept `when` and `mode`. Rules cannot contain
-  `version`, `$schema`, `rules`, `delegation` or `encryption`; a rule containing `limits` cannot
+  `$schema`, `rules`, `delegation` or `encryption`; a rule containing `limits` cannot
   use `mode: "default"`. Request rules cannot contain limits, even behind a false condition.
 - All limits belong to saved resources. Top-level lifetime and concurrency settings do not use
   an additional counter slot; those settings inside one rule share one slot. Every saved scope
@@ -115,20 +115,32 @@ Add optional named rules when settings should depend on request or catalog facts
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"rules": {
 		"working_hours": {
 			"when": "request.time.getHours('UTC') >= 9 && request.time.getHours('UTC') < 17",
-			"limits": { "spend": { "lifetimeUsd": "100" } }
+			"limits": {
+				"spend": {
+					"lifetimeUsd": "100"
+				}
+			}
 		},
 		"redact_openai": {
 			"when": "provider.id == 'openai'",
-			"plugins": { "stogasRedaction": { "email_address": true } }
+			"plugins": {
+				"stogasRedaction": {
+					"email_address": true
+				}
+			}
 		},
 		"prefer_context": {
 			"mode": "default",
 			"routing": {
-				"sort": [{ "by": "deployment.contextWindowTokens", "direction": "desc" }]
+				"sort": [
+					{
+						"by": "deployment.contextWindowTokens",
+						"direction": "desc"
+					}
+				]
 			}
 		}
 	}
@@ -179,11 +191,12 @@ For saved resources, an object supplies a default and explicit resource-ID excep
 
 ```json
 {
-	"version": 1,
 	"delegation": {
 		"keys": {
 			"default": false,
-			"exceptions": { "0195ef30-7b1a-7000-8000-000000000001": ["routing.filter"] }
+			"exceptions": {
+				"0195ef30-7b1a-7000-8000-000000000001": ["routing.filter"]
+			}
 		}
 	}
 }

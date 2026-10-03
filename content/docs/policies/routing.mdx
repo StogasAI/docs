@@ -8,9 +8,10 @@ and `routing.sort` to order the candidates that remain. These settings apply tog
 
 ```json title="policy.json"
 {
-	"version": 1,
 	"routing": {
-		"allowedCatalogNodes": { "providers": ["openai", "chutes"] },
+		"allowedCatalogNodes": {
+			"providers": ["openai", "chutes"]
+		},
 		"filter": "deployment.dataHandling.trainingUse == false"
 	}
 }
@@ -117,11 +118,16 @@ and Booleans as false before true when ascending. Lists cannot be sorted.
 
 ```json title="Prefer lower output prices"
 {
-	"version": 1,
 	"routing": {
 		"sort": [
-			{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" },
-			{ "by": "deployment.contextWindowTokens", "direction": "desc" }
+			{
+				"by": "deployment.pricing.output_tokens.per_mill_tokens",
+				"direction": "asc"
+			},
+			{
+				"by": "deployment.contextWindowTokens",
+				"direction": "desc"
+			}
 		]
 	}
 }
@@ -135,12 +141,16 @@ To supply a replaceable preference, put the sort in a rule with `mode: "default"
 
 ```json title="Default organization ordering"
 {
-	"version": 1,
 	"rules": {
 		"prefer_lower_price": {
 			"mode": "default",
 			"routing": {
-				"sort": [{ "by": "blended_price(3, 1, 'per_mill_tokens')", "direction": "asc" }]
+				"sort": [
+					{
+						"by": "blended_price(3, 1, 'per_mill_tokens')",
+						"direction": "asc"
+					}
+				]
 			}
 		}
 	}
@@ -227,8 +237,11 @@ To allow another local credential attempt, explicitly raise `maxPreDispatchCandi
 
 ```json title="policy.json"
 {
-	"version": 1,
-	"routing": { "fallbacks": { "maxPreDispatchCandidates": 3 } }
+	"routing": {
+		"fallbacks": {
+			"maxPreDispatchCandidates": 3
+		}
+	}
 }
 ```
 

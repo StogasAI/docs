@@ -12,7 +12,6 @@ of a member.
 
 Open **Grants** in the dashboard and create a grant. It controls:
 
-- which members may use it;
 - how many keys each assigned member may create;
 - whether it is enabled; and
 - whether saved key policies may be edited.
@@ -24,12 +23,12 @@ independent allowance.
 Lowering an allowance does not delete existing keys. It stops the member from creating another key
 until their key count is below the new allowance.
 
-A grant administrator can assign member or role permissions. Members gain access when they receive a
-linked role. Direct assignments remain independent of role changes. A role with no organization permissions can
-group members; its grant Use is sufficient to create their own keys.
+In **Members → Roles**, add the grant or its folder to a role with **Use**, then assign that role
+to members. A role needs no organization-wide permissions to provide this access. Member managers
+need matching Admin authority when assigning a role that introduces grant rights.
 
 When a member loses their last source of grant Use, their keys under that grant are deleted.
-Another direct, role, folder, or organization grant of Use preserves those keys. Restoring access does not
+Another role, folder, or organization grant of Use preserves those keys. Restoring access does not
 restore deleted keys. Role removal and deletion dialogs warn about this consequence.
 
 Select grant icons to enable, disable, or delete several grants at once. The header selects all grants
@@ -51,8 +50,7 @@ requests across its keys; each key can also have its own limits. See
 
 **View** covers grant settings, its member-key settings and usage. **Use** adds permission to create
 personal keys, within the per-member allowance. **Manage** adds configuration and lifecycle actions.
-Use and Manage are independent and each includes View. **Admin** includes both and permits assigning
-access. See [API-key permissions](/docs/api-keys#service-keys).
+Use and Manage are independent and each includes View. **Admin** includes both and permits member managers to assign existing roles within that scope. See [API-key permissions](/docs/api-keys#service-keys).
 
 Folder permissions apply to grants in that folder. Organization-wide API permissions apply across
 the organization. Managers still obey parent policies. Moving a grant requires Admin on both
