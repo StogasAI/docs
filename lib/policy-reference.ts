@@ -35,10 +35,6 @@ const documentFields = {
 		description: 'Register customer encryption key identifiers by label on an organization policy.',
 		href: '/docs/policies/plugins#encrypted-plugins'
 	},
-	version: {
-		description: 'Policy format version. The only accepted value is 1.',
-		href: '/docs/policies/editing#document-rules'
-	},
 	$schema: {
 		description: 'Optional JSON Schema URL for editor completion. It does not change enforcement.',
 		href: '/docs/policies/editing#use-an-external-editor'
@@ -84,7 +80,8 @@ export function policyDocumentFields() {
 					: 'type' in field
 						? field.type
 						: 'object',
-			required: policy.required.includes(name),
+			required:
+				'required' in policy && Array.isArray(policy.required) && policy.required.includes(name),
 			...summary
 		};
 	});

@@ -9,6 +9,10 @@ for (const width of [390, 1440]) {
 		await page.goto('/docs/policies');
 		const fieldsTable = page.getByRole('table', { name: 'Policy document fields' });
 		await expect(fieldsTable.getByRole('button')).toHaveCount(0);
+		await expect(fieldsTable.getByRole('row')).toHaveCount(
+			Object.keys(schema.properties).length + 1
+		);
+		await expect(fieldsTable.getByRole('link', { name: 'version', exact: true })).toHaveCount(0);
 		expect(
 			await fieldsTable.evaluate((table) => table.scrollWidth <= table.parentElement!.clientWidth)
 		).toBe(true);
