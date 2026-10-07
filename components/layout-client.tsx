@@ -6,10 +6,27 @@ import { messages } from '@/lib/messages';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 import type { Root } from 'fumadocs-core/page-tree';
 import { LayoutDashboard, Home } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import { ThemeSwitch } from 'fumadocs-ui/layouts/shared/slots/theme-switch';
+import { FullSearchTrigger, SearchTrigger } from 'fumadocs-ui/layouts/shared/slots/search-trigger';
 import { StogasLink } from './stogas-link';
+
+function CompactSearchTrigger(props: ComponentProps<typeof SearchTrigger>) {
+	return (
+		<span data-docs-search-trigger className="contents">
+			<SearchTrigger {...props} />
+		</span>
+	);
+}
+
+function WideSearchTrigger(props: ComponentProps<typeof FullSearchTrigger>) {
+	return (
+		<span data-docs-search-trigger className="contents">
+			<FullSearchTrigger {...props} />
+		</span>
+	);
+}
 
 // Inline GitHub mark SVG (brand icon, not in lucide-react)
 function GithubIcon({ className }: { className?: string }) {
@@ -35,7 +52,14 @@ export default function LayoutClient({ children, tree, baseOptions }: LayoutClie
 			</a>
 			<DocsLayout
 				tree={tree}
-				slots={{ themeSwitch: false, languageSelect: false }}
+				slots={{
+					themeSwitch: false,
+					languageSelect: false,
+					searchTrigger: {
+						sm: CompactSearchTrigger,
+						full: WideSearchTrigger
+					}
+				}}
 				{...baseOptions}
 				sidebar={{
 					defaultOpenLevel: 1,

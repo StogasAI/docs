@@ -8,6 +8,8 @@ We provide one API for supported AI models. Existing OpenAI-compatible clients w
 ## 1. Create an API key
 
 Open the [Stogas dashboard](https://app.stogas.ai) and select the organization that will own the key.
+Your **personal organization** is for your own work. An **external organization** is a shared
+workspace with members and roles. Use the organization menu to switch or create a shared organization.
 If it is inactive, open **Balance** and add at least $1 in credited funds to activate it.
 See [Billing](/docs/billing) for payment fees and when credit becomes available.
 
@@ -28,7 +30,12 @@ member-assigned key.
 
 These examples use the Chutes deployment `chutes-mistral-nemo-instruct-2407`.
 The key must be enabled, have available funds and allowance, and permit this deployment
-under its [effective policy](/docs/policies).
+under its [effective policy](/docs/policies). The 64-token output cap keeps this first request
+small; the reservation otherwise uses the deployment's maximum.
+
+These examples call `api.stogas.ai`. Use an API key from the matching environment. If your
+dashboard provides another API base URL, replace the URL in both examples. The address hosting
+these docs does not select the API endpoint. Inference consumes billable usage.
 
 ```console
 curl https://api.stogas.ai/v1/chat/completions \
@@ -36,7 +43,8 @@ curl https://api.stogas.ai/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
     "model": "chutes-mistral-nemo-instruct-2407",
-    "messages": [{"role": "user", "content": "Say hello in one sentence."}]
+    "messages": [{"role": "user", "content": "Say hello in one sentence."}],
+    "max_completion_tokens": 64
   }'
 ```
 
@@ -48,14 +56,26 @@ from openai import OpenAI
 client = OpenAI(
     api_key="your-key",
     base_url="https://api.stogas.ai/v1",
+    max_retries=0,
 )
 
 response = client.chat.completions.create(
     model="chutes-mistral-nemo-instruct-2407",
     messages=[{"role": "user", "content": "Say hello in one sentence."}],
+    max_completion_tokens=64,
 )
 print(response.choices[0].message.content)
 ```
+
+A successful request returns HTTP 200 with the model's reply in `choices[0].message.content`.
+The Python example prints that reply. Automatic retries are disabled because a disconnected
+request may already have run.
+
+| Error             | Next step                                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `402`             | Check the organization's balance and applicable policy allowances.                                                     |
+| `model_ambiguous` | Choose an exact deployment from the catalog.                                                                           |
+| Provider error    | Inspect the request in **Analytics** before retrying. See [provider errors](/docs/reference/provider-behavior#errors). |
 
 ## 3. Choose a model
 
@@ -65,24 +85,24 @@ Use the [model catalog](https://stogas.ai/catalog), or query it directly:
 curl https://api.stogas.ai/v1/models
 ```
 
-## Protect the connection
+The directory organizes models into their authors' groups. Groups may nest at any depth and do
+not inherit prices, capabilities, or data-handling guarantees. Use `group:` in catalog search.
+**Include retired** loads archived records separately; active browsing does not download them.
+Retired model and deployment URLs remain available, but retired deployments cannot receive requests.
 
-Normal OpenAI-compatible requests need no Stogas-specific SDK. If you want your application to
-check the gateway and encrypt the connection, continue with [Verify a gateway](/docs/verification).
-
-## Request limits
-
-Inference requests accept a decoded JSON body up to 128 MiB, at most 100,000 entries in
-`messages` or array-valued `input`, and at most 1,000,000 JSON values with 128 levels of
-nesting. Objects, arrays and scalar values count toward the value limit; property names
-and text inside strings do not. Exceeding the body, message or value limit returns HTTP 413.
-The selected provider's body, context and output limits also apply.
-
-The catalog filters deployments using requested features and output/reasoning limits before
-credential preparation and text processing. An incompatible explicitly selected model fails
-instead of being replaced. Provider-specific parameter combinations still receive provider validation.
+## Next steps
 
 <Cards>
+	<Card
+		title="Stream responses"
+		description="Read output as it arrives and handle stream errors."
+		href="/docs/streaming"
+	/>
+	<Card
+		title="Send input files"
+		description="Include images, audio and documents in a request."
+		href="/docs/input-files"
+	/>
 	<Card
 		title="Verify a gateway"
 		description="Use the CLI or add verification to your application."
@@ -94,14 +114,9 @@ instead of being replaced. Provider-specific parameter combinations still receiv
 		href="/docs/byok"
 	/>
 	<Card
-		title="How verification works"
-		description="Understand the evidence, time limits, and response receipts."
-		href="/docs/trusted-gateways"
-	/>
-	<Card
-		title="Security and trust model"
-		description="Review the detailed guarantees and limits."
-		href="/docs/confidential-security-model"
+		title="Configure plugins"
+		description="Redact sensitive input or export traces to your own destination."
+		href="/docs/policies#plugins"
 	/>
 	<Card
 		title="API reference"

@@ -43,6 +43,7 @@ async function main() {
 								'---Models---',
 								'...openai-compatible',
 								'---Gateway---',
+								'...gateway',
 								'provider-behavior',
 								'security',
 								'...'
@@ -104,7 +105,7 @@ async function main() {
 								'<OpenAPIPage ',
 								`<Callout type="info" title="Application E2EE">
         Use the managed transport to send this request with E2EE. Your request and response types
-        stay the same; the transport handles encryption and verification. See <a href="/docs/reference/security#application-e2ee">Application E2EE</a> and <a href="/docs/reference/provider-behavior">Compatibility Notes</a>.
+        stay the same; the transport handles encryption and verification. See <a href="/docs/reference/security#confidential-transport">Application E2EE</a> and <a href="/docs/reference/provider-behavior">Compatibility Notes</a>.
       </Callout>
 
       <OpenAPIPage `

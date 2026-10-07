@@ -6,6 +6,8 @@ const sections = {
 	rule: policy.properties.rules.additionalProperties,
 	delegation: policy.properties.delegation,
 	input: policy.properties.input,
+	exportDestination:
+		policy.properties.plugins.anyOf[0].properties.stogasExport!.properties.destinations.items,
 	recurringSpend:
 		policy.properties.limits.properties.spend.properties.recurring.additionalProperties,
 	requestLimit: policy.properties.limits.properties.requests.additionalProperties,
@@ -22,6 +24,7 @@ export const policySectionNames: Record<PolicySection, string> = {
 	rule: 'rules.<name>',
 	delegation: 'delegation',
 	input: 'input',
+	exportDestination: 'plugins.stogasExport.destinations[]',
 	recurringSpend: 'limits.spend.recurring.<name>',
 	requestLimit: 'limits.requests.<name>',
 	tokenLimit: 'limits.tokens.<name>',
@@ -33,7 +36,7 @@ export const policySectionNames: Record<PolicySection, string> = {
 const documentFields = {
 	encryption: {
 		description: 'Register customer encryption key identifiers by label on an organization policy.',
-		href: '/docs/policies/plugins#encrypted-plugins'
+		href: '/docs/cli#encrypt-plugin-settings'
 	},
 	$schema: {
 		description: 'Optional JSON Schema URL for editor completion. It does not change enforcement.',
@@ -53,11 +56,11 @@ const documentFields = {
 	},
 	input: {
 		description: 'Require ASCII-only prompt text before redaction.',
-		href: '/docs/policies/plugins#ascii-only-input'
+		href: '/docs/plugins/pii-redaction#ascii-only-input'
 	},
 	plugins: {
-		description: 'Require redaction of sensitive prompt text.',
-		href: '/docs/policies/plugins'
+		description: 'Extract or redact request text, and export traces to your own destination.',
+		href: '/docs/policies#plugins'
 	},
 	delegation: {
 		description: 'Allow or deny saved-policy edits and request policies.',

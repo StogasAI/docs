@@ -9,6 +9,9 @@ incoming JSON byte size. These are read-only fields, not settings you assign in 
 
 For example, `deployment.contextWindowTokens >= 128000` keeps deployments with a
 context window of at least 128,000 tokens. It does not change their context window.
+`deployment.maxInputTokens` is the separate input ceiling; `deployment.maxOutputTokens`
+is the output ceiling. The context window bounds the active input and output sequence,
+not cumulative billed input across provider-hosted tool iterations.
 
 The tables below list every registered field. Unknown paths are rejected. A registered field
 can still be missing on a particular candidate; see [Missing values](/docs/policies/routing#missing-values).
@@ -55,6 +58,11 @@ supports that capability.
 
 These are the catalog's resolved data-handling properties. A missing disclosure is not a `false`
 value or a guarantee. Require the property explicitly when your application depends on it.
+
+`zeroDataRetention: true` requires no persistent retention throughout the selected offering.
+An allowed persistent cache counts even when an individual request does not use it.
+A ZDR guarantee must cover every permitted configuration; a more private configuration must
+be enforced before it can carry a stronger guarantee.
 
 <RoutingFields group="data-handling" />
 

@@ -1,0 +1,74 @@
+---
+title: Streaming
+description: Read model output as it arrives, handle stream errors and cancel requests.
+---
+
+Set `stream: true` on Chat Completions or Responses to receive output as Server-Sent Events
+(SSE). Streaming works over ordinary HTTPS, attested TLS and E2EE.
+
+## Read a stream
+
+Use an OpenAI client configured for Stogas, either through the [Quickstart](/docs) or a
+[verified transport](/docs/sdk-overview). With that `client`:
+
+```ts
+const cancellation = new AbortController();
+
+try {
+	const stream = await client.chat.completions.create(
+		{
+			model: 'openai/gpt-5-mini',
+			messages: [{ role: 'user', content: 'Say hello.' }],
+			stream: true
+		},
+		{ signal: cancellation.signal }
+	);
+
+	for await (const chunk of stream) {
+		const text = chunk.choices[0]?.delta.content;
+		if (text) process.stdout.write(text);
+	}
+} catch (error) {
+	if (!cancellation.signal.aborted) throw error;
+}
+```
+
+The client handles SSE framing and ignores [keepalive comments](/docs/keepalives).
+Handle reasoning and tool-call deltas separately from text; a chunk need not contain content.
+For interface labels such as Sending or Generating, follow [Request progress](/docs/request-progress).
+
+## Parse SSE directly
+
+Use an SSE parser if you consume the HTTP body without an SDK. Network chunks do not correspond
+to complete events: one event can span reads, and a read can contain several events. Comments
+start with `:` and are not JSON. Combine an event's `data:` lines before parsing its payload.
+
+| Endpoint         | Completion                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| Chat Completions | `data: [DONE]` ends the stream. Read any final usage before it.                          |
+| Responses        | Handle named events, including `response.completed`, `response.incomplete` and failures. |
+
+Inspect errors as well as completion. An ordinary EOF or a final text chunk alone does not
+establish success. With E2EE, the Stogas transport checks encrypted completion before exposing
+the terminal application event. With `Stogas-Metadata: v1`, it also verifies the final receipt.
+
+## Handle errors
+
+Catch errors around both request creation and stream iteration, as in the example above.
+Before response headers are sent, failures use their normal HTTP status and JSON error body.
+Once headers are sent, later failures arrive in the stream. A processing comment can start
+that response before any model output; see [HTTP status and errors](/docs/keepalives#http-status-and-errors).
+
+Do not treat HTTP 200 or partial text as successful completion. Surface a stream failure even
+when some output has already been displayed. Your client owns retry policy. A broken
+connection can leave execution uncertain, and repeating the request can duplicate work.
+
+## Cancel a request
+
+Call `cancellation.abort()` from your stop action. This ends the client request. Cancellation
+does not prove that the provider stopped immediately or that no billable work occurred.
+Close streams you no longer need instead of leaving them unread.
+
+A request can run for up to 60 minutes, including quiet model processing. [Keepalives](/docs/keepalives)
+help maintain an idle connection; they do not extend the request deadline or override a proxy's
+total-duration limit. A response write that cannot make progress for one minute ends that response.

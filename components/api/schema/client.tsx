@@ -307,20 +307,31 @@ function RootTypeInfoTrigger({ pathName, $ref, children }: TypeInfoTriggerProps)
 		(element: HTMLDivElement | null) => {
 			if (!element) return;
 			element.scrollTop = scrollTops.get(getScrollKey(rootId, path)) ?? 0;
-			const current = parseFloat(element.style.getPropertyValue('--min-height') || '200px');
-			element.style.setProperty('--min-height', Math.max(element.clientHeight + 2, current) + 'px');
 		},
 		[rootId, path]
 	);
 
 	return (
 		<Popover open={open} onOpenChange={onOpenChange}>
-			<PopoverTrigger className={cn(typeVariants({ variant: 'trigger' }))}>
+			<PopoverTrigger
+				className={cn(typeVariants({ variant: 'trigger' }))}
+				onFocus={(event) => {
+					const bounds = event.currentTarget.getBoundingClientRect();
+					if (bounds.top < 0 || bounds.bottom > window.innerHeight) {
+						event.currentTarget.scrollIntoView({
+							block: 'center',
+							inline: 'nearest',
+							behavior: 'instant'
+						});
+					}
+				}}
+			>
 				{children}
 			</PopoverTrigger>
 			<PopoverContent
 				ref={popoverRef}
-				className="fd-scroll-container max-h-[460px] min-h-(--min-height,200px) w-[600px] max-w-(--available-width) px-3 pt-0"
+				sticky
+				className="fd-scroll-container max-h-[min(460px,var(--available-height))] min-h-[min(200px,var(--available-height))] w-[600px] max-w-(--available-width) px-3 pt-0"
 				onScrollEnd={(e) => {
 					// ensure popover scroll top is stable
 					scrollTops.set(getScrollKey(rootId, path), (e.target as HTMLElement).scrollTop);

@@ -104,6 +104,10 @@ including BYOK requests. The organization balance separately pays our charge: th
 amount for managed requests or the 2% gateway fee for BYOK. Catalog rates may differ from a
 negotiated provider invoice. An allowance does not fund your organization balance.
 
+Limits check estimated holds before dispatch. Actual provider usage can exceed the hold and
+the allowance, and can leave a negative balance. Use a modest request output limit and see
+[holds and settlement](#holds-and-settlement) before relying on a cap.
+
 ### USD values
 
 Money is a decimal string from `"0"` through `"1000000000000"`, with up to 36 fractional digits
@@ -113,16 +117,14 @@ and a trailing decimal point are invalid. A zero cap leaves no room for a positi
 
 ### Reset schedules
 
-Each entry under `limits.spend.recurring` defines one named schedule:
-
-<PolicyFields section="recurringSpend" />
+Each entry under `limits.spend.recurring` defines one named schedule.
 
 Recurring spend supports `minute`, `hour`, `day`, `week`, `month`, and `year`, with a
 `window.count` from 1 to 1,000. These are anchored periods, not rolling lookbacks.
 
 `timeZone` is required and accepts an IANA time zone such as `UTC` or `America/New_York`.
 `anchor` sets the schedule; it does not postpone enforcement. We supply it on the first save
-if omitted, and retains it for that named limit on later saves. A future anchor still defines
+if omitted, and retain it for that named limit on later saves. A future anchor still defines
 the current period. Use the [timestamp and time-zone formats](/docs/policies/access#timestamps-and-time-zones)
 when supplying these values.
 
@@ -135,6 +137,8 @@ exactly 24 elapsed hours. Use UTC when you want to avoid those changes.
 Usage belongs to the period when the hold was created. Settlement after a reset does not charge
 the new period. Older unresolved holds still reserve allowance until they settle or are released.
 Unused allowance does not carry into the next period.
+
+<PolicyFields section="recurringSpend" />
 
 ## Request rates
 
@@ -217,7 +221,7 @@ Use `limits.tokens` to cap combined input and output tokens in one or more fixed
 }
 ```
 
-Tokens use the same [hold-and-settle lifecycle](#holds-and-settlement) as spend. Admission reserves buffered input plus the
+Tokens use the same [hold-and-settle lifecycle](#holds-and-settlement) as spend. Admission reserves estimated input plus the
 enforced output maximum: the caller's output limit when supplied, otherwise the catalog maximum.
 Provider-hosted tool iterations use the same additional reservation bounds as spend.
 The `per-minute` example is a tokens-per-minute (TPM) quota. Lowering the request's output maximum
@@ -281,8 +285,9 @@ Parent limits still apply.
 Admission checks settled tokens plus pending reservations plus the new request’s reservation.
 Counting, estimation, settlement, and unknown-usage handling follow [token quotas](#token-quotas).
 Usage accumulates even without a cap. Removing, raising, or restoring the cap does not reset usage.
-Organization and grant totals retain usage from deleted keys. A lifetime cap does not consume one
-of the five named-limit slots.
+Organization and grant totals retain usage from deleted keys. A top-level lifetime cap does not
+consume a counter slot. Within one conditional rule, lifetime spending, lifetime tokens and
+concurrency share one slot. See [Choose a limit](#choose-a-limit).
 
 ## Concurrent requests
 
@@ -309,38 +314,62 @@ Before dispatch, we reserve an estimate of the request's maximum upstream cost. 
 cover settled usage, outstanding holds, and the new hold together. Concurrent requests cannot use
 the same reserved allowance. Settlement records the upstream cost and releases the unused reservation.
 
-The reservation uses buffered input-token estimates and the enforced output maximum. Estimates
+An expired unresolved hold is checked against recorded request evidence before it is settled or
+released. Unavailable or conflicting evidence can delay recovery; elapsed time alone does not erase
+a reservation. Deleting a key or leaving an organization does not cancel an outstanding charge.
+
+The reservation uses input-token estimates and the enforced output maximum. Estimates
 are not a proof of the provider's input-token count. A request may be declined even when its likely
 final charge would fit. Setting a smaller output maximum can reduce the reservation.
 
 ### Input-token estimates
 
-We estimate the text **after redaction**, including supported message framing and tool
-definitions. It does not divide all input by four or assume that every provider uses one tokenizer.
+We estimate text **after redaction**, including text in tool definitions, with one fixed formula
+for every model. It uses UTF-8 byte classes and the growth in byte length under NFC and NFKC
+Unicode normalization. Normalization is measured without changing the text sent upstream.
+Policies, model names and hosting providers cannot select different text coefficients.
 
-Each catalog model declares a `tokenizerFamily` that selects its local estimator. Hosting Claude
-through Azure does not make it use an OpenAI tokenizer, and a custom deployment name does not
-change the estimate. Policies and requests cannot override the model's tokenizer family.
+For each nonempty text field, the estimate is:
 
-OpenAI, DeepSeek, Qwen, Gemma, MiniMax, Mistral, NVIDIA, Moonshot, and Z.ai use local counts based
-on published vocabularies. Models share a counter when their tokenization matches; Qwen3 and
-Qwen3.5+ use different vocabularies. Claude uses a local vocabulary and normalization
-reconstruction, not Anthropic's official tokenizer.
+```text
+ceil(6.5897 + 0.4763 × (L + W) + 0.9763 × (U + P)
+     + 0.6001 × D + 0.5677 × C + 0.6705 × Z
+     + 1.9105 × G + 0.3231 × H)
+```
 
-Counts include a safety margin and separate allowances for message and tool formatting.
-Counting uses bounded pieces to limit processing work, so estimates can differ from an exact
-tokenizer. Published vocabularies also do not reveal every hosted provider's hidden formatting.
+`L`, `U` and `D` count ASCII lowercase, uppercase and digit bytes. `W` counts ASCII whitespace,
+including line endings; `P` counts ASCII punctuation; `C` counts other ASCII control bytes.
+`Z` counts non-ASCII UTF-8 bytes. With original byte length `B`, let
+`N = max(B, NFC byte length)` and `K = max(N, NFKC byte length)`; then `G = N - B` and `H = K - N`.
+Empty fields contribute zero. Normalization uses bounded, stream-safe segments.
+
+The gateway adds separate message/tool framing allowances and an allowance for opaque reasoning.
+The text formula's calibration target allowed up to 50% underestimation on nonempty reference
+text; this is an empirical target, not a guaranteed error bound. It does not reproduce each
+provider's tokenizer or hidden processing. [STT](/docs/request-metrics) remains decoded UTF-8
+bytes divided by four and does not select the financial hold.
+
 The hold is an estimate. Settlement charges actual usage, including usage above the hold; unused funds are released. An underestimated request can exceed a spending or token allowance and leave a negative balance, preventing further requests until enough allowance is available.
 
-The estimate is capped at the catalog context window. Large inputs can therefore reserve the
-whole input window. A context cap does not prove that a request fits: the provider still validates
+The estimate is capped at the catalog input ceiling, which may be smaller than the combined
+input-and-output context window. Large inputs can therefore reserve the whole input window. A context cap does not prove that a request fits: the provider still validates
 its own tokenizer, hidden framing, and context limits. Settlement uses usable provider-reported
-usage, with priced quantities capped to the reservation. No generic local tokenizer can guarantee
+usage, including quantities above the reservation. No generic local tokenizer can guarantee
 exact counts for every hosted model.
+
+Opaque attachments, including file URLs and provider file IDs, select the full input allowance
+before provider tool-loop accounting. Extracted text uses the text estimate. File size and
+image detail do not select model-specific token formulas.
+
+For Anthropic server-tool loops with explicitly enabled caching and no compaction, the input
+hold reserves one full allowance at the highest applicable input/cache-write rate and the
+remaining sampling iterations at the cache-read rate. Cache misses can exceed this estimate.
+A tool-use cap bounds tool charges where the provider supports it; it does not necessarily
+bound sampling iterations. Without qualifying caching, the ordinary/write-rate estimate applies.
 
 Text is never sampled or truncated to reduce a hold. Counting may stop once the reservation
 has reached the applicable context cap.
-See [redaction resource limits](/docs/policies/plugins#scan-cost-and-rejected-requests) for the separate
+See [redaction resource limits](/docs/plugins/pii-redaction#scan-cost-and-rejected-requests) for the separate
 checks that can reject a request before a balance reservation.
 
 ## Edit or remove limits
@@ -391,15 +420,19 @@ A limit error identifies the scope and kind, not a particular named counter; ins
 Use bounded backoff with jitter for temporary traffic limits. Repeated retries cannot make a
 reservation fit a cap that is too small; lower the output maximum or change the applicable cap.
 
-Gateway capacity checks account for decoded JSON structure as well as body size. A request
-below the body-size limit can still exceed capacity. If one request repeatedly receives
-`gateway_capacity_exceeded` even with low concurrency, reduce its size or number of messages.
+Gateway capacity checks account for request and provider-response bytes, decoded JSON
+structure, and compression state. A request below the body-size limit can still exceed
+capacity. If one request repeatedly receives `gateway_capacity_exceeded` even with low
+concurrency, reduce its size, message count, or requested output. Capacity can also be
+exhausted after inference starts; a terminal stream error does not make replay safe.
 
 Repeated failed requests, including provider and Gateway failures, can briefly pause new
-attempts from the same key or organization. These responses use `abuse_rate_limited` and
+attempts from the same API key. These responses use `abuse_rate_limited` and
 include `Retry-After` in seconds. Cancellation and retries already refused by this safeguard
 do not extend the pause. A completed successful request clears older failures; a newer failure
-still applies. This safeguard can also delay otherwise healthy requests in that organization.
+still applies. The pause lasts at most two seconds and resets after it expires. Other keys do
+not share this failure penalty. A successful runaway application can still consume the shared
+organization allowance; give that key its own request-rate bucket to bound its share.
 
 Each gateway also applies broad source-IP safeguards: 1,000 HTTP requests/second with a
 2,000-request burst, and 100 new TLS or encrypted-session setups/second with a 200-setup
@@ -410,5 +443,9 @@ Reusing the backend connection and encrypted session avoids new setup work.
 These limits do not interrupt admitted streams or replace account limits. HTTP rejection
 uses `ip_rate_limit_exceeded` and `Retry-After`; TLS admission rejection closes the handshake.
 Reuse sessions and respect backoff. A bounded IP admission table can also return HTTP `503`
-with `ip_admission_unavailable` under pressure. An ambiguous inference failure must never
-trigger automatic replay.
+with `ip_admission_unavailable` under pressure. Encrypted requests that need new keys for
+skipped messages can receive outer HTTP `503` with `Retry-After` when that work is busy.
+Ordered requests and requests with retained delayed keys do not consume this allowance.
+New E2EE session setup can also receive `503` before the shared memory budget is exhausted,
+preserving headroom for requests on established sessions.
+An ambiguous inference failure must never trigger automatic replay.

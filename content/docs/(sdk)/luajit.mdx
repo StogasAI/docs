@@ -186,3 +186,17 @@ by the [verifier CLI](/docs/sdk-overview), including its path.
 
 Run `luajit main.lua --no-stream` for one completed response. Ctrl+C cancels a
 quiet stream and releases its HTTP connection and native transport.
+
+## Workload configuration
+
+```lua
+start_transport(library, { security = "e2ee", max_connections = 4 })
+```
+
+The configuration table also accepts `environment` and `base_url`. Configure libcurl timeouts and cancellation in the HTTP client; the transport never repeats inference.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

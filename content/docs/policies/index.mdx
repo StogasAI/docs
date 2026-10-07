@@ -1,10 +1,10 @@
 ---
 title: Policies
-description: Set budgets, control traffic, choose providers, and add redaction rules.
+description: Set budgets, choose providers, control access, and configure plugins.
 ---
 
 A policy is a JSON document that controls which requests an API key may make, how much it may
-use, and what text reaches a provider. Save shared settings on organizations, folders, grants,
+use, what text reaches a provider, and which traces are exported. Save shared settings on organizations, folders, grants,
 roles, members and credentials, then add key or request settings. Every request must satisfy
 all applicable requirements.
 
@@ -44,10 +44,23 @@ Add the settings you need. Each field links to its examples, accepted values, an
 The same [JSON Schema](/schemas/key-config-v1.json) supplies these field types and editor
 completion. [Document rules](/docs/policies/editing#document-rules) cover validation and size limits.
 
+## Plugins
+
+Plugins use the same policy scopes and inheritance rules:
+
+| Plugin                                       | Use it to                                                 |
+| -------------------------------------------- | --------------------------------------------------------- |
+| [PII Redaction](/docs/plugins/pii-redaction) | Remove sensitive text before provider dispatch.           |
+| [Export](/docs/plugins/export)               | Send request traces to your own OTLP endpoint or webhook. |
+
+[Text extraction](/docs/input-files#text-extraction) converts inline UTF-8 file content before
+input checks and redaction. [Encrypt plugin settings](/docs/cli#encrypt-plugin-settings) to keep
+private rules and destination credentials unreadable when saved.
+
 ## Policies for one request
 
 The optional inference-request `policy` field accepts permitted routing, access, input and
-redaction settings, including flat conditional rules. It cannot define shared limits. See
+plugin settings, including flat conditional rules. It cannot define shared limits. See
 [Request policies](/docs/policies/request-policies) for permissions and examples.
 
 A policy governs an existing credential. It does not create keys, grant membership, or add funds.

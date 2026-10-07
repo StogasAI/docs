@@ -56,6 +56,25 @@ The optional `--upstream` accepts an HTTPS origin without a path, credentials or
 It does not change trusted evidence origins or signing roots. `--environment staging` requires
 a build with staging support; the public build selects production.
 
+## Check gateway availability
+
+```console
+stogas probe --security tls
+stogas probe --security e2ee --timeout-ms 8000
+```
+
+Each call verifies current evidence and a fresh session, then sends a fixed invalid credential
+to the inference route. Success requires the expected authentication rejection after the gateway's
+readiness and memory admission checks. No API key or provider request is involved.
+
+The command prints a `stogas.probe.v1` JSON report with `security`, `ready`, the verified `node_id`
+when available, `http_status`, and a fixed `error_code`. It exits zero only when `ready` is true.
+The timeout covers evidence, connection setup and the response. `--upstream` and `--environment`
+use the same restrictions as `serve`.
+
+This checks connection and admission availability from the caller's location. It does not measure
+provider health, database-backed authorization, or the success rate of all customer requests.
+
 ## Browser applications
 
 ```console
@@ -103,12 +122,7 @@ its other settings:
 Only the organization policy registers key identifiers. Labels use a lowercase letter followed
 by up to 47 lowercase letters, digits, underscores or hyphens. Register each identifier once.
 Generate and register separate keys when credentials and plugins need different access.
-Encrypt each credential or plugin object with the appropriate key:
-
-```console
-stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
-  --purpose plugins --input plugins.json --output plugins.encrypted.json
-```
+The encryption purpose determines which input the command accepts:
 
 | Purpose          | Input                                                       |
 | ---------------- | ----------------------------------------------------------- |
@@ -117,9 +131,73 @@ stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
 | `byok/anthropic` | The exact Anthropic credential, without a trailing newline. |
 | `byok/chutes`    | The exact Chutes credential, without a trailing newline.    |
 
-Neither command uploads the key or input. They refuse to overwrite an existing output file.
-Follow [encrypted plugins](/docs/policies/plugins#encrypted-plugins) or
-[customer-encrypted BYOK](/docs/byok#customer-encryption) to save the resulting envelope.
+For provider credentials, follow [customer-encrypted BYOK](/docs/byok#customer-encryption).
+
+### Encrypt plugin settings
+
+Encrypt the entire `plugins` object to keep redaction rules, export URLs and destination credentials
+private when saved. Limits, routing, access and delegation stay readable. Plugin settings and
+provider credentials can use separate registered keys.
+
+1. Save the contents of `plugins` in a local file, without its outer wrapper:
+
+   ```json title="plugins.json"
+   {
+    "stogasRedaction": {
+      "literals": [{ "values": ["Project Aurora"] }]
+    },
+    "stogasExport": {
+      "destinations": [
+        {
+          "url": "https://collector.example/v1/traces",
+          "headers": { "Authorization": "Bearer YOUR_COLLECTOR_TOKEN" }
+        }
+      ]
+    }
+   }
+   ```
+
+   Include only the plugins you need. See [PII Redaction](/docs/plugins/pii-redaction) and
+   [Export](/docs/plugins/export) for their settings.
+
+2. Encrypt the file using a key registered on the organization policy:
+
+   ```console
+   stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
+     --purpose plugins --input plugins.json --output plugins.encrypted.json
+   ```
+
+   Neither this command nor `encryption-key` uploads the key or input. They refuse to overwrite
+   an existing output file.
+
+3. Replace the entire policy's `plugins` value with an object whose `encrypted` property contains
+   the generated envelope. The saved policy has this shape:
+
+   ```jsonc title="Policy shape (replace placeholders)"
+   {
+    "plugins": {
+      "encrypted": {
+        "version": 1,
+        "keyId": "64_LOWERCASE_HEX_CHARACTERS",
+        "salt": "BASE64URL_32_BYTES",
+        "nonce": "BASE64URL_12_BYTES",
+        "blob": "BASE64URL_CIPHERTEXT_AND_TAG"
+      }
+    }
+   }
+   ```
+
+   Preserve the other settings and [save the policy](/docs/policies/editing).
+   Each encrypted section selects its registered key by `keyId`.
+
+4. [Send the key with each request](#send-the-key-with-a-request). Saving checks the readable
+   settings and envelope format; the gateway decrypts and validates the plugin settings before
+   inference. Missing or wrong keys, invalid settings and excessive combined rules reject the request.
+   Use the optional [execution check](/docs/policies/editing#check-execution-before-saving) before inference.
+
+Compiled settings can be reused in a bounded cache. Every request still needs the correct key
+and current authorization. [Policy size limits](/docs/policies/editing#document-rules) count
+decrypted plugin bytes; encryption adds only bounded storage overhead.
 
 ### Send the key with a request
 
@@ -152,7 +230,7 @@ same field. Keep the key out of URLs, command-line arguments, and application lo
 
 Anyone who obtains both a root and its ciphertext can decrypt that content. Separate roots
 provide separate cryptographic access; labels alone do not. Removing a member cannot make
-them forget a root. A caller must know any root needed for that caller's redaction policy.
+them forget a root. A caller must know every key needed by that caller's encrypted plugin settings.
 
 Keep original policies and provider credentials for replacement or rotation. Prepare new
 ciphertexts locally and register the new root under a new label. Update clients to supply both

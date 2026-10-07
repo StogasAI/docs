@@ -10,6 +10,8 @@ import {
 } from '@/lib/source';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
 import { MarkdownCopyButton } from '@/components/markdown-copy-button';
+import { PageOutline } from '@/components/page-outline';
+import { TOC, TOCProvider } from 'fumadocs-ui/layouts/docs/page/slots/toc';
 import { OpenApiViewOptionsPopover } from '@/components/openapi-view-options-popover';
 import { notFound } from 'next/navigation';
 import { getMDXComponents } from '@/components/mdx';
@@ -41,6 +43,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 			tabIndex={-1}
 			toc={page.data.toc}
 			full={page.data.full}
+			slots={{ toc: { provider: TOCProvider, main: TOC, popover: PageOutline } }}
 			footer={{ className: 'mt-14' }}
 		>
 			<script

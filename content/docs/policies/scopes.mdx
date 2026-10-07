@@ -13,8 +13,15 @@ from where a document is saved, not a field inside it.
 | Member key  | Organization, its grant's folder if any, grant, owning member, every assigned role, selected provider credential, and key. |
 
 A service key's viewers and managers do not add their personal or role policies to inference.
-Every role assigned to a member applies to that member's keys, regardless of which role grants
-access. Each candidate uses its own credential policy; unrelated credentials do not contribute
+Resource access from roles is additive: any assigned role can provide the needed permission.
+Policy restrictions work differently. Every role assigned to a member applies to all of that
+member's keys, regardless of which resource the role grants access to.
+
+For example, a role with Use on grant A and an OpenAI-only policy restricts the member's keys
+under grant B too, even when another role supplies Use on grant B. Scope the restriction to
+a grant or folder policy when it should apply only to those resources.
+
+Each candidate uses its own credential policy; unrelated credentials do not contribute
 redaction or budgets to the selected request.
 
 ## Scope differences
@@ -162,7 +169,8 @@ reject evaluation; use `has(...)` when absence has a deliberate meaning.
 Only the selected candidate's active plugins transform the body. Its matching limits enter the
 same atomic authorization as all unconditional limits. Editing a condition starts new counters;
 formatting-only edits and amount changes retain usage. Already admitted requests keep the exact
-counter identities they reserved. See [Conditional limits](/docs/policies/limits#conditional-limits).
+counter identities they reserved. See [Conditional limits](/docs/policies/limits#conditional-limits)
+and [Choose a limit](/docs/policies/limits#choose-a-limit).
 
 <PolicyFields section="rule" />
 
@@ -225,7 +233,7 @@ because an editor has no particular inference request to evaluate. Encrypted plu
 opaque; the gateway checks them with the supplied roots.
 
 Every authorized resource reader can inspect its applicable sources. Plaintext inherited contents
-are visible. Use [encrypted plugins](/docs/policies/plugins#encrypted-plugins) where readers should
+are visible. Use [encrypted plugins](/docs/cli#encrypt-plugin-settings) where readers should
 receive ciphertext. Reading a source does not grant permission to change it.
 
 A save checks the edited source and its applicable combination. Parent saves preserve child sources
@@ -241,7 +249,7 @@ only that parent's revision. Versions do not retain the old contents or prove ex
 1. Authenticate, admit resource use, and load the saved policies and credential metadata.
 2. Narrow compatible deployments and credentials; apply each candidate's rules, filters and ordering.
 3. Prepare the selected credential, then check ASCII requirements and redact its input once.
-4. Run the selected model's tokenizer once. Reserve spend, tokens and concurrency against every applicable counter in one authorization.
+4. Estimate input with the universal text formula and separate framing allowances. Reserve spend, tokens and concurrency against every applicable counter in one authorization.
 5. Dispatch once. Settle usage against the admitted counter identities and release unused reservations.
 
 A candidate is a deployment paired with one assigned credential, so its provider is already
@@ -252,7 +260,7 @@ removing a pair is an eligibility decision, not a failed provider attempt. Crede
 breaks ties for the same deployment; it does not override a required deployment sort.
 
 A rejected limit consumes no other counter's allowance. Processing still consumes gateway capacity.
-See [Limits](/docs/policies/limits) and [Redaction](/docs/policies/plugins#scan-cost-and-rejected-requests).
+See [Limits](/docs/policies/limits) and [Redaction](/docs/plugins/pii-redaction#scan-cost-and-rejected-requests).
 
 ## When changes take effect
 
@@ -265,3 +273,8 @@ for three minutes. A revision mismatch rejects before dispatch and starts a shar
 refresh. After three minutes without confirmation, the next request fetches a current snapshot.
 Unchanged sources and matchers remain reusable within the memory budget. Every request still
 supplies the roots needed by its encrypted content; roots are never cached.
+
+Saving confirms that the source was stored; it does not mean every gateway has refreshed its
+snapshot. A `503 key_configuration_changed` response rejects that request before provider
+dispatch and charges nothing. Retry shortly. A successful **Combined** preview describes the
+saved sources; it does not establish readiness or evaluate every request's conditional rules.

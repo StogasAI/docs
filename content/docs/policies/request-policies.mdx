@@ -4,8 +4,11 @@ description: Add permitted restrictions and default overrides to one inference r
 ---
 
 A request policy lasts for one inference request. It uses the saved policy syntax for permitted
-routing, scheduled access, input restrictions and redaction. It can replace defaults, but it
+routing, scheduled access, input restrictions and plugins. It can replace defaults, but it
 cannot remove required restrictions.
+
+Plugin settings include [PII Redaction](/docs/plugins/pii-redaction) and
+[Export](/docs/plugins/export).
 
 Request policies cannot define persistent spend, request-rate, token or concurrency counters,
 register encryption roots, or delegate permission. This includes stricter limits and limits
@@ -42,7 +45,7 @@ Send `policy` in the JSON body of Chat Completions or Responses:
 	"messages": [
 		{
 			"role": "user",
-			"content": "Contact alice@example.com"
+			"content": "Contact élise@stogas.ai."
 		}
 	],
 	"policy": {
@@ -57,6 +60,10 @@ Send `policy` in the JSON body of Chat Completions or Responses:
 	}
 }
 ```
+
+The synthetic email example becomes `Contact <EMAIL_ADDRESS>.` before provider dispatch.
+Reserved documentation domains such as `example.com` are deliberately excluded from the
+email detector and will not demonstrate a positive match.
 
 ```json title="Responses request"
 {

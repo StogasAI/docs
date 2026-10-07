@@ -158,3 +158,17 @@ For a non-streaming request, use `$client->chat()->create(...)` and read
 `$response->choices[0]->message->content`. Add
 `->withHttpHeader('Stogas-Metadata', 'v1')` to the client factory to request metadata
 and automatic receipt verification.
+
+## Workload configuration
+
+```php
+new Transport($library, ['security' => 'e2ee', 'max_connections' => 4])
+```
+
+The configuration array also accepts `environment` and `base_url`. Set HTTP timeouts, cancellation and any retry middleware in your OpenAI client.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

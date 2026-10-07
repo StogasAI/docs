@@ -11,7 +11,7 @@ The `model` field accepts three forms:
 
 | Form               | Example              | Meaning                                     |
 | ------------------ | -------------------- | ------------------------------------------- |
-| Model ID           | `gpt-5.6-sol`        | Use the model author's provider when usable |
+| Model ID           | `gpt-5.6-sol`        | Consider eligible deployments of this model |
 | Provider and model | `azure/gpt-5.6-sol`  | Use that provider's deployment of the model |
 | Deployment ID      | `openai-gpt-5.6-sol` | Pin the exact catalog deployment            |
 
@@ -20,8 +20,10 @@ Stogas does not move it to another tier, region, speed, or reasoning mode.
 
 For an unqualified model, Stogas first removes deployments that cannot satisfy the request and API
 key configuration. It then applies `provider.only` as a strict restriction and `provider.order` as
-a preference. If no order is set, the model author's provider is first when it remains usable. This
-means `service_tier: "flex"` can select the only provider with a cataloged Flex deployment.
+a preference after any applicable policy sort. There is no automatic preference for the model
+author's provider. If equally ranked deployments remain, select a deployment or supply a
+[routing sort](/docs/policies/routing#sorting); otherwise the request returns `model_ambiguous`.
+A requested feature such as `service_tier: "flex"` can leave only one eligible deployment.
 
 Use `provider` or its `rules` alias to restrict or order providers:
 
@@ -98,22 +100,12 @@ See [Model Tools](/docs/model-tools) for supported function, custom, and provide
 
 ## Streaming
 
-Set `stream: true` to receive Server-Sent Events (SSE). Use your SDK's stream iterator or an
-SSE parser. Comments such as `: STOGAS PROCESSING` keep a quiet stream open; they are not JSON
-or generated output. Chat Completions ends with `data: [DONE]`; Responses uses its named events.
+Chat Completions and Responses support `stream: true`. Errors before response headers use HTTP
+status codes and JSON; failures after headers arrive within the SSE stream. This includes a
+provider failure after a [keepalive](/docs/keepalives#http-status-and-errors) has started the response.
 
-Errors before streaming starts use the normal HTTP status and JSON error body. Once headers have
-been sent, an error arrives within the stream. An HTTP `200` alone does not mean generation finished.
-
-The verified transport validates encrypted completion before exposing the final application event.
-With `Stogas-Metadata: v1`, it also verifies the final receipt. Cancelling or losing a stream before
-completion does not count as a verified success. Disable automatic inference retries: a disconnected
-request may already have run.
-
-Requests have a 60-minute lifecycle. Healthy streams can use that period, including quiet model
-processing. A response write that cannot make progress for one minute ends the affected response;
-final delivery has one minute beyond the request deadline. Keep reading or explicitly close a stream
-you no longer need.
+[Streaming](/docs/streaming) covers parsing, completion and cancellation.
+[Request progress](/docs/request-progress) covers application status updates.
 
 ## Errors
 
@@ -201,7 +193,10 @@ categories; an unrecognized failure uses `provider_error`.
 These categories describe the result, not who caused it. Each attempt also keeps the provider's
 HTTP status when available. Request filters accept these categories, Stogas error codes such as
 `insufficient_balance`, and HTTP error codes such as `402`. `status:success` requires a completed request with no cancellation or Stogas failure. Other provider error filters inspect all attempts,
-including earlier failed attempts when a later call succeeded.
+including earlier failed attempts in historical records that contain more than one attempt.
+Current requests dispatch to one provider once. Local credential preparation can advance only
+with explicit [pre-dispatch fallback](/docs/policies/routing#candidate-checks); provider errors
+never cause another dispatch. A caller or SDK retry is a separate request.
 
 Stogas processing and provider results remain separate. If a provider succeeds but Stogas cannot
 finish pricing, encode the response, or build a requested response proof, the record keeps the
@@ -211,7 +206,8 @@ sending the prompt alone does not mean Stogas completed the response.
 
 An ordinary provider error stays in `provider_attempts`; it does not create a gateway `error`. A handled accounting warning
 or a delayed log delivery does not change a valid response into a failure. Usable provider-reported
-usage determines the charge within the authorized hold; an error alone does not determine billing.
+usage determines the charge, which can exceed an underestimated hold; an error alone does not
+determine billing. See [holds and settlement](/docs/policies/limits#holds-and-settlement).
 Client logging preferences cannot disable accounting records.
 
 ## Cancellation and billing

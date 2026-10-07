@@ -234,7 +234,7 @@ E2EE explicitly. An optional `base_url` changes the HTTPS origin, not trusted au
 
 Read streams through completion and keep errors visible. The verifier checks authenticated
 completion before releasing the terminal event. Partial text, cancellation and an HTTP error
-must not be reported as successful delivery or automatically retried.
+must not be reported as successful delivery. Any retry policy must account for possibly repeated execution.
 
 ## Ownership
 
@@ -244,3 +244,17 @@ after concurrent calls finish. Explicit free waits for bounded graceful cleanup.
 The header includes C++ linkage guards and opaque types suitable for RAII wrappers.
 
 Send `Stogas-Metadata: v1` to request final metadata and automatic content-receipt verification.
+
+## Workload configuration
+
+```json
+{ "security": "e2ee", "max_connections": 4 }
+```
+
+Pass this JSON to `stogas_transport_start`. It also accepts `environment` and `base_url`. Set libcurl timeouts and cancellation callbacks in your application; the transport has no inference retry setting.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

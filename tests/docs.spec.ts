@@ -10,6 +10,201 @@ const test = base.extend({
 	}
 });
 
+test('page outline names its progress and follows a keyboard-selected section', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 1180, height: 757 });
+	await page.goto('/docs/reasoning');
+	const trigger = page.getByRole('button', { name: /On this page/ });
+	await expect(trigger).toBeVisible();
+	await expect(page.getByRole('progressbar', { name: 'Page outline progress' })).toHaveAttribute(
+		'aria-valuemin',
+		'0'
+	);
+	await trigger.focus();
+	await page.keyboard.press('Enter');
+	const target = page
+		.locator('[data-toc-popover-content]')
+		.getByRole('link', { name: 'Manual token limits', exact: true });
+	await target.focus();
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/#manual-token-limits$/);
+	await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	await expect
+		.poll(async () =>
+			Number(
+				await page
+					.getByRole('progressbar', { name: 'Page outline progress' })
+					.getAttribute('aria-valuenow')
+			)
+		)
+		.toBeGreaterThan(0);
+});
+
+for (const viewport of [
+	{ width: 333, height: 504 },
+	{ width: 590, height: 378 }
+]) {
+	test(`search, outline and history reveal the section at ${viewport.width} × ${viewport.height}`, async ({
+		page
+	}) => {
+		await page.setViewportSize(viewport);
+		await page.goto('/docs/policies/limits');
+		await page.keyboard.press('Control+k');
+		const search = page.getByRole('combobox', { name: 'Search documentation' });
+		await search.fill('conditional rules');
+		await expect(page.getByRole('dialog').getByRole('option').first()).toContainText(
+			'Scopes and inheritance'
+		);
+		await page.keyboard.press('ArrowDown');
+		await page.keyboard.press('Enter');
+		const heading = page.locator('#conditional-rules');
+		const introduction = heading.locator('xpath=following-sibling::p[1]');
+		const outline = page.getByRole('button', { name: /On this page/ });
+		async function expectVisibleSection() {
+			await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
+			await expect(page.getByRole('dialog')).toHaveCount(0);
+			await page.evaluate(() => document.fonts.ready);
+			await expect
+				.poll(async () => {
+					const target = await heading.boundingBox();
+					const opening = await introduction.boundingBox();
+					const sticky = await outline.boundingBox();
+					return (
+						!!target &&
+						!!opening &&
+						!!sticky &&
+						target.y >= sticky.y + sticky.height &&
+						opening.y >= target.y + target.height &&
+						opening.y + opening.height <= viewport.height
+					);
+				})
+				.toBe(true);
+		}
+		await expectVisibleSection();
+		await page.goBack();
+		await expect(page).toHaveURL(/\/policies\/limits$/);
+		await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+		await page.goForward();
+		await expectVisibleSection();
+		await outline.click();
+		await page
+			.locator('[data-toc-popover-content]')
+			.getByRole('link', { name: 'Conditional rules', exact: true })
+			.click();
+		await expect(outline).toHaveAttribute('aria-expanded', 'false');
+		await expectVisibleSection();
+		await page.reload();
+		await expectVisibleSection();
+	});
+}
+
+test('nested policy popovers keep their header and initial focus within a short viewport', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 333, height: 504 });
+	await page.goto('/docs/policies/limits');
+	await page.keyboard.press('Control+k');
+	await page.getByRole('combobox', { name: 'Search documentation' }).fill('conditional rules');
+	await expect(page.getByRole('dialog').getByRole('option').first()).toContainText(
+		'Scopes and inheritance'
+	);
+	await page.keyboard.press('ArrowDown');
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+	const schema = page.locator('[id="policy-fields.rule"]');
+	await schema.getByRole('textbox', { name: 'Filter Properties' }).fill('limits');
+	await expect(schema.getByRole('button', { name: 'object', exact: true })).toHaveCount(1);
+	await schema.getByRole('button', { name: 'object', exact: true }).click();
+	const dialog = page.getByRole('dialog');
+	const filter = dialog.getByRole('textbox', { name: 'Filter Properties' });
+	await filter.fill('spend');
+	await filter.press('Enter');
+	await expect(filter).toHaveValue('');
+	const expectVisiblePopover = () =>
+		expect
+			.poll(() =>
+				dialog.evaluate((element) => {
+					const bounds = element.getBoundingClientRect();
+					const focused = document.activeElement?.getBoundingClientRect();
+					return (
+						bounds.top >= 0 &&
+						bounds.bottom <= innerHeight &&
+						!!focused &&
+						focused.top >= bounds.top &&
+						focused.bottom <= bounds.bottom
+					);
+				})
+			)
+			.toBe(true);
+	await expectVisiblePopover();
+	await expect(filter).toBeFocused();
+	await filter.fill('zzznoproperty');
+	await expect(dialog).toContainText('No property matching "zzznoproperty"');
+	await expectVisiblePopover();
+	for (const viewport of [
+		{ width: 1180, height: 757 },
+		{ width: 333, height: 504 }
+	]) {
+		await page.setViewportSize(viewport);
+		await expectVisiblePopover();
+		await expect(filter).toBeFocused();
+	}
+	await page.evaluate(() => window.scrollTo(0, 0));
+	await expectVisiblePopover();
+	await filter.fill('');
+	await expect(dialog.getByText('No property matching', { exact: false })).toHaveCount(0);
+	await expectVisiblePopover();
+	await page.keyboard.press('Escape');
+	await expect(dialog).toHaveCount(0);
+	const trigger = schema.getByRole('button', { name: 'object', exact: true });
+	await expect(trigger).toBeFocused();
+	await expect(trigger).toBeInViewport({ ratio: 1 });
+});
+
+test('collapsed desktop sidebar keeps an accurate action name and expanded state', async ({
+	page
+}) => {
+	await page.goto('/docs');
+	await page
+		.locator('#nd-sidebar')
+		.getByRole('button', { name: /^(?:Collapse|Toggle) Sidebar$/, exact: true })
+		.click();
+	const expand = page
+		.getByRole('button', { name: /^(?:Expand|Toggle) Sidebar$/, exact: true })
+		.last();
+	await expect(expand).toHaveAttribute('aria-expanded', 'false');
+	await expand.focus();
+	await page.keyboard.press('Enter');
+	await expect(page.locator('#nd-sidebar')).not.toHaveAttribute('inert');
+	await expect(
+		page
+			.locator('#nd-sidebar')
+			.getByRole('button', { name: /^(?:Collapse|Toggle) Sidebar$/, exact: true })
+	).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('provider routing alternatives name and expose their object fields', async ({ page }) => {
+	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
+	for (const field of ['provider', 'rules']) {
+		const row = page
+			.getByRole('button', { name: `Copy Link: ${field}`, exact: true })
+			.locator('../..');
+		await expect(row).toContainText('Provider ID');
+		await expect(row).not.toContainText('unknown');
+		await row.getByRole('button', { name: 'Allowed providers', exact: true }).click();
+		const dialog = page.getByRole('dialog');
+		await expect(
+			dialog.getByRole('button', { name: 'Copy Link: only', exact: true })
+		).toBeVisible();
+		await expect(
+			dialog.getByRole('button', { name: 'Copy Link: order', exact: true })
+		).toBeVisible();
+		await page.keyboard.press('Escape');
+	}
+});
+
 test('API samples are formatted and highlighted with JavaScript disabled', async ({ browser }) => {
 	const context = await browser.newContext({ javaScriptEnabled: false });
 	try {
@@ -142,6 +337,58 @@ test('static search finds guides and API reference, with keyboard navigation', a
 	await page.keyboard.press('Space');
 	await expect(page).toHaveURL(/\/docs\/reference\/provider-behavior/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Compatibility Notes');
+	await page.keyboard.press('Control+k');
+	await search.fill('Quickstart');
+	const firstResult = page.getByRole('dialog').getByRole('option').first();
+	await expect(firstResult).toContainText('Quickstart');
+	await expect(firstResult).toHaveAttribute('aria-selected', 'true');
+	await page.keyboard.press('ArrowDown');
+	await expect(firstResult).toHaveAttribute('aria-selected', 'false');
+	await page.keyboard.press('ArrowUp');
+	await expect(firstResult).toHaveAttribute('aria-selected', 'true');
+	await page.keyboard.press('Enter');
+	await expect(page).toHaveURL(/\/docs(?:#.*)?$/);
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Quickstart');
+});
+
+test('search dismissal restores the opener and its next keyboard position', async ({ page }) => {
+	await page.goto('/docs/policies/editing');
+	const search = page.getByRole('combobox', { name: 'Search documentation' });
+	const trigger = page.getByRole('button', { name: /^Search/ }).filter({ visible: true });
+	const policyLink = page.getByRole('link', { name: 'Edit a policy', exact: true });
+	for (const opener of [trigger, policyLink]) {
+		await opener.focus();
+		await page.keyboard.press('Tab');
+		const next = await page.evaluateHandle(() => document.activeElement);
+		for (const close of ['Escape', 'button']) {
+			await opener.focus();
+			if (opener === trigger && close === 'Escape') await opener.click();
+			else await page.keyboard.press(opener === trigger ? 'Enter' : 'Control+k');
+			await expect(search).toBeFocused();
+			await page.keyboard.press('Tab');
+			await expect(page.getByRole('button', { name: 'Close Search' })).toBeFocused();
+			await page.keyboard.press('Tab');
+			await expect(search).toBeFocused();
+			if (close === 'Escape') await page.keyboard.press('Escape');
+			else await page.getByRole('button', { name: 'Close Search' }).click();
+			await expect(page.getByRole('dialog')).toHaveCount(0);
+			await expect(opener).toBeFocused();
+			await page.keyboard.press('Tab');
+			expect(await page.evaluate((target) => document.activeElement === target, next)).toBe(true);
+		}
+		await next.dispose();
+	}
+	// Opening without a focused control falls back to the visible search trigger.
+	for (const width of [1440, 390]) {
+		await page.setViewportSize({ width, height: 1000 });
+		await page.evaluate(() => (document.activeElement as HTMLElement)?.blur());
+		await page.keyboard.press('Control+k');
+		await expect(search).toBeFocused();
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+		await expect(page.locator('[data-docs-search-trigger] button:visible')).toBeFocused();
+	}
 });
 
 test('JSON copy controls clear native scrollbars and response status tabs stay usable', async ({

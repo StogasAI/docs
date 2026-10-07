@@ -1,16 +1,16 @@
 ---
-title: Input and redaction
-description: Validate prompt text and redact identifiers, literal text, or custom patterns before provider dispatch.
+title: PII Redaction
+description: Remove sensitive text from prompts before sending them to a provider.
 ---
 
-Use `plugins.stogasRedaction` to choose what we remove from provider-bound text.
-Choose from nine presets, literal text rules, or one custom RE2 expression per policy.
-Use `input.asciiOnly` separately to reject non-ASCII prompt text before redaction.
-Matches in supported request text are replaced irreversibly. Provider responses are unchanged.
+Use `stogasRedaction` to remove personally identifiable information (PII), secrets and custom
+text from requests before they reach a provider. Redaction is off by default; provider responses
+are unchanged.
 
-## Configure redaction
+## Enable redaction
 
-This example redacts email addresses, banking and healthcare identifiers, and employee IDs such as `EMP-123456`:
+Add this configuration to an API key or another [policy scope](/docs/policies/scopes).
+It redacts email addresses, banking and healthcare identifiers, and employee IDs such as `EMP-123456`:
 
 ```json title="policy.json"
 {
@@ -25,30 +25,18 @@ This example redacts email addresses, banking and healthcare identifiers, and em
 }
 ```
 
+[Save the policy](/docs/policies/editing), then send a request with synthetic text such as
+`Contact élise@stogas.ai.`. That text becomes `Contact <EMAIL_ADDRESS>.` before provider dispatch.
+Reserved domains such as `example.com` are excluded from email detection.
+In **Analytics → Requests**, open the request and check **Stogas redaction** for its match count.
+
 Keep only the options you need. Preset flags are optional Booleans; within a configured plugin,
 omitted flags are off. `customPattern` is one optional string; `literals` is an optional array.
 An empty `stogasRedaction` object replaces redaction defaults without adding rules.
 Required redaction from other policies still applies.
 
-Set a flag to `false` to leave that preset off at this scope. For example,
-`"stogasRedaction": { "email_address": false }` requires no redaction of its own;
-parent-required presets, literals and custom patterns still apply.
-
-If no applicable policy configures this plugin, we leave text unchanged. Saved policies and
-permitted request policies can add redaction rules. Parent-required rules still apply when a
-child omits the plugin. Remote rule lists and arbitrary scripts are not supported.
-
-### Token estimates and context limits
-
-Typed placeholders preserve where a value was removed. Literal and custom-pattern matches
-become `<CUSTOM_PII>`; preset matches use their category's placeholder. Replacements can increase
-the token count, especially when many short values match.
-
-The gateway selects a deployment, applies its complete redaction policy, then estimates input
-tokens once for reservations, token quotas and request metrics. Local estimates do not reject
-or truncate requests, even when they exceed the catalog context window. The provider checks
-its actual context limit. A provider rejection does not retry another deployment or weaken
-redaction. Gateway byte and processing bounds still apply to the transformed request.
+A `false` flag adds no requirement at this scope. [Inherited requirements](#combining-scopes)
+still apply. Remote rule lists and arbitrary scripts are not supported.
 
 ## Presets
 
@@ -77,6 +65,42 @@ numbers may need a label such as `ITIN`, `NHS`, or `routing number` to match.
 Phone numbers and numeric identifiers such as SSNs also recognize Unicode decimal digits, including full-width and Arabic-Indic
 digits, and common Unicode spaces and hyphens. The same format, checksum, and context rules apply.
 Only matched values are replaced; we do not normalize the rest of your text.
+
+### Test examples
+
+Use these synthetic fixtures without substituting personal records or working credentials.
+With only the named preset enabled, each positive replaces the value with the shown placeholder
+and preserves its label; each negative stays unchanged. The expected match counts are **1**
+and **0**, respectively.
+
+| Preset                   | Positive input                         | Placeholder                      | Negative input                           |
+| ------------------------ | -------------------------------------- | -------------------------------- | ---------------------------------------- |
+| `email_address`          | `Email qa.fixture+redaction@stogas.ai` | `<EMAIL_ADDRESS>`                | `Email qa.fixture+redaction@example.com` |
+| `phone_number`           | `Call +44 7700 900123`                 | `<PHONE_NUMBER>`                 | `Call +0 7700 900123`                    |
+| `social_security_number` | `SSN: 856-45-6789`                     | `<US_SSN>`                       | `SSN: 123-45-6789`                       |
+| `credit_card_number`     | `Card: 4532 0151 1283 0366`            | `<PAYMENT_CARD>`                 | `Card: 4242 4242 4242 4242`              |
+| `ip_address`             | `IP: 198.51.100.24`                    | `<IP_ADDRESS>`                   | `IP: 198.51.100.256`                     |
+| `api_keys_and_secrets`   | `password=stogas-qa-only-7X!`          | `<CREDENTIAL>`                   | `password=********`                      |
+| `bank_identifiers`       | `IBAN GB82 WEST 1234 5698 7654 32`     | `<IBAN>`                         | `IBAN GB81 WEST 1234 5698 7654 32`       |
+| `national_identifiers`   | `National Insurance AB 12 34 56 C`     | `<UK_NATIONAL_INSURANCE_NUMBER>` | `National Insurance QQ 12 34 56 C`       |
+| `health_identifiers`     | `NPI 1234567893`                       | `<US_NPI>`                       | `NPI 1234567894`                         |
+
+SSNs accept the `NNN-NN-NNNN` form; compact or space-separated forms need a nearby `SSN` or
+`social security` label. Zero groups, zero serials, area `000`, `666` or `900`–`999`, repeated
+digits, and the sample values `078-05-1120`, `123-45-6789` and `987-65-4320` are excluded.
+Adding a label does not make an excluded value match.
+
+Payment cards need a supported network prefix and length, a valid Luhn checksum, and recognized
+digit grouping or a nearby card label. Known test values, including `4242 4242 4242 4242` and
+`4111 1111 1111 1111`, are excluded even with a label and valid checksum. The negative IBAN and
+NPI examples have invalid checksums; the negative National Insurance example has an invalid prefix.
+Documentation-reserved IP addresses still match, while reserved email domains are excluded.
+
+Check **Stogas redaction** in the request details after the
+[saved policy takes effect](/docs/policies/scopes#when-changes-take-effect). Other scanned fields
+or inherited rules can add matches. An absent plugin metric is not a measured zero, and the
+aggregate count does not reveal the exact provider-bound text. A model's reply is not evidence
+of what redaction removed.
 
 ## Literal text
 
@@ -186,6 +210,68 @@ Saving validates the edited policy and its known parents. If a later parent edit
 descendant's combined rules exceed a bound, that descendant cannot execute until its policies
 are repaired. Its saved source remains available for editing.
 
+## What is scanned
+
+Model, provider, service-tier, catalog restrictions, and output-bound checks run before redaction.
+Redaction then runs on Chat Completions and Responses text before token estimation and provider
+conversion, after the deployment and credential have been selected. Token estimates do not
+affect routing. Redaction covers message and input text, instructions, tool definitions and
+arguments, text-format definitions, and supported stop sequences. It scans string values inside
+these containers while preserving protocol fields and accepted signed or encrypted reasoning replay.
+
+Model selectors, routing policies, authentication headers, sampling controls, cache controls,
+and request metadata are not prompt-text redaction targets. Do not put sensitive prompt content
+in metadata. Image, audio, and file scanning are not supported.
+
+Built-in matches become typed placeholders such as `<EMAIL_ADDRESS>`; custom matches become
+`<CUSTOM_PII>`. Replacement is irreversible. We keep no map for restoring the original values,
+and it does not restore placeholders in the response. This plugin redacts request text, not newly
+generated provider output.
+
+The match bounds are 65,536 candidate matches per text value, before overlaps are merged, and
+100,000 replacements per request. JSON nesting is limited to 128 levels. Exceeding a bound
+rejects the request before dispatch.
+
+### Token estimates and context limits
+
+Typed placeholders preserve where a value was removed. Literal and custom-pattern matches
+become `<CUSTOM_PII>`; preset matches use their category's placeholder. Replacements can increase
+the token count, especially when many short values match.
+
+The gateway selects a deployment, applies its complete redaction policy, then estimates input
+tokens once for reservations, token quotas and request metrics. Local estimates do not reject
+or truncate requests, even when they exceed the catalog context window. The provider checks
+its actual context limit. A provider rejection does not retry another deployment or weaken
+redaction. Gateway byte and processing bounds still apply to the transformed request.
+
+For inline UTF-8 text files, enable [text extraction](/docs/input-files#text-extraction) before redaction.
+
+## Combining scopes
+
+Save redaction at any saved scope or in a permitted request policy. A preset enabled by any
+active requirement stays enabled. A child's `false` or omission cannot cancel that requirement.
+Default redaction applies only when no active requirement supplies the plugin.
+
+Custom expressions also combine: a match in **any** scope is redacted. Exact duplicate
+expressions run once. The text does not have to match every expression. Conditional redaction
+applies only to the selected candidate's matching rules. Conditions cannot inspect redacted
+output or token estimates.
+
+Literal rules combine the same way. We remove duplicates and rules fully covered by another
+rule with the same text. It preserves each remaining rule's options: case-insensitive exact
+matching plus case-sensitive fuzzy matching does **not** enable case-insensitive fuzzy matching.
+All scanners read the original text; overlapping matches become one replacement covering their union.
+
+For example, organization email detection, grant banking detection, and a key custom
+pattern all run on the same request. Removing an option from one scope removes it only when
+no other scope requires it.
+
+## Encrypt private rules
+
+To keep custom patterns and literal values private when saved, [encrypt the plugin settings](/docs/cli#encrypt-plugin-settings)
+with your own key. This encrypts the entire `plugins` object, including any export destinations.
+Supply the required key with each request over attested TLS or E2EE to keep it private from TLS intermediaries.
+
 ## ASCII-only input
 
 To reject non-ASCII prompt text instead of redacting it, set the separate input restriction:
@@ -208,26 +294,6 @@ Any scope's `true` requires this check; a child's `false` or omission cannot can
 Protocol fields, object property names, metadata, binary content and opaque reasoning replay are
 outside this text check. It is not a blanket ban on Unicode anywhere in the HTTP request.
 
-## Combining scopes
-
-Save redaction at any saved scope or in a permitted request policy. A preset enabled by any
-active requirement stays enabled. A child's `false` or omission cannot cancel that requirement.
-Default redaction applies only when no active requirement supplies the plugin.
-
-Custom expressions also combine: a match in **any** scope is redacted. Exact duplicate
-expressions run once. The text does not have to match every expression. Conditional redaction
-applies only to the selected candidate's matching rules. Conditions cannot inspect redacted
-output or token estimates.
-
-Literal rules combine the same way. We remove duplicates and rules fully covered by another
-rule with the same text. It preserves each remaining rule's options: case-insensitive exact
-matching plus case-sensitive fuzzy matching does **not** enable case-insensitive fuzzy matching.
-All scanners read the original text; overlapping matches become one replacement covering their union.
-
-For example, organization email detection, grant banking detection, and a key custom
-pattern all run on the same request. Removing an option from one scope removes it only when
-no other scope requires it.
-
 ## Scan cost and rejected requests
 
 Unbounded repetitions such as `+` and `*` remain available within a valid, nonempty expression.
@@ -249,27 +315,30 @@ If we cannot safely process a request at the moment, we return **HTTP 503**. Ret
 bounded exponential backoff and jitter. Required redaction is never skipped to complete a request.
 These temporary capacity errors are separate from your saved spend, token, and request limits.
 
-## What is scanned
+## Request metrics
 
-Model, provider, service-tier, catalog restrictions, and output-bound checks run before redaction.
-Redaction then runs on Chat Completions and Responses text before token estimation and provider
-conversion, after the deployment and credential have been selected. Token estimates do not
-affect routing. Redaction covers message and input text, instructions, tool definitions and
-arguments, text-format definitions, and supported stop sequences. It scans string values inside
-these containers while preserving protocol fields and accepted signed or encrypted reasoning replay.
+For a logged request, the plugin reports only `items_redacted` and `duration_us` under
+`plugins.stogas_structured_pii_redaction`. It does not log original values, replacement maps,
+offsets, or per-category counts. The log name differs from the policy name, `stogasRedaction`.
 
-Model selectors, routing policies, authentication headers, sampling controls, cache controls,
-and request metadata are not prompt-text redaction targets. Do not put sensitive prompt content
-in metadata. Image, audio, and file scanning are not supported.
+In **Analytics → Requests**, redacted requests show the number of replaced items. Open a request
+to see **Stogas redaction**, with its match count and duration in microseconds.
 
-Built-in matches become typed placeholders such as `<EMAIL_ADDRESS>`; custom matches become
-`<CUSTOM_PII>`. Replacement is irreversible. We keep no map for restoring the original values,
-and it does not restore placeholders in the response. This plugin redacts request text, not newly
-generated provider output.
+The duration covers scanning and replacing the selected request fields. It is part of request
+admission time, not an additional interval to add to total duration. Loading a policy, compiling
+its matcher, and counting tokens are separate work and are not included in the plugin duration.
 
-The match bounds are 65,536 candidate matches per text value, before overlaps are merged, and
-100,000 replacements per request. JSON nesting is limited to 128 levels. Exceeding a bound
-rejects the request before dispatch.
+Use the analytics search bar to filter requests, charts, and exports:
+
+| Filter                   | Matches                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `redaction:redacted`     | One or more items were replaced.                                             |
+| `redaction:no_matches`   | Redaction ran and reported zero replacements.                                |
+| `redaction:not_recorded` | The log has no redaction metrics. This does not mean redaction was disabled. |
+
+Combine filters, for example `redaction:redacted AND provider:openai` or
+`NOT redaction:not_recorded`. A replacement count is not a count of distinct people or detector
+categories. Original text is never included in these metrics.
 
 ## Detector coverage
 
@@ -365,105 +434,3 @@ that should stay unchanged, before relying on a custom expression.
 Each request is scanned once against its original text. Sending the redacted result in a later
 request can produce different matches if nearby context has changed. Typed placeholders do not
 act as identifier labels or exempt surrounding text from redaction.
-
-## Encrypted plugins
-
-Encrypt the inner `plugins` object to keep custom rules private when saved. Limits, routing,
-access and delegation stay readable in the same policy. Plugins and
-[customer-encrypted provider credentials](/docs/byok#customer-encryption) can use separate
-registered roots.
-
-<Steps>
-<Step>
-
-### Set up the organization key
-
-[Generate and register an organization key](/docs/cli#encrypt-credentials-and-plugins), or use
-an existing private key file. Only the organization policy declares `encryption.keys`, mapping
-labels to public key identifiers. Each encrypted plugin section selects its root by `keyId`.
-
-</Step>
-<Step>
-
-### Encrypt the plugin object
-
-Save only the contents of `plugins`, without its outer wrapper:
-
-```json title="plugins.json"
-{
-	"stogasRedaction": {
-		"literals": [{ "values": ["Project Aurora"] }]
-	}
-}
-```
-
-```console
-stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
-  --purpose plugins --input plugins.json --output plugins.encrypted.json
-```
-
-</Step>
-<Step>
-
-### Save the encrypted section
-
-Replace the entire `plugins` section with `{"encrypted": CONTENTS_OF_PLUGINS_ENCRYPTED_JSON}`.
-The resulting policy has this shape:
-
-```jsonc title="Policy shape (replace placeholders)"
-{
-	"plugins": {
-		"encrypted": {
-			"version": 1,
-			"keyId": "64_LOWERCASE_HEX_CHARACTERS",
-			"salt": "BASE64URL_32_BYTES",
-			"nonce": "BASE64URL_12_BYTES",
-			"blob": "BASE64URL_CIPHERTEXT_AND_TAG"
-		}
-	}
-}
-```
-
-Keep any other policy settings in the document. Save it through the usual editor or API.
-Supply the required roots by label in `encryption_keys` in each inference request's JSON body; see
-[sending the key](/docs/cli#send-the-key-with-a-request).
-
-</Step>
-</Steps>
-
-We check readable settings and the envelope's format and size when saving. The gateway decrypts
-and validates the inherited plugin rules before inference. A successful save does not establish
-that encrypted plugins can execute. Missing or wrong keys, invalid rules, and excessive combined
-rules reject the request.
-
-Compiled rules are reused in a bounded cache. Each request still needs the correct key and live
-authorization. The [policy size limits](/docs/policies/editing#document-rules) count decrypted
-plugin bytes; encryption adds only bounded storage overhead.
-
-Use the optional [execution check](/docs/policies/editing#check-execution-before-saving) to
-validate the proposed policies in advance.
-
-## Request metrics
-
-For a logged request, the plugin reports only `items_redacted` and `duration_us` under
-`plugins.stogas_structured_pii_redaction`. It does not log original values, replacement maps,
-offsets, or per-category counts. The log name differs from the policy name, `stogasRedaction`.
-
-In **Analytics → Requests**, redacted requests show the number of replaced items. Open a request
-to see **Stogas redaction**, with its match count and duration in microseconds.
-
-The duration covers scanning and replacing the selected request fields. It is part of request
-admission time, not an additional interval to add to total duration. Loading a policy, compiling
-its matcher, and counting tokens are separate work and are not included in the plugin duration.
-
-Use the analytics search bar to filter requests, charts, and exports:
-
-| Filter                   | Matches                                                                      |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| `redaction:redacted`     | One or more items were replaced.                                             |
-| `redaction:no_matches`   | Redaction ran and reported zero replacements.                                |
-| `redaction:not_recorded` | The log has no redaction metrics. This does not mean redaction was disabled. |
-
-Combine filters, for example `redaction:redacted AND provider:openai` or
-`NOT redaction:not_recorded`. A replacement count is not a count of distinct people or detector
-categories. Original text is never included in these metrics.

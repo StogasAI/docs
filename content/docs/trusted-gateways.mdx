@@ -8,7 +8,7 @@ the same Rust core in native packages and browser WebAssembly.
 
 ## What is checked
 
-- The root-signed key manifest and online-signed complete approval manifest.
+- The root-signed key manifest, online-signed complete approval manifest, and Rekor inclusion for both.
 - Build provenance and signatures for approved gateway releases and catalogs.
 - Our signed, transparently logged hardware policy.
 - AMD certificate chains, ARK-signed product CRLs, and SEV-SNP reports.
@@ -17,6 +17,11 @@ the same Rust core in native packages and browser WebAssembly.
 
 TLS, response-signing, and E2EE public keys have separate purposes. The gateway retains private keys
 inside the confidential VM. A valid public boot record alone does not authenticate a live connection.
+
+Concurrent session setups can share one fresh hardware report. A Merkle inclusion proof binds each
+client's challenge and session keys to that report; the SDK verifies both the proof and the hardware
+evidence. Batching starts with available work without an added waiting period. Reused sessions and
+streaming chunks do not require new hardware reports.
 
 The hardware policy selects physical chips and minimum firmware and security requirements. The
 launch policy bundled with each gateway release fixes that build's expected VM settings, including
@@ -37,6 +42,30 @@ between polls. Session establishment obtains fresh hardware attestation.
 The current bundle contains allowed releases, catalogs, key authorization, hardware policy and
 necessary collateral. It contains no current node list. Boot evidence travels with the handshake;
 public history retains immutable boot and release records for later inspection.
+
+The Trust Center separates nodes, catalogs, gateway releases, hardware policies, signing manifests
+and release policies. Signed generations and revisions identify key and release-policy versions;
+hardware policies are identified by their content digest, selected by the numbered release policy. Each resource card has
+one verification mark and disclosures for its original JSON. Hover, focus or hold the mark to see
+its verification duration. Release evidence pairs GitHub build provenance with a Stogas
+countersignature. Successfully checked history records retain their mark when
+collapsed or revisited within the page. Every history tab supports ID or version lookup across
+the archive; hardware policies also accept a digest prefix. Fetch and local verification timings are separate, and rechecks
+identify reuse of previously authenticated artifacts.
+
+AMD collateral is separate from Stogas's hardware policy. AMD signatures authenticate the
+certificates and revocation lists; expiry and revocation still need checking. Collateral refreshes
+create no new transparency-history entry. Original material is retained to verify archived boots
+at their authenticated Rekor inclusion time, while live sessions require current collateral.
+
+The current evidence endpoint returns one complete bundle. History indexes are lookup hints,
+not trusted evidence: each record points to an immutable snapshot that references shared signed
+documents and certificate objects by digest. Boots also have a separate immutable boot record containing the original attestation quote and report data. Its Decoded view combines readable report fields and report data; Signed JSON shows the original signed document. The decoded view is derived after verification and is not another stored record.
+The verifier reconstructs and authenticates the evidence before the card receives a checkmark.
+
+The latest root-signed key manifest may omit retired keys. Gateways whose boot proofs still depend
+on those keys must leave the serving fleet before removal. Historical receipts use their original
+archived evidence; retired keys cannot authorize the current release list.
 
 Rotating an online signing key does not change a release's identity. Refreshing a revocation list
 does not change the original boot quote or require it to be logged again. Live checks use current
@@ -62,6 +91,9 @@ Rekor's search index is best effort. An empty result does not prove that no entr
 inclusion proofs remain independently verifiable without the index or Trust Center. A search
 result proves neither current approval nor document authorship: verify the complete document's
 ML-DSA signature and its exact digest against the logged entry.
+
+The submission key identifies a publisher for searches; it grants no approval authority.
+Verification accepts a valid log proof for the exact signed document regardless of who submitted it.
 
 ## Updates
 

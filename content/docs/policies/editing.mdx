@@ -20,7 +20,8 @@ the same JSON format. Do not add a scope or resource ID inside the document.
 Member owners manage their own keys. Parent policies may restrict
 which sections any manager can edit. Organization-wide key readers can inspect saved policies;
 credential readers can inspect credential policies. Reading does not reveal stored credentials.
-See [Scopes and inheritance](/docs/policies/scopes) before changing a shared policy.
+See the [permission reference](/docs/members#permission-reference) and
+[Scopes and inheritance](/docs/policies/scopes) before changing a shared policy.
 
 ## Set a lifetime spend limit
 
@@ -42,14 +43,15 @@ Use the [document fields](/docs/policies#document-fields) to find other settings
 
 Saving at organization scope makes the limit shared across all organization keys. Saving on a key
 limits only that key. Existing lifetime spend and pending requests count toward the allowance;
-setting a limit does not start a new lifetime counter.
+setting a limit does not start a new lifetime counter. The limit checks an estimated hold;
+actual provider usage may exceed it. See [holds and settlement](/docs/policies/limits#holds-and-settlement).
 
 ## Save and check the result
 
 1. Start from the saved policy and edit the fields you want to change.
-2. Use **Format JSON** if needed. Formatting changes layout, not policy validity.
+2. Use **Format JSON** if needed. Formatting changes whitespace while preserving property order, strings and numeric tokens, including values outside the allowed range. It does not make an invalid policy valid.
 3. Save the policy. We check its readable settings and the policies that apply at this resource.
-   [Encrypted plugins](/docs/policies/plugins#encrypted-plugins) are checked before inference.
+   [Encrypted plugins](/docs/cli#encrypt-plugin-settings) are checked before inference.
 4. On an API key, review its effective policy and **Overview** to check the resulting restrictions
    and usage.
 
@@ -103,7 +105,7 @@ Include the organization and key, every applicable folder, grant, role and membe
 }
 ```
 
-For [encrypted plugins](/docs/policies/plugins#encrypted-plugins), include the required labeled
+For [encrypted plugins](/docs/cli#encrypt-plugin-settings), include the required labeled
 roots in `encryption_keys` in the same body to check their contents. The endpoint accepts the same transports as inference;
 [choose the transport before sending your key](/docs/cli#send-the-key-with-a-request).
 
@@ -142,7 +144,7 @@ policies. Reading an inherited source does not grant permission to change it.
 
 An organization can supply decryption keys through its own trusted service. A client that
 actually receives a raw decryption key can decrypt the corresponding contents.
-See [Encrypted plugins](/docs/policies/plugins#encrypted-plugins).
+See [Encrypted plugins](/docs/cli#encrypt-plugin-settings).
 
 ## Document rules
 

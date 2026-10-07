@@ -1,0 +1,51 @@
+---
+title: Input files
+description: Send images, audio and documents, or extract inline text before redaction.
+---
+
+Chat Completions accepts supported `image_url`, `file`, and `input_audio` content blocks;
+Responses accepts `input_image` and `input_file`. The selected deployment must support the
+input modality. Use base64 data URLs for inline images and files. File URLs use Responses
+or an Anthropic-format deployment; the gateway does not fetch remote files itself.
+Provider `file_id` references require your own upstream credential through [BYOK](/docs/byok).
+
+The [catalog](https://stogas.ai/catalog) publishes native document MIME types and filename
+extensions as `fileInputs` on each route. Deployment overrides replace these lists and may
+add or remove formats. OpenAI Chat Completions accepts PDF files; Responses also accepts supported text,
+office documents, and spreadsheets. Anthropic document blocks accept PDF and plain text.
+Azure support depends on its protocol route. File support includes provider-side preprocessing,
+so a text-only model may accept PDFs. These document formats are separate from image and audio
+content blocks.
+
+Declare an inline file’s MIME type in `file_data` using a base64 data URL. A supported filename
+extension is required when the MIME type is absent or `application/octet-stream`. The gateway
+checks this metadata after text extraction; the provider validates the actual file. URL and
+file-ID formats remain subject to provider validation. Anthropic native text requires a
+`data:text/plain;base64,...` URL.
+
+Opaque files, image URLs, and provider file IDs reserve the deployment’s full input allowance.
+The provider checks its actual token and file limits. To turn inline UTF-8 text files into prompt
+text before redaction, enable [text extraction](/docs/input-files#text-extraction).
+
+## Text extraction
+
+Set `plugins.stogasTextExtraction` to `true` to replace inline text file blocks with prompt
+text, prefixed by the filename when supplied. It is off by default. Any required policy that
+enables extraction keeps it enabled; a child cannot disable it. It also works in encrypted
+plugin configuration and permitted request policies.
+
+Declare `text/*`, `application/json`, `application/xml`, or a MIME type ending in `+json` or
+`+xml` in the base64 data URL. Extraction requires valid UTF-8 without NUL bytes. A filename
+extension alone does not enable it. PDFs, office documents, archives, OCR, URLs, and provider
+file IDs are not extracted. Extracted text no longer needs native file support, so an inline
+CSV can become ordinary text even on a route that accepts only PDF documents. Remaining
+attachments must satisfy the selected deployment’s catalog `fileInputs` formats.
+
+Extracted text passes through ASCII checks and redaction, then ordinary text accounting.
+Opaque attachments are rejected when ASCII-only input or active redaction requires inspection;
+those policies cannot inspect hidden file contents. File counters still include extracted files.
+
+## Request size
+
+Base64 encoding and JSON structure count toward the [128-MiB request limit](/docs/reference/security#limits).
+The provider also enforces its own file, body and token limits.

@@ -47,8 +47,8 @@ marked content blocks.
 ```
 
 Responses uses the same top-level controls and puts `prompt_cache_breakpoint` on `input_text`
-blocks. Chat Completions puts it on `text` blocks. OpenAI supports more cacheable block types, but
-the current Stogas API is text-only. OpenAI tracks at most four active breakpoints. They produce
+blocks. Chat Completions puts it on `text` blocks. Native attachment breakpoints are not
+currently accepted. OpenAI tracks at most four active breakpoints. They produce
 one cache-write token partition in usage, not overlapping copies of the same prompt tokens.
 
 `prompt_cache_retention` is the legacy retention control for models before GPT-5.6. For GPT-5.6,
@@ -104,7 +104,7 @@ hold. Meter quantities are combined before rounding. Bring-your-own-key requests
 settle 2% of those amounts.
 
 If a successful provider response has missing, negative, inconsistent, or overflowing usage,
-We return an upstream protocol error instead of inventing a successful charge.
+we return an upstream protocol error instead of inventing a successful charge.
 
 ## Provider references
 

@@ -284,3 +284,17 @@ end.
 Cancellation does not mean the provider did no work. Treat partial output as
 incomplete and do not replay automatically. At application shutdown, call
 `stogas_transport:close(Transport)` or stop its supervisor.
+
+## Workload configuration
+
+```erlang
+stogas_transport:start_link(#{args => ["--security", "e2ee", "--max-connections", "4"]})
+```
+
+CLI arguments also accept `--environment` and `--upstream`. Configure Gun timeouts and cancellation in the caller; the supervisor owns the verifier process.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

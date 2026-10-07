@@ -9,10 +9,9 @@ Tools let a model call something outside normal text generation. The gateway tre
 - **Provider-hosted tools** are run by OpenAI or Anthropic. These can have separate provider charges, so only the hosted tools listed below are available.
 
 <Callout type="info">
-	The MVP API accepts and returns text only. Catalog modalities report the actual upstream model and
-	deployment capabilities; they do not enable image, audio, video, file, or PDF content on the
-	public wire. Supported hosted tools can return text, citations, and control records, but not
-	binary or file artifacts.
+	Input attachments use the selected deployment’s supported native formats. Provider file IDs
+	require BYOK. Supported hosted tools return text, citations, and control records; generated
+	binary and file artifacts are not supported.
 </Callout>
 
 <Callout type="info">
@@ -65,13 +64,21 @@ We accept only provider versions with known wire behavior and cataloged pricing.
 versions shown by the deployment catalog. Unknown future aliases fail closed instead of inheriting a
 current tool price.
 
-Use `max_tool_calls` to bound provider-hosted tool calls. If you omit it for a priced hosted tool, the gateway applies a conservative default cap before the request is sent upstream.
+Use `max_tool_calls` to bound provider-hosted tool calls. If you omit it, the gateway reserves an allowance for ten calls of the most expensive eligible hosted tool. This financial allowance does not add an upstream execution cap. An explicit lower cap reduces the call-fee reservation; actual usage is charged even when it exceeds the allowance.
+
+OpenAI search reservations include retrieved content for each budgeted call: the documented fixed
+token block where applicable, otherwise up to 128,000 tokens or the deployment's smaller input
+limit. Selection among enabled search tools includes both call and content costs. Ordinary output
+uses one response-wide budget. These allowances are estimates, not guaranteed limits on the
+provider's internal work or final bill.
 
 Anthropic accepts one hosted tool definition per request. Its Responses translation accepts the string
 tool-choice modes `auto`, `none`, and `required`, plus a named `function` selector. Hosted-tool object
 selectors and `allowed_tools` are rejected because the Anthropic wire does not preserve them. Stogas
-reserves every possible server-side sampling iteration, including a possible compaction step before
-each iteration.
+reserves cumulative input for up to ten normal server-side sampling iterations and one ordinary
+request-wide output budget. A tool-use cap can produce an error result without ending the loop,
+so it does not reduce that iteration allowance. Compaction adds separate input and summary-output
+capacity. Cache hits reduce settlement costs when reported; reservations do not assume them.
 
 <Callout type="info">
 	`tool_choice: "none"` disables provider-hosted tool calls for that request, so no hosted-tool call

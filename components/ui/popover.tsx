@@ -11,12 +11,19 @@ export function PopoverContent({
 	className,
 	align = 'center',
 	sideOffset = 4,
+	sticky,
 	...props
 }: React.ComponentProps<typeof Primitive.Popup> &
-	Pick<Primitive.Positioner.Props, 'sideOffset' | 'align'>) {
+	Pick<Primitive.Positioner.Props, 'sideOffset' | 'align' | 'sticky'>) {
 	return (
 		<Primitive.Portal>
-			<Primitive.Positioner align={align} side="bottom" sideOffset={sideOffset} className="z-50">
+			<Primitive.Positioner
+				align={align}
+				side="bottom"
+				sideOffset={sideOffset}
+				sticky={sticky}
+				className="z-50"
+			>
 				<Primitive.Popup
 					className={(s) =>
 						cn(

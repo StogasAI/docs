@@ -14,6 +14,10 @@ export const messages = {
 	dashboard: 'Dashboard',
 	githubDocumentation: 'Stogas documentation on GitHub',
 	searchDocumentation: 'Search documentation',
+	onThisPage: 'On this page',
+	outlineProgress: 'Page outline progress',
+	apiPlaygroundEndpoint:
+		'Live endpoint: https://api.stogas.ai. Use a key for this API environment. Sending inference incurs usage charges.',
 	searchFailed: 'Search could not load. Check your connection and reload the page to try again.',
 	copyMarkdown: 'Copy Markdown',
 	copying: 'Copying…',

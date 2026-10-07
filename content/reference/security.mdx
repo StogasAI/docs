@@ -26,7 +26,7 @@ Do not expose a privileged API key in public browser code. Use a narrowly limite
 
 ## Request handling
 
-- The MVP API accepts text input and returns text output. Catalog modalities describe upstream capabilities; they do not enable image, audio, video, file, or PDF content on the public API.
+- Native input attachments require a supported wire shape and compatible deployment. Provider file IDs require BYOK. The gateway does not fetch remote attachments, decode binary documents, or perform OCR; upstream owns native file acceptance. Output remains text and supported tool/control records.
 - Unknown top-level JSON fields are accepted and ignored for SDK compatibility. They are never forwarded to a provider.
 - Meaningful values for known unsupported features are rejected before authorization. Optional `null` values and selected empty SDK defaults are treated as omission.
 - Compressed bodies are checked after decompression; oversized bodies return `413`.
@@ -41,7 +41,17 @@ Requests have a 128-MiB decoded JSON ceiling. Binary E2EE applies the same paylo
 separately bounded framing and authentication overhead. It does not wrap keys for the entire fleet
 or base64-encode the body. Compressed bodies are measured after decompression.
 
-The gateway also checks the selected model's context limits and the organization's policy.
+The decoded body may contain at most 100,000 entries in `messages` or array-valued `input`,
+and 1,000,000 JSON values with 128 levels of nesting. Objects, arrays and scalar values count;
+property names and text inside strings do not. Exceeding the body, message or value limit returns
+HTTP 413. Base64 encoding and JSON overhead count toward the body limit.
+
+The catalog filters deployments using requested features and output/reasoning limits before
+credential preparation and text processing. An incompatible explicitly selected model fails
+instead of being replaced. The provider enforces its file, body, context and output limits,
+and validates provider-specific parameter combinations. See [Input files](/docs/input-files).
+
+Every request must also satisfy the organization's policy.
 The default platform allowance is shared across the organization, including requests from different
 API keys. See [limits](/docs/policies/limits).
 

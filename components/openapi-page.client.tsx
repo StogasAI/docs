@@ -9,6 +9,15 @@ import { OpenAPIRequestBody } from './openapi-request-body';
 import { DefaultCollapsiblePanel } from 'fumadocs-openapi/ui/playground/client';
 import { codeThemes } from '@/lib/highlight';
 import { OpenAPICodeBlock } from './openapi-code-block';
+import { useTranslations } from '@fuma-translate/react';
+import { messages } from '@/lib/messages';
+
+function PlaygroundEndpoint() {
+	const t = useTranslations();
+	return (
+		<p className="text-fd-muted-foreground mb-3 text-sm">{t(messages.apiPlaygroundEndpoint)}</p>
+	);
+}
 
 const Page = createOpenAPIPageBase({
 	shiki: apiShiki,
@@ -21,6 +30,7 @@ const Page = createOpenAPIPageBase({
 			<div className="stogas-api-operation-layout">
 				<div className="stogas-api-operation-main">
 					{slots.header}
+					<PlaygroundEndpoint />
 					{slots.apiPlayground}
 					{slots.description}
 					{slots.authSchemes}

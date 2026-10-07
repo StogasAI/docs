@@ -5,6 +5,7 @@ description: Give members their own API keys under shared access rules and indiv
 
 A grant lets selected members create their own API keys. It has no secret and cannot call
 inference itself. Each member key carries its owner's identity into request history.
+For a short setup sequence, see [Give a teammate API access](/docs/members#give-a-teammate-api-access).
 Use a [service key](/docs/api-keys#service-keys) for an application that should run independently
 of a member.
 
@@ -28,11 +29,12 @@ to members. A role needs no organization-wide permissions to provide this access
 need matching Admin authority when assigning a role that introduces grant rights.
 
 When a member loses their last source of grant Use, their keys under that grant are deleted.
-Another role, folder, or organization grant of Use preserves those keys. Restoring access does not
+Another role, folder, or organization-wide Use permission preserves those keys. Restoring access does not
 restore deleted keys. Role removal and deletion dialogs warn about this consequence.
 
-Select grant icons to enable, disable, or delete several grants at once. The header selects all grants
-matching the current filter. Deletion confirms the number of attached keys that will also be deleted.
+Select grant icons to enable, disable, or delete several grants at once. The header selects loaded grants
+you can manage. Use **Select all matching** to include every manageable result for the current filter.
+Deletion confirms the number of attached keys that will also be deleted.
 
 Disabling a grant immediately rejects new requests from all keys under it without deleting the keys.
 Removing a member's last source of Use on a grant deletes that member's keys under the grant. Deleting the grant deletes

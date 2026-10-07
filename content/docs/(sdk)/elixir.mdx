@@ -217,3 +217,17 @@ alive for other requests and close it after those requests finish.
 `StogasTransport.close(pid)` closes the parent pipe. The CLI then allows up to
 five seconds for native cleanup. Removing the child from your supervision tree
 has the same effect.
+
+## Workload configuration
+
+```elixir
+StogasTransport.start_link(args: ["--security", "e2ee", "--max-connections", "4"])
+```
+
+CLI arguments also accept `--environment` and `--upstream`. Configure OpenaiEx timeouts and retries in the client. Cancel the request task when its consumer exits.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

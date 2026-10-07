@@ -89,3 +89,17 @@ The [complete example](https://github.com/StogasAI/verifier/tree/main/examples/c
 also includes a Maven dependency file. It is tested against HTTP failures, streamed errors
 and truncated responses. To use a separately running [verifier CLI](/docs/cli), set
 `STOGAS_BASE_URL` to its complete printed URL.
+
+## Workload configuration
+
+```clojure
+(Transport. {"security" "e2ee" "max_connections" 4})
+```
+
+The map also accepts `environment` and `base_url`. Configure `.maxRetries` and `.timeout` on the OpenAI builder. The example separately prevents transparent HTTP-stack replay.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

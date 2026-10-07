@@ -3,9 +3,11 @@ title: API Reference
 description: Interactive endpoint playground for the gateway API.
 ---
 
-Explore and test all gateway endpoints. Each operation page includes an interactive playground for live requests.
+Explore and test all gateway endpoints. Each operation page includes an interactive playground for live requests. Inference incurs usage charges.
 
-Use `https://api.stogas.ai` as the base URL. Endpoint paths include their API version.
+Use `https://api.stogas.ai` as the base URL. Endpoint paths include their API version. Examples and the live playground use this endpoint
+regardless of where these docs are hosted. Keys belong to their API environment; use the
+matching endpoint and key.
 
 ## Endpoints
 
@@ -30,18 +32,23 @@ Use `https://api.stogas.ai` as the base URL. Endpoint paths include their API ve
 		description="Create an OpenAI-compatible response"
 		href="/docs/reference/openai-compatible/createResponse"
 	/>
+	<Card
+		title="Validate a policy"
+		description="Check policy execution before saving or sending inference."
+		href="/docs/reference/gateway/validatePolicy"
+	/>
 </Cards>
 
 ## Guides
 
 <Cards>
 	<Card
-		title="Provider Behavior"
+		title="Compatibility Notes"
 		description="Provider differences and compatibility notes."
 		href="/docs/reference/provider-behavior"
 	/>
 	<Card
-		title="Security"
+		title="API Security"
 		description="Authentication, request limits, CORS, and header policies."
 		href="/docs/reference/security"
 	/>

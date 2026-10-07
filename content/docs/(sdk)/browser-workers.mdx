@@ -42,7 +42,11 @@ The transport verifies the gateway before releasing your credentials or prompt. 
 
 With `Stogas-Metadata: v1`, the transport also verifies the final content receipt before completing the response. Consume streams through completion. Standard SSE comments, including our processing keepalive, are ignored by the OpenAI client.
 
-`openAIOptions` disables automatic inference retries. Cancellation ends the request with an error;
+For progress labels, acknowledgement semantics and error handling, see
+[Request progress](/docs/request-progress). Its Fetch callback example works here; import
+`StogasRequestInit` from `stogas/browser` or `stogas/worker` for your runtime.
+
+`openAIOptions` leaves OpenAI retry and timeout policy to the caller. Cancellation ends the request with an error;
 partial output is not verified completion.
 
 Our browser transport uses Fetch and does not require access to the browser's TLS handshake. The same Rust WebAssembly core verifies hardware evidence, published approvals, session setup, and receipts locally.
@@ -75,4 +79,15 @@ try {
 
 For a browser Web Worker, use the browser entrypoint and call `await init()` there. Keep a transport only for as long as the runtime permits; a suspended or discarded worker cannot retain a session reliably.
 
-See [JavaScript and TypeScript](/docs/typescript) for connection limits, metadata callbacks, evidence refresh, and offline verification. Unsupported requests fail before sending credentials; transport errors never trigger an automatic inference replay.
+See [JavaScript and TypeScript](/docs/typescript) for connection limits, metadata callbacks, evidence refresh, and offline verification. Unsupported requests fail before sending credentials; the transport itself never repeats inference. The OpenAI client owns retries.
+
+## Workload configuration
+
+Use `StogasTransport.create({ maxConnections: 4 })` with either entrypoint. Four is the default
+maximum; sessions open only when existing sessions reach capacity. `baseURL` accepts an HTTPS API URL ending in `/v1`;
+`environment: 'staging'` requires a staging build. Set `maxRetries` and `timeout` on the OpenAI
+client, and use `AbortSignal` for per-request cancellation.
+
+Bound simultaneous uploads and queued request bytes in your application. Browser uploads retain
+ciphertext; increasing `maxConnections` does not bound memory or application concurrency. Set the maximum to one when predictable session use matters more than burst capacity. Keep Worker transports within the isolate's supported
+lifetime and close them when their work finishes. See [shared workload settings](/docs/sdk-overview#choose-settings-for-your-workload).

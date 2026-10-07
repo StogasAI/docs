@@ -212,3 +212,17 @@ The empty transport configuration selects native attested TLS. Replace
 over HTTPS. `STOGAS_BASE_URL` is only for an already running local verifier; it is not
 a gateway URL. See [verification and receipts](/docs/verification) for checking
 saved responses.
+
+## Workload configuration
+
+```ocaml
+with_transport library (`Assoc ["security", `String "e2ee"; "max_connections", `Int 4]) request
+```
+
+The configuration also accepts `environment` and `base_url`. Configure HTTP deadlines and cancellation in the caller; the helper releases the transport when the action exits.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

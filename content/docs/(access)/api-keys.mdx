@@ -64,7 +64,9 @@ Request policies have their [own permission](/docs/policies/request-policies#gra
 
 Folders group service keys and grants within an organization. Each resource can belong to one
 folder; member keys follow their grant's folder. Use the folder filter on **API keys** or **Grants**,
-and **Manage folders** to create, rename, or delete a folder. Set a resource's folder in its settings.
+to search by folder name or choose **New folder**, **Edit folder**, or **Manage folders**.
+Give folders a name and optional hex color. Each table has a separate **Folder** column;
+the breadcrumb shows the current folder filter. Set a resource's folder in its settings.
 Folder managers can manage that folder, its grants and all contained keys. Member managers also
 need Admin on the resource when assigning roles that introduce access. Moving a service key or grant requires Admin on both the source and destination folder.
 Moving to or from the organization root requires organization-wide API resource Admin.
@@ -73,6 +75,11 @@ A move changes inherited folder policies and shared limits while preserving key 
 secrets. Deleting a folder keeps its keys and grants at the organization root; deleting a non-empty
 folder therefore also requires organization-wide API resource Admin. Folders cannot nest. Each organization
 supports up to 1,000 folders; names must be unique regardless of case.
+
+Search and sorting cover all resources you can view. **Load more** appends the next results.
+The header checkbox selects loaded resources you can manage; **Select all matching** extends
+the selection to every manageable match. Changing the query or folder clears the selection.
+Bulk actions check permissions again when applied.
 
 ## Key status
 
@@ -100,13 +107,14 @@ Each usable key can have these optional controls in one JSON document:
 Every request must satisfy its applicable policies and the organization balance. Start with
 [Edit a policy](/docs/policies/editing), or see [Scopes and inheritance](/docs/policies/scopes)
 to understand which restrictions and shared allowances apply.
-For private redaction rules, see [encrypted plugins](/docs/policies/plugins#encrypted-plugins).
+For private redaction rules and export credentials, see [encrypted plugins](/docs/cli#encrypt-plugin-settings).
 
 ## Provider credentials
 
 Every service or member key owns an ordered credential list for each provider. Configuring these
 lists requires Manage on that key. Adding a credential also requires Use on the credential.
 Reordering or removing existing assignments needs only key Manage. Empty lists disable the provider.
+See the [permission reference](/docs/members#permission-reference).
 
 New keys start with managed credentials for every provider that supports them, currently Chutes.
 Other provider lists start empty. OpenAI and Anthropic need stored or customer-encrypted

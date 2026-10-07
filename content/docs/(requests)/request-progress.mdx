@@ -1,0 +1,96 @@
+---
+title: Request progress
+description: Show useful request states from connection setup through verified completion.
+---
+
+Give each request its own progress state, especially when several chat messages run concurrently.
+Use transport events for local work and incoming deltas for model output. A fast phase may finish
+between screen updates; do not add delays to make it visible.
+
+## Choose useful labels
+
+| State                  | When to show it                                                                                                |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Securing               | Acquiring a protected session and checking its evidence. Reuse can finish immediately.                         |
+| Encrypting             | The E2EE Fetch transport is encoding and encrypting the request body.                                          |
+| Sending                | Starting the HTTP request.                                                                                     |
+| Waiting for response   | The encrypted start acknowledgement arrived; authorization, upload and provider dispatch may still be pending. |
+| Waiting for provider   | Successful response headers arrived, before reasoning or content. This does not prove provider acceptance.     |
+| Reasoning / Generating | The corresponding output arrives.                                                                              |
+| Complete               | The transport has accepted completion and verified any requested receipt.                                      |
+| Cancelled / Failed     | The request was cancelled or an error occurred, including during stream iteration.                             |
+
+Only show phases your transport exposes. [Keepalives](/docs/keepalives) explains the difference
+between an encrypted start acknowledgement and an SSE processing comment. Neither establishes
+that the model provider accepted the request.
+
+## Use the Fetch callback
+
+The JavaScript/TypeScript Fetch transport accepts `onProgress` per request in Node, Bun, Deno,
+browsers and Workers. It emits `securing`, `encrypting`, `sending` and `acknowledged`; the last
+fires once after the first authenticated response record. Native language transports do not
+expose this JavaScript callback.
+
+Initialize an OpenAI `client` with a [Stogas transport](/docs/sdk-overview#choose-your-runtime),
+then pass `onProgress` through the request's `fetchOptions`:
+
+```ts
+import type { StogasRequestInit } from 'stogas';
+
+async function sendChat(
+	prompt: string,
+	signal: AbortSignal,
+	update: { status: (label: string) => void; text: (delta: string) => void }
+) {
+	const labels = {
+		securing: 'Securing',
+		encrypting: 'Encrypting',
+		sending: 'Sending',
+		acknowledged: 'Waiting for response'
+	};
+	const fetchOptions: StogasRequestInit = {
+		onProgress: (phase) => update.status(labels[phase])
+	};
+	try {
+		const stream = await client.chat.completions.create(
+			{
+				model: 'openai/gpt-5-mini',
+				messages: [{ role: 'user', content: prompt }],
+				stream: true
+			},
+			{ signal, fetchOptions, headers: { 'Stogas-Metadata': 'v1' } }
+		);
+		update.status('Waiting for provider');
+		for await (const chunk of stream) {
+			const text = chunk.choices[0]?.delta.content;
+			if (text) {
+				update.status('Generating');
+				update.text(text);
+			}
+		}
+		update.status('Complete');
+	} catch (error) {
+		update.status(signal.aborted ? 'Cancelled' : 'Failed');
+		throw error;
+	}
+}
+```
+
+Pass callbacks bound to that message as `update`; overlapping requests then cannot overwrite
+one another's status. Handle reasoning deltas separately when your selected model exposes them.
+For browser or Worker imports, use `stogas/browser` or `stogas/worker` instead of `stogas`.
+In JavaScript, omit the type import and annotations.
+
+With direct Fetch, pass `onProgress` alongside `body`, `headers` and `signal` to `transport.fetch`.
+It also works with `stream: false` while the buffered response is pending. Observer exceptions
+do not replace transport results; cancel through the request's `AbortSignal`.
+
+## Finish the UI state
+
+Handle errors around both stream creation and iteration. HTTP 200, a keepalive, partial output
+or ordinary EOF alone is not successful completion. See [Streaming](/docs/streaming) for the
+terminal events and verification checks. Your OpenAI client owns retries; a disconnect after
+submission can leave execution uncertain.
+
+In a web UI, use a `role="status"` region for status changes and keep the stop action available
+while the request is active.

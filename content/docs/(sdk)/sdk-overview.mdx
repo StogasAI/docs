@@ -66,6 +66,16 @@ The transport opens one channel initially and more only when needed, up to `maxC
 (`max_connections` in Python and the C ABI, `MaxConnections` in Go). The default maximum is four.
 Connections may reach the same gateway; this setting does not promise separate machines.
 
+One E2EE session can carry many concurrent requests. Another session opens only when every
+eligible session has 256 starts still awaiting an authenticated acknowledgement. An ACK releases
+that capacity before the provider finishes. Native TLS instead follows the gateway's advertised
+HTTP/2 stream capacity. Slow model output alone does not exhaust E2EE start capacity.
+
+When a gateway drains, the transport retires the affected channel for new work and lets admitted
+responses finish. A replacement performs fresh attestation. At most one additional channel can
+temporarily overlap the configured maximum during replacement. The request that encountered
+draining is returned to your client; its retry policy controls another inference attempt.
+
 Evidence comes from our compiled R2 origin first, with our independent AWS replica as fallback.
 The transport verifies evidence locally at initialization and performs one bounded recovery when
 setup needs newer evidence. It does not poll in the background. Our gateways monitor their own
@@ -74,6 +84,34 @@ approval and stop admitting work when it is withdrawn. `refreshBundle` (`refresh
 Reuse one transport and close it during graceful shutdown. Native options select the environment,
 security mode, connection maximum and an optional HTTPS origin. The origin override cannot change
 the trusted signing keys or evidence endpoints. Staging requires a staging build.
+
+### Choose settings for your workload
+
+Keep the lazy maximum of four for a mix of interactive and server work. The transport uses one
+channel until protocol capacity requires another; a higher maximum does not open spare channels
+or promise traffic distribution. Set the maximum to one when predictable session use matters
+more than burst capacity. Servers should reuse a transport across requests and bound application
+concurrency and queued body bytes independently.
+
+| Setting                                         | Native bindings                                      | Fetch bindings                               |
+| ----------------------------------------------- | ---------------------------------------------------- | -------------------------------------------- |
+| Security                                        | `tls` by default; select `e2ee` explicitly           | E2EE                                         |
+| Channel maximum                                 | `max_connections: 4` in the underlying configuration | `maxConnections: 4`                          |
+| Environment                                     | `prod`; `staging` requires a staging build           | Same                                         |
+| Origin override                                 | `base_url`: HTTPS origin without a path              | `baseURL`: HTTPS API address ending in `/v1` |
+| Retry policy, request deadline and cancellation | Your HTTP/OpenAI client                              | Your HTTP/OpenAI client and `AbortSignal`    |
+
+Channel maxima count reusable TLS connections or E2EE sessions, not requests, threads or guaranteed
+distinct gateways. They do not limit all HTTP sockets owned by a Fetch runtime. Setup and waiting
+for channel capacity share a 15-second budget, bounded by the caller's deadline. Native loopback
+requests have a one-hour total ceiling; choose a shorter application deadline when appropriate.
+Keepalives do not extend either deadline. E2EE limits each request body to 128 MiB and each response
+body to 64 MiB; these are protocol ceilings, not suggested application budgets.
+
+Fetch uploads retain ciphertext for the HTTP request. Bound simultaneous large uploads, especially
+in browsers. Consume responses incrementally and cancel work when its consumer goes away. In native
+async applications, perform blocking transport startup and shutdown away from the event-loop or UI
+thread. Close the transport after active work has finished.
 
 ## OpenAI client integration
 
@@ -87,13 +125,38 @@ The language guides use real client APIs; they do not require a separate Stogas 
 Browser, Worker, Node, Bun and Deno integrations provide a managed `fetch` function with the same
 verification core compiled to WebAssembly. E2EE carries binary records without base64 body expansion.
 
-Disable the OpenAI client's automatic retries. The transport can recover setup before submitting
-a request, but a disconnect after submission can leave execution unknown. It never repeats an
-inference automatically.
+The OpenAI SDK owns retries. Stogas does not replay inference or override the SDK's retry policy.
+It preserves the decrypted HTTP status, supported headers including `Retry-After`, and body.
+An encrypted acknowledgement does not turn a later HTTP error into HTTP 200.
+
+Set retry counts and request deadlines in your OpenAI client. The native examples explicitly choose
+zero retries; this is an application policy, not a transport requirement. A disconnect after
+submission can leave execution unknown, so a retry can execute the request again. Stream errors
+after response headers are separate from HTTP status errors.
 
 Send `Stogas-Metadata: v1` to request the final `stogas` metadata. Its receipt signs the exact request
 and response content. The transport verifies that receipt before reporting successful completion.
 Streaming content can arrive before that final check; receipt failure does not undo execution.
+
+## Build the request experience
+
+<Cards>
+	<Card
+		title="Streaming"
+		description="Read output as it arrives, handle errors and cancel requests."
+		href="/docs/streaming"
+	/>
+	<Card
+		title="Keepalives"
+		description="Handle quiet requests and understand acknowledgements."
+		href="/docs/keepalives"
+	/>
+	<Card
+		title="Request progress"
+		description="Connect transport events to per-message UI state."
+		href="/docs/request-progress"
+	/>
+</Cards>
 
 ## Choose your runtime
 

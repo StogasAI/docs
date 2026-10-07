@@ -17,7 +17,8 @@ and `routing.sort` to order the candidates that remain. These settings apply tog
 }
 ```
 
-Each possible deployment is a **candidate**. Its provider must have an eligible credential.
+A **candidate** is one deployment paired with one eligible provider credential.
+Several credential choices can therefore belong to the same deployment.
 The request's model or deployment selector, service tier, interface and output-token limit narrow
 the choices before their complete policies apply. An encrypted credential with no matching
 supplied root is ineligible. A policy cannot widen an explicit request selector. Other
@@ -46,6 +47,13 @@ active deployments. A model slug limits selection to that model; a deployment sl
 deployment. Empty or null selectors are invalid. If several deployments remain without an order
 that chooses one, the request returns `model_ambiguous` with usable deployment selectors.
 There is no automatic preference for the model author's provider.
+
+A `model_unavailable` error means no eligible deployment remains. Check the requested model,
+assigned provider credentials and **Combined** policy. Required lists and filters all apply:
+an OpenAI-only requirement and a Chutes-only requirement leave no shared provider, and
+contradictory body-size filters reject every candidate. The error alone does not identify which
+restriction excluded a deployment. Repair the conflicting sources; retrying an unchanged
+request does not resolve that conflict.
 
 ## Routing settings
 
@@ -214,7 +222,7 @@ Body bytes are the exact incoming JSON size, including whitespace and request co
 redaction. The [field reference](/docs/policies/routing-fields) lists the full catalog inventory.
 
 Token estimates and estimated total request costs are unavailable to routing and rule conditions.
-After selection, redaction and the selected model's tokenizer run once. The resulting estimate
+After selection, redaction and the universal text estimator run once, with separate framing allowances. The resulting estimate
 feeds reservations, token limits and the `estimated_input_tokens` usage meter. Redaction can
 increase token count. Provider context admission remains authoritative; a large local estimate
 does not truncate the request, weaken redaction, or choose another deployment.

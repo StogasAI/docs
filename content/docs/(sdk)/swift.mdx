@@ -103,3 +103,17 @@ visible to callers; incomplete delivery must not become success or an automatic 
 Reuse one session in a long-running application and invalidate it before closing the transport. The package supports macOS and Linux on
 x86-64 and ARM64; it does not include iOS artifacts. Use `STOGAS_BASE_URL` only when
 connecting through a separately running [verifier CLI](/docs/cli).
+
+## Workload configuration
+
+```swift
+try Transport(options: TransportOptions(security: "e2ee", maxConnections: 4))
+```
+
+`environment` defaults to `prod`; `baseURL` accepts an HTTPS origin. Configure request and resource timeouts on `URLSessionConfiguration` and cancel the owning task. Startup is blocking; keep it off the main actor.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

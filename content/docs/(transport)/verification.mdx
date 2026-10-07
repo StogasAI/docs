@@ -15,7 +15,7 @@ stogas serve
 ```
 
 Pass the complete printed URL, including its random capability, to your OpenAI-compatible client.
-Disable the client's automatic retries. The CLI preserves streaming and manages verified reusable
+Choose the client's retry policy explicitly; interrupted execution can be uncertain. The CLI preserves streaming and manages verified reusable
 connections. See the [CLI guide](/docs/cli) for configuration and browser access.
 
 ## Use an SDK
@@ -48,11 +48,36 @@ Native SDKs use [attested TLS](/docs/attested-tls) by default. Browser and Fetch
 selected gateway before releasing credentials or content. Reuse one transport and close it during
 application shutdown.
 
+## Compare connection modes
+
+Both modes require fresh attestation of the gateway and bind the connection keys to that evidence
+before sending credentials or content. E2EE allows outer HTTPS to terminate at an intermediary;
+the inner encryption still ends at the verified confidential gateway.
+
+| Property                | Attested TLS                                                             | E2EE over HTTPS                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Runtimes                | Native SDKs                                                              | Browsers, Fetch and native SDKs                                                                                             |
+| Encrypted connection    | TLS ends at the verified gateway                                         | Binary E2EE ends at the verified gateway, inside ordinary HTTPS                                                             |
+| Intermediary visibility | Network addresses, timing and encrypted traffic sizes; no HTTP plaintext | The HTTPS terminator also sees outer HTTP requests, routing/session identifiers, request numbers and public ratchet headers |
+| Credentials and content | Encrypted by the verified TLS connection                                 | Encrypted inside the HTTPS body, including the API key, inner HTTP metadata and content                                     |
+| Key evolution           | TLS key updates derive new connection traffic keys from existing secrets | Per-request keys, with fresh DH and post-quantum secrets exchanged during bidirectional traffic                             |
+| Cost                    | Fresh session attestation, then reusable TLS records                     | Fresh session attestation, plus application record framing, ratchet state and encryption inside HTTPS                       |
+
+TLS key updates do not recover from theft of the current traffic secret; establish a fresh verified
+connection for fresh key exchange. E2EE can recover as new DH and KEM secrets enter after endpoint
+access ends, but recovery requires honest delivery and is not guaranteed after every request.
+Neither mode hides all traffic patterns or protects plaintext while a client or gateway is compromised.
+See [the trust model](/docs/confidential-security-model) for metadata and hardware limits.
+
 ## Request a receipt
 
 Send `Stogas-Metadata: v1` for a final `stogas` object with useful request metadata and a compact
 response receipt. Buffered responses append it to JSON. Streams carry it in an SSE comment before
 the terminal event. The SDK verifies requested receipts before reporting normal completion.
+
+Streamed content is hashed incrementally as it passes through. The receipt needs one final signature
+from the gateway's attested signing key, without a new hardware report or buffering the full response.
+Earlier content remains available while completion waits for verification.
 
 One signature covers the exact request and response hashes and the canonical `stogas` metadata,
 excluding the receipt itself. Keep the original bytes, complete metadata and boot evidence to verify

@@ -91,3 +91,17 @@ is also tested against streaming errors and interrupted responses. To use a sepa
 Our published native archives target desktop and server systems. We do not ship Android
 or Kotlin/Native packages. Applications embedding the verifier on a supported native target
 can use the [C ABI](/docs/c-cpp).
+
+## Workload configuration
+
+```kotlin
+Transport(mapOf("security" to "e2ee", "max_connections" to 4))
+```
+
+The map also accepts `environment` and `base_url`. Configure `maxRetries` and `timeout` on the OpenAI builder. The example separately prevents transparent HTTP-stack replay.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

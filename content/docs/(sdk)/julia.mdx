@@ -154,6 +154,10 @@ function stream_chat(base, key, model)
             end
             completed && isempty(line) && isempty(data) && !expired[] || error("Incomplete stream")
             HTTP.closeread(stream)
+        catch
+            # Do not let HTTP.open drain an unfinished persistent response on cancellation.
+            close(stream)
+            rethrow()
         finally
             close(timer)
         end
@@ -224,3 +228,17 @@ For signed response metadata and automatic receipt verification, add
 `STOGAS_BASE_URL` optionally selects a separately running [verifier CLI](/docs/cli).
 Keep its complete URL, including the path. When set, the example uses that
 transport instead of loading the native library.
+
+## Workload configuration
+
+```julia
+StogasNative.Transport(library; configuration=Dict("security" => "e2ee", "max_connections" => 4))
+```
+
+The dictionary also accepts `environment` and `base_url`. Configure `retry`, `readtimeout` and cancellation in the HTTP client; the example also enforces an overall stream deadline.
+
+Native attested TLS is the default; this configuration selects E2EE and retains the default
+maximum of four channels. Reuse one transport, bound application concurrency separately, and
+close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
+because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
+for channel limits, staging builds, origin overrides and deadline behavior.

@@ -1,0 +1,254 @@
+---
+title: Export
+description: Send request traces to your own OpenTelemetry endpoint or JSON webhook.
+---
+
+Use `stogasExport` to send request traces directly from the gateway to your collector
+or webhook. Each trace includes the model, token usage, cost, timing and final outcome.
+Export is off until an applicable policy enables it. Prompt and response content are excluded by default.
+
+## Configure a destination
+
+Add this configuration to an API key or another [policy scope](/docs/policies/scopes).
+Replace the URL and authentication header with those supplied by your collector:
+
+```json title="policy.json"
+{
+	"plugins": {
+		"stogasExport": {
+			"destinations": [
+				{
+					"url": "https://collector.example/v1/traces",
+					"headers": { "Authorization": "Bearer YOUR_COLLECTOR_TOKEN" }
+				}
+			]
+		}
+	}
+}
+```
+
+Use the complete ingestion URL. Stogas does not append `/v1/traces` to a base URL.
+Hosted destinations must accept HTTPS POST requests on a public address with a valid certificate.
+Redirects and private addresses are blocked. Numeric loopback HTTP addresses work only with a local gateway.
+
+To keep the destination URL and credentials private when saved, [encrypt the plugin settings](#encrypt-destination-credentials).
+Otherwise, authorized policy readers can inspect them.
+
+[Save the policy](/docs/policies/editing), send an inference request, and check your receiver
+after the request finishes. Look for `resourceSpans` and the `stogas.request.id` span attribute.
+A successful inference response does not confirm export delivery.
+
+## Choose a delivery format
+
+| Destination        | Settings                                        | Successful acknowledgement                                                     |
+| ------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| OTLP HTTP JSON     | `format: "otlp"`, `encoding: "json"` (defaults) | HTTP 200 with an OTLP JSON or Protobuf response and its matching content type. |
+| OTLP HTTP Protobuf | `format: "otlp"`, `encoding: "protobuf"`        | HTTP 200 with an OTLP JSON or Protobuf response and its matching content type. |
+| JSON webhook       | `format: "webhook"`                             | Any HTTP 2xx response. The response body is ignored.                           |
+
+Both formats use the [OpenTelemetry Protocol (OTLP) trace envelope](https://opentelemetry.io/docs/specs/otlp/).
+Webhooks receive OTLP JSON, including the `resourceSpans` array. They must accept this payload;
+Stogas does not convert it into a destination-specific event format. gRPC is not supported.
+
+For a custom webhook, return a 2xx response after accepting the batch. For an OTLP JSON
+receiver, a full-success acknowledgement is `{}` with `Content-Type: application/json`.
+
+## Compatible destinations
+
+### Tested self-hosted receivers
+
+These releases were tested with batches of real HTTP exports and read back through their query
+APIs. Checks covered Chat and Responses content, Unicode, tool calls and replies, system
+instructions, token usage and billed cost. Protobuf tests used gzip. Collector tests also
+verified forwarding to Jaeger. These results apply to the listed versions, not every future release.
+
+| Receiver                                                                          | Tested version and encoding           | Ingestion path and headers                                                                                                           |
+| --------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/configuration/) | 0.162.0; JSON and Protobuf            | `/v1/traces` on its HTTP receiver; authentication depends on your configuration.                                                     |
+| [Jaeger](https://www.jaegertracing.io/docs/2.21/architecture/apis/)               | 2.22.0; JSON and Protobuf             | `/v1/traces` on its OTLP HTTP receiver.                                                                                              |
+| [Grafana Tempo](https://grafana.com/docs/tempo/latest/configuration/)             | 3.1.0; JSON and Protobuf              | `/v1/traces` on its OTLP HTTP receiver.                                                                                              |
+| [Arize Phoenix](https://arize.com/docs/phoenix/deployment/authentication)         | 20.19.0; Protobuf                     | `/v1/traces`; use the authentication headers required by your instance.                                                              |
+| [Langfuse](https://langfuse.com/integrations/native/opentelemetry)                | 4.53.0; JSON and Protobuf             | `/api/public/otel/v1/traces`; `Authorization: Basic BASE64_PUBLIC_KEY_COLON_SECRET_KEY` and `x-langfuse-ingestion-version: 4`.       |
+| [MLflow](https://mlflow.org/docs/latest/genai/tracing/opentelemetry/ingest/)      | 3.16.1; Protobuf                      | `/v1/traces`; `x-mlflow-experiment-id: YOUR_EXPERIMENT_ID`. Add your server's authentication headers when required.                  |
+| [Opik](https://www.comet.com/docs/opik/integrations/opentelemetry)                | 2.2.92; JSON with `format: "webhook"` | `/api/v1/private/otel/v1/traces` through the standard frontend; `projectName: YOUR_PROJECT`. The backend's direct path omits `/api`. |
+| [LangWatch](https://docs.langwatch.ai/integration/opentelemetry/guide)            | 3.20.1; JSON and Protobuf             | `/api/otel/v1/traces`; `Authorization: Bearer YOUR_PROJECT_API_KEY`.                                                                 |
+
+Use `encoding: "protobuf"` for Phoenix and MLflow. Opik's tested receiver returns an empty
+HTTP 200 response without an OTLP content type, so select `format: "webhook"` for its acknowledgement.
+Phoenix, Langfuse, Opik and LangWatch also passed checks for their native token and cost fields;
+MLflow passed its native token-usage check and retained the billed-cost attribute.
+
+A hosted gateway still requires a public HTTPS URL. Put your self-hosted receiver behind
+an authenticated HTTPS endpoint; its internal Docker hostname or private address cannot be a destination.
+
+### Hosted OTLP interfaces
+
+The services below document compatible OTLP HTTP interfaces. These configurations were checked
+against their documentation; their hosted ingestion and UI mappings have **not** been tested with
+Stogas. Use `encoding: "protobuf"` unless noted, select your region, and confirm a trace arrives
+before relying on a destination. Receiver limits can truncate content independently of Stogas.
+
+| Service                                                                                                        | Full trace endpoint                                                                       | Headers                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| [LangSmith](https://docs.langchain.com/langsmith/trace-with-opentelemetry)                                     | `https://api.smith.langchain.com/otel/v1/traces`                                          | `x-api-key: YOUR_API_KEY`; `Langsmith-Project: YOUR_PROJECT`.                                                                            |
+| [Braintrust](https://www.braintrust.dev/docs/integrations/sdk-integrations/opentelemetry/send-traces-and-logs) | `https://api.braintrust.dev/otel/v1/traces`                                               | `Authorization: Bearer YOUR_API_KEY`; `x-bt-parent: project_id:YOUR_PROJECT_ID`.                                                         |
+| [Raindrop](https://www.raindrop.ai/docs/sdk/opentelemetry/)                                                    | `https://api.raindrop.ai/v1/traces`                                                       | `Authorization: Bearer YOUR_WRITE_KEY`; `X-Raindrop-Project-Id: YOUR_PROJECT_ID`. JSON is also documented; Stogas sends it uncompressed. |
+| [Grafana Cloud](https://grafana.com/docs/grafana-cloud/send-data/otlp/send-data-otlp/)                         | Your stack's OTLP base URL followed by `/v1/traces`, usually ending in `/otlp/v1/traces`. | Copy the `Authorization: Basic …` header from your stack's OpenTelemetry connection settings.                                            |
+| [Honeycomb](https://docs.honeycomb.io/send-data/opentelemetry/)                                                | `https://api.honeycomb.io/v1/traces`                                                      | `x-honeycomb-team: YOUR_API_KEY`; Classic also requires `x-honeycomb-dataset: YOUR_DATASET`.                                             |
+| [New Relic](https://docs.newrelic.com/docs/opentelemetry/best-practices/opentelemetry-otlp/)                   | `https://otlp.nr-data.net:4318/v1/traces`                                                 | `api-key: YOUR_LICENSE_KEY`.                                                                                                             |
+
+New Relic documents a 4,095-character string-attribute limit: long prompts and responses may
+be truncated there. Hosted editions of the self-hosted products above can have different
+authentication, limits and release versions; follow their linked documentation.
+
+For other consumers, send to an OpenTelemetry Collector and configure its supported exporter.
+Stogas sends traces to `/v1/traces`, not the separate OTLP logs or metrics signals.
+
+## Include prompt and response content
+
+Set `content` on a destination to `input`, `output`, or `both`. The default, `none`, exports
+metadata only. Enabling content export permits that content to leave the confidential VM
+for the destination you configured.
+
+These options select the conversation direction. They do not separately switch reasoning or
+tools on and off. `input` includes captured conversation history, including earlier assistant
+reasoning, tool calls and tool replies; `output` includes the current model response.
+
+Input is captured after [text extraction](/docs/input-files#text-extraction) and
+[PII redaction](/docs/plugins/pii-redaction), when configured. Output contains validated text,
+visible reasoning and summaries, refusals, and function or custom tool calls. Custom tool inputs
+remain strings. There is no additional PII scan of exported content.
+
+Capture uses Bifrost's normalized messages. OpenAI-compatible reasoning aliases, including
+Chutes' `reasoning_content`, are captured once. This is a bounded conversation export, not a
+lossless copy of the provider response.
+
+Each enabled input or output has a capture budget of 65,536 bytes by default, including message
+structure. Set `maxCaptureBytes` to change it, up to 262,144 bytes. Streaming deltas are assembled
+into one bounded output; terminal snapshots are not repeated. Failed or cancelled requests can
+include partial output. Cancellation stops further capture; the trace is sent after provider
+completion and final accounting, which can continue after the client disconnects.
+
+Attachment bodies, encrypted reasoning, reasoning signatures, provider-hosted tool items,
+tool definitions, provider-only fields, inference authentication headers, BYOK secrets and
+`encryption_keys` are excluded. The [trace fields](#trace-fields) indicate
+truncated, omitted or incomplete content.
+
+## Filter requests
+
+Use `outcomes` to select `success`, `failure`, or `cancelled`. Omitting it includes all three.
+This example exports only failures with a final error status from 500 through 599:
+
+```json title="policy.json"
+{
+	"plugins": {
+		"stogasExport": {
+			"destinations": [
+				{
+					"url": "https://collector.example/v1/traces",
+					"outcomes": ["failure"],
+					"errorStatusRanges": [{ "min": 500, "max": 599 }],
+					"maxRetries": 3
+				}
+			]
+		}
+	}
+}
+```
+
+`errorCodes` accepts Stogas error codes. When both code and status filters are present, a failure
+must match both. These filters refine failures only; they do not exclude successes or cancellations
+unless `outcomes` excludes them. A failed stream is a failure even if its initial HTTP status was 200.
+
+Use `sampleRate` to export a fraction of requests, from `0` to `1`. The default is `1`; `0` disables
+that destination. Sampling happens before content capture and outcome filtering.
+
+Exports begin after policy and deployment selection. Unauthenticated, malformed, denied-selection
+and undecryptable-policy requests do not produce traces.
+
+## Destination settings
+
+Each entry in `plugins.stogasExport.destinations` accepts these fields:
+
+<PolicyFields section="exportDestination" />
+
+Headers are limited to 32 names and 8,192 UTF-8 bytes per destination. Names must be unique
+without regard to case. Stogas sets the content type and transport headers; use `headers`
+for authentication and destination-specific settings such as project selection.
+
+## Trace fields
+
+Each request produces one standalone client span with stable trace and span IDs and start/end timestamps.
+Incoming `traceparent` headers are not propagated, and provider attempts are metadata rather than
+child spans. The resource identifies `service.name: "stogas"` and the gateway version.
+
+| Attribute                                                                                                     | Value                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `gen_ai.request.model`, `gen_ai.response.model`                                                               | Selected and reported model identifiers, when available.                                                                      |
+| `gen_ai.provider.name`                                                                                        | Selected provider.                                                                                                            |
+| `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                     | Known input and output token totals; absent usage is omitted, not reported as zero.                                           |
+| `gen_ai.usage.cache_read.input_tokens`, `gen_ai.usage.cache_creation.input_tokens`                            | Known cache-read and cache-write input token counts.                                                                          |
+| `gen_ai.usage.reasoning.output_tokens`                                                                        | Known reasoning output token count.                                                                                           |
+| `gen_ai.response.finish_reasons`                                                                              | The final provider attempt's finish reason, when available.                                                                   |
+| `gen_ai.request.temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `max_tokens`, `seed` | Supported numeric generation settings present in the request; each name has the `gen_ai.request.` prefix.                     |
+| `stogas.performance.ttft_ms`                                                                                  | Time to first token in milliseconds, when measured.                                                                           |
+| `stogas.request.id`, `stogas.request.type`                                                                    | Request identifier and API route type.                                                                                        |
+| `stogas.cost.usd`                                                                                             | Billed cost as a decimal string.                                                                                              |
+| `stogas.outcome`                                                                                              | `success`, `failure`, or `cancelled`.                                                                                         |
+| `error.type`, `stogas.error.status`                                                                           | Error code and available status for a failed request.                                                                         |
+| `stogas.request.metadata`                                                                                     | JSON string containing the customer request event, including accounting, timing and provider-attempt details, when available. |
+
+When content is enabled, `gen_ai.input.messages` and `gen_ai.output.messages` are JSON strings
+using OpenTelemetry GenAI `role` and `parts` fields. Separate instructions use
+`gen_ai.system_instructions`. Input conversations include tool replies; Responses output items
+become parts of one output choice.
+
+`stogas.input.truncated` and `stogas.output.truncated` mark capture limits. The corresponding
+`omitted` flags mark unsupported content. Failed or cancelled requests set `stogas.output.incomplete`.
+The exact billed cost remains `stogas.cost.usd`. Numeric copies in `llm.cost.total`,
+`gen_ai.usage.cost` and `langwatch.span.cost` populate native consumer cost fields. These are
+compatibility attributes, not additional charges; `gen_ai.usage.cost` is not a registered
+OpenTelemetry GenAI attribute. Content is sent once per span, without parallel vendor-specific copies.
+
+## Inheritance and request policies
+
+Required destinations from applicable scopes and rules combine. Exact duplicates are sent once;
+up to eight distinct destinations may apply. A child cannot change or disable an inherited destination.
+
+`destinations: []` adds none and suppresses plugin defaults. Required exports from other scopes
+still apply. A [request policy](/docs/policies/request-policies) needs `plugins.stogasExport`
+or `plugins` delegation to add an export destination.
+
+## Encrypt destination credentials
+
+[Encrypt the entire plugin object](/docs/cli#encrypt-plugin-settings) with your own key to keep
+destination URLs and credentials private when saved. The gateway opens it with the key you
+supply for each request. Use attested TLS or E2EE to keep that key private from TLS intermediaries.
+
+## Delivery and retries
+
+Delivery runs asynchronously in batches of at most 64 records or 512 KiB. Batches normally flush
+within 200 ms when workers are available and never mix organizations, credentials or destination
+settings. Repeated resource fields are combined. Protobuf batches use gzip when it reduces the
+payload and compression fits the memory budget; JSON and webhooks remain uncompressed.
+
+`maxRetries` permits up to three additional attempts after the first, with backoff and
+`Retry-After` handling. It defaults to `3`; use `0` for a single attempt. HTTP 429, 502, 503,
+504 and transport failures can retry. Other HTTP failures, including 500, are final.
+A destination waiting for retry backoff does not occupy a delivery worker. Retries reuse the
+same encoded batch and IDs. OTLP partial acceptance is counted without resending the batch.
+
+Export is best effort. Memory pressure, a full queue, expiry or process exit can lose records;
+retries can produce duplicates. Use the stable trace and span IDs to deduplicate where your receiver supports it; some consumers rewrite IDs. Do not depend
+on arrival order. Records expire after 30 seconds, each HTTP attempt has a five-second timeout,
+and shutdown drains for up to five seconds. Failed delivery never fails inference.
+
+## Troubleshooting
+
+| Symptom                                          | Check                                                                                                                                           |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| No requests reach the receiver                   | Confirm the full URL, public HTTPS address, certificate and authentication headers. Redirects are not followed.                                 |
+| Some requests have no trace                      | Check sampling, outcome filters and whether the request reached deployment selection. Capacity limits and delivery expiry can also drop traces. |
+| The receiver returns 2xx but OTLP delivery fails | Use HTTP 200 with a valid OTLP acknowledgement and content type, or choose `format: "webhook"` for a generic receiver.                          |
+| Prompt or response content is missing            | Set `content` explicitly and inspect the `truncated`, `omitted` and `incomplete` flags.                                                         |
+| A trace appears more than once                   | An acknowledgement may have been lost. Deduplicate using trace and span IDs.                                                                    |

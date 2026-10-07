@@ -7,6 +7,9 @@ Native SDKs use attested TLS by default. A fresh hardware-attested signer binds 
 an approved gateway. The Rust transport verifies the evidence locally before it releases your
 API key or request content.
 
+The API key stays in the standard `Authorization: Bearer` header. TLS encrypts
+both HTTP headers and the request body; moving the key into the body adds no protection.
+
 ## Connect from a native runtime
 
 Choose a [language guide](/docs/sdk-overview#choose-your-runtime), or run
@@ -26,6 +29,9 @@ an update acknowledgement before sending data. Updates add small TLS control mes
 they do not add a full handshake or another payload encryption layer. The one-minute spacing
 limits update frequency, not key lifetime. Protection follows connection key changes,
 rather than each request finishing.
+Key updates derive from existing traffic secrets and add no fresh DH or post-quantum secret.
+Someone who steals a current traffic secret can derive its later updates; a fresh verified
+connection performs a new key exchange. [Compare this with E2EE's ratchet](/docs/verification#compare-connection-modes).
 The native client permits AES-256-GCM and ChaCha20-Poly1305 for 256-bit traffic keys,
 with no AES-128 fallback. It prefers AES when it detects x86 or ARM64 AES-GCM acceleration,
 and ChaCha20 otherwise.
@@ -42,6 +48,6 @@ provider receives the forwarded request. It does not make the provider's executi
 verifiable.
 
 Initial setup performs fresh session attestation; it is not identical in cost to ordinary HTTPS.
-Reusing connections amortizes setup. Disable automatic inference retries: a lost connection after
-submission can leave execution uncertain. See [Gateway verification](/docs/verification) for
+Reusing connections amortizes setup. Your OpenAI client owns retry policy. A lost connection after
+submission can leave execution uncertain, and a retry can execute again. See [Gateway verification](/docs/verification) for
 receipts and [the trust model](/docs/confidential-security-model) for hardware and evidence limits.

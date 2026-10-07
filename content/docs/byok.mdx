@@ -1,6 +1,6 @@
 ---
 title: Bring your own provider key
-description: Use a stored provider credential or encrypt it with a key your organization controls.
+description: Configure BYOK with a stored provider credential or a key your organization controls.
 ---
 
 Bring your own key (BYOK) lets us route a request through your provider account. You still
@@ -28,7 +28,7 @@ Azure uses stored Microsoft Entra credentials so we can discover deployments.
 
 Before saving or replacing a secret, we check it through authenticated metadata calls, not
 paid inference. OpenAI and Anthropic use their model-list operation; Chutes uses its account-quota
-operation. Azure uses its management and model APIs. A rejected credential is not saved. If the
+operation. Azure uses its management API to discover targets. A rejected credential is not saved. If the
 provider is unavailable or rate-limits the check, try again. A successful check does not guarantee
 quota or access to every model.
 
@@ -86,26 +86,30 @@ backups, and replacement procedure.
 ## Connect Azure
 
 Create one Microsoft Entra application for the Azure accounts that one Stogas credential may use.
-Grant its service principal read access to the selected subscriptions or narrower resource groups,
-and grant **Cognitive Services User** on each model account that it may call. Keep each assignment at
-the narrowest practical scope. Azure role changes can take several minutes to apply.
+Grant its service principal **Reader** on the selected subscriptions and **Foundry User** on the
+model accounts or projects that it may call. Scope inference access to the resources you intend to
+use. Azure role changes can take several minutes to apply.
 
 When you save the credential, we read Azure Resource Manager to find accessible model accounts,
 locations, deployments, exact model versions, hosting modes, SKUs, and supported Foundry projects.
-It also checks Microsoft Entra access to each trusted model endpoint. Customer deployment names,
+Discovery does not execute a paid request or establish inference permission, quota, or account
+eligibility for every model. Azure checks those when a request runs. Customer deployment names,
 resource IDs, endpoints, and physical resource locations remain private binding data; they do not
 become public catalog nodes.
 
 Azure Instant access is separate from a normal Azure deployment. We discover supported Instant
-models through an accessible West US 3 Foundry project and binds the exact versioned model name to
+models through an accessible West US 3 Foundry project and bind the exact versioned model name to
 that project endpoint. Use **Refresh Azure deployments** after you add, remove, or change Azure
 deployments or projects.
 
 Each Stogas API key can order stored Azure credentials. An empty list means that Azure requests
 fail. At request time, we match the selected catalog deployment to an exact discovered model,
-version, hosting mode, and deployment type inside that credential. If several Azure resources expose
-the same exact target, the request ID selects one deterministically. We never search another
-credential, guesses a customer deployment name, or falls back to another provider.
+version, hosting mode, and deployment type inside that credential. Open **Azure targets** to choose
+one physical target for each matching offering. A unique target is selected when the credential is
+created; duplicates require your choice. Refreshing preserves that choice, and newly discovered
+targets remain unselected. If the selected target disappears, it stays visible as unavailable and
+requests cannot use another target until you choose it. We never guess a customer deployment name
+or fall back to another provider.
 
 The catalog represents material Azure choices such as Global Standard, US or EU Data Zone Standard,
 Azure-hosted or partner-hosted inference, and Instant access. It does not duplicate every physical
@@ -117,9 +121,10 @@ storage region. It does not establish a separate zero-data-retention agreement.
 
 ## Choose and order credentials
 
-Every service or member API key owns an ordered credential list for each provider. Members with
-BYOK management and management of that key can add, remove, or reorder its choices. An empty list
-disables that provider for the key. New keys start with Stogas-managed Chutes assigned.
+Every service or member API key owns an ordered credential list for each provider. Adding a
+credential requires **Manage** on the key and **Use** on the credential. Reordering or removing
+existing choices requires only key **Manage**. See the [permission reference](/docs/members#permission-reference).
+An empty list disables that provider for the key. New keys start with Stogas-managed Chutes assigned.
 
 | Choice                 | Result                                                           |
 | ---------------------- | ---------------------------------------------------------------- |
@@ -139,6 +144,11 @@ default, and failures after selection, including provider errors, never switch c
 Encrypted plugins open after selection. Missing plugin keys or invalid plugin content reject that
 request, including when another credential could have served the same deployment.
 
+Azure accepts ordered stored credentials with discovered targets. It does not accept
+customer-encrypted or Stogas-managed credentials.
+
+### Configuration caching
+
 Credential lists and ciphertexts are cached with the API key's policy. Changed generations reject
 stale requests before dispatch and start a refresh. Every authorization checks the exact selected
 assignment, ownership, status, and applicable policy revisions again. Saving a list requires the
@@ -149,9 +159,6 @@ The complete snapshot also has a 96-MiB memory accounting allowance, charging sh
 once at eight times its bytes and credential metadata at three times its bytes, plus object
 overhead. `key_configuration_too_large` means the assigned policies or target metadata exceed
 that allowance. Reduce the assignments or their content; retrying the same configuration cannot fix it.
-
-Azure accepts ordered stored credentials with discovered targets. It does not accept
-customer-encrypted or Stogas-managed credentials.
 
 ## Rotate or revoke a credential
 

@@ -36,7 +36,7 @@ try {
 
 The Fetch transport supports Chat Completions and Responses over E2EE. It sends binary encrypted records through `https://e2ee.stogas.ai/v1/session`; your OpenAI client still uses its normal request methods. Unsupported paths and methods fail before credentials are sent.
 
-One session opens on first use. More open when existing sessions reach capacity, up to `maxConnections` (four by default). Session reuse is automatic. An idle session can be replaced before a new request; an interrupted inference is never silently sent again. `openAIOptions` disables the OpenAI client's automatic retries.
+One session opens on first use. More open when existing sessions reach capacity, up to `maxConnections` (four by default). Session reuse is automatic. An idle session can be replaced before a new request; the transport never repeats interrupted inference. Your OpenAI client may retry according to its own policy. `openAIOptions` supplies the URL, key and Fetch adapter; it leaves the OpenAI client's retry and timeout settings unchanged.
 
 ## Stream and cancel
 
@@ -60,7 +60,17 @@ for await (const chunk of stream) {
 
 Consume the iterator to completion and handle errors. The transport withholds the terminal event
 until it verifies encrypted completion. Cancellation or a broken stream does not establish success;
-do not automatically repeat the inference.
+account for possibly repeated execution when choosing retry policy.
+
+For per-request UI updates, follow [Request progress](/docs/request-progress). Its `onProgress`
+example works with this client and with browser and Worker Fetch transports.
+
+## Client policy
+
+Set `maxRetries` and `timeout` on `new OpenAI({ ...transport.openAIOptions(apiKey), ... })`
+according to your application. Stogas preserves status errors and `Retry-After`; it never retries
+inference itself. An interrupted request may already have executed. Use `AbortSignal` to cancel
+and bound application concurrency separately from `maxConnections`.
 
 ## Options
 
@@ -71,6 +81,8 @@ const transport = await StogasTransport.create({
 	onMetadata: (metadata) => console.log(metadata)
 });
 ```
+
+The default maximum is four; see [workload settings](/docs/sdk-overview#choose-settings-for-your-workload) for interactive, server and constrained clients.
 
 `baseURL` may select another HTTPS `/v1` address, but does not change the pinned evidence authorities. A staging build also accepts `environment: 'staging'`; production builds reject it.
 
