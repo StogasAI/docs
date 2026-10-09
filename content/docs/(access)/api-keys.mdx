@@ -71,9 +71,10 @@ Folder managers can manage that folder, its grants and all contained keys. Membe
 need Admin on the resource when assigning roles that introduce access. Moving a service key or grant requires Admin on both the source and destination folder.
 Moving to or from the organization root requires organization-wide API resource Admin.
 
-A move changes inherited folder policies and shared limits while preserving key identities and
-secrets. Deleting a folder keeps its keys and grants at the organization root; deleting a non-empty
-folder therefore also requires organization-wide API resource Admin. Folders cannot nest. Each organization
+A move changes inherited folder policies, permissions and shared limits. Deleting a folder moves
+service keys and grants to the organization root and requires organization-wide API resource Admin
+when the folder is non-empty. Either operation deletes a member's grant keys if it removes their last
+source of grant Use. Surviving keys retain their identities and secrets. Folders cannot nest. Each organization
 supports up to 50 folders; names must be unique regardless of case.
 
 Search and sorting cover all resources you can view. Enter selects the highlighted suggestion;

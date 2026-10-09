@@ -91,6 +91,11 @@ independent of whether outer HTTPS uses TLS 1.2 or TLS 1.3. Both combine classic
 key establishment. Classical-only HTTPS remains vulnerable to future decryption of recorded traffic
 by a sufficiently capable quantum adversary.
 
+ML-KEM-768 targets NIST security category 3. These categories compare estimated attack costs;
+they do not give a probability of surviving future cryptanalytic discoveries. A larger parameter
+set adds margin within the same mathematical family, without guaranteeing resistance to a
+break of that family. See [NIST's ML-KEM standard](https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.203.pdf).
+
 Stogas root authorizations, approvals, hardware policies, release countersignatures and receipts use
 ML-DSA-65. Rekor records a SHA-512 commitment to each logged signed document using a classical
 submission key; that key cannot authorize a Stogas document. AMD attestation, GitHub build proofs,

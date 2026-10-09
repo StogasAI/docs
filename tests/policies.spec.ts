@@ -187,8 +187,8 @@ test('plugins are discoverable through their own sidebar section and search', as
 	await expect(page).toHaveURL(/\/docs\/plugins\/export$/);
 	await expect(page.getByRole('heading', { name: 'Export', exact: true })).toBeVisible();
 	const destination = page.locator('[id="policy-fields.exportDestination"]');
-	await expect(destination).toContainText('maxRetries');
-	await expect(destination).toContainText('errorStatusRanges');
+	await expect(destination).toContainText('url');
+	await expect(destination).toContainText('headers');
 	await page.keyboard.press('Control+k');
 	await page.getByRole('combobox', { name: 'Search documentation' }).fill('stogasExport');
 	await page

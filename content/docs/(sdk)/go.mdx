@@ -11,6 +11,9 @@ go get github.com/openai/openai-go/v3
 ```
 
 Use the official OpenAI Go client with the Stogas cgo binding. Tagged Stogas releases include the native Rust library.
+Enable cgo and install a C compiler for your platform. On Alpine or another musl system,
+build with `-tags musl`; other Linux builds use the glibc library. These libraries use
+the host's C runtime. The release's matching debug archive supports source-level relinking.
 
 ## Stream with the OpenAI client
 

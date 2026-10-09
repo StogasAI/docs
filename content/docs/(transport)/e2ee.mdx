@@ -18,20 +18,29 @@ Follow [Browser and Workers](/docs/browser-workers) or the
 The verifier requires the selected hybrid construction and fails closed when it is unavailable.
 Records are binary, without base64 expansion of request bodies. Responses stream as they arrive.
 Native uploads stream; browser uploads use a replayable ciphertext body to accommodate Fetch limits.
+Every request data record except the last carries the full 65,515 bytes; the gateway rejects a
+short record followed by more data.
 
-Browser and Fetch runtimes use WebCrypto AES-256-GCM when available, with a portable Rust
-fallback when the service or algorithm is unavailable. The first incoming record is
-authenticated in Rust so concurrent requests update shared session state atomically. Each direction's WebCrypto key is
-imported once and is non-exportable. Rust owns the session secrets, counters and record rules;
+Browser and Fetch runtimes use WebCrypto AES-256-GCM for records larger than 256 bytes. Smaller
+records, where importing a fresh key costs more than it saves, use the portable Rust
+implementation, as does any runtime without the service or algorithm. The first incoming record
+is authenticated in Rust so concurrent requests update shared session state atomically. Each
+record uses its own key; WebCrypto keys are non-exportable and released after the operation.
+Rust owns the session secrets, counters and record rules;
 an authentication failure always closes the request. WebCrypto provides no explicit key-erasure
 operation, so releasing a browser key does not guarantee immediate erasure from memory.
 
 ## Session keys and concurrency
 
-E2EE uses a Double Ratchet with full X448 and ML-KEM-768 exchanges and encrypted, padded
+E2EE uses a Double Ratchet with full X25519 and ML-KEM-768 exchanges and fixed-size encrypted
 ratchet headers. Each new alternating turn mixes fresh DH and KEM secrets through HKDF-SHA512.
-Every request and response start derives an independent AES-256-GCM message key, including
-messages sent in a concurrent burst. Later chain state cannot recreate erased earlier keys.
+Every request and response start derives an independent directional chain, including messages
+sent in a concurrent burst. Each record consumes a new AES-256-GCM key from an HKDF-SHA256
+chain, including metadata, data, keepalive and completion records. The old chain state and
+used key are discarded; later chain state cannot recreate erased earlier record keys.
+This adds no network messages or record bytes. Capturing the current chain still exposes the
+remaining records in that direction; recovery requires a later fresh hybrid exchange.
+Application-held plaintext and browser-managed key copies remain outside this erasure guarantee.
 
 A request that arrives ahead of another causes the gateway to retain the missing request's
 individual key for up to one minute, within a 256-number window. Once admitted, an upload or
@@ -39,6 +48,12 @@ response keeps its normal deadline; this one-minute wait does not limit inferenc
 The client retains bounded delayed reply keys for requests awaiting their first response and
 discards that cache when the last such request completes or is cancelled.
 The SDK manages numbering, concurrent requests and session renewal automatically.
+
+The gateway retires a session after 2³⁰ cryptographic start attempts, including failed
+authentication. Malformed framing and known replays do not use keys or spend this budget.
+Accepted streams retain their keys and can finish. Sending chains also stop at 2²⁴ messages;
+these are key-use limits, separate from request rate limits. A rejected submission is never
+automatically replayed; later work establishes a fresh session.
 
 During terminal gateway drain, encrypted response metadata carries an authenticated `closing`
 flag. The SDK preserves that response's status and body, stops assigning new requests to the
@@ -54,14 +69,15 @@ sessions with unfinished requests remain available. The next attempt on a reclai
 can fail. The SDK then retires that session so later requests establish a fresh one; it never
 automatically repeats submitted inference.
 
-Fresh session setup uses X-Wing HPKE and binds the gateway's initial X448 and ML-KEM public
+Fresh session setup uses X-Wing HPKE and binds the gateway's initial X25519 and ML-KEM public
 keys to the session evidence. Each subsequent alternating turn sends complete public keys and
 one complete ML-KEM ciphertext. A turn requires authenticated traffic in the opposite direction;
 several requests sent together can share one turn while still using different message keys.
 The SDK needs no extra update request or configurable KEM chunk size.
 
-The first record in each direction carries a fixed 2,384-byte encrypted ratchet header. Its
-padding and encryption conceal ratchet counters, public keys and turn changes. The outer session
+The first record in each direction carries a fixed 2,336-byte encrypted ratchet header. Its
+fixed size and encryption conceal ratchet counters, public keys and turn changes. The visible
+request number serves as the header's encryption nonce, so the header carries no nonce. The outer session
 identifier, request number, message sizes and timing remain visible. Later records in the same
 request or response do not repeat the ratchet header.
 

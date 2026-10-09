@@ -40,7 +40,7 @@ a field that the target scope does not support.
 | API key             | Yes      | No                         | None                                                  | Yes                  |
 | Request             | No       | No                         | None                                                  | No                   |
 
-All eight scopes support `access`, `input`, `routing`, plaintext or encrypted `plugins`, and
+All eight scopes support `access`, `input`, `timeouts`, `routing`, plaintext or encrypted `plugins`, and
 flat named `rules`, subject to their applicable permissions. In particular, a permitted request
 policy can set `input.asciiOnly` and use encrypted plugins whose roots are already registered.
 Only the organization registers root identifiers; no policy contains the roots themselves.
@@ -90,7 +90,7 @@ Top-level settings and rules with omitted `mode` are **required**. `mode: "requi
 but equivalent. Put replaceable settings in a rule with `mode: "default"`.
 
 Defaults apply only when no active requirement supplies that setting. Settings are the same
-units used by delegation: `access`, `input`, each routing field, and the redaction plugin.
+units used by delegation: `access`, `input`, each timeout and routing field, and the redaction plugin.
 Plaintext and encrypted redaction belong to the same unit. Replacing a default filter does not
 replace a default sort, and replacing defaults never removes another required setting.
 
@@ -155,7 +155,7 @@ Add optional named rules when settings should depend on request or catalog facts
 ```
 
 `when` is a Boolean CEL expression; omission means always. Rules are flat and unordered.
-They can contain access, input, limits, plugins and routing, but cannot nest rules, register
+They can contain access, input, timeouts, limits, plugins and routing, but cannot nest rules, register
 roots or delegate authority. Names use 1–48 lowercase letters, digits, underscores or hyphens,
 starting with a letter; `constructor` and `prototype` are reserved. Names identify conditional
 counters and never set priority. A matching rule activates its settings directly; no separate

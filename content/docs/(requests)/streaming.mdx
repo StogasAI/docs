@@ -65,8 +65,8 @@ connection can leave execution uncertain, and repeating the request can duplicat
 
 ## Cancel a request
 
-Call `cancellation.abort()` from your stop action. This ends the client request. Cancellation
-does not prove that the provider stopped immediately or that no billable work occurred.
+Call `cancellation.abort()` from your stop action. This ends the client request. The provider
+still runs to completion so Stogas can record its final usage, and that usage is billed.
 Close streams you no longer need instead of leaving them unread.
 
 A request can run for up to 60 minutes, including quiet model processing. [Keepalives](/docs/keepalives)

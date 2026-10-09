@@ -12,7 +12,7 @@ $1 in confirmed credited funds to activate; sending $1 before fees may not be en
 4. Open the current payment instructions and send from your wallet.
 5. Check **Recent payments** for confirmed credit. Activation follows the credited amount.
 
-Completed requests settle asynchronously from their final usage record. Recovery starts after the request deadline and settlement allowance. It settles valid evidence or releases the reservation when evidence is absent and delivery checks permit. Dependency failures and old queued work delay release. A released reservation cannot be charged by a late record. Inconsistent financial records require review; absence from request history does not prove a refund.
+Completed requests settle asynchronously from their final usage record. Missing or invalid records leave funds reserved while delivery recovers or the request is reviewed. Elapsed time and absence from request history do not authorize a charge or refund. If a final record cannot be recovered, contact [billing@stogas.ai](mailto:billing@stogas.ai) for review.
 
 Request history reports the charge calculated from final usage. A gateway with undelivered request logs temporarily returns `503` with `gateway_unavailable` before accepting another inference request; work with an acquired reservation continues.
 

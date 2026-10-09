@@ -9,8 +9,9 @@ streaming example uses macOS Foundation. Set `STOGAS_API_KEY` and `STOGAS_MODEL`
 ## Install
 
 Download `stogas-swift-v<version>.tar.gz` from the
-[verifier release](https://github.com/StogasAI/verifier/releases), verify its published
-checksum, and extract it into `Vendor/Stogas`. Add it to your package:
+[verifier release](https://github.com/StogasAI/verifier/releases). Download its complete
+asset set and verify it with an independently trusted `stogas verify-release <directory>`
+before extracting the Swift archive into `Vendor/Stogas`. Add it to your package:
 
 ```swift
 // In Package.swift:
@@ -19,7 +20,8 @@ dependencies: [.package(path: "Vendor/Stogas")],
 dependencies: [.product(name: "Stogas", package: "Stogas")]
 ```
 
-The archive includes the native library; no Rust toolchain is required.
+The archive includes the native library as an XCFramework on Apple platforms and
+a static artifact bundle on Linux; no Rust toolchain is required.
 
 ## Stream a response
 
@@ -91,7 +93,7 @@ final class NoRedirects: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
 
 Build with `swift run` in your package.
 The [complete Swift example](https://github.com/StogasAI/verifier/tree/main/examples/swift-http)
-is tested with our published transport.
+uses the native transport.
 It prints SSE text, including comments and terminal events, and requires the verified
 `[DONE]` marker before reporting completion. URLSession can treat an interrupted chunked
 body as ordinary EOF, so checking EOF alone is insufficient. Use an SSE parser when consuming
@@ -100,8 +102,7 @@ For a buffered response, omit `stream` and use `session.data(for: request)`.
 
 A Swift task's cancellation stops its pending request. Keep cancellation and transport errors
 visible to callers; incomplete delivery must not become success or an automatic replay.
-Reuse one session in a long-running application and invalidate it before closing the transport. The package supports macOS and Linux on
-x86-64 and ARM64; it does not include iOS artifacts. Use `STOGAS_BASE_URL` only when
+Reuse one session in a long-running application and invalidate it before closing the transport. The release manifest lists the package’s supported targets. Use `STOGAS_BASE_URL` only when
 connecting through a separately running [verifier CLI](/docs/cli).
 
 ## Workload configuration

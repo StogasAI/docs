@@ -6,6 +6,7 @@ const sections = {
 	rule: policy.properties.rules.additionalProperties,
 	delegation: policy.properties.delegation,
 	input: policy.properties.input,
+	timeouts: policy.properties.timeouts,
 	exportDestination:
 		policy.properties.plugins.anyOf[0].properties.stogasExport!.properties.destinations.items,
 	recurringSpend:
@@ -24,6 +25,7 @@ export const policySectionNames: Record<PolicySection, string> = {
 	rule: 'rules.<name>',
 	delegation: 'delegation',
 	input: 'input',
+	timeouts: 'timeouts',
 	exportDestination: 'plugins.stogasExport.destinations[]',
 	recurringSpend: 'limits.spend.recurring.<name>',
 	requestLimit: 'limits.requests.<name>',
@@ -43,12 +45,16 @@ const documentFields = {
 		href: '/docs/policies/editing#use-an-external-editor'
 	},
 	routing: {
-		description: 'Filter catalog candidates, choose their order, and bound candidate checks.',
+		description: 'Filter catalog candidates, choose deployment targets, and bound total attempts.',
 		href: '/docs/policies/routing'
 	},
 	limits: {
 		description: 'Cap spending, tokens, request rates, and concurrent requests.',
 		href: '/docs/policies/limits'
+	},
+	timeouts: {
+		description: 'Bound caller wait time and the wait between useful provider outputs.',
+		href: '/docs/policies#request-timeouts'
 	},
 	access: {
 		description: 'Deny access during scheduled periods.',
@@ -59,7 +65,7 @@ const documentFields = {
 		href: '/docs/plugins/pii-redaction#ascii-only-input'
 	},
 	plugins: {
-		description: 'Extract or redact request text, and export traces to your own destination.',
+		description: 'Extract or redact request text, and export request JSON to your own webhook.',
 		href: '/docs/policies#plugins'
 	},
 	delegation: {

@@ -1,5 +1,19 @@
-# Stogas.ai Docs
+# Stogas Docs
 
-The source for the official [Stogas.ai documentation](https://stogas.ai/docs), covering anonymous AI access, the OpenAI-compatible API, confidential verification, billing, and account management.
+The source for the [Stogas documentation](https://stogas.ai/docs): the OpenAI-compatible API, SDKs, confidential verification, policies, billing, and account management.
 
-The site is built with [Fumadocs](https://fumadocs.dev) and [Next.js](https://nextjs.org). Its public content lives under `content/docs/` and is licensed under Apache-2.0.
+Built with [Fumadocs](https://fumadocs.dev) and [Next.js](https://nextjs.org). Pages live under `content/docs/`.
+
+## Develop
+
+```sh
+bun install --frozen-lockfile
+bun run dev
+bun run typecheck
+bun run build
+bun run test
+```
+
+## License
+
+Content is licensed under Apache-2.0.

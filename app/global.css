@@ -23,7 +23,7 @@
 @theme {
 	--font-sans: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-	/* Stogas uses opaque surfaces throughout, including Fumadocs overlays. */
+	/* Content stays opaque; modal backdrops dim the page without blur. */
 	--blur-*: initial;
 	/* HTTP method labels must remain readable on selected light surfaces. */
 	--color-green-600: var(--color-green-800);
@@ -32,7 +32,7 @@
 	--color-fd-muted-foreground: hsl(0, 0%, 35%);
 	--color-fd-accent: hsl(0, 0%, 89%);
 	--color-fd-ring: hsl(0, 0%, 32%);
-	--color-fd-overlay: var(--color-fd-background);
+	--color-fd-overlay: rgb(0 0 0 / 50%);
 	--color-response-success: #166534;
 	--color-response-success-background: #dcfce7;
 	--color-response-error: #991b1b;
@@ -42,7 +42,6 @@
 .dark {
 	--color-fd-muted-foreground: hsl(0, 0%, 70%);
 	--color-fd-accent: hsl(0, 0%, 17.5%);
-	--color-fd-overlay: var(--color-fd-background);
 	--color-response-success: #86efac;
 	--color-response-success-background: #112b1c;
 	--color-response-error: #fca5a5;
@@ -105,6 +104,11 @@ html {
 	color-scheme: only dark;
 	scrollbar-gutter: stable;
 	font-family: var(--font-sans);
+}
+
+/* The native gutter owns scrollbar space, including fractional widths at zoom. */
+html body[data-scroll-locked] {
+	margin-right: 0 !important;
 }
 
 html.light {
@@ -208,6 +212,12 @@ html.light {
 }
 
 @media (pointer: coarse) {
+	input:not([type='checkbox']):not([type='radio']),
+	select,
+	textarea,
+	[contenteditable='true'] {
+		font-size: max(1rem, 1em);
+	}
 	:where(button, select, [role='tab'], [role='combobox']) {
 		min-height: 2.75rem;
 		min-width: 2.75rem;

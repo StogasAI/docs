@@ -138,7 +138,7 @@ for the same deployment; [routing settings](/docs/policies/routing) choose betwe
 For example, put a customer-encrypted Chutes credential before Stogas managed to prefer it when
 its key is supplied.
 
-Only an explicit `routing.fallbacks.maxPreDispatchCandidates` greater than one allows another
+Only an explicit `routing.maxAttempts` greater than one allows another
 local credential attempt if the first usable choice cannot be prepared. There is no fallback by
 default, and failures after selection, including provider errors, never switch credentials.
 Encrypted plugins open after selection. Missing plugin keys or invalid plugin content reject that

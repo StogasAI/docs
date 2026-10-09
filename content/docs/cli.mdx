@@ -8,9 +8,18 @@ Your OpenAI-compatible client keeps its normal API surface; only the base URL ch
 
 ## Install
 
-Download the archive for your platform from [GitHub Releases](https://github.com/StogasAI/verifier/releases), verify `SHA256SUMS`, and place `stogas` on your `PATH`.
+Download the complete asset set from a published [GitHub release](https://github.com/StogasAI/verifier/releases).
+Use an independently trusted CLI to verify the manifest, GitHub build provenance,
+Stogas approval, qualification reports and every artifact:
 
-Supported targets are Linux x86-64 and ARM64, macOS x86-64 and ARM64, and Windows x86-64.
+```console
+stogas verify-release /path/to/downloaded-release
+```
+
+Then extract the archive for your platform and place `stogas` on your `PATH`.
+`release-manifest.json` lists the release's exact platforms and artifacts. Linux glibc
+and musl archives are separate; choose musl for Alpine. Matching debug archives retain
+source-level diagnostics. Draft releases have not completed approval.
 
 ## Start
 
@@ -53,8 +62,9 @@ It does not poll. A setup failure can trigger one bounded evidence refresh befor
 submission. The separately printed refresh URL accepts a manual `POST` from a local application.
 
 The optional `--upstream` accepts an HTTPS origin without a path, credentials or query.
-It does not change trusted evidence origins or signing roots. `--environment staging` requires
-a build with staging support; the public build selects production.
+It does not change trusted evidence origins or signing roots. Published packages trust
+production only. `--environment staging` is available only in a source build with the
+explicit `staging` feature.
 
 ## Check gateway availability
 
@@ -143,17 +153,17 @@ provider credentials can use separate registered keys.
 
    ```json title="plugins.json"
    {
-    "stogasRedaction": {
-      "literals": [{ "values": ["Project Aurora"] }]
-    },
-    "stogasExport": {
-      "destinations": [
-        {
-          "url": "https://collector.example/v1/traces",
-          "headers": { "Authorization": "Bearer YOUR_COLLECTOR_TOKEN" }
-        }
-      ]
-    }
+   	"stogasRedaction": {
+   		"literals": [{ "values": ["Project Aurora"] }]
+   	},
+   	"stogasExport": {
+   		"destinations": [
+   			{
+   				"url": "https://receiver.example.com/events",
+   				"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }
+   			}
+   		]
+   	}
    }
    ```
 
@@ -175,15 +185,15 @@ provider credentials can use separate registered keys.
 
    ```jsonc title="Policy shape (replace placeholders)"
    {
-    "plugins": {
-      "encrypted": {
-        "version": 1,
-        "keyId": "64_LOWERCASE_HEX_CHARACTERS",
-        "salt": "BASE64URL_32_BYTES",
-        "nonce": "BASE64URL_12_BYTES",
-        "blob": "BASE64URL_CIPHERTEXT_AND_TAG"
-      }
-    }
+   	"plugins": {
+   		"encrypted": {
+   			"version": 1,
+   			"keyId": "64_LOWERCASE_HEX_CHARACTERS",
+   			"salt": "BASE64URL_32_BYTES",
+   			"nonce": "BASE64URL_12_BYTES",
+   			"blob": "BASE64URL_CIPHERTEXT_AND_TAG"
+   		}
+   	}
    }
    ```
 

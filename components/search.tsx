@@ -40,6 +40,7 @@ export default function DocsSearchDialog(props: SharedProps) {
 		>
 			<SearchDialogOverlay className="backdrop-blur-none" />
 			<SearchDialogContent
+				aria-modal="true"
 				onOpenAutoFocus={() => {
 					navigating.current = false;
 					returnFocus.current =

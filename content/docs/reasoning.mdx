@@ -59,6 +59,13 @@ For a deployment with effort levels, `true` selects its nearest equivalent to `m
 `false` disables optional reasoning. For a binary deployment, it directly selects on or off.
 Conflicting `enabled` and `effort` values are rejected. Responses uses `reasoning.effort`.
 
+## Thinking summaries
+
+For Anthropic models, omitting the display control preserves the provider's default.
+To request or hide a thinking summary explicitly, use `reasoning_display: "summarized"`
+or `"omitted"` on Chat Completions. On Responses, use `reasoning.summary: "auto"`
+or `"none"`. These controls change visible output, not the reasoning-token charge.
+
 ## Manual token limits
 
 Some deployments accept a maximum reasoning-token budget:

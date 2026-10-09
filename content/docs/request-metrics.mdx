@@ -11,12 +11,14 @@ usage, cost, and plugin results.
 The gateway node links to its verified transparency history, including its boot signing
 key, gateway launch policy and hardware policy. Receipt verification uses the exact boot
 identified by the response receipt. Request logs do not duplicate that key or evidence.
-Published gateway versions link to their GitHub release. Expand **Catalog** for the
-historical configuration identified by the request's chain hash.
+Gateway versions and catalog releases link to Trust Center. A link opens the current approval
+or a loaded history record, then searches history when needed. Expand **Catalog** for the
+historical configuration identified by each attempt's chain hash.
 
 The header shows the request outcome. Each provider attempt retains its own result:
 a provider can succeed before a later gateway failure. Grouped rejections show their
-count and exact time range. Empty usage and provider-attempt sections are omitted.
+count and exact time range. Provider attempts remain visible with a linked BYOK credential
+or **Managed**. Requests without a provider call have no attempts.
 
 In the raw log, `policy_versions` records the loaded API configuration revisions for
 routing, access and limits. These counters do not identify launch or hardware policies.
@@ -79,8 +81,9 @@ the timespan or filters if a query cannot finish. A failed query does not return
 
 ## Meters and cost
 
-The request log and the optional signed `stogas` response object use the same `meters`.
-Each entry contains a quantity. Priced entries also contain a rate key, the USD price for
+Request logs group meters, cost summaries, and Standard Text Tokens under `usage`.
+`usage.meters` contains the same meter values as the optional signed `stogas.meters`
+response object. Each entry contains a quantity. Priced entries also contain a rate key, the USD price for
 that rate, and the resulting USD charge. Quantities and money are decimal strings.
 
 ```json
@@ -98,7 +101,9 @@ that rate, and the resulting USD charge. Quantities and money are decimal string
 ```
 
 A published free price is `"0"`. An informational count omits all three pricing fields. Missing
-quantities are unknown; they are not zero. Sum the available meter charges to recover
+quantities are unknown; they are not zero. Observed zero quantities remain in the log
+and the Usage table. Unreported provider subcounts remain absent when their presence
+cannot be established. Sum the available meter charges to recover
 the recorded upstream cost. Totals are never charged again.
 
 | Meter                                                        | Meaning                                                                                                                                          |
@@ -137,9 +142,10 @@ subtracting file bytes from the JSON request size.
 Equivalent literal and JSON-escaped text has the same count. Use it to compare input size
 across providers; it does not measure the provider's complete rendered prompt.
 Standard Text Tokens (STT) equal decoded UTF-8 bytes divided by four, without rounding.
-Input, reasoning, and output use this same unit and appear separately in request details.
-Unknown quantities have a `null` STT projection and display as a dash; their byte meter is
-omitted. A known empty quantity is zero. Summaries and encrypted reasoning cannot measure
+The log emits exact decimal strings as `usage.standard_text_tokens.input`, `.reasoning`,
+and `.output`; request details read those same values.
+Unmeasured quantities omit both the STT field and its byte meter. Request details show
+only measured quantities, including zero for known empty text. Summaries and encrypted reasoning cannot measure
 the underlying reasoning, including native Claude thinking summaries. Output counts only
 exposed material; interrupted streams retain the observed prefix, and repeated final
 snapshots do not count text twice. STT measures text volume, not semantic meaning or hidden
@@ -164,7 +170,7 @@ Token limits use `total_tokens`;
 when that total is unavailable, the original token reservation remains counted. Requests
 that never reach a provider consume no token allowance.
 
-Four request-wide amounts accompany the meters:
+Four request-wide amounts accompany the meters inside `usage`:
 
 - `upstream_cost_usd`: the recorded provider cost.
 - `billed_cost_usd`: the charge calculated from final usage, which differs for BYOK.
@@ -173,14 +179,14 @@ Four request-wide amounts accompany the meters:
 
 Request history and signed response metadata describe execution and calculated cost; they do not confirm completion of asynchronous balance settlement.
 
-Cache savings and overhead use the request's applied rates. Null means unavailable;
+Cache savings and overhead use the request's applied rates. Unavailable values are omitted;
 `"0"` means known zero. A cache write costing $1.25 instead of $1 of ordinary input has
 $0.25 overhead, not $1.25.
 
 ## Catalog history
 
-`catalog_version` identifies the approved catalog used for the request. The resolved
-`catalog_chain_hash` identifies its exact author, model, deployment, route and provider
+`catalog_version` identifies the approved catalog used for the request. Each provider
+attempt's `catalog_chain_hash` identifies its exact author, model, deployment, route and provider
 settings. Request details retain those historical settings when the live catalog changes.
 When the provider fulfills a different offering, such as a different service tier,
 `catalog_chain_hash` records the offering used for accounting. The provider attempt
@@ -189,13 +195,21 @@ omitted when selection and accounting use the same chain.
 The chain supplies catalog node identities without repeating their array in every log.
 The separate `node_id` identifies the gateway VM that handled the request.
 
+Select a chain hash, or paste a SHA-256 chain hash into Catalog search, to inspect its
+exact historical settings on a separate chain page. Select a node for its JSON, or
+open Combined JSON for the complete chain. Catalog releases lists the versions and
+manifest hashes containing that chain, with links to their Trust Center evidence.
+A request link retains its catalog version; unchanged chains may belong to several
+releases. Lookup verifies the content against the chain hash; missing history never
+falls back to the current catalog.
+
 ## Timing
 
 Request duration starts when the gateway's inference handler receives the decoded request
 body. It ends when the gateway captures the final request record.
 
 The `performance` object records `total_ms`, `provider_ms`, nullable `provider_start_ms`,
-and nullable `ttft_ms`. The provider start is an offset from the same request start;
+nullable `first_output_ms`, and nullable `ttft_ms`. The provider start is an offset from the same request start;
 its end is that offset plus `provider_ms`. A missing measurement remains null.
 Provider time spans the selected provider call, including upstream connection setup.
 Current requests dispatch once; an SDK or caller retry creates a separate request. For streams, it also includes response backpressure;
@@ -217,13 +231,19 @@ response writer accepts the first generated token-bearing output. It includes ad
 provider work before that output. Unary requests and streams without generated token-bearing
 output have no time-to-first-token value.
 
-The request timeline places gateway preparation, provider work and final processing
-on one time axis. First output and client cancellation are markers on that same axis.
+The timeline separates gateway preparation, provider wait until first output, provider
+completion, and gateway completion. `first_output_ms` records the first validated provider
+output at ingress; for a unary response, it records arrival of the buffered result. It
+includes non-token output such as citations or images. An empty result leaves it null.
+TTFT and client cancellation are markers on the same request clock.
 Gateway work can continue after the first token, so its combined duration can exceed
 time to first token. If the provider start was not recorded, the dashboard cannot
 place that interval and does not invent its position.
 
 ## Outcomes and billing
+
+`gateway_error` is a nullable `{code, status}` object for gateway processing or admission
+failures. Each provider attempt retains its own status independently.
 
 Provider outcome, response delivery, cancellation and the recorded charge describe different parts of a request. A
 provider error does not mean the gateway failed to process the request. An error can still have
@@ -232,13 +252,25 @@ billable usage, and a stream can return output before failing.
 ## Redaction
 
 The **Stogas redaction** section shows replaced items and scan/replacement duration in microseconds.
-This duration is already included in admission time. Zero replacements means the scan found
+Redaction runs before the billing hold; its duration is included in gateway preparation. Zero replacements means the scan found
 no matches; missing metrics mean execution was not recorded. Loading or compiling the policy
 is not part of the plugin's scan duration.
 
-Disabled redaction emits no plugin entry. Request details omit absent redaction and
-empty usage sections. Failed requests with recorded usage still retain their charges.
+Disabled redaction emits no plugin entry. The log omits `plugins` when there are no
+recorded plugin metrics. A configured scan with zero replacements remains explicit.
+Failed requests with recorded usage still retain their charges.
+
+Export records `plugins.stogas_export.capture_us`: cumulative time copying processed
+request and response content. Capture spans the request, so it is listed separately
+from the timeline. Final record encoding, queueing, and asynchronous webhook delivery
+are outside this metric. Plugin durations overlap the main phases and must not be added
+to total request duration.
 
 Filter requests with `redaction:redacted`, `redaction:no_matches`, or
 `redaction:not_recorded`. See [redaction metrics](/docs/plugins/pii-redaction#limits-of-detection)
 for the recorded fields and privacy boundaries.
+
+## Downloads
+
+NDJSON downloads use the same structured event as the raw request viewer. CSV and Parquet
+retain nested objects as JSON strings in their columns.

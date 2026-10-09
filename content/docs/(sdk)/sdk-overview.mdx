@@ -7,6 +7,13 @@ The Stogas SDK works with the OpenAI client you already use. Before sending a re
 selected gateway and opens a protected connection. Session setup verifies current evidence locally;
 the transport does not poll in the background.
 
+Published SDK packages trust production gateways only. Each approved release binds its
+package manifest, GitHub build provenance, independent rebuild and qualification reports
+to a Stogas signature. See the [CLI guide](/docs/cli#install) to verify downloaded releases.
+
+Native release targets use 64-bit AMD64 or ARM64 processors. Native 32-bit packages
+are not provided; browser and JavaScript packages use WebAssembly.
+
 <Cards>
 	<Card
 		title="Make a protected request"

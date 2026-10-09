@@ -149,7 +149,7 @@ error code, not message text or requested catalog choices. Successful requests a
 | `request_count`     | Requests represented by this row; `1` for every admitted request.                           |
 | `created_at`        | First rejection time in a group, or the admitted request's billing authorization time.      |
 | `last_request_at`   | Last rejection time in a group; equals `created_at` for an admitted request.                |
-| `error`             | Rejection or gateway error as `{code, status}`; `null` when absent.                         |
+| `gateway_error`     | Rejection or gateway error as `{code, status}`; `null` when absent.                         |
 | `provider_attempts` | Actual provider calls and their results; empty for a rejected request.                      |
 
 For example, 99 matching credit rejections in one window produce five individual rows and one row
@@ -193,10 +193,10 @@ categories; an unrecognized failure uses `provider_error`.
 These categories describe the result, not who caused it. Each attempt also keeps the provider's
 HTTP status when available. Request filters accept these categories, Stogas error codes such as
 `insufficient_balance`, and HTTP error codes such as `402`. `status:success` requires a completed request with no cancellation or Stogas failure. Other provider error filters inspect all attempts,
-including earlier failed attempts in historical records that contain more than one attempt.
-Current requests dispatch to one provider once. Local credential preparation can advance only
-with explicit [pre-dispatch fallback](/docs/policies/routing#candidate-checks); provider errors
-never cause another dispatch. A caller or SDK retry is a separate request.
+including earlier failed attempts. Local credential preparation and Chutes' exact, proven
+pre-execution retries share the [attempt limit](/docs/policies/routing#attempt-limit), which
+defaults to one. Each Chutes invocation has its own status and duration. Generic provider errors,
+timeouts and ambiguous failures never cause another dispatch. A caller or SDK retry is a separate request.
 
 Stogas processing and provider results remain separate. If a provider succeeds but Stogas cannot
 finish pricing, encode the response, or build a requested response proof, the record keeps the
@@ -204,7 +204,7 @@ provider's success and the Stogas error. A setup failure before provider dispatc
 attempt; an interrupted provider call with no known result has an unknown outcome. Successfully
 sending the prompt alone does not mean Stogas completed the response.
 
-An ordinary provider error stays in `provider_attempts`; it does not create a gateway `error`. A handled accounting warning
+An ordinary provider error stays in `provider_attempts`; it does not create a gateway `gateway_error`. A handled accounting warning
 or a delayed log delivery does not change a valid response into a failure. Usable provider-reported
 usage determines the charge, which can exceed an underestimated hold; an error alone does not
 determine billing. See [holds and settlement](/docs/policies/limits#holds-and-settlement).

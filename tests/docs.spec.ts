@@ -1,14 +1,76 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test as base } from '@playwright/test';
+import { chromium, expect, test as base, type Page } from '@playwright/test';
+import { resolve } from 'node:path';
 
-const test = base.extend({
-	page: async ({ page }, use) => {
+const test = base.extend<{ browserZoom: number }>({
+	browserZoom: [1, { option: true }],
+	page: async ({ page, baseURL, viewport, browserZoom }, use) => {
+		const extension = resolve(__dirname, 'fixtures/browser-zoom');
+		const context =
+			browserZoom === 1
+				? undefined
+				: await chromium.launchPersistentContext('', {
+						channel: 'chromium',
+						baseURL,
+						viewport,
+						ignoreDefaultArgs: ['--hide-scrollbars'],
+						args: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`]
+					});
 		const errors: string[] = [];
-		page.on('pageerror', (error) => errors.push(error.message));
-		await use(page);
-		expect(errors).toEqual([]);
+		try {
+			if (context) {
+				page = context.pages()[0];
+			}
+			page.on('pageerror', (error) => errors.push(error.message));
+			if (context) {
+				await page.goto('/docs');
+				const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent('serviceworker'));
+				await worker.evaluate(`(async () => {
+					const [tab] = await chrome.tabs.query({ active: true });
+					await chrome.tabs.setZoom(tab.id, ${browserZoom});
+				})()`);
+			}
+			await use(page);
+			expect(errors).toEqual([]);
+		} finally {
+			await context?.close();
+		}
 	}
 });
+
+async function expectReadingRegion(page: Page, id: string) {
+	await expect(page.getByRole('dialog')).toHaveCount(0);
+	await page.evaluate(() => document.fonts.ready);
+	await expect
+		.poll(() =>
+			page.evaluate((id) => {
+				const heading = document.getElementById(id)?.getBoundingClientRect();
+				const introduction = document
+					.getElementById(id)
+					?.nextElementSibling?.getBoundingClientRect();
+				const outline = document
+					.querySelector('[data-toc-popover-trigger]')
+					?.getBoundingClientRect();
+				return (
+					!!heading &&
+					!!introduction &&
+					!!outline &&
+					heading.top >= outline.bottom &&
+					introduction.top >= heading.bottom &&
+					introduction.bottom <= innerHeight
+				);
+			}, id)
+		)
+		.toBe(true);
+}
+
+async function searchForSection(page: Page, query: string, title: string) {
+	await page.keyboard.press('Control+k');
+	await page.getByRole('combobox', { name: 'Search documentation' }).fill(query);
+	await expect(page.getByRole('dialog').getByRole('option').first()).toContainText(title);
+	await page.keyboard.press('ArrowDown');
+	await page.keyboard.press('Enter');
+}
 
 test('page outline names its progress and follows a keyboard-selected section', async ({
 	page
@@ -42,62 +104,129 @@ test('page outline names its progress and follows a keyboard-selected section', 
 });
 
 for (const viewport of [
-	{ width: 333, height: 504 },
-	{ width: 590, height: 378 }
+	{ width: 333, height: 504, zoom: 1.5 },
+	{ width: 590, height: 378, zoom: 2 }
 ]) {
-	test(`search, outline and history reveal the section at ${viewport.width} × ${viewport.height}`, async ({
-		page
-	}) => {
-		await page.setViewportSize(viewport);
-		await page.goto('/docs/policies/limits');
-		await page.keyboard.press('Control+k');
-		const search = page.getByRole('combobox', { name: 'Search documentation' });
-		await search.fill('conditional rules');
-		await expect(page.getByRole('dialog').getByRole('option').first()).toContainText(
-			'Scopes and inheritance'
-		);
-		await page.keyboard.press('ArrowDown');
-		await page.keyboard.press('Enter');
-		const heading = page.locator('#conditional-rules');
-		const introduction = heading.locator('xpath=following-sibling::p[1]');
-		const outline = page.getByRole('button', { name: /On this page/ });
-		async function expectVisibleSection() {
-			await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
-			await expect(page.getByRole('dialog')).toHaveCount(0);
-			await page.evaluate(() => document.fonts.ready);
-			await expect
-				.poll(async () => {
-					const target = await heading.boundingBox();
-					const opening = await introduction.boundingBox();
-					const sticky = await outline.boundingBox();
-					return (
-						!!target &&
-						!!opening &&
-						!!sticky &&
-						target.y >= sticky.y + sticky.height &&
-						opening.y >= target.y + target.height &&
-						opening.y + opening.height <= viewport.height
-					);
-				})
-				.toBe(true);
-		}
-		await expectVisibleSection();
-		await page.goBack();
-		await expect(page).toHaveURL(/\/policies\/limits$/);
-		await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
-		await page.goForward();
-		await expectVisibleSection();
-		await outline.click();
-		await page
-			.locator('[data-toc-popover-content]')
-			.getByRole('link', { name: 'Conditional rules', exact: true })
-			.click();
-		await expect(outline).toHaveAttribute('aria-expanded', 'false');
-		await expectVisibleSection();
-		await page.reload();
-		await expectVisibleSection();
+	test.describe(`native browser zoom ${viewport.zoom * 100}%`, () => {
+		test.use({
+			browserZoom: viewport.zoom,
+			viewport: {
+				width: Math.round(viewport.width * viewport.zoom),
+				height: viewport.height * viewport.zoom
+			}
+		});
+		test(`search, outline and history reveal the section at ${viewport.width} × ${viewport.height}`, async ({
+			page
+		}) => {
+			expect(
+				await page.evaluate(() => ({
+					width: innerWidth,
+					height: innerHeight,
+					zoom: devicePixelRatio
+				}))
+			).toEqual({ width: viewport.width, height: viewport.height, zoom: viewport.zoom });
+			await page.goto('/docs/policies/limits');
+			await page.keyboard.press('Control+k');
+			const search = page.getByRole('combobox', { name: 'Search documentation' });
+			await search.fill('conditional rules');
+			await expect(page.getByRole('dialog').getByRole('option').first()).toContainText(
+				'Scopes and inheritance'
+			);
+			await page.keyboard.press('ArrowDown');
+			await page.keyboard.press('Enter');
+			const outline = page.getByRole('button', { name: /On this page/ });
+			async function expectVisibleSection() {
+				await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
+				await expectReadingRegion(page, 'conditional-rules');
+			}
+			await expectVisibleSection();
+			await page.goBack();
+			await expect(page).toHaveURL(/\/policies\/limits$/);
+			await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+			await page.goForward();
+			await expectVisibleSection();
+			await outline.click();
+			await page
+				.locator('[data-toc-popover-content]')
+				.getByRole('link', { name: 'Conditional rules', exact: true })
+				.click();
+			await expect(outline).toHaveAttribute('aria-expanded', 'false');
+			await expectVisibleSection();
+			await page.reload();
+			await expectVisibleSection();
+		});
 	});
 }
+
+test.describe('native browser zoom with nested navigation', () => {
+	test.use({ browserZoom: 1.5, viewport: { width: 500, height: 756 } });
+	test('search from a schema popup preserves the reading target through direct history', async ({
+		page
+	}) => {
+		await page.goto('/docs/policies/limits');
+		const fields = page.locator('[id="policy-fields.recurringSpend"]');
+		await fields.getByRole('textbox', { name: 'Filter Properties' }).fill('window');
+		await fields.getByRole('button', { name: 'object', exact: true }).click();
+		await expect(page.getByRole('dialog')).toBeVisible();
+		await page.keyboard.press('Control+k');
+		const search = page.getByRole('combobox', { name: 'Search documentation' });
+		await search.fill('i11-?!-7d6c');
+		await expect(page.getByRole('option')).toHaveCount(0);
+		await search.fill('conditional rules');
+		await expect(page.getByRole('option').first()).toContainText('Scopes and inheritance');
+		await page.keyboard.press('ArrowDown');
+		await page.keyboard.press('Enter');
+		await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
+		await expectReadingRegion(page, 'conditional-rules');
+		await page.goBack();
+		await expect(page).toHaveURL(/\/policies\/limits$/);
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+		await page.goForward();
+		await expectReadingRegion(page, 'conditional-rules');
+	});
+});
+
+test.describe('native browser zoom 200% at 400 × 378', () => {
+	test.use({ browserZoom: 2, viewport: { width: 800, height: 756 } });
+	test('sidebar opening and closing preserves a search anchor through history', async ({
+		page
+	}) => {
+		await page.goto('/docs');
+		await searchForSection(page, 'lifetime tokens', 'Limits');
+		await expect(page).toHaveURL(/\/policies\/limits#lifetime-tokens$/);
+		await expectReadingRegion(page, 'lifetime-tokens');
+		await page.getByRole('button', { name: 'Open Sidebar', exact: true }).click();
+		await page
+			.locator('#nd-sidebar-mobile')
+			.getByRole('button', { name: 'Close Sidebar', exact: true })
+			.click();
+		await expectReadingRegion(page, 'lifetime-tokens');
+		await page.goBack();
+		await expect(page).toHaveURL(/\/docs$/);
+		await page.goForward();
+		await expectReadingRegion(page, 'lifetime-tokens');
+	});
+
+	test('replacing a dismissed sidebar search reveals the current hash again', async ({ page }) => {
+		await page.goto('/docs/policies/scopes#conditional-rules');
+		await expectReadingRegion(page, 'conditional-rules');
+		await page.getByRole('button', { name: 'Open Sidebar', exact: true }).click();
+		const close = page
+			.locator('#nd-sidebar-mobile')
+			.getByRole('button', { name: 'Close Sidebar', exact: true });
+		await close.focus();
+		await page.keyboard.press('Control+k');
+		await page.getByRole('combobox', { name: 'Search documentation' }).fill('lifetime tokens');
+		await expect(page.getByRole('option').first()).toContainText('Limits');
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('combobox', { name: 'Search documentation' })).toHaveCount(0);
+		await expect(close).toBeFocused();
+		await close.click();
+		await searchForSection(page, 'conditional rules', 'Scopes and inheritance');
+		await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
+		await expectReadingRegion(page, 'conditional-rules');
+	});
+});
 
 test('nested policy popovers keep their header and initial focus within a short viewport', async ({
 	page
@@ -202,6 +331,7 @@ test('provider routing alternatives name and expose their object fields', async 
 			dialog.getByRole('button', { name: 'Copy Link: order', exact: true })
 		).toBeVisible();
 		await page.keyboard.press('Escape');
+		await expect(dialog).toHaveCount(0);
 	}
 });
 
@@ -337,6 +467,7 @@ test('static search finds guides and API reference, with keyboard navigation', a
 	await page.keyboard.press('Space');
 	await expect(page).toHaveURL(/\/docs\/reference\/provider-behavior/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Compatibility Notes');
+	await expect(page.getByRole('dialog')).toHaveCount(0);
 	await page.keyboard.press('Control+k');
 	await search.fill('Quickstart');
 	const firstResult = page.getByRole('dialog').getByRole('option').first();
@@ -366,6 +497,7 @@ test('search dismissal restores the opener and its next keyboard position', asyn
 			if (opener === trigger && close === 'Escape') await opener.click();
 			else await page.keyboard.press(opener === trigger ? 'Enter' : 'Control+k');
 			await expect(search).toBeFocused();
+			await expect(page.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
 			await page.keyboard.press('Tab');
 			await expect(page.getByRole('button', { name: 'Close Search' })).toBeFocused();
 			await page.keyboard.press('Tab');
@@ -524,27 +656,38 @@ test('request editor blocks invalid drafts and sends exact nested JSON and decim
 	await expect(editor).toHaveValue(JSON.stringify(body, null, 2));
 });
 
-test('narrow layouts, reduced motion, and forced colors keep content reachable', async ({
-	page
-}) => {
-	await page.setViewportSize({ width: 320, height: 800 });
-	await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
-	for (const path of [
-		'/docs',
-		'/docs/policies/routing-fields',
-		'/docs/reference/openai-compatible/createChatCompletion'
-	]) {
-		await page.goto(path);
-		await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-		expect(
-			await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
-		).toBe(true);
-	}
-	await expect(page.getByRole('textbox', { name: 'Request JSON' })).toBeVisible();
-	await page.keyboard.press('Control+k');
-	await expect(page.getByRole('combobox', { name: 'Search documentation' })).toBeFocused();
-	await page.keyboard.press('Escape');
-	await expect(page.getByRole('dialog')).toHaveCount(0);
+test.describe('touch accessibility', () => {
+	test.use({ hasTouch: true });
+	test('narrow layouts, reduced motion, and forced colors keep content reachable', async ({
+		page
+	}) => {
+		await page.setViewportSize({ width: 320, height: 800 });
+		await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
+		for (const path of [
+			'/docs',
+			'/docs/policies/routing-fields',
+			'/docs/reference/openai-compatible/createChatCompletion'
+		]) {
+			await page.goto(path);
+			await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+			).toBe(true);
+		}
+		await expect(page.getByRole('textbox', { name: 'Request JSON' })).toBeVisible();
+		await expect(page.getByRole('textbox', { name: 'Request JSON' })).toHaveCSS(
+			'font-size',
+			'16px'
+		);
+		await page.keyboard.press('Control+k');
+		await expect(page.getByRole('combobox', { name: 'Search documentation' })).toBeFocused();
+		await expect(page.getByRole('combobox', { name: 'Search documentation' })).toHaveCSS(
+			'font-size',
+			'16px'
+		);
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('dialog')).toHaveCount(0);
+	});
 });
 
 test('keeps English routes and search when the browser prefers another language', async ({

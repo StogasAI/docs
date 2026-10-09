@@ -1,10 +1,10 @@
 ---
 title: Routing
-description: Filter eligible deployments with CEL and choose a complete ordering.
+description: Filter eligible deployments, choose ordered or random targets, and bound attempts.
 ---
 
-Use `routing.allowedCatalogNodes` for exact catalog IDs, `routing.filter` for a CEL condition,
-and `routing.sort` to order the candidates that remain. These settings apply together.
+Use `routing.allowedCatalogNodes` for exact catalog IDs and `routing.filter` for a CEL condition.
+Choose among the remaining deployments with `routing.sort` or `routing.selection`.
 
 ```json title="policy.json"
 {
@@ -27,11 +27,11 @@ automatic routing preferences.
 
 Selection has three separate inputs:
 
-| Input                          | What it decides                                                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| Deployment filters             | Which deployment and credential pairs are eligible, including their privacy and location requirements.                 |
-| Deployment ordering            | Which eligible deployment to choose first: a policy sort, or the request's provider order when it resolves the choice. |
-| Ordered credential assignments | Which eligible credential to prepare first for the chosen deployment.                                                  |
+| Input                          | What it decides                                                                                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Deployment filters             | Which deployment and credential pairs are eligible, including their privacy and location requirements.                                |
+| Deployment ordering            | Which eligible deployment to choose first: ordered targets, uniform random selection, a policy sort, or the request's provider order. |
+| Ordered credential assignments | Which eligible credential to prepare first for the chosen deployment.                                                                 |
 
 An ineligible pair is filtered out without consuming a preparation attempt. A local credential
 preparation failure consumes an attempt and can advance only with the explicit allowance below.
@@ -44,7 +44,7 @@ Catalog data-handling fields describe the resolved deployment and route, includi
 
 For Chat Completions and Responses, `model` is optional. Omission considers all compatible
 active deployments. A model slug limits selection to that model; a deployment slug pins that
-deployment. Empty or null selectors are invalid. If several deployments remain without an order
+deployment. Empty or null selectors are invalid. If several deployments remain without a selection setting or an order
 that chooses one, the request returns `model_ambiguous` with usable deployment selectors.
 There is no automatic preference for the model author's provider.
 
@@ -117,6 +117,46 @@ A true branch can resolve `||` despite an unknown branch; a false branch can res
 Otherwise the result remains unknown. A [conditional rule](/docs/policies/scopes#conditional-rules)
 with an unknown condition rejects evaluation instead of silently omitting its restrictions.
 
+## Ordered and random selection
+
+Use canonical deployment IDs in `routing.selection.targets`. These targets come from the same
+eligible pool: they never bypass inherited restrictions, credential policies, or an explicit
+request model. Unavailable targets are skipped. If none remain, the request returns `model_unavailable`.
+
+```json title="Ordered deployment targets"
+{
+	"routing": {
+		"selection": {
+			"mode": "ordered",
+			"targets": ["openai-gpt-5.6-sol", "anthropic-claude-sonnet-4-6"]
+		},
+		"maxAttempts": 2
+	}
+}
+```
+
+Ordered mode requires a nonempty, unique target list. It prepares eligible credentials for each
+deployment in assignment order before advancing to the next deployment, within the shared
+[attempt limit](#attempt-limit). Listing a second target does not enable retries after provider errors.
+
+```json title="Distribute requests across eligible deployments"
+{
+	"routing": {
+		"selection": { "mode": "random" }
+	}
+}
+```
+
+Random mode gives each eligible deployment the same initial chance, regardless of its number
+of credentials. Each request shuffles deployments once without replacement; credentials retain
+their assignment order. Supply `targets` to limit the draw to those deployments. Selection runs
+independently on each gateway and keeps no shared counter, affinity, or live-load estimate.
+
+Use selection or a nonempty sort, not both. All required selection settings must agree: ordered
+lists must have the same order; random lists must contain the same targets. Sort and selection
+share default replacement, so a required selection replaces a default sort and vice versa.
+Agreement includes every eligible credential's policy, even credentials beyond the attempt limit.
+
 ## Sorting
 
 A sort is an ordered array of up to three criteria: one main criterion and two tie breakers.
@@ -165,20 +205,20 @@ To supply a replaceable preference, put the sort in a rule with `mode: "default"
 }
 ```
 
-An applicable required sort replaces sort defaults. This includes an explicit `"sort": []`,
+An applicable required sort or selection replaces ordering defaults. This includes an explicit `"sort": []`,
 which adds no ordering while preserving other required orders. When only defaults apply, their
-orders must agree too. Candidate-dependent sorts must define one consistent ordering across
+orders must agree too. Candidate-dependent ordering must define one consistent choice across
 all remaining candidates.
 
 After an explicit sort, deployment ID breaks any remaining tie deterministically. Without a
-policy sort, the request's explicit provider order applies. Equal-rank deployments still require
-a deployment selector or sort; neither catalog iteration order nor fallback allowance resolves
+policy sort or selection, the request's explicit provider order applies. Equal-rank deployments still require
+a deployment selector, sort, or selection setting; neither catalog iteration order nor attempt allowance resolves
 that ambiguity.
 
-To prohibit descendant policy sorting, the organization must exclude `routing.sort` from its
+To prohibit descendant policy ordering, the organization must exclude both `routing.sort` and `routing.selection` from its
 delegation to all six saved resource types and from `delegation.request`, and suppress its own
-sort defaults. `"sort": []` alone only replaces defaults: it does not prohibit another required
-sort. With sorting prohibited, requests still need a deployment selector or an unambiguous
+ordering defaults. `"sort": []` alone only replaces defaults: it does not prohibit another required
+ordering. With policy ordering prohibited, requests still need a deployment selector or an unambiguous
 provider order. See [Delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for section permissions.
 
 ## Blended price
@@ -237,26 +277,36 @@ All conditions, filters and sort evaluations share 100,000 units per request. Ex
 allowance rejects the request before a hold. These units bound evaluator work, not elapsed time.
 The [document bounds](/docs/policies/editing#document-rules) also apply.
 
-## Candidate checks
+## Attempt limit
 
-There are **no fallback attempts by default**. The gateway prepares one selected candidate. Invalid encryption keys or encrypted content always
-stop the request, including when local fallback is enabled.
-To allow another local credential attempt, explicitly raise `maxPreDispatchCandidates`:
+`routing.maxAttempts` defaults to **one**. It covers failed local credential preparations and
+provider invocations, including the first invocation. Invalid encryption keys or encrypted content
+always stop the request. To allow additional attempts:
 
 ```json title="policy.json"
 {
 	"routing": {
-		"fallbacks": {
-			"maxPreDispatchCandidates": 3
-		}
+		"maxAttempts": 3
 	}
 }
 ```
 
-The accepted values are 1, 2 and 3, including the first candidate. Required values combine by
-minimum; defaults apply only when no requirement supplies that setting. Fallback allowance does
-not select an order. A failed local credential preparation can advance within the allowance.
+The accepted values are 1, 2 and 3. Required values combine by minimum; defaults apply only when
+no requirement supplies that setting. A failed local credential preparation can advance within
+the allowance. A lower limit encountered on a candidate remains binding for the request.
+
+The allowance is shared across credentials and deployments. With a value of 3, two failed
+credential preparations leave one provider invocation on the next eligible credential or
+deployment. Target order does not grant an extra allowance. Every candidate still satisfies its
+complete policy, and each new provider invocation uses the remaining shared budget.
 
 Redaction, tokenization and authorization begin only after a credential is selected. Failures
-from those stages do not select another candidate. Once dispatch begins, the provider result is
-final for this request. Context errors and budget declines never trigger an automatic retry.
+from those stages do not select another candidate. Provider errors do not restart policy selection.
+Context errors, budget declines, timeouts and ambiguous network failures never trigger an
+automatic inference retry.
+
+Within the remaining allowance, Chutes can retry an exact rejection proven to precede inference
+on another verified instance with a fresh one-use ticket. This preserves the selected deployment
+and credential. An empty policy permits one invocation. Caller timeout, disconnect, or failed
+delivery stops additional retries; an invocation already in flight remains owned through usage
+collection and settlement under the separate server deadline.
