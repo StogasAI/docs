@@ -10,6 +10,7 @@ const createConfig = (phase) => {
 	/** @type {import('next').NextConfig} */
 	const config = {
 		reactStrictMode: true,
+		agentRules: false,
 		turbopack: {
 			root: path.resolve(appDir, '../..')
 		}
