@@ -18,27 +18,31 @@ cannot replace those roots.
 
 1. Our root authorizes an online signing key. Separate keys and build profiles keep staging
    from authorizing production.
-2. The online key signs a complete approval manifest selecting gateway releases, catalogs and the
-   hardware policy. It cannot authorize itself or another signing key.
+2. The online key signs one approval manifest that contains every approved gateway and catalog
+   release manifest with its build evidence, and the hardware policy. It cannot authorize itself
+   or another signing key.
 3. Build evidence links approved artifacts to their public source and workflow. GitHub attests both
-   the IGVM and manifest. Our countersignature records approval of the same manifest.
+   the IGVM and its manifest.
 4. AMD evidence authenticates the guest measurement, hardware identity, security state and bound
    keys. Vendor certificate chains and signed revocation lists are checked locally.
 5. Fresh session attestation binds the client's challenge to the protected connection. The session
    also commits to the gateway's logged boot evidence.
 
-Stogas evidence uses snake_case fields and a common `{document, signature}` envelope. Releases add
-`provenance`; logged policies and boot publications add `inclusion`. Each signed document carries
-its schema. Release artifacts specify their SHA-256 digest and byte length. External GitHub,
+Stogas evidence uses snake_case fields. Signed documents use a `{document, signature}` envelope;
+the key manifest, approval manifest and boot publications also add their Rekor `inclusion`.
+Releases inside the approval manifest use `{document, provenance}`. Each document carries its
+schema. Release artifacts specify their SHA-256 digest and byte length. External GitHub,
 Rekor and AMD evidence retains its standard format.
 
 Our signatures use the `stogas signed document v1` purpose label and RFC 8785 canonical JSON.
 Document hashes and signatures exclude the JSON file's final newline; GitHub build evidence
-binds the complete file. A release identity hashes its unsigned manifest, so key rotation does not turn unchanged
-software into a different release. Online-key changes require a root-signed key manifest.
-The root-signed authorization expires after 30 days and is renewed before expiry. A newer verified
-manifest can retire a key sooner; a publisher hiding that update can replay the older authorization
-only until its signed deadline. Renewal does not change gateway identities or invalidate historical receipts.
+binds the complete file. A release identity is the hash of its manifest, so key rotation does not
+turn unchanged software into a different release. Online-key changes require a root-signed key
+manifest. The key manifest expires 24 hours after signing and is renewed several times a day. The
+approval manifest names its key manifest by hash, so that expiry covers all current evidence. A
+publisher that hides newer evidence, such as a key retirement or a release withdrawal, can serve
+the older copy only until it expires. Renewal does not change gateway identities or invalidate
+historical receipts.
 
 Signatures prove authorization and provenance. They do not prove that an independent rebuild took
 place or that approved source has no vulnerabilities.
@@ -96,9 +100,9 @@ they do not give a probability of surviving future cryptanalytic discoveries. A 
 set adds margin within the same mathematical family, without guaranteeing resistance to a
 break of that family. See [NIST's ML-KEM standard](https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.203.pdf).
 
-Stogas root authorizations, approvals, hardware policies, release countersignatures and receipts use
-ML-DSA-65. Rekor records a SHA-512 commitment to each logged signed document using a classical
-submission key; that key cannot authorize a Stogas document. AMD attestation, GitHub build proofs,
+Stogas key manifests, approval manifests, boot publications and receipts use ML-DSA-65. Rekor
+records a SHA-512 commitment to each logged signed document using a classical submission key;
+that key cannot authorize a Stogas document. AMD attestation, GitHub build proofs,
 Rekor's own signatures and ordinary HTTPS certificates retain their external cryptographic assumptions.
 The complete verification chain therefore cannot be described as quantum-safe.
 

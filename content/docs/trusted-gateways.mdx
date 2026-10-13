@@ -8,9 +8,9 @@ the same Rust core in native packages and browser WebAssembly.
 
 ## What is checked
 
-- The root-signed key manifest, online-signed complete approval manifest, and Rekor inclusion for both.
-- Build provenance and signatures for approved gateway releases and catalogs.
-- Our signed, transparently logged hardware policy.
+- The root-signed key manifest, the online-signed approval manifest, and Rekor inclusion for both.
+- Build provenance for each gateway release and catalog in the approval manifest.
+- The hardware policy in the approval manifest.
 - AMD certificate chains, ARK-signed product CRLs, and SEV-SNP reports.
 - The report's guest privilege level, launch measurement, hardware security state and key binding.
 - A fresh client challenge bound to the session, with inclusion of the gateway's exact boot record.
@@ -45,10 +45,10 @@ public history retains immutable boot and release records for later inspection.
 
 The Trust Center separates nodes, catalogs, gateway releases, hardware policies, signing manifests
 and release policies. Signed generations and revisions identify key and release-policy versions;
-hardware policies are identified by their content digest, selected by the numbered release policy. Each resource card has
+hardware policies are identified by their content digest and belong to the numbered release policy. Each resource card has
 one verification mark and disclosures for its original JSON. Hover, focus or hold the mark to see
-its verification duration. Release evidence pairs GitHub build provenance with a Stogas
-countersignature. Successfully checked history records retain their mark when
+its verification duration. Release evidence shows GitHub build provenance; the release policy's
+Stogas signature covers it. Successfully checked history records retain their mark when
 collapsed or revisited within the page. Every history tab supports ID or version lookup across
 the archive; hardware policies also accept a digest prefix. Fetch and local verification timings are separate, and rechecks
 identify reuse of previously authenticated artifacts.
