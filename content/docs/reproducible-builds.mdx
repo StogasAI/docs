@@ -14,14 +14,14 @@ publish.
 
 The gateway VM boots one image with no disk, shell or package manager:
 
-| Layer    | Component                                                                                                                                                            |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Firmware | OVMF from edk2 `stable202608`, built for AMD SEV with its own ACPI tables, to boot only the measured kernel and to run no code from the host                         |
-| Kernel   | Linux-libre 6.18.54 with a reduced guest configuration, no loadable modules and no console output                                                                    |
-| Boot     | A unified kernel image built with systemd 262 `ukify`                                                                                                                |
-| Init     | A small init process written in Go                                                                                                                                   |
-| Clock    | The [ntpd-rs](https://github.com/pendulum-project/ntpd-rs) client, which keeps the guest clock in sync                                                               |
-| Gateway  | The [Stogas gateway](https://github.com/StogasAI/gateway), built with Go 1.27.2, with the [Rust verifier](https://github.com/StogasAI/verifier) linked in statically |
+| Layer    | Component                                                                                                                                                          |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Firmware | OVMF from edk2 `stable202608`, built for AMD SEV with its own ACPI tables, to boot only the measured kernel and to run no code from the host                       |
+| Kernel   | Linux-libre 6.18.54 with a reduced guest configuration, no loadable modules and no console output                                                                  |
+| Boot     | A unified kernel image built with systemd 262 `ukify`                                                                                                              |
+| Init     | A small init process written in Go                                                                                                                                 |
+| Clock    | The [ntpd-rs](https://github.com/pendulum-project/ntpd-rs) client, which keeps the guest clock in sync                                                             |
+| Gateway  | The [Stogas gateway](https://github.com/StogasAI/gateway), built with Go 1.27.2, with the [Rust verifier](https://github.com/StogasAI/stogas) linked in statically |
 
 The launch measurement covers all of it. Changing one byte in any layer gives a different
 measurement, which the SDK rejects.
@@ -121,9 +121,8 @@ No output means the builds match. The manifest's launch measurement is the value
 	`ci.guix.gnu.org`. A package that the farms built differently therefore enters the two builds as
 	different bytes, and a package that only one farm has is built from source on the other side, so
 	matching manifests show that no single farm's package changed the image. To build every tool on
-	your machine instead,
-	run the Guix daemon with `--no-substitutes`. Guix then builds its compilers from the small binary
-	seed. This takes much longer.
+	your machine instead, run the Guix daemon with `--no-substitutes`. Guix then builds its compilers
+	from the small binary seed. This takes much longer.
 </Callout>
 
 ## Check the GitHub build proof
@@ -142,7 +141,7 @@ The SDK makes the same check, and our approval check, before it trusts a gateway
 
 ## Verify an SDK download
 
-Each [SDK release](https://github.com/StogasAI/verifier/releases) lists every file with its SHA-256
+Each [SDK release](https://github.com/StogasAI/stogas/releases) lists every file with its SHA-256
 in `release-manifest.json`. GitHub build proofs cover each file, and our signature covers the manifest.
 npm, PyPI, crates.io, RubyGems and Maven Central serve the same bytes as the release. NuGet adds its
 own repository signature. Go downloads the module from the `go/v<version>` tag, which has the same
@@ -151,8 +150,8 @@ files as `stogas-go-v<version>.tar.gz`.
 Check that the release workflow built a file from its tag:
 
 ```console
-gh attestation verify <file> --repo StogasAI/verifier \
-  --signer-workflow StogasAI/verifier/.github/workflows/release.yml \
+gh attestation verify <file> --repo StogasAI/stogas \
+  --signer-workflow StogasAI/stogas/.github/workflows/release.yml \
   --source-ref refs/tags/v<version> --deny-self-hosted-runners
 ```
 

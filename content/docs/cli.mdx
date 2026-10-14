@@ -19,13 +19,13 @@ the other commands need no key.
 
 ### Download the archive
 
-Each [release](https://github.com/StogasAI/verifier/releases) has an archive for each platform,
+Each [release](https://github.com/StogasAI/stogas/releases) has an archive for each platform,
 named `stogas-v<version>-<platform>.tar.gz`, or `.zip` for Windows. The platforms are
 `linux-amd64`, `linux-arm64`, `darwin-amd64`, `darwin-arm64`, `windows-amd64` and `windows-arm64`.
 On Alpine and other musl systems, use `linux-musl-amd64` or `linux-musl-arm64`.
 
 ```console
-gh release download v<version> --repo StogasAI/verifier --pattern 'stogas-v<version>-linux-amd64.tar.gz'
+gh release download v<version> --repo StogasAI/stogas --pattern 'stogas-v<version>-linux-amd64.tar.gz'
 ```
 
 </Step>
@@ -36,8 +36,8 @@ gh release download v<version> --repo StogasAI/verifier --pattern 'stogas-v<vers
 Check that the release workflow built the archive from its tag:
 
 ```console
-gh attestation verify stogas-v<version>-linux-amd64.tar.gz --repo StogasAI/verifier \
-  --signer-workflow StogasAI/verifier/.github/workflows/release.yml \
+gh attestation verify stogas-v<version>-linux-amd64.tar.gz --repo StogasAI/stogas \
+  --signer-workflow StogasAI/stogas/.github/workflows/release.yml \
   --source-ref refs/tags/v<version> --deny-self-hosted-runners
 ```
 
