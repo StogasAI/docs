@@ -80,13 +80,14 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 | `dashboard_key_denied` | Your dashboard session cannot use this key.                                 |
 | `permission_denied`    | The key does not allow a [request policy](/docs/policies/request-policies). |
 
-### 404, 405 and 415
+### 404, 405, 408 and 415
 
-| Status | Code                     | Meaning                                    |
-| -----: | ------------------------ | ------------------------------------------ |
-|  `404` | `route_not_found`        | The path does not exist.                   |
-|  `405` | `method_not_allowed`     | The path does not accept this HTTP method. |
-|  `415` | `unsupported_media_type` | `Content-Type` is not `application/json`.  |
+| Status | Code                     | Meaning                                         |
+| -----: | ------------------------ | ----------------------------------------------- |
+|  `404` | `route_not_found`        | The path does not exist.                        |
+|  `405` | `method_not_allowed`     | The path does not accept this HTTP method.      |
+|  `408` | `request_body_timeout`   | The request body took longer than five minutes. |
+|  `415` | `unsupported_media_type` | `Content-Type` is not `application/json`.       |
 
 ### 413 Content too large
 
@@ -141,7 +142,7 @@ Send the request again later. The gateway did not send these requests to a model
 | ------------------------------- | --------------------------------------------------------------------------------------------- |
 | `gateway_unavailable`           | The gateway is temporarily unavailable.                                                       |
 | `gateway_draining`              | The gateway is shutting down for an update. Send new work on a new connection.                |
-| `gateway_capacity_exceeded`     | The gateway is too busy to accept the request now.                                            |
+| `gateway_capacity_exceeded`     | The gateway is too busy to accept the request now, or needed the memory a slow upload held.   |
 | `ip_admission_unavailable`      | The gateway cannot track new IP addresses now.                                                |
 | `key_configuration_changed`     | The key changed, and the gateway is loading the new version.                                  |
 | `byok_unavailable`              | Your provider credential is unavailable.                                                      |

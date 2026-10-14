@@ -38,10 +38,12 @@ Do not put a key with wide permissions in public browser code. Give browsers a k
 | JSON values in the body                        | 1,000,000 |
 | JSON nesting depth                             | 128       |
 | E2EE response body                             | 64 MiB    |
+| Time to send the request body                  | 5 minutes |
 
 Objects, arrays and scalar values each count as one JSON value. Property names and text inside
-strings do not. A request over a limit returns `413`. Base64 attachments count toward the body
-size.
+strings do not. A request over a size limit returns `413`, and a body that takes longer than five
+minutes returns `408`. Base64 attachments count toward the body size. When a gateway runs short of
+memory, it ends the slowest uploads first with `503 gateway_capacity_exceeded`.
 
 Each gateway also limits each IP address. Clients on a shared network share these limits:
 
