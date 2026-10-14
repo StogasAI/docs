@@ -1,0 +1,185 @@
+---
+title: Customer encryption
+description: Encrypt provider keys and plugin settings with a key that only you hold.
+icon: LockKeyhole
+---
+
+Customer encryption keeps saved secrets private from everyone who lacks your key, including us. You
+hold the organization key. We store only ciphertext, and the gateway decrypts it inside the verified
+confidential VM for the request that sends the key.
+
+Use it for:
+
+- **Provider credentials** used by [BYOK](/docs/byok#customer-encryption).
+- **Plugin settings**, such as [PII redaction](/docs/pii-redaction) rules and
+  [Export](/docs/export) destinations and their credentials.
+
+Limits, routing, access and delegation stay readable.
+
+## Create a key
+
+<Steps>
+<Step>
+
+### Generate the key
+
+[Install the CLI](/docs/cli#install) on your own machine, then run:
+
+```console
+stogas encryption-key --output org.key
+```
+
+The command writes a private key file and prints only its public identifier. Keep a secure backup.
+We cannot recover a lost key.
+
+</Step>
+<Step>
+
+### Register the identifier
+
+Add the identifier under a label in the organization policy's `encryption.keys`, and keep the
+policy's other settings:
+
+```json title="Organization policy"
+{
+	"encryption": { "keys": { "providers": "THE_PRINTED_IDENTIFIER" } }
+}
+```
+
+Only the organization policy registers keys. A label is a lowercase letter followed by up to 47
+lowercase letters, digits, underscores or hyphens. Register each identifier once. Use separate keys
+when credentials and plugins need different access.
+
+</Step>
+</Steps>
+
+## Encrypt plugin settings
+
+Encrypt the whole `plugins` object of a policy. Plugin settings and provider credentials can use
+different registered keys.
+
+<Steps>
+<Step>
+
+### Save the plugin settings to a file
+
+Save the contents of `plugins`, without the outer `plugins` wrapper:
+
+```json title="plugins.json"
+{
+	"stogasRedaction": {
+		"literals": [{ "values": ["Project Aurora"] }]
+	},
+	"stogasExport": {
+		"destinations": [
+			{
+				"url": "https://receiver.contoso.com/stogas",
+				"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }
+			}
+		]
+	}
+}
+```
+
+Include only the plugins you need.
+
+</Step>
+<Step>
+
+### Encrypt the file
+
+```console
+stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
+  --purpose plugins --input plugins.json --output plugins.encrypted.json
+```
+
+The command works offline and does not overwrite an existing output file. The `--purpose` decides
+which input it accepts:
+
+| Purpose          | Input                                                       |
+| ---------------- | ----------------------------------------------------------- |
+| `plugins`        | The inner plugin JSON object.                               |
+| `byok/openai`    | The exact OpenAI credential, without a trailing newline.    |
+| `byok/anthropic` | The exact Anthropic credential, without a trailing newline. |
+| `byok/chutes`    | The exact Chutes credential, without a trailing newline.    |
+
+</Step>
+<Step>
+
+### Save the encrypted settings
+
+Replace the policy's `plugins` value with an object whose `encrypted` property holds the output:
+
+```jsonc title="Policy shape (replace placeholders)"
+{
+	"plugins": {
+		"encrypted": {
+			"version": 1,
+			"keyId": "64_LOWERCASE_HEX_CHARACTERS",
+			"salt": "BASE64URL_32_BYTES",
+			"nonce": "BASE64URL_12_BYTES",
+			"blob": "BASE64URL_CIPHERTEXT_AND_TAG"
+		}
+	}
+}
+```
+
+Keep the policy's other settings and [save the policy](/docs/policies/editing). `keyId` selects the
+registered key. Saving checks only the readable settings and the envelope format.
+
+</Step>
+<Step>
+
+### Send the key with each request
+
+[Send the key](#send-the-key-with-a-request) with each request. The gateway decrypts and checks
+the settings before it calls the provider, and rejects the request if the key is missing or wrong,
+or the settings are invalid. To find problems first, use the
+[policy check](/docs/policies/editing#check-a-policy-before-saving).
+
+</Step>
+</Steps>
+
+[Policy size limits](/docs/policies/editing#document-rules) count the decrypted plugin bytes.
+
+## Send the key with a request
+
+Put each required key under its registered label in `encryption_keys` in the request body. Keep
+your API key in the `Authorization` header:
+
+```json title="Responses request body"
+{
+	"model": "chutes-mistral-nemo-instruct-2407",
+	"input": "Hello",
+	"encryption_keys": { "providers": "CONTENTS_OF_ORG_KEY_FILE" }
+}
+```
+
+- Send every key that the encrypted plugin settings of the request need. An encrypted provider
+  credential is used only when its key is sent.
+- Each label must match its registered identifier.
+- The gateway removes `encryption_keys` before it calls the provider, and never stores the keys.
+- Send keys through the [SDK or CLI](/docs/connection-modes), so that only the verified gateway
+  can read them. Ordinary HTTPS does not verify the gateway, and a TLS proxy can read the body.
+- Keep keys out of URLs, command-line arguments and logs.
+
+## Key sharing and rotation
+
+Anyone with both a key and its ciphertext can decrypt that content. Only separate keys give
+separate access; labels do not. Removing a member does not make them forget a key they had. Each
+caller must hold every key that their encrypted plugin settings need.
+
+Keep the original policies and provider credentials so you can encrypt them again. To rotate a key:
+
+1. Generate a new key and register it under a new label.
+2. Update your clients to send both keys.
+3. Encrypt the plugin settings and provider credentials again with the new key, and save them.
+4. Remove the old registration, then stop sending the old key.
+
+Each step is a separate save that checks the current policy revision.
+
+## Encryption details
+
+Each encryption uses a fresh salt and nonce to derive an AES-256-GCM key with HKDF-SHA-256. The
+authenticated context binds the organization, the purpose and the key identifier, so a ciphertext
+cannot be moved to another organization or purpose.

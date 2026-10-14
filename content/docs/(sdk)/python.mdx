@@ -1,7 +1,11 @@
 ---
 title: Python
-description: Use Stogas from Python.
+description: Send verified requests from Python with the official OpenAI client.
+icon: logo:python
 ---
+
+The `stogas` package runs a local connection to a verified gateway. Point the OpenAI client at its
+URL, and keep using Chat Completions and Responses as usual.
 
 ## Install
 
@@ -9,103 +13,137 @@ description: Use Stogas from Python.
 pip install stogas openai
 ```
 
-Use the official OpenAI Python client with one reusable Stogas transport.
+## Send a request
 
-## Stream with the OpenAI client
+Create one transport and one client, and reuse them for every request:
 
 ```python
 import os
-from contextlib import ExitStack
 
 from openai import DefaultHttpxClient, OpenAI
 from stogas import Transport
 
+transport = Transport()  # Checks the gateway, then connects with attested TLS.
+client = OpenAI(
+    api_key=os.environ["STOGAS_API_KEY"],
+    base_url=transport.base_url,  # A local URL with a random secret.
+    max_retries=0,  # A retried request can run twice.
+    http_client=DefaultHttpxClient(
+        trust_env=False,  # Do not send the local URL through a proxy.
+        follow_redirects=False,  # A redirect would send the request again.
+    ),
+)
 
-def client(base_url: str, api_key: str) -> OpenAI:
-    return OpenAI(
-        api_key=api_key,
-        base_url=base_url,
-        max_retries=0,
-        http_client=DefaultHttpxClient(
-            trust_env=False, follow_redirects=False, timeout=45 * 60
-        ),
+try:
+    response = client.responses.create(
+        model="chutes-mistral-nemo-instruct-2407",
+        input="Say hello in one sentence.",
     )
-
-
-def main() -> None:
-    api_key = os.environ["STOGAS_API_KEY"]
-    model = os.environ["STOGAS_MODEL"]
-    with ExitStack() as resources:
-        base_url = os.environ.get("STOGAS_BASE_URL")
-        if not base_url:
-            transport = Transport()
-            resources.callback(transport.close)
-            base_url = transport.base_url
-        with client(base_url, api_key) as api:
-            with api.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": "Say hello in one sentence."}],
-                stream=True,
-            ) as stream:
-                for chunk in stream:
-                    for choice in chunk.choices:
-                        if choice.delta.content:
-                            print(choice.delta.content, end="", flush=True)
-            print()
-
-
-if __name__ == "__main__":
-    main()
+    print(response.output_text)
+finally:
+    client.close()
+    transport.close()
 ```
 
-Set `STOGAS_API_KEY` and `STOGAS_MODEL` before running the example. Reuse the transport and client
-for subsequent requests; close them when the application stops.
+The local URL accepts Chat Completions, Responses and the policy check endpoint. Requests through it
+can run for up to one hour; the OpenAI client's own timeout is 10 minutes unless you set `timeout`.
 
-Press Ctrl+C to cancel; the example closes the stream and transport before propagating the
-interruption. Cancelled or partial output is not verified completion. The client uses OpenAI's
-HTTP client factory, disables redirects and inference retries, and bypasses environment proxies
-for the local transport URL. Its request timeout is 45 minutes; choose a shorter application
-deadline when appropriate.
-
-For a buffered request, use the same client with `stream=False` and read
-`response.choices[0].message.content`. Use the client's normal `responses.create` method for the
-Responses API. See the [runnable example](https://github.com/StogasAI/verifier/tree/main/examples/python-openai).
-
-`Transport()` defaults to native attested TLS and a maximum of four connections. Use
-`Transport(security="e2ee")` for application encryption over HTTPS. Optional `base_url` changes
-the HTTPS origin without changing the trusted evidence authorities. There is no background polling.
-
-Pass `extra_headers={"Stogas-Metadata": "v1"}` to request final metadata and a content receipt.
-The transport checks the receipt before reporting successful completion.
-
-## Offline verification
-
-`EvidenceVerifier` checks evidence supplied by your application without making network requests.
-Its default authority is the compiled production root. `refresh(bundle_bytes)` returns an
-`EvidenceSnapshot`; retain that snapshot while a request is in flight. A failed refresh does not
-destroy it, and authenticated revocations still apply to new verification.
-
-`snapshot.verify_logged_boot(boot_bytes, inclusion_bytes)` returns a `VerifiedBoot` only after
-hardware, release, and transparency checks pass. Its `verify_response(request_sha256, response_bytes)`
-checks a buffered response and its appended receipt. Supply the 32-byte SHA-256 digest of the exact
-request body. `verify_receipt(stogas_bytes, request_sha256, response_sha256)` takes the complete final
-`stogas` object, including its receipt, and separately computed content hashes. These methods return
-JSON bytes; they never send an inference request.
-
-Catch `VerificationError` and inspect its `code` field to distinguish failures without parsing
-error messages. Snapshot and boot objects own their verified state and remain usable after the
-verifier object is released. They cannot be constructed from unverified Python dictionaries.
-
-## Workload configuration
+## Stream and cancel
 
 ```python
-Transport(security="e2ee", max_connections=4)
+with client.chat.completions.create(
+    model="chutes-mistral-nemo-instruct-2407",
+    messages=[{"role": "user", "content": "Say hello."}],
+    stream=True,
+) as stream:
+    for chunk in stream:
+        for choice in chunk.choices:
+            print(choice.delta.content or "", end="", flush=True)
 ```
 
-`environment="prod"` is the default. `base_url` accepts an HTTPS origin. Set `max_retries` and `timeout` on the OpenAI client; use its async client for concurrent async inference.
+Leaving the `with` block early cancels the request. Output from a cancelled request is incomplete,
+and the request can still be billed. See [Streaming](/docs/streaming).
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+## Async
+
+`Transport()` and `close()` block while they start and stop the connection, so run them in a
+thread:
+
+```python
+import asyncio
+
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+
+
+async def main() -> None:
+    transport = await asyncio.to_thread(Transport)
+    client = AsyncOpenAI(
+        api_key=os.environ["STOGAS_API_KEY"],
+        base_url=transport.base_url,
+        max_retries=0,
+        http_client=DefaultAsyncHttpxClient(trust_env=False, follow_redirects=False),
+    )
+    try:
+        response = await client.responses.create(
+            model="chutes-mistral-nemo-instruct-2407", input="Say hello."
+        )
+        print(response.output_text)
+    finally:
+        await client.close()
+        await asyncio.to_thread(transport.close)
+```
+
+## Options
+
+```python
+transport = Transport(security="e2ee", max_connections=4)
+```
+
+| Option            | Effect                                                                         |
+| ----------------- | ------------------------------------------------------------------------------ |
+| `security`        | `"tls"` (default) or `"e2ee"`. See [Connection modes](/docs/connection-modes). |
+| `max_connections` | The most connections to open, as needed. Default `4`.                          |
+| `base_url`        | Another HTTPS origin, with no path. The trusted evidence does not change.      |
+
+`transport.refresh_bundle()` loads new evidence now. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+
+## Receipts
+
+Send `Stogas-Metadata: v1` to get a signed [receipt](/docs/receipts):
+
+```python
+response = client.responses.create(
+    model="chutes-mistral-nemo-instruct-2407",
+    input="Say hello.",
+    extra_headers={"Stogas-Metadata": "v1"},
+)
+```
+
+The transport checks the receipt before it returns the response. If the check fails, the request
+fails, and the transport does not send it again.
+
+## Check evidence offline
+
+Check a saved response later, with the boot record and evidence files from
+[Check without network access](/docs/receipts#check-without-network-access). This makes no network requests:
+
+```python
+from hashlib import sha256
+
+from stogas import EvidenceVerifier, VerificationError
+
+verifier = EvidenceVerifier()  # Trusts our built-in root key.
+try:
+    # Checks the boot against the evidence that was valid when it was logged.
+    boot = verifier.verify_boot_archive(boot_bytes, evidence_bytes)
+    # Checks a buffered response that ends with its `stogas` object.
+    receipt = boot.verify_response(sha256(request_bytes).digest(), response_bytes)
+except VerificationError as error:
+    print(error.code)  # A stable code, such as "receipt_content".
+```
+
+`verify_receipt(stogas_bytes, request_sha256, response_sha256)` takes a `stogas` object that you
+saved on its own, with the hashes that you computed. To check current evidence instead, call
+`verifier.refresh(bundle_bytes)`, then `verify_logged_boot` on the snapshot it returns. Each method
+returns JSON bytes.

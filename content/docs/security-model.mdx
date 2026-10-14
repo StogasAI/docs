@@ -1,0 +1,158 @@
+---
+title: Security model
+description: What the gateway protects, what it does not, and what you have to trust.
+icon: Shield
+---
+
+Gateways run inside AMD SEV-SNP confidential VMs. The processor encrypts the VM's memory, so
+the host, the cloud operator and our staff cannot read your API key, prompts or responses while
+the gateway handles them. Before your client sends anything, the SDK checks hardware evidence that
+the gateway runs an approved release built [reproducibly](/docs/reproducible-builds) from public
+source.
+
+## How a request is protected
+
+| Stage                  | Protection                                                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Your device to gateway | [Attested TLS or E2EE](/docs/connection-modes), which ends inside the verified gateway                                             |
+| Inside the gateway     | SEV-SNP memory encryption. Policies, PII redaction, routing and billing run here.                                                  |
+| Gateway to provider    | TLS 1.3, post-quantum where the provider supports it. Chutes adds [E2EE to its TEE](/docs/providers/chutes#end-to-end-encryption). |
+| After the request      | The [request record](/docs/request-records) has no prompt or response. A [receipt](/docs/receipts) signs both, if you ask for one. |
+
+Ordinary HTTPS without the SDK still works, but it does not check the gateway. It relies on our
+routing and TLS endpoint, and a later receipt does not change that.
+
+## What you trust
+
+- **AMD:** the processor, its firmware and AMD's signing keys. A hardware flaw can break the
+  protection.
+- **The gateway source code:** it is public. You can [rebuild it](/docs/reproducible-builds) from
+  the same pinned upstream sources and patches and get the same launch measurement, so you do not
+  have to trust the builds that we or GitHub publish. Approval does not prove that the code has
+  no bugs.
+- **Our signing keys:** they decide which releases, catalogs and hardware policies are
+  approved. Every approval is in the public Rekor log, so it is visible and cannot be changed
+  later.
+- **The model provider:** it receives the prompt, and its [data terms](/docs/providers) apply.
+  We cannot prove how a provider handles it.
+- **Your own device**, and the device or service that runs the SDK.
+
+## Design rules
+
+- **You can use Stogas without trusting us.** Assume we act with maximum malice. The SDK checks
+  every claim on your device, so to read your data we would have to approve a release that does
+  so, publicly, built from public source that anyone can inspect.
+- **Cryptographic proof where possible, signed public commitments everywhere else.** What you
+  cannot check yourself, such as our decision to approve a release or start a gateway, we sign and
+  log. If we lie, the proof against us is permanent.
+- **Anything you trust is publicly and permanently logged.** Signing keys, release approvals,
+  gateway and SDK releases, catalogs, hardware policy and gateway boots are in the append-only
+  Rekor log. The SDK rejects approvals and boot records that are not in the log.
+- **All software we release is reproducible.** Gateway images and SDK packages
+  [rebuild](/docs/reproducible-builds) from public source to the same bytes. A gateway release
+  needs both GitHub's build proof and our own matching rebuild.
+- **We don't trust our own infrastructure.** Any of our servers, our database, our hosting
+  providers, GitHub, Sigstore, Rekor or the evidence hosts can be compromised. None of them alone
+  can read your data or get a gateway approved that differs from its public source. The evidence
+  hosts can delay an update but cannot change it.
+- **The hardware boundary can fail.** Each release fixes strict VM settings, such as debugging and
+  migration off, and the hardware policy sets the minimum firmware for each chip. Both are signed
+  and logged, and the SDK checks them in every hardware report. A gateway serves you only after
+  its boot is in the public log.
+- **Defense in depth.** Gateway memory is already encrypted, yet E2EE still deletes each record's
+  key after use, and its ratchet keeps adding fresh secrets. If a key leaks from a gateway,
+  earlier traffic stays protected and later exchanges can lock the attacker out.
+- **We design for a future with quantum computers.** Attested TLS, E2EE and our signatures use
+  [post-quantum algorithms](#post-quantum-protection). Key exchanges and our signatures also keep
+  a classical algorithm, so they hold unless both algorithms break.
+
+## What the hardware does not protect
+
+- **Availability.** The host can stop, slow or block a gateway.
+- **Traffic patterns.** Network observers see addresses, timing and encrypted sizes. Traffic is not
+  padded.
+- **Location.** A gateway's region, such as `FR` or `US-VA`, is a statement by the operator. AMD
+  evidence does not prove where a machine is.
+- **Time.** Gateways set their clock inside the VM from five independent time servers over
+  [Network Time Security](https://www.rfc-editor.org/rfc/rfc8915), and start only after three
+  agree. A host that blocks those servers can slow the gateway's clock and delay its expiry checks.
+  The SDK checks the same dates with your device clock.
+- **Side channels.** Depending on the processor generation, the host can watch memory ciphertext
+  and cache timing, and steer branch prediction, while a gateway runs. Published attacks have used
+  such access to recover keys from protected VMs.
+- **Bugs.** Evidence proves which code runs, not that the code is correct. An attacker who
+  controls a gateway or your device can read the data there.
+
+## Chain of trust
+
+The SDK has our root key, Sigstore's root keys and AMD's root certificates built in.
+
+<Steps>
+<Step>
+
+### Root key
+
+Our root signs a key manifest that authorizes the online signing key. The key manifest expires 24
+hours after signing, and we renew it several times a day. Only the root can authorize or retire a
+signing key.
+
+</Step>
+<Step>
+
+### Approvals
+
+The online key signs an approval manifest that lists the approved gateway releases, catalogs and
+hardware policy. It names the key manifest it relies on, so all current evidence expires with that
+key manifest. It cannot authorize itself or another key. Gateways recheck the manifest about
+every two minutes and stop accepting new requests when their release is withdrawn, so your client
+does not need to poll for changes.
+
+</Step>
+<Step>
+
+### Build proofs
+
+GitHub attests both the IGVM and manifest of each gateway release, which links them to the public
+source tag and workflow. We approve the release only after our own independent build matches. The
+SDK requires both, so neither GitHub nor we alone can get an image approved that differs from its
+public source.
+
+</Step>
+<Step>
+
+### Hardware evidence
+
+AMD's signed report shows the VM's launch measurement, the chip, its firmware versions and the keys
+that the gateway generated.
+
+</Step>
+<Step>
+
+### Fresh connection
+
+A random challenge from your client goes into a new report, which binds this connection to the
+hardware evidence and to the gateway's logged boot record.
+
+</Step>
+</Steps>
+
+[Gateway verification](/docs/verification) lists each check and shows how to inspect the evidence
+yourself.
+
+## Post-quantum protection
+
+| Part                                                                  | Algorithms                                                     | Post-quantum |
+| --------------------------------------------------------------------- | -------------------------------------------------------------- | ------------ |
+| Attested TLS                                                          | TLS 1.3 with X25519MLKEM768 and an ML-DSA-65 certificate       | Yes          |
+| E2EE                                                                  | X-Wing (X25519 and ML-KEM-768), then a ratchet with ML-KEM-768 | Yes          |
+| Our signatures on key manifests, approvals, boot records and receipts | Composite ML-DSA-65 and Ed25519; both must verify              | Yes          |
+| Gateway to OpenAI and Anthropic                                       | TLS 1.3 with X25519MLKEM768                                    | Yes          |
+| Gateway to Azure                                                      | TLS 1.3, which can fall back to X25519                         | No           |
+| AMD reports, GitHub build proofs and Rekor                            | Classical signatures                                           | No           |
+
+The hybrid key exchanges protect recorded traffic from future quantum computers. The full chain of
+trust is not quantum safe, because AMD, GitHub and Rekor still use classical signatures.
+
+ML-KEM-768 targets [NIST security category 3](https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.203.pdf).
+A security category compares estimated attack costs. It does not promise that the algorithm will
+resist future discoveries.

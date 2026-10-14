@@ -1,0 +1,178 @@
+---
+title: Reproducible builds
+description: Rebuild the gateway image and SDK packages from public source, and check that they match what runs.
+icon: Hammer
+---
+
+Hardware attestation reports a measurement of the software that a gateway VM booted. A measurement
+is useful only if you can tell which source code produced it. Every gateway release builds
+reproducibly: you can rebuild it from the public source on your own machine and get the same bytes
+and the same launch measurement. You do not need to trust the binaries that we or GitHub
+publish.
+
+## What runs in a gateway
+
+The gateway VM boots one image with no disk, shell or package manager:
+
+| Layer    | Component                                                                                                                                                            |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Firmware | OVMF from edk2 `stable202608`, built for AMD SEV with its own ACPI tables, to boot only the measured kernel and to run no code from the host                         |
+| Kernel   | Linux-libre 6.18.54 with a reduced guest configuration, no loadable modules and no console output                                                                    |
+| Boot     | A unified kernel image built with systemd 262 `ukify`                                                                                                                |
+| Init     | A small init process written in Go                                                                                                                                   |
+| Clock    | The [ntpd-rs](https://github.com/pendulum-project/ntpd-rs) client, which keeps the guest clock in sync                                                               |
+| Gateway  | The [Stogas gateway](https://github.com/StogasAI/gateway), built with Go 1.27.2, with the [Rust verifier](https://github.com/StogasAI/verifier) linked in statically |
+
+The launch measurement covers all of it. Changing one byte in any layer gives a different
+measurement, which the SDK rejects.
+
+## How the build stays reproducible
+
+- **Every input is pinned.** The release tag fixes the source tree. `pins.lock.json` fixes each
+  upstream source by commit and content hash. `go.sum` and the Cargo lock files fix the version
+  and hash of every dependency, and each GitHub Action is pinned by commit.
+- **The repository holds no copies of dependencies.** The build downloads each one from its
+  upstream project or registry, and each download must match its pinned hash. You fetch the same
+  sources that we fetched, instead of trusting a copy in the gateway repository.
+- **Patches are small and separate.** Each patched upstream project has one patch file in
+  `stogas/release/patches/`. The patches for
+  [virt-firmware-rs](https://gitlab.com/kraxel/virt-firmware-rs) and the `igvmmeasure` tool from
+  [COCONUT-SVSM](https://github.com/coconut-svsm/svsm) fix how the four-CPU VM is measured, and
+  include tests. The edk2 patch makes the firmware boot only the measured kernel and gives the
+  guest fixed ACPI tables in place of the ones the host supplies.
+- **Compilers trace back to source.** [GNU Guix](https://guix.gnu.org) supplies every compiler and
+  tool from a Guix revision fixed by commit in `guix/channels.scm` and authenticated by its signing
+  key. Guix builds its compilers, such as GCC and Rust, from a small binary seed through its
+  [full-source bootstrap](https://guix.gnu.org/manual/en/html_node/Full_002dSource-Bootstrap.html).
+  Go, the kernel, the firmware, the IGVM tools and the verifier build from their pinned sources.
+- **Builds run offline.** Only the source downloads use the network. Guix builds every package
+  without network access. The build fixes timestamps, locale, time zone and file permissions, and
+  removes build paths from the binaries.
+
+## Two independent builds
+
+GitHub Actions builds each release tag once and attests the image and its release manifest. We
+build the same tag again on our own machines, and approve the release only when the two
+`release-manifest.json` files match byte for byte. The manifest records the source commit and its SHA-256 digest,
+every input hash, the compiler and tool versions, the image hash and the launch measurement.
+
+Your own build is a third, independent check.
+
+## Rebuild a release
+
+You need an x86_64 Linux machine with Git, Node.js, curl and a working Guix daemon.
+
+<Steps>
+<Step>
+
+### Get the source
+
+```console
+git clone https://github.com/StogasAI/gateway
+cd gateway
+git checkout v<version>
+```
+
+</Step>
+<Step>
+
+### Install the pinned Guix
+
+Skip this step if Guix is already installed. The script needs `sudo`:
+
+```console
+stogas/release/scripts/install-guix-bootstrap.sh
+```
+
+</Step>
+<Step>
+
+### Build
+
+```console
+stogas/release/scripts/build-release.sh v<version> ../build
+```
+
+The script checks the pins, downloads the inputs and builds offline. Read the patches in
+`stogas/release/patches/` to see every change to upstream code.
+
+</Step>
+<Step>
+
+### Compare
+
+Download `release-manifest.json` from the
+[gateway release](https://github.com/StogasAI/gateway/releases) and compare it with yours:
+
+```console
+cmp ../build/release-manifest.json release-manifest.json
+```
+
+No output means the builds match. The manifest's launch measurement is the value that the
+[Trust Center](/docs/verification#trust-center) shows for gateways that run this release.
+
+</Step>
+</Steps>
+
+<Callout title="Prebuilt Guix packages">
+	Guix downloads its own prebuilt packages, such as GCC and Rust, from one of its two build farms
+	and checks their signatures. The farms build each package separately. The build script takes
+	packages from `bordeaux.guix.gnu.org`, and GitHub's release build takes them from
+	`ci.guix.gnu.org`. A package that the farms built differently therefore enters the two builds as
+	different bytes, and a package that only one farm has is built from source on the other side, so
+	matching manifests show that no single farm's package changed the image. To build every tool on
+	your machine instead,
+	run the Guix daemon with `--no-substitutes`. Guix then builds its compilers from the small binary
+	seed. This takes much longer.
+</Callout>
+
+## Check the GitHub build proof
+
+To check that GitHub's release workflow built an image from its tag, without a rebuild, use the
+[GitHub CLI](https://cli.github.com/):
+
+```console
+gh attestation verify gateway.igvm --repo StogasAI/gateway \
+  --signer-workflow StogasAI/gateway/.github/workflows/gateway-igvm-release.yml \
+  --source-ref refs/tags/v<version> --deny-self-hosted-runners
+```
+
+The SDK makes the same check, and our approval check, before it trusts a gateway. See
+[Gateway verification](/docs/verification).
+
+## Verify an SDK download
+
+Each [SDK release](https://github.com/StogasAI/verifier/releases) lists every file with its SHA-256
+in `release-manifest.json`. GitHub build proofs cover each file, and our signature covers the manifest.
+npm, PyPI, crates.io, RubyGems and Maven Central serve the same bytes as the release. NuGet adds its
+own repository signature. Go downloads the module from the `go/v<version>` tag, which has the same
+files as `stogas-go-v<version>.tar.gz`.
+
+Check that the release workflow built a file from its tag:
+
+```console
+gh attestation verify <file> --repo StogasAI/verifier \
+  --signer-workflow StogasAI/verifier/.github/workflows/release.yml \
+  --source-ref refs/tags/v<version> --deny-self-hosted-runners
+```
+
+To check our signature as well, put these release files in a directory with the files you
+want to check: `release-manifest.json`, `qualification.json`, `github-attestation.jsonl` and
+`stogas-signature.json`. Then run:
+
+```console
+stogas verify-release <directory>
+```
+
+The command works offline, lists each file it checked, and rejects any other file in the
+directory. Use a `stogas` [CLI](/docs/cli) that you already trust, and check your first CLI download
+with `gh attestation verify`.
+
+We sign an SDK release only after our own machines rebuild every platform except Apple from
+the tag and every file matches GitHub's build byte for byte. Apple's compilers run only on Apple
+hardware, so the compiled Apple libraries come from GitHub's build; we still package them again
+and require the same bytes. A key that our root key authorizes makes the
+signature, and Rekor logs it. `qualification.json` records GitHub's tests of the installed
+packages on each platform, including real iPhones and Android phones on the oldest supported system
+version. GitHub makes its build proof only after every test passes, and that one proof covers the
+test report too.

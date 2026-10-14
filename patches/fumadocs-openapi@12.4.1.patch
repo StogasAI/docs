@@ -1,0 +1,111 @@
+--- a/dist/ui/operation/index.js
++++ b/dist/ui/operation/index.js
+@@ -341,7 +341,7 @@
+ 				className: "max-w-full overflow-x-auto font-mono [scrollbar-width:none]",
+ 				items: responses.map((item) => ({
+ 					value: item.status,
+-					label: item.status
++					label: /* @__PURE__ */ jsx("span", { "data-response-status": item.status, children: item.status })
+ 				}))
+ 			})
+ 		}), responses.map((item) => /* @__PURE__ */ jsx(ResponseContent, {
+--- a/dist/ui/operation/response-tabs.js
++++ b/dist/ui/operation/response-tabs.js
+@@ -6,7 +6,7 @@
+ import { ClientCodeBlock } from "../components/codeblock.js";
+ import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+ import { useTranslations } from "@fuma-translate/react";
+-import { Tab, Tabs } from "fumadocs-ui/components/tabs";
++import { Tab, Tabs, TabsList, TabsTrigger } from "fumadocs-ui/components/tabs";
+ //#region src/ui/operation/response-tabs.tsx
+ function ResponseTabs() {
+ 	const ctx = useRenderContext();
+@@ -25,8 +25,11 @@
+ 	}
+ 	return /* @__PURE__ */ jsx(Tabs, {
+ 		groupId: "fumadocs_openapi_responses",
+-		items: tabs.map((tab) => tab.code),
+-		children: tabs.map((tab) => {
++		defaultValue: tabs[0].code,
++		children: [/* @__PURE__ */ jsx(TabsList, { children: tabs.map((tab) => /* @__PURE__ */ jsx(TabsTrigger, {
++			value: tab.code,
++			children: /* @__PURE__ */ jsx("span", { "data-response-status": tab.code, children: tab.code })
++		}, tab.code)) }), ...tabs.map((tab) => {
+ 			const { examples = [] } = tab;
+ 			let slot = t("Empty");
+ 			if (examples.length > 1) slot = /* @__PURE__ */ jsx(Accordions, {
+@@ -46,7 +49,7 @@
+ 				value: tab.code,
+ 				children: slot
+ 			}, tab.code);
+-		})
++		})]
+ 	});
+ }
+ //#endregion
+--- a/dist/packages/shared-api/dist/components/select-tab.js
++++ b/dist/packages/shared-api/dist/components/select-tab.js
+@@ -1,4 +1,5 @@
+ "use client";
++import { useTranslations } from "@fuma-translate/react";
+ import { cn } from "../utils/cn.js";
+ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select.js";
+ import { AnchorSection, useAnchorLink } from "../auto-anchor/index.js";
+@@ -30,6 +31,7 @@
+ 	}) : content;
+ }
+ function SelectTabTrigger({ items, className, placeholder, ...props }) {
++	const t = useTranslations();
+ 	const { value, setValue } = use(Context);
+ 	return /* @__PURE__ */ jsxs(Select, {
+ 		items,
+@@ -37,6 +39,7 @@
+ 		onValueChange: setValue,
+ 		children: [/* @__PURE__ */ jsx(SelectTrigger, {
+ 			className: cn("not-prose w-fit min-w-0 *:min-w-0", className),
++			"aria-label": t("Content variant"),
+ 			...props,
+ 			children: /* @__PURE__ */ jsx(SelectValue, { placeholder })
+ 		}), /* @__PURE__ */ jsx(SelectContent, { children: items.map(({ label, value }) => /* @__PURE__ */ jsx(SelectItem, {
+--- a/dist/ui/playground/components/url-bar.js
++++ b/dist/ui/playground/components/url-bar.js
+@@ -37,11 +37,13 @@
+ 		}), /* @__PURE__ */ jsxs("button", {
+ 			type: "submit",
+ 			disabled: loading,
++			"aria-keyshortcuts": isMac ? "Meta+Enter" : "Control+Enter",
+ 			className: cn(buttonVariants({ variant: "primary" }), "h-10 shrink-0 gap-2 rounded-xl px-4 transition-[background-color,scale] active:scale-[0.97] disabled:opacity-80 motion-reduce:transition-none"),
+ 			children: [
+ 				loading ? /* @__PURE__ */ jsx(Spinner, { className: "size-3.5" }) : /* @__PURE__ */ jsx(SendHorizontal, { className: "size-3.5" }),
+ 				t("Send"),
+ 				/* @__PURE__ */ jsxs("kbd", {
++					"aria-hidden": true,
+ 					className: "hidden font-sans text-xs text-fd-primary-foreground/60 sm:inline",
+ 					children: [isMac ? "⌘" : "Ctrl", " ↵"]
+ 				})
+--- a/dist/ui/playground/client.js
++++ b/dist/ui/playground/client.js
+@@ -77,6 +77,13 @@
+ 	const [view, setView] = useState("request");
+ 	const onSubmit = (e) => {
+ 		e.preventDefault();
++		// a field with a custom validity error, like an invalid JSON draft, blocks the request
++		const invalid = Array.from(e.currentTarget.closest("[role=\"dialog\"]")?.querySelectorAll("input, textarea") ?? []).find((field) => field.validity.customError);
++		if (invalid) {
++			setView("request");
++			requestAnimationFrame(() => invalid.focus());
++			return;
++		}
+ 		send();
+ 		setView("response");
+ 	};
+--- a/dist/ui/playground/components/request-panel.js
++++ b/dist/ui/playground/components/request-panel.js
+@@ -323,6 +323,7 @@
+ 			value: selected,
+ 			onValueChange: (v) => v !== null && select(v),
+ 			children: [/* @__PURE__ */ jsx(SelectTrigger, {
++				"aria-label": t("Authorization"),
+ 				className: "h-7 w-auto max-w-60 gap-1.5 @sm:-me-2 border-0 bg-transparent px-2 text-xs hover:bg-fd-accent focus:ring-0 focus-visible:ring-2",
+ 				children: /* @__PURE__ */ jsx(SelectValue, { className: "truncate" })
+ 			}), /* @__PURE__ */ jsx(SelectContent, {

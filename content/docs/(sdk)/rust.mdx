@@ -1,6 +1,7 @@
 ---
 title: Rust
 description: Use a typed OpenAI client through the Stogas transport.
+icon: logo:rust
 ---
 
 ## Install
@@ -18,7 +19,7 @@ anyhow = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
 ```
 
-The OpenAI client sends HTTP to the transport's private loopback URL. Stogas handles the encrypted
+The OpenAI client sends HTTP to the transport's private loopback URL. The transport handles the encrypted
 connection to the gateway, so this local HTTP client does not need a TLS backend.
 
 ## Stream a response
@@ -135,7 +136,7 @@ Send `Stogas-Metadata: v1` to request the final `stogas` metadata and automatic 
 The [complete example](https://github.com/StogasAI/verifier/tree/main/examples/rust-openai) includes
 client integration tests.
 
-## Workload configuration
+## Options
 
 ```rust
 stogas::TransportOptions {
@@ -145,10 +146,7 @@ stogas::TransportOptions {
 }
 ```
 
-`environment` defaults to production; `base_url` accepts an HTTPS origin. Configure retry middleware and deadlines on the HTTP/OpenAI client. The example deliberately uses `ReqwestService` without retry middleware.
+`base_url` accepts an HTTPS origin. Configure retry middleware and deadlines on the HTTP/OpenAI client. The example deliberately uses `ReqwestService` without retry middleware.
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+Native attested TLS is the default; this example selects E2EE. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

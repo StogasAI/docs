@@ -1,66 +1,59 @@
 ---
 title: API Reference
-description: Interactive endpoint playground for the gateway API.
+description: API endpoints, with an interactive playground.
 ---
 
-Explore and test all gateway endpoints. Each operation page includes an interactive playground for live requests. Inference incurs usage charges.
-
-Use `https://api.stogas.ai` as the base URL. Endpoint paths include their API version. Examples and the live playground use this endpoint
-regardless of where these docs are hosted. Keys belong to their API environment; use the
-matching endpoint and key.
+The base URL is `https://api.stogas.ai`. Send your API key from the
+[dashboard](https://app.stogas.ai) as `Authorization: Bearer <api_key>`; `/v1/catalog` and
+`/v1/models` need no key. Each endpoint page has a playground that sends live requests, and
+inference requests from it are billed.
 
 ## Endpoints
 
 <Cards>
 	<Card
 		title="Catalog"
-		description="Inspect public model aliases, routes, providers, and prices."
+		description="Models, deployments, routes and prices."
 		href="/docs/reference/catalog/getCatalog"
 	/>
 	<Card
 		title="Models"
-		description="List OpenAI-compatible model IDs accepted by the gateway."
+		description="Model IDs that the API accepts."
 		href="/docs/reference/catalog/listModels"
 	/>
 	<Card
 		title="Chat Completions"
-		description="Create an OpenAI-compatible chat completion"
+		description="Create a chat completion."
 		href="/docs/reference/openai-compatible/createChatCompletion"
 	/>
 	<Card
 		title="Responses"
-		description="Create an OpenAI-compatible response"
+		description="Create a model response."
 		href="/docs/reference/openai-compatible/createResponse"
 	/>
 	<Card
-		title="Validate a policy"
-		description="Check policy execution before saving or sending inference."
-		href="/docs/reference/gateway/validatePolicy"
+		title="Validate policy"
+		description="Check policies before you save them."
+		href="/docs/reference/policies/validatePolicy"
 	/>
 </Cards>
 
-## Guides
+## API behavior
 
 <Cards>
 	<Card
-		title="Compatibility Notes"
-		description="Provider differences and compatibility notes."
+		title="Compatibility notes"
+		description="Where the API differs from a provider API."
 		href="/docs/reference/provider-behavior"
 	/>
 	<Card
-		title="API Security"
-		description="Authentication, request limits, CORS, and header policies."
+		title="Errors"
+		description="Every error code, and when to retry."
+		href="/docs/reference/errors"
+	/>
+	<Card
+		title="API security"
+		description="Authentication, browser access and request limits."
 		href="/docs/reference/security"
 	/>
 </Cards>
-
-## Authentication
-
-Inference endpoints require a gateway API key:
-
-```http
-Authorization: Bearer <api_key>
-Content-Type: application/json
-```
-
-`/v1/catalog` and `/v1/models` are public. Get your key from the [dashboard](https://app.stogas.ai).

@@ -1,0 +1,150 @@
+---
+title: Images and files
+description: Send images and documents to models that accept them, inline, by URL or by file ID.
+icon: Paperclip
+---
+
+Add images and documents to a message as content blocks. The gateway checks that the selected
+deployment accepts the input type before it calls the provider. The provider checks the file itself.
+
+| Input    | Chat Completions | Responses     |
+| -------- | ---------------- | ------------- |
+| Image    | `image_url`      | `input_image` |
+| Document | `file`           | `input_file`  |
+
+## Send an image
+
+```json tab="Chat Completions"
+{
+	"model": "gpt-5.6-sol",
+	"messages": [
+		{
+			"role": "user",
+			"content": [
+				{ "type": "text", "text": "What does this chart show?" },
+				{
+					"type": "image_url",
+					"image_url": { "url": "https://example.com/chart.png", "detail": "high" }
+				}
+			]
+		}
+	]
+}
+```
+
+```json tab="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": [
+		{
+			"role": "user",
+			"content": [
+				{ "type": "input_text", "text": "What does this chart show?" },
+				{ "type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo..." }
+			]
+		}
+	]
+}
+```
+
+An image can be an HTTP(S) URL or a base64 data URL. On Responses, `file_id` also works, except on
+Anthropic models.
+
+## Send a document
+
+```jsonc tab="Chat Completions"
+{
+	"model": "gpt-5.6-sol",
+	"messages": [
+		{
+			"role": "user",
+			"content": [
+				{ "type": "text", "text": "List the deadlines in this contract." },
+				{
+					"type": "file",
+					"file": {
+						"filename": "contract.pdf",
+						// A base64 data URL that names the MIME type.
+						"file_data": "data:application/pdf;base64,JVBERi0xLjcK..."
+					}
+				}
+			]
+		}
+	]
+}
+```
+
+```jsonc tab="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": [
+		{
+			"role": "user",
+			"content": [
+				{ "type": "input_text", "text": "List the deadlines in this contract." },
+				// The provider downloads the file. The gateway does not.
+				{ "type": "input_file", "file_url": "https://example.com/contract.pdf" }
+			]
+		}
+	]
+}
+```
+
+Give each document exactly one source:
+
+| Field       | Contents                                                     | Works on                                              |
+| ----------- | ------------------------------------------------------------ | ----------------------------------------------------- |
+| `file_data` | A base64 data URL, such as `data:application/pdf;base64,...` | Every deployment that accepts documents               |
+| `file_url`  | An HTTP(S) URL                                               | Responses, and Chat Completions with Anthropic models |
+| `file_id`   | A file that you uploaded to the provider                     | [BYOK](/docs/byok) credentials only                   |
+
+If the data URL has no MIME type or uses `application/octet-stream`, `filename` must end in an
+extension that the deployment accepts.
+
+## Supported formats
+
+Each catalog deployment lists the document MIME types and extensions it accepts on each endpoint as
+`nativeFileInputs`, and its input types as `inputModalities`.
+
+| Provider                                            | Images | Documents                                                                          |
+| --------------------------------------------------- | ------ | ---------------------------------------------------------------------------------- |
+| [OpenAI](/docs/providers/openai#files)              | Yes    | PDF on Chat Completions; PDF, text, office documents and spreadsheets on Responses |
+| [Anthropic](/docs/providers/anthropic#files)        | Yes    | PDF and plain text                                                                 |
+| [Azure](/docs/providers/azure#tools-and-files)      | Yes    | GPT: PDF on Responses. Claude: PDF and plain text                                  |
+| [Chutes](/docs/providers/chutes#supported-requests) | No     | No                                                                                 |
+
+The provider can convert a document before the model reads it, so a model that reads only text can
+still accept a PDF.
+
+## Turn text files into prompt text
+
+Text extraction turns inline text files, such as CSV, JSON and source code, into ordinary prompt
+text. The text then works on any deployment, even one that accepts no documents, and goes through
+the same [PII redaction](/docs/pii-redaction) and input checks as the rest of the prompt. Turn it on
+in a [policy](/docs/policies):
+
+```json
+{
+	"plugins": { "stogasTextExtraction": true }
+}
+```
+
+- Extraction accepts `text/*`, `application/json`, `application/xml`, and types that end in `+json`
+  or `+xml`. The MIME type must be in the data URL.
+- The file must be valid UTF-8 without NUL bytes.
+- The gateway puts the filename before the text when you give one.
+- PDFs, office documents, URLs and file IDs are not extracted. There is no OCR.
+- A policy cannot turn off extraction that a required parent policy turns on.
+
+## Limits
+
+- The gateway cannot read URLs, file IDs, or files that it does not extract. [ASCII-only
+  input](/docs/pii-redaction#ascii-only-input) and active [PII redaction](/docs/pii-redaction) reject
+  them.
+- Those inputs reserve the deployment's full input limit in the
+  [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their tokens.
+- Base64 and JSON encoding count toward the [128 MiB request limit](/docs/reference/security#limits).
+  The provider applies its own file, page and size limits.
+- Audio input (`input_audio` on Chat Completions) works only on deployments that list `audio` in
+  `inputModalities`.
+- Models return text, tool calls and citations. Image and audio output are not available.

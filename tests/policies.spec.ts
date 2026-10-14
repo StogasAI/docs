@@ -2,11 +2,12 @@ import { expect, test } from '@playwright/test';
 import schema from '../content/schemas/key-config-v1.json';
 import routingRegistry from '../content/schemas/routing-fields.json';
 import navigation from '../content/docs/policies/meta.json';
-import plugins from '../content/docs/plugins/meta.json';
 
 const topics = [
-	...navigation.pages.map((slug) => `/docs/policies${slug === 'index' ? '' : `/${slug}`}`),
-	...plugins.pages.map((slug) => `/docs/plugins/${slug}`)
+	'/docs/policies',
+	...navigation.pages.map((slug) => `/docs/policies/${slug}`),
+	'/docs/pii-redaction',
+	'/docs/export'
 ];
 
 for (const width of [390, 1440]) {
@@ -33,12 +34,11 @@ for (const width of [390, 1440]) {
 		const fields = page.locator('[id="policy-fields.requestLimit"]');
 		await fields.getByRole('textbox').fill('window');
 		await fields.getByRole('button', { name: 'object', exact: true }).click();
-		const detail = page.getByRole('dialog');
-		await expect(detail.getByText('count', { exact: true })).toBeVisible();
-		await expect(detail).toContainText('999999');
-		await expect(detail).toContainText('week');
-		await page.keyboard.press('Escape');
-		await page.goto('/docs/plugins/pii-redaction');
+		await expect(fields.locator('[aria-current="page"]')).toHaveText('window');
+		await expect(fields.getByText('count', { exact: true })).toBeVisible();
+		await expect(fields).toContainText('999999');
+		await expect(fields).toContainText('week');
+		await page.goto('/docs/pii-redaction');
 		const literal = page.locator('[id="policy-fields.literalRule"]');
 		await expect(literal.getByText('wholeWord?', { exact: true })).toBeVisible();
 		await expect(literal).toContainText('true');
@@ -77,11 +77,11 @@ test('policy topics retain complete field exports and working links to their own
 			schema.properties.limits.properties.tokens.additionalProperties
 		],
 		'/docs/policies/access': [schema.properties.access.properties.deny.items],
-		'/docs/plugins/pii-redaction': [
+		'/docs/pii-redaction': [
 			schema.properties.plugins.anyOf[0].properties.stogasRedaction!.properties.literals.items,
 			schema.properties.input
 		],
-		'/docs/plugins/export': [
+		'/docs/export': [
 			schema.properties.plugins.anyOf[0].properties.stogasExport!.properties.destinations.items
 		]
 	};
@@ -110,7 +110,7 @@ test('policy topics retain complete field exports and working links to their own
 		expect(response.ok()).toBe(true);
 		const markdown = await response.text();
 		expect(markdown).not.toMatch(/<(?:PolicyFields|RoutingFields)/);
-		const json = Array.from(markdown.matchAll(/```json[^\n]*\n([\s\S]*?)\n```/g), (m) =>
+		const json = Array.from(markdown.matchAll(/```json(?: [^\n]*)?\n([\s\S]*?)\n```/g), (m) =>
 			JSON.parse(m[1])
 		);
 		for (const definition of definitions[path] ?? []) expect(json, path).toContainEqual(definition);
@@ -158,7 +158,7 @@ test('routing field inventories survive Markdown export and query examples are h
 	expect(response.ok()).toBe(true);
 	const markdown = await response.text();
 	expect(markdown).not.toContain('<RoutingFields');
-	for (const name of Object.keys(routingRegistry.fields)) expect(markdown).toContain(`\`${name}\``);
+	for (const name of Object.keys(routingRegistry)) expect(markdown).toContain(`\`${name}\``);
 	await page.setViewportSize({ width: 390, height: 950 });
 	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 	await expect(page.getByRole('table').getByRole('button')).toHaveCount(0);
@@ -174,17 +174,14 @@ test('routing field inventories survive Markdown export and query examples are h
 	await expect(example).toContainText('deployment.capabilities.streaming == true');
 });
 
-test('plugins are discoverable through their own sidebar section and search', async ({ page }) => {
+test('plugin pages are discoverable through the sidebar and search', async ({ page }) => {
 	await page.goto('/docs');
 	const sidebar = page.locator('#nd-sidebar');
-	const folder = sidebar.getByRole('button', { name: 'Plugins', exact: true });
-	await expect(folder).toBeVisible();
-	if ((await folder.getAttribute('aria-expanded')) === 'false') await folder.click();
-	await sidebar.getByRole('link', { name: 'PII Redaction', exact: true }).click();
-	await expect(page).toHaveURL(/\/docs\/plugins\/pii-redaction$/);
-	await expect(page.getByRole('heading', { name: 'PII Redaction', exact: true })).toBeVisible();
+	await sidebar.getByRole('link', { name: 'PII redaction', exact: true }).click();
+	await expect(page).toHaveURL(/\/docs\/pii-redaction$/);
+	await expect(page.getByRole('heading', { name: 'PII redaction', exact: true })).toBeVisible();
 	await sidebar.getByRole('link', { name: 'Export', exact: true }).click();
-	await expect(page).toHaveURL(/\/docs\/plugins\/export$/);
+	await expect(page).toHaveURL(/\/docs\/export$/);
 	await expect(page.getByRole('heading', { name: 'Export', exact: true })).toBeVisible();
 	const destination = page.locator('[id="policy-fields.exportDestination"]');
 	await expect(destination).toContainText('url');
@@ -193,8 +190,7 @@ test('plugins are discoverable through their own sidebar section and search', as
 	await page.getByRole('combobox', { name: 'Search documentation' }).fill('stogasExport');
 	await page
 		.getByRole('dialog')
-		.getByRole('option', { name: /Export/ })
-		.first()
+		.getByRole('option', { name: /Documentation\s*Export$/ })
 		.click();
-	await expect(page).toHaveURL(/\/docs\/plugins\/export(?:#.*)?$/);
+	await expect(page).toHaveURL(/\/docs\/export(?:#.*)?$/);
 });

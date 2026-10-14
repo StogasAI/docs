@@ -1,0 +1,107 @@
+---
+title: Chutes
+description: Open models in Intel TDX and NVIDIA confidential GPUs, reached with end-to-end encryption.
+icon: Cpu
+---
+
+Chutes runs open models such as Kimi, Qwen, GLM and DeepSeek in trusted execution environments
+(TEEs) built on Intel TDX and NVIDIA confidential GPUs. Every new API key can use Chutes through our
+account. To use your own Chutes account instead, add a key in [BYOK](/docs/byok).
+
+## End-to-end encryption
+
+The gateway encrypts every Chutes request to the TEE that runs the model. Chutes' relay forwards the
+ciphertext and cannot read the prompt or the response.
+
+<Steps>
+<Step>
+
+### Find instances
+
+The gateway asks Chutes for running instances of the model. Each instance has an ML-KEM-768 public
+key and one-use request tickets.
+
+</Step>
+<Step>
+
+### Check the hardware evidence
+
+The gateway checks a fresh Intel TDX quote against Intel's certificates and revocation lists, and
+the NVIDIA GPU evidence through NVIDIA's attestation service. The quote must have debugging off,
+match a measurement that Chutes publishes for its runtime, and bind the instance's ML-KEM key. Chutes
+instances on AMD SEV-SNP are not used.
+
+</Step>
+<Step>
+
+### Encrypt the request
+
+The gateway encrypts the request to that key with ML-KEM-768 and ChaCha20-Poly1305. The instance
+encrypts its response, including usage, with a fresh key. The gateway accepts only authenticated
+output and usage.
+
+</Step>
+</Steps>
+
+There is no plaintext fallback. If no verified instance is available, the request fails.
+
+Chutes' relay still sees metadata: the model and instance, timing, sizes and usage for billing.
+
+Chutes does not support post-quantum TLS, so the outer TLS 1.3 connection uses a classical key
+exchange. The prompt and response stay protected by the inner ML-KEM encryption. The Chutes API key
+and the metadata are protected only by the classical TLS connection.
+
+### What the evidence does not prove
+
+Chutes decides which TEE measurements are acceptable, and no independent party checks them against
+Chutes' published source code yet. The measurements cover Chutes' runtime, not the model container.
+The runtime starts only containers signed with keys that Chutes controls, so the quote does not
+identify the container image or the model weights. The catalog therefore lists Chutes with
+`tee: true` and `teeVerified: false`. The
+[gateway's own evidence](/docs/verification) covers the gateway, not the Chutes TEE.
+
+## Data handling
+
+Chutes states that it never stores API prompts or responses and does not train on them. The catalog
+lists Chutes as zero data retention.
+
+## Supported requests
+
+Chutes supports Chat Completions only, with text messages. It accepts:
+
+- `stream` and `stream_options`
+- `tools` with `function` tools, and `tool_choice`
+- `response_format` with `json_object` or `json_schema`, where the deployment supports it
+- `reasoning_effort` and `reasoning`
+- `temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `repetition_penalty`,
+  `seed` and `stop`
+
+Responses, service tiers, hosted tools, cache controls, `logprobs`, `n` above 1,
+`parallel_tool_calls`, images, audio and files are not available, even when the model supports them.
+
+## Output limit
+
+Chutes uses `max_tokens`; the gateway converts `max_completion_tokens`. **If you omit the limit, Chutes
+stops at 1,024 output tokens.** Set a limit for long answers or heavy reasoning. Zero is rejected.
+
+## Reasoning
+
+Reasoning controls depend on the model. Some models take effort levels, some can only turn
+reasoning on or off, and some always reason. The catalog lists each deployment's levels, and other
+efforts map to the nearest level, as described in [Reasoning](/docs/reasoning).
+
+## Prompt caching and billing
+
+Chutes caches prompts automatically. Cached input tokens are billed at the deployment's cached-input
+rate.
+
+## Retries
+
+Chutes can reject a request before the model starts, for example when an instance is at capacity.
+Within your [attempt limit](/docs/policies/routing#attempt-limit), the gateway retries only these
+errors, on another verified instance with a new ticket. The default limit is one attempt, so set
+`routing.maxAttempts` to 2 or 3 to allow retries. Other errors are never retried.
+
+## References
+
+- [Chutes documentation](https://chutes.ai/docs)

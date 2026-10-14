@@ -1,0 +1,324 @@
+---
+title: PII redaction
+description: Replace personal data, secrets and your own terms in prompts before a provider receives them.
+icon: EyeOff
+---
+
+Redaction replaces personal data, credentials and terms that you choose with placeholders such as
+`<EMAIL_ADDRESS>`, before the gateway sends a request to the provider. It runs inside the
+confidential gateway, so the original text never leaves it. Redaction is off until a policy turns
+it on, and it does not change responses.
+
+## Turn on redaction
+
+Add `stogasRedaction` to the policy of an API key or another [scope](/docs/policies/scopes), then
+[save the policy](/docs/policies/editing):
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"stogasRedaction": {
+			"email_address": true, // A preset. Presets that you leave out stay off.
+			"bank_identifiers": true,
+			"literals": [{ "values": ["Project Aurora"], "ignoreCase": true }], // Your own terms.
+			"customPattern": "\\bEMP-[0-9]{6}\\b" // Employee IDs such as EMP-123456.
+		}
+	}
+}
+```
+
+With this policy, this prompt:
+
+```text
+Email ana.silva+orders@contoso.com about EMP-123456 and project aurora.
+```
+
+reaches the provider as:
+
+```text
+Email <EMAIL_ADDRESS> about <CUSTOM_PII> and <CUSTOM_PII>.
+```
+
+Open the request in **Analytics** to see how many values were replaced. Every setting is optional.
+An empty `stogasRedaction` object adds no rules and replaces
+[default plugin settings](/docs/policies/scopes#required-settings-and-defaults).
+
+## Presets
+
+Each preset turns on a group of detectors:
+
+| Preset                   | Replaces                                                          | Placeholders                                                                            |
+| ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `email_address`          | Email addresses                                                   | `<EMAIL_ADDRESS>`                                                                       |
+| `phone_number`           | Formatted phone numbers, including international numbers          | `<PHONE_NUMBER>`                                                                        |
+| `social_security_number` | U.S. Social Security numbers                                      | `<US_SSN>`                                                                              |
+| `credit_card_number`     | Payment card numbers                                              | `<PAYMENT_CARD>`                                                                        |
+| `ip_address`             | IPv4 and IPv6 addresses                                           | `<IP_ADDRESS>`                                                                          |
+| `api_keys_and_secrets`   | Passwords, API keys, tokens, private keys and credentials in URLs | `<CREDENTIAL>`, `<VENDOR_TOKEN>`, `<PRIVATE_KEY>`, `<JSON_WEB_TOKEN>`, `<DATABASE_URL>` |
+| `bank_identifiers`       | IBANs and U.S. ABA routing numbers                                | `<IBAN>`, `<US_ROUTING_NUMBER>`                                                         |
+| `national_identifiers`   | National, tax and business IDs from 20 countries                  | One for each type, such as `<UK_NATIONAL_INSURANCE_NUMBER>`                             |
+| `health_identifiers`     | Health insurance and provider IDs from 4 countries                | One for each type, such as `<US_NPI>`                                                   |
+
+Detectors check the format, checksum and nearby labels, so ordinary numbers do not match. Some
+values match only with a label nearby, such as `ITIN`, `NHS` or `routing number`. A match does not
+mean that the value was issued or is in use. Known sample values, such as the card number
+`4242 4242 4242 4242` and the SSN `123-45-6789`, never match. Numbers written with other digits,
+such as full-width or Arabic-Indic digits, also match.
+
+<Accordions type="multiple">
+<Accordion title="Email addresses">
+
+Covers plus-addressing, subdomains and Unicode letters, such as `élise@bücher.de`. Addresses at
+reserved domains, such as `example.com` and `.test`, stay unchanged. Quoted local parts, IP address
+literals and obfuscated addresses, such as `name at domain dot com`, are not detected.
+
+</Accordion>
+<Accordion title="Phone numbers">
+
+Covers formatted North American numbers, such as `(415) 555-2671` and `+1 415-555-2671`, and
+international formats such as `+44 20 7946 0958`. A marked extension of up to ten digits, such as
+`ext. 204`, `x204` or `;ext=204`, is replaced with the number. Unformatted strings of digits are
+not detected.
+
+</Accordion>
+<Accordion title="Social Security numbers and payment cards">
+
+SSNs match in the form `NNN-NN-NNNN`. Other forms need a nearby `SSN` or `social security` label.
+Numbers that the Social Security Administration never issues, such as area `000`, `666` or
+`900`–`999`, do not match.
+
+Payment cards need a known network prefix and length, a valid Luhn checksum, and the usual grouping
+of digits or a nearby card label. `national_identifiers` does not include SSNs, and
+`bank_identifiers` does not include payment cards.
+
+</Accordion>
+<Accordion title="Bank identifiers">
+
+IBANs, with or without spaces, for every country length, with checksum validation. Nine-digit U.S.
+ABA routing numbers, with a nearby routing label and checksum validation. Account numbers, SWIFT/BIC
+codes and cryptocurrency wallet addresses are not detected.
+
+</Accordion>
+<Accordion title="National, tax and business identifiers">
+
+| Country        | Identifiers                                                             |
+| -------------- | ----------------------------------------------------------------------- |
+| Australia      | Tax File Number (TFN), Business Number (ABN), Company Number (ACN)      |
+| Brazil         | Individual taxpayer number (CPF), business taxpayer number (CNPJ)       |
+| Canada         | Social Insurance Number (SIN)                                           |
+| China          | Resident identity card number                                           |
+| Finland        | Personal identity code (HETU)                                           |
+| Germany        | Tax identification number (Steuer-ID), social security number (RVNR)    |
+| India          | Aadhaar number                                                          |
+| Israel         | National ID number                                                      |
+| Italy          | Fiscal code (codice fiscale), VAT number (partita IVA)                  |
+| Nigeria        | National Identification Number (NIN)                                    |
+| Poland         | PESEL number                                                            |
+| Singapore      | NRIC and FIN numbers                                                    |
+| South Africa   | National ID number                                                      |
+| South Korea    | Resident or foreigner registration number, business registration number |
+| Spain          | DNI and NIE numbers                                                     |
+| Sweden         | Personal identity number (personnummer)                                 |
+| Thailand       | National ID number                                                      |
+| Türkiye        | National identity number (TCKN)                                         |
+| United Kingdom | National Insurance number (NINO)                                        |
+| United States  | Individual Taxpayer Identification Number (ITIN)                        |
+
+Passport numbers, driver's license numbers and IDs from other countries are not detected.
+
+</Accordion>
+<Accordion title="Health identifiers">
+
+| Country        | Identifiers                                                               |
+| -------------- | ------------------------------------------------------------------------- |
+| Australia      | Medicare number                                                           |
+| Germany        | Health insurance number (KVNR)                                            |
+| United Kingdom | NHS number                                                                |
+| United States  | National Provider Identifier (NPI), Medicare Beneficiary Identifier (MBI) |
+
+Diagnoses, medical notes and patient record numbers are not detected.
+
+</Accordion>
+<Accordion title="API keys and secrets">
+
+- Labeled passwords, API keys, access tokens and client secrets, including `Bearer` and `Basic`
+  authorization text in a prompt.
+- PEM private keys and JSON Web Tokens.
+- Credentials in HTTP, HTTPS, FTP, FTPS and SFTP URLs.
+- Database URLs with credentials, for PostgreSQL, CockroachDB, MySQL, MariaDB, MongoDB, SQL Server,
+  Redis and AMQP.
+- Token formats from AWS and Bedrock, GitHub, GitLab, Google, Slack, Stogas, Anthropic, OpenAI,
+  Stripe, Hugging Face, Groq, npm, PyPI, Doppler, 1Password, PlanetScale, Pulumi, Sentry, Vault,
+  Databricks, DigitalOcean, Perplexity, Twilio, Shopify, Linear, Atlassian, age, SendGrid,
+  Telegram and Notion.
+
+A secret with no label and no known format may not match.
+
+</Accordion>
+</Accordions>
+
+## Terms and phrases
+
+Use `literals` for names, code words, domains and other exact text. Each group applies its options
+to every string in `values`:
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"stogasRedaction": {
+			"literals": [
+				// Also matches "project aurora" and one typo, such as "Project Auorra".
+				{ "values": ["Project Aurora", "Project Borealis"], "ignoreCase": true, "fuzzy": true },
+				// Matches inside longer text, such as https://wiki.internal.contoso.com/page.
+				{ "values": ["internal.contoso.com"], "wholeWord": false }
+			]
+		}
+	}
+}
+```
+
+<PolicyFields section="literalRule" />
+
+- Terms are plain text: `.` and `*` have no special meaning. Every match becomes `<CUSTOM_PII>`.
+- With `wholeWord` on, the characters next to a match cannot be letters, numbers, combining marks or
+  underscores.
+- `ignoreCase` treats ASCII `A`–`Z` and `a`–`z` as equal. Other letters keep their case.
+- `fuzzy` also matches one inserted, deleted or changed character, or two swapped neighbors. A fuzzy
+  term needs 8–64 printable ASCII characters, a letter, digit or underscore at each end, and
+  `wholeWord` on.
+- Text is not normalized. Composed and decomposed Unicode, look-alike characters, percent-encoding
+  and abbreviations count as different text.
+
+Each term can be up to 256 bytes. Each scope, and all the policies that apply to one request
+together, can have up to 1,000 terms and 65,536 bytes of term text after duplicates are removed.
+
+## Custom pattern
+
+For identifiers with a fixed structure, add one regular expression. Use `|` for more than one
+format:
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"stogasRedaction": {
+			// Matches EMP-123456 and ACCT-FR-12345678.
+			"customPattern": "\\b(?:EMP-[0-9]{6}|ACCT-[A-Z]{2}-[0-9]{8})\\b"
+		}
+	}
+}
+```
+
+<Callout type="warn">
+	In JSON, write `\\b` for the regex `\b`. A single `\b` in a JSON string is a backspace character.
+</Callout>
+
+- Patterns use [Go RE2 syntax](https://pkg.go.dev/regexp/syntax). Lookarounds, backreferences and
+  `\C` are not supported.
+- Every match becomes `<CUSTOM_PII>`.
+- A pattern must match at least one character. Patterns that can match empty text, such as `.*`,
+  and patterns that match a placeholder are rejected.
+- `\b` uses ASCII word characters, and `(?i)` uses Unicode case folding.
+- Start with fixed text and bound each repetition, such as `EMP-[0-9]{1,12}`, to keep scans fast.
+
+| Limit                                      | Maximum            |
+| ------------------------------------------ | ------------------ |
+| Patterns in one scope                      | 1                  |
+| Different patterns that apply to a request | 3                  |
+| Size of one pattern                        | 512 bytes          |
+| Compiled size of all patterns              | 4,096 instructions |
+| Count in one repetition, such as `{1000}`  | 1,000              |
+
+## What is scanned
+
+Redaction runs after the gateway selects a deployment, and before it estimates input tokens and
+calls the provider.
+
+| Scanned                                    | Not scanned                                      |
+| ------------------------------------------ | ------------------------------------------------ |
+| Message and `input` text, and instructions | Model, routing and policy fields                 |
+| Tool definitions and tool call arguments   | Headers, `metadata`, sampling and cache settings |
+| Structured output schemas                  | Images, audio and files                          |
+| Stop sequences                             | Signed or encrypted reasoning from earlier turns |
+
+To scan text files too, turn on [text extraction](/docs/input-files#turn-text-files-into-prompt-text).
+
+- Replacement cannot be undone. The gateway keeps no record of the original values, and does not
+  put them back into the response.
+- Placeholders can use more tokens than the text they replace. [Input estimates](/docs/usage#input-estimates)
+  count the redacted text.
+- Each detector reads the original text, and overlapping matches become one placeholder. A
+  placeholder that the client sends does not protect the text around it.
+
+## Combine scopes
+
+Redaction from every scope that applies to a request adds together. For example, organization email
+detection, a grant's banking detection and a key's custom pattern all run on the same request. A
+preset, term or pattern that one scope requires stays on, and a child scope cannot turn it off with
+`false`.
+
+If a parent change makes the combined rules of a key exceed a limit, requests with that key fail
+until you fix its policies. To keep terms and patterns private, [encrypt the plugin
+settings](/docs/customer-encryption#encrypt-plugin-settings).
+
+## ASCII-only input
+
+To reject a prompt that contains non-ASCII text, instead of redacting it:
+
+```json title="policy.json"
+{ "input": { "asciiOnly": true } }
+```
+
+<PolicyFields section="input" />
+
+The check reads the [scanned fields](#what-is-scanned) before redaction. JSON escapes such as
+`é` count as non-ASCII. Any scope can require the check, and a child scope cannot turn it off.
+A request policy can set it when `delegation.request` permits `input`.
+
+## Errors
+
+| Status | Code                        | Cause                                                       |
+| ------ | --------------------------- | ----------------------------------------------------------- |
+| `400`  | `input_ascii_required`      | ASCII-only input is on, and the prompt has other characters |
+| `413`  | `request_too_large`         | The request exceeded a redaction limit                      |
+| `503`  | `gateway_capacity_exceeded` | The gateway cannot load the redaction policy now            |
+
+The redaction limits for one request are 65,536 matches in one text value, 100,000 replacements,
+128 levels of JSON nesting, and one shared scan budget. Complex patterns and long text use more of
+the budget, so a valid pattern can still exceed it. To fix a `413`, narrow the pattern or send less
+text. Retry a `503` with backoff.
+
+These errors happen before the provider receives the request, and they are not charged. The gateway
+never sends a request without its required redaction.
+
+## Check results
+
+The [request record](/docs/request-records) shows what redaction did:
+
+```jsonc
+"plugins": {
+	"stogas_structured_pii_redaction": {
+		"items_redacted": 3, // The number of replaced values.
+		"duration_us": 412 // Time spent scanning and replacing, in microseconds.
+	}
+}
+```
+
+The record has no original values, positions or counts for each preset. In **Analytics**, open a
+request to see the same values under **Redaction**, or filter requests:
+
+| Filter                   | Requests                                                        |
+| ------------------------ | --------------------------------------------------------------- |
+| `redaction:redacted`     | One or more values were replaced                                |
+| `redaction:no_matches`   | Redaction ran and replaced nothing                              |
+| `redaction:not_recorded` | The record has no redaction data. Redaction may still have run. |
+
+Filters combine, for example `redaction:redacted AND provider:openai`.
+
+## What redaction does not detect
+
+- Names, street addresses, places, dates, UUIDs and numbers without a format or label.
+- IDs that no preset lists.
+- Model output. Redaction changes requests only.
+
+Before you rely on a rule, test it with typical prompts, including values that must stay unchanged.
+Redaction does not detect prompt injection or harmful content.

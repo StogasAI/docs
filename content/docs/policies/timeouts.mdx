@@ -1,0 +1,53 @@
+---
+title: Timeouts
+description: Limit how long a caller waits for a request and for each provider output.
+icon: Timer
+---
+
+Requests wait up to **60 minutes in total** and up to **five minutes for useful provider output**.
+Set shorter or longer limits in whole seconds from 1 through 3600:
+
+```json title="policy.json"
+{
+	"timeouts": {
+		"totalSeconds": 900,
+		"outputIdleSeconds": 120
+	}
+}
+```
+
+| Field               | Starts                                             | Restarts                 |
+| ------------------- | -------------------------------------------------- | ------------------------ |
+| `totalSeconds`      | When the gateway admits the request body           | Never                    |
+| `outputIdleSeconds` | When the gateway sends the request to the provider | After each useful output |
+
+`totalSeconds` includes policy checks, preparation, authorization and provider work. If
+preparation uses up the time, the request fails before the gateway calls the provider.
+
+Useful output is text, reasoning, tool output or media. Headers, keepalives, usage-only updates and
+empty lifecycle events do not restart `outputIdleSeconds`. A buffered request has no output until
+the full response arrives, so the limit covers the whole provider call. Raise it for models that
+reason for a long time without output. If you set it equal to `totalSeconds`, only the total limit
+applies.
+
+## How policies combine
+
+The earlier deadline wins. For each field, the gateway uses the smallest required value across the
+applicable policies, so a child cannot lengthen a parent's limit. Conditional defaults can be
+replaced field by field, and permitted [request policies](/docs/policies/request-policies) can set
+either field. See [Scopes and inheritance](/docs/policies/scopes).
+
+## When a timeout expires
+
+The response ends with `request_timeout`: HTTP 504 before the response starts, or an error event
+in a stream that has started. The gateway does not retry or try another deployment.
+
+A timeout ends only your wait. Once the gateway has called the provider, the provider work continues up
+to 60 minutes. The gateway keeps reading the response and bills the usage, including usage that arrives
+after your response ended, so a short timeout does not limit the cost of a request that was sent.
+Set your client's retries so it does not send a timed-out request again when its outcome is
+unknown.
+
+## Fields
+
+<PolicyFields section="timeouts" />

@@ -1,15 +1,20 @@
 ---
 title: Browser and Workers
-description: Encrypted inference in browsers and edge runtimes.
+description: Encrypted inference in browsers and Cloudflare Workers.
+icon: Globe
 ---
 
-## Browser
+The `stogas` package has entrypoints for browsers and Workers. Both verify the gateway on the
+device, then send every request end-to-end encrypted over ordinary HTTPS. They use the same API as
+the [JavaScript SDK](/docs/javascript).
 
 ```console
 npm install stogas openai
 ```
 
-Initialize WebAssembly once, then reuse the transport and OpenAI client:
+## Browser
+
+Initialize the WebAssembly module once, then reuse the transport and the OpenAI client:
 
 ```ts
 import OpenAI from 'openai';
@@ -17,48 +22,36 @@ import init, { StogasTransport } from 'stogas/browser';
 
 await init();
 const transport = await StogasTransport.create();
-const client = new OpenAI(transport.openAIOptions(userProvidedStogasKey));
-const cancellation = new AbortController();
-// Your Cancel button calls cancellation.abort().
+const client = new OpenAI(transport.openAIOptions(userApiKey));
+const cancellation = new AbortController(); // Your stop button calls cancellation.abort().
 
-try {
-	const stream = await client.chat.completions.create(
-		{
-			model: 'openai/gpt-5-mini',
-			messages: [{ role: 'user', content: 'Say hello in one sentence.' }],
-			stream: true
-		},
-		{ headers: { 'Stogas-Metadata': 'v1' }, signal: cancellation.signal }
-	);
-	for await (const chunk of stream) {
-		console.log(chunk.choices[0]?.delta.content ?? '');
-	}
-} finally {
-	await transport.close();
+const stream = await client.chat.completions.create(
+	{
+		model: 'chutes-mistral-nemo-instruct-2407',
+		messages: [{ role: 'user', content: 'Say hello in one sentence.' }],
+		stream: true
+	},
+	{ signal: cancellation.signal }
+);
+for await (const chunk of stream) {
+	console.log(chunk.choices[0]?.delta.content ?? '');
 }
 ```
 
-The transport verifies the gateway before releasing your credentials or prompt. Its reusable E2EE sessions use binary records over HTTPS, so browser connection reuse and load-balancer routing do not change the encryption owner. Session keys stay inside the owning gateway.
-
-With `Stogas-Metadata: v1`, the transport also verifies the final content receipt before completing the response. Consume streams through completion. Standard SSE comments, including our processing keepalive, are ignored by the OpenAI client.
-
-For progress labels, acknowledgement semantics and error handling, see
-[Request progress](/docs/request-progress). Its Fetch callback example works here; import
-`StogasRequestInit` from `stogas/browser` or `stogas/worker` for your runtime.
-
-`openAIOptions` leaves OpenAI retry and timeout policy to the caller. Cancellation ends the request with an error;
-partial output is not verified completion.
-
-Our browser transport uses Fetch and does not require access to the browser's TLS handshake. The same Rust WebAssembly core verifies hardware evidence, published approvals, session setup, and receipts locally.
+Close the transport with `await transport.close()` when the page no longer needs it.
 
 <Callout type="warn">
-	Each user should provide their own API key. Never ship a shared key in browser assets. E2EE cannot
-	protect secrets from compromised JavaScript running in the same page.
+	Each user must enter their own API key. Never put a shared key in browser code. Encryption cannot
+	protect a key from other JavaScript that runs on the same page.
 </Callout>
 
-## Workers
+To show a status for each message, pass `onProgress`, as described in
+[Streaming](/docs/streaming#show-progress). Import the `StogasRequestInit` type from `stogas/browser`
+or `stogas/worker`.
 
-Cloudflare Workers use the Worker entrypoint, which initializes its bundled WebAssembly module:
+## Cloudflare Workers
+
+The Worker entrypoint loads its bundled WebAssembly module itself:
 
 ```ts
 import OpenAI from 'openai';
@@ -66,9 +59,9 @@ import { StogasTransport } from 'stogas/worker';
 
 const transport = await StogasTransport.create();
 try {
-	const client = new OpenAI(transport.openAIOptions(stogasAPIKey));
+	const client = new OpenAI(transport.openAIOptions(apiKey));
 	const response = await client.responses.create({
-		model: 'openai/gpt-5-mini',
+		model: 'chutes-mistral-nemo-instruct-2407',
 		input: 'Say hello.'
 	});
 	console.log(response.output_text);
@@ -77,17 +70,18 @@ try {
 }
 ```
 
-For a browser Web Worker, use the browser entrypoint and call `await init()` there. Keep a transport only for as long as the runtime permits; a suspended or discarded worker cannot retain a session reliably.
+In a browser Web Worker, use the browser entrypoint and call `await init()` in the worker. A runtime
+can suspend or discard a worker at any time, so keep a transport only while the worker runs.
 
-See [JavaScript and TypeScript](/docs/typescript) for connection limits, metadata callbacks, evidence refresh, and offline verification. Unsupported requests fail before sending credentials; the transport itself never repeats inference. The OpenAI client owns retries.
+## Options
 
-## Workload configuration
+`StogasTransport.create()` accepts:
 
-Use `StogasTransport.create({ maxConnections: 4 })` with either entrypoint. Four is the default
-maximum; sessions open only when existing sessions reach capacity. `baseURL` accepts an HTTPS API URL ending in `/v1`;
-`environment: 'staging'` requires a staging build. Set `maxRetries` and `timeout` on the OpenAI
-client, and use `AbortSignal` for per-request cancellation.
+| Option           | Default | Use                                                   |
+| ---------------- | ------- | ----------------------------------------------------- |
+| `maxConnections` | `4`     | The most encrypted sessions that the transport opens. |
+| `baseURL`        |         | An HTTPS API address that ends in `/v1`.              |
 
-Bound simultaneous uploads and queued request bytes in your application. Browser uploads retain
-ciphertext; increasing `maxConnections` does not bound memory or application concurrency. Set the maximum to one when predictable session use matters more than burst capacity. Keep Worker transports within the isolate's supported
-lifetime and close them when their work finishes. See [shared workload settings](/docs/sdk-overview#choose-settings-for-your-workload).
+Set `maxRetries` and `timeout` on the OpenAI client, and cancel requests with an `AbortSignal`.
+Browsers keep each encrypted upload in memory until it is sent, so limit how many large uploads run
+at once. See [Connection settings](/docs/sdk-overview#connection-settings).

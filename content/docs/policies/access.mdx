@@ -1,23 +1,23 @@
 ---
 title: Access and expiration
 description: Enable or disable a scope, expire access, or block requests on a weekly schedule.
+icon: CalendarClock
 ---
 
-Enabled state and expiration belong to the resource. `access.deny` belongs to its policy. Every applicable resource must be enabled and unexpired for a new request to proceed.
+Every resource that applies to a request must be enabled and unexpired. Enabled state and
+expiration are settings of the resource. Deny periods are in its policy, under `access.deny`.
 
 ## Enable or disable access
 
-Set the resource's `enabled` setting to `false` to stop new requests. It defaults to `true`. A child cannot override a disabled parent. The dashboard's switch changes this setting without changing the policy or its revision.
-
-Disabling a resource does not cancel requests already authorized. Clearing its policy preserves its enabled state.
+Turn a resource off with its switch in the dashboard to stop new requests. Requests that are
+running continue. A disabled parent blocks every resource below it.
 
 ## Set an expiration
 
-Set the resource's `expiresAt` setting to an absolute timestamp, such as `2026-12-01T00:00:00Z`. Set it to `null` to remove that resource's expiration.
-
-The earliest expiration across applicable resources applies. Removing a key's expiration does not remove an inherited expiration. Once every applicable expiration is removed, an otherwise enabled key can be used again. At the expiration instant, new requests are blocked; requests already authorized continue.
-
-Clearing a policy preserves the resource's expiration. Policy documents reject `enabled` and `expiresAt`.
+Set an expiration time on a key, grant or other resource, such as `2026-12-01T00:00:00Z`. From
+that time, new requests are blocked and requests that are running continue. The earliest
+expiration of every resource that applies wins, so removing a key's expiration does not remove its
+grant's.
 
 ## Deny periods
 
@@ -77,19 +77,21 @@ A period cannot cross midnight. Split Friday 20:00 through Saturday 08:00 into t
 The second entry uses the following day. Equal start and end times are invalid; they do not
 mean all day.
 
-## Time zones and scope
+## Daylight saving time
 
-IANA time zones apply their daylight-saving rules. A repeated local hour is checked against
-the deny period on both occurrences; a skipped local hour never occurs. Use UTC for a schedule
-that does not shift with daylight saving.
+IANA time zones follow daylight saving time. A local hour that repeats is denied both times, and a
+local hour that is skipped never occurs. Use `UTC` for a schedule that does not shift.
 
-All applicable required deny periods apply together. Periods share the
-[policy byte budget](/docs/policies/editing#document-rules); each needs one to seven unique days.
-Omit `access` to add no periods. An empty `deny` array replaces default periods without
-removing other required periods. A permitted request policy can add periods;
-it cannot change a key's expiration.
+## How periods combine
 
-### Timestamps and time zones
+Every required deny period from every policy applies. An empty `deny` array replaces default
+periods only. A permitted [request policy](/docs/policies/request-policies) can add periods.
+
+A deny period in a [conditional rule](/docs/policies/scopes#conditional-rules) or a credential's
+policy blocks only the deployments and credentials it applies to. The gateway tries the others,
+and fails with `schedule_denied` when none remain.
+
+## Timestamps and time zones
 
 `expiresAt` and recurring `anchor` values are ISO 8601 timestamps with `Z` or an explicit offset,
 for example `2026-12-01T00:00:00Z` or `2026-12-01T09:00:00+09:00`. Local times without an offset

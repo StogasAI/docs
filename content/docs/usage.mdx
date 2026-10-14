@@ -1,0 +1,138 @@
+---
+title: Usage and cost
+description: How the gateway measures tokens and text, prices each request, and holds funds while it runs.
+icon: Coins
+---
+
+Each [request record](/docs/request-records) lists the request's usage meters and cost. A
+[receipt](/docs/receipts) signs the same meters.
+
+## How a request is charged
+
+<Steps>
+<Step>
+
+### Hold
+
+Before the gateway calls the provider, it holds the most the request can cost: the
+[estimated input](#input-estimates) at the highest input rate, plus the output limit at the highest
+output rate. The hold must fit your balance and every [limit](/docs/policies/limits) that applies.
+
+</Step>
+<Step>
+
+### Run
+
+The provider runs the request and reports its usage. Concurrent requests cannot use the same held
+funds.
+
+</Step>
+<Step>
+
+### Settle
+
+The gateway prices the reported usage at catalog rates, charges it, and releases the rest of the hold.
+
+</Step>
+</Steps>
+
+- A lower `max_completion_tokens` or `max_output_tokens` lowers the hold, so a request fits more
+  easily under a balance or limit.
+- Settlement charges actual usage even when it is more than the hold. Your balance can go below
+  zero, and then new requests fail until you add credit.
+- When a provider changes a price for a set time, such as a promotion, the catalog lists the
+  temporary price with its start and end. A request pays the price in effect when it starts.
+- If a request fails before it reaches the provider, the gateway releases the hold and charges nothing.
+- If a gateway stops before it settles a request, we release the hold without a charge within a few
+  minutes, and the request gets no [request record](/docs/request-records). If a usage record fails
+  our checks, the hold stays until we review it. Time alone never turns a hold into a charge or a
+  refund. Contact [billing@stogas.ai](mailto:billing@stogas.ai) about a hold that does not clear.
+- While a gateway cannot settle requests, it rejects new ones with `503 gateway_unavailable`.
+  Requests that already have a hold continue.
+
+## Meters
+
+`usage.meters` in the request record lists each quantity. Priced meters also show the rate and the
+charge:
+
+```jsonc
+{
+	"input_tokens": {
+		"quantity": "1000",
+		"rateKey": "per_mill_tokens", // USD per million tokens.
+		"rateUsd": "2",
+		"usd": "0.002"
+	},
+	"total_tokens": { "quantity": "1500" } // Information only, never charged.
+}
+```
+
+| Meter                                                                 | Counts                                                                                                 |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `input_tokens`                                                        | Input tokens, without cache reads and writes                                                           |
+| `cached_input_tokens`                                                 | Input tokens read from the provider cache                                                              |
+| `cache_write_5m_input_tokens`, `cache_write_1h_input_tokens`          | Input tokens written to a five-minute or one-hour cache                                                |
+| `cache_write_input_tokens`                                            | Cache writes with no reported duration                                                                 |
+| `output_tokens`                                                       | Output tokens, without reasoning                                                                       |
+| `reasoning_tokens`                                                    | Reasoning tokens                                                                                       |
+| `total_input_tokens`, `total_output_tokens`, `total_tokens`           | Totals, with each token counted once. [Token limits](/docs/policies/limits#tokens) use `total_tokens`. |
+| `total_cache_write_tokens`                                            | All cache writes                                                                                       |
+| `estimated_input_tokens`                                              | The gateway's [input estimate](#input-estimates) for the hold                                          |
+| `hosted_tool_calls`, `client_tool_calls`                              | Hosted tool calls, and calls returned to your application                                              |
+| `input_text_bytes`, `output_text_bytes`, `reasoning_text_bytes`       | UTF-8 bytes of text: input after redaction, visible output and visible reasoning                       |
+| `input_file_count`, `input_file_url_count`, `input_inline_file_bytes` | Attachments, attachments sent as URLs, and decoded inline bytes                                        |
+
+Some models charge more for every token of a request whose prompt is over a size. The prompt counts
+cache reads and writes. For example, a GPT-6 Sol request with a 300,000-token prompt prices each
+token meter at its `per_mill_context_gt_272k` rate instead of `per_mill_tokens`.
+
+Priced tool meters name the provider and the tool, such as `anthropic_web_search_calls` with the
+rate `per_1k_calls`. They can be lower than `hosted_tool_calls`, because a provider does not charge
+for some failed calls. A free meter has a rate of `"0"`.
+
+## Cost
+
+`usage` also has four amounts for the whole request:
+
+| Amount                     | Meaning                                                            |
+| -------------------------- | ------------------------------------------------------------------ |
+| `upstream_cost_usd`        | The sum of the priced meters: the provider cost at catalog rates.  |
+| `billed_cost_usd`          | What we charged. With [BYOK](/docs/byok), this is the 2% BYOK fee. |
+| `cache_read_savings_usd`   | What cache reads saved compared with ordinary input.               |
+| `cache_write_overhead_usd` | What cache writes cost above ordinary input.                       |
+
+For example, a cache write that costs $1.25 instead of $1 of input has $0.25 overhead.
+
+Amounts are exact decimal strings with up to 36 decimal places. The gateway adds each meter's usage
+before it rounds the charge up once, so a rate of $0.001 per million tokens costs exactly
+$0.000000001 for one token. [Billing](/docs/billing#fees) lists the fees.
+
+## Standard text tokens
+
+Each provider counts tokens with its own tokenizer, so the same prompt can have different token
+counts on different models. Standard text tokens (STT) measure text the same way on every model:
+**1 STT is 4 bytes of UTF-8 text**, which is close to one token of English text.
+
+`usage.standard_text_tokens` has `input`, `reasoning` and `output`.
+
+- Input is the request text after [PII redaction](/docs/pii-redaction), including tool definitions
+  and arguments. JSON syntax, property names and attachments do not count.
+- Output and reasoning count only visible text. Hidden or encrypted reasoning cannot be measured.
+- Values are not rounded, so they can end in `.25`, `.5` or `.75`.
+
+Use STT to compare text size across models, or to cap input text the same way on every model with
+an [STT token quota](/docs/policies/limits#count-stt). STT never sets the price.
+
+## Input estimates
+
+The provider counts input tokens only after the request runs, so the gateway estimates them for the
+hold. The estimate uses one formula for every model and counts text after redaction, including tool
+definitions. It adds allowances for message and tool framing and for hidden reasoning. Settlement
+always uses the provider's count.
+
+- The estimate is never more than the deployment's input limit. A large prompt can therefore hold
+  the full input limit.
+- URLs, file IDs and files that the gateway does not [extract](/docs/input-files#turn-text-files-into-prompt-text)
+  hold the full input limit, because the gateway cannot count them.
+- Hosted tools add their own [holds](/docs/model-tools#holds-for-hosted-tools).
+- Text is never sampled or cut to lower a hold.

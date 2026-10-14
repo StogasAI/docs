@@ -1,89 +1,106 @@
 ---
-title: API Security
-description: Authentication, browser access, request limits, and optional diagnostics.
+title: API security
+description: Authentication, browser access, request handling, size limits and signed formats.
 ---
 
 ## Authentication
 
-Inference endpoints require a bearer API key:
+Inference endpoints need an API key in the `Authorization` header:
 
 ```http
 Authorization: Bearer <stogas_api_key>
-Content-Type: application/json
 ```
 
-`/v1/catalog` and `/v1/models` are public. API keys are not accepted in query parameters or cookies.
+Query parameters and cookies cannot carry an API key. `/v1/catalog` and `/v1/models` need no key.
 
 ## Browser access
 
-The public API allows cross-origin requests and uses bearer authentication rather than cookies:
-
-```http
-Access-Control-Allow-Origin: *
-```
-
-Do not expose a privileged API key in public browser code. Use a narrowly limited key or your own server when users must not receive the credential.
+The API allows requests from any origin (`Access-Control-Allow-Origin: *`) and never uses cookies.
+Do not put a key with wide permissions in public browser code. Give browsers a key with narrow
+[policies](/docs/policies), or call the API from your own server.
 
 ## Request handling
 
-- Native input attachments require a supported wire shape and compatible deployment. Provider file IDs require BYOK. The gateway does not fetch remote attachments, decode binary documents, or perform OCR; upstream owns native file acceptance. Output remains text and supported tool/control records.
-- Unknown top-level JSON fields are accepted and ignored for SDK compatibility. They are never forwarded to a provider.
-- Meaningful values for known unsupported features are rejected before authorization. Optional `null` values and selected empty SDK defaults are treated as omission.
-- Compressed bodies are checked after decompression; oversized bodies return `413`.
-- Unrecognized client headers are accepted and ignored for SDK and browser compatibility.
-- Client headers are never forwarded to providers.
-- Provider response headers are not returned to clients.
-- Client-supplied private Stogas and Bifrost control headers are rejected.
+- Unknown top-level JSON fields and unknown headers are ignored, so OpenAI SDKs keep working. They
+  are never forwarded to a provider.
+- A known field that the selected deployment cannot accept returns `400` before any charge. `null`
+  and the empty defaults that SDKs send count as omitted.
+- Client headers are never forwarded to providers, and provider headers are never returned.
+- Headers that start with `x-stogas-` or `x-bf-` are rejected.
+- The gateway never downloads attachments. Providers download file URLs themselves.
 
 ## Limits
 
-Requests have a 128-MiB decoded JSON ceiling. Binary E2EE applies the same payload ceiling with
-separately bounded framing and authentication overhead. It does not wrap keys for the entire fleet
-or base64-encode the body. Compressed bodies are measured after decompression.
+| Limit                                          | Value     |
+| ---------------------------------------------- | --------- |
+| Request body, after decompression              | 128 MiB   |
+| Entries in `messages`, or in `input` as a list | 100,000   |
+| JSON values in the body                        | 1,000,000 |
+| JSON nesting depth                             | 128       |
+| E2EE response body                             | 64 MiB    |
 
-The decoded body may contain at most 100,000 entries in `messages` or array-valued `input`,
-and 1,000,000 JSON values with 128 levels of nesting. Objects, arrays and scalar values count;
-property names and text inside strings do not. Exceeding the body, message or value limit returns
-HTTP 413. Base64 encoding and JSON overhead count toward the body limit.
+Objects, arrays and scalar values each count as one JSON value. Property names and text inside
+strings do not. A request over a limit returns `413`. Base64 attachments count toward the body
+size.
 
-The catalog filters deployments using requested features and output/reasoning limits before
-credential preparation and text processing. An incompatible explicitly selected model fails
-instead of being replaced. The provider enforces its file, body, context and output limits,
-and validates provider-specific parameter combinations. See [Input files](/docs/input-files).
+Each gateway also limits each IP address. Clients on a shared network share these limits:
 
-Every request must also satisfy the organization's policy.
-The default platform allowance is shared across the organization, including requests from different
-API keys. See [limits](/docs/policies/limits).
+| Limit                                 | Rate           | Burst |
+| ------------------------------------- | -------------- | ----- |
+| HTTP requests                         | 1,000 a second | 2,000 |
+| New TLS connections and E2EE sessions | 100 a second   | 200   |
 
-## Confidential transport
+Over the request limit, the gateway returns `429 ip_rate_limit_exceeded` with `Retry-After`. Over
+the connection limit, it closes the TLS handshake. Reuse connections and E2EE sessions to stay under
+it. These limits never stop a stream that has started.
 
-Native attested TLS requires TLS 1.3 with X25519MLKEM768. Ordinary HTTPS and E2EE outer carriage
-support hardened TLS 1.2 and TLS 1.3. E2EE provides its own hybrid protection inside outer HTTPS.
+Providers apply their own limits on files, context and output. Your organization's
+[limits](/docs/policies/limits) also apply.
 
-Use a managed Stogas transport. It establishes a fresh verified session, then sends encrypted
-credentials, request metadata and body records to the owning gateway. Responses, errors and SSE
-content remain encrypted until the client verifies them. Only the owner can decrypt the session;
-a new session can use another gateway without moving conversation state.
+## Transport
 
-Record ordering, replay protection and an authenticated terminal record prevent a truncated or
-modified exchange from reporting successful completion. The client rejects unexpected trailing
-bytes. The SDK never repeats an inference after an ambiguous disconnect.
+- Native attested TLS requires TLS 1.3 with X25519MLKEM768.
+- Ordinary HTTPS, and the outer HTTPS of E2EE, accept TLS 1.2 and TLS 1.3. E2EE provides its own
+  hybrid protection inside outer HTTPS.
+- E2EE records are ordered and authenticated, and every exchange ends with an authenticated
+  terminal record. A cut or changed exchange cannot report success, and trailing bytes are
+  rejected.
+- The SDK never repeats an inference after an ambiguous disconnect.
 
-See the [security model](/docs/confidential-security-model) and [SDK guide](/docs/sdk-overview).
+See [Connection modes](/docs/connection-modes).
 
-## Optional metadata
+## Receipt format
 
-```http
-Stogas-Metadata: v1
-```
+Send `Stogas-Metadata: v1` to get a final `stogas` object with usage, routing and provider details,
+and a receipt. A buffered response adds the object to the JSON. A stream sends it in a
+`: stogas {...}` SSE comment before the last event.
 
-This single option requests a final `stogas` object containing useful usage, routing and available
-provider information, plus a content receipt. Standard API `usage` remains available independently.
-A buffered response appends the object to JSON. A stream carries it in a `: stogas {...}` SSE comment
-before its terminal marker. Ordinary SSE parsers can ignore the comment.
+The `receipt` field has the schema `stogas.receipt.v1`:
 
-The nested `receipt` uses `stogas.receipt.v1` and contains `boot_sha256`, `request_sha256`,
-`response_sha256` and `signature`. One signature covers the request hash, response hash and
-SHA-256 of the RFC 8785 canonical `stogas` object with its top-level `receipt` removed. Metadata
-and keepalive comments are excluded from the response hash; the endpoint's terminal frame is
-included. The managed SDK checks requested receipts automatically.
+| Field             | Value                                                              |
+| ----------------- | ------------------------------------------------------------------ |
+| `boot_sha256`     | The boot record of the gateway that signed the receipt             |
+| `request_sha256`  | SHA-256 of the exact request body                                  |
+| `response_sha256` | SHA-256 of the exact response, including the endpoint's last event |
+| `signature`       | The gateway's signature                                            |
+
+One signature covers the request hash, response hash and SHA-256 of the RFC 8785 canonical
+`stogas` object without its `receipt` field. Metadata and keepalive comments are not part of the
+response hash. See [Receipts](/docs/receipts).
+
+## Signed documents
+
+Key manifests, approval manifests and boot records share one format:
+
+- A `{document, signature}` JSON envelope with snake_case fields and the Rekor `inclusion` proof.
+- The approval manifest contains the hardware policy and each approved gateway release and catalog
+  as `{document, provenance}`, where `provenance` is GitHub's build proof.
+- Each document names its schema. Release artifacts list their SHA-256 and size in bytes.
+- The signature covers the RFC 8785 canonical JSON of `document` with the purpose label
+  `stogas signed document v1`. The final newline of a file is not signed.
+- Signatures are composite [ML-DSA-65 and Ed25519](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/).
+  Both parts must verify.
+- A release's identity is the hash of its manifest, so a new signing key does not change the
+  identity of an existing release.
+
+GitHub, Rekor and AMD evidence keep their own standard formats.

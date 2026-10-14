@@ -1,0 +1,174 @@
+---
+title: Errors
+description: The error object, every error code, and when to retry.
+---
+
+Errors use the OpenAI error object:
+
+```jsonc
+{
+	"error": {
+		"message": "API key spend limit exceeded", // For people. The text can change.
+		"type": "billing_error",
+		"code": "key_spend_limit", // Stable. Handle errors by status and code.
+		"param": null // The request field that caused the error, when known.
+	}
+}
+```
+
+Every gateway error has a code from the lists below. A provider error keeps the provider's code and
+message when they help you fix the request, and otherwise has `"code": null`. Provider credentials
+and internal details are never shown.
+
+After a stream starts, its HTTP status cannot change, and an error arrives as an event in the
+stream. See [Streaming](/docs/streaming#handle-errors).
+
+## Error codes
+
+Codes that start with a scope come from a [policy](/docs/policies) at that scope: `organization`,
+`folder`, `grant`, `role`, `member`, `credential` or `key`. For example, `grant_spend_limit` means
+that a grant's spending limit is reached.
+
+### 400 Bad request
+
+Fix the request before you send it again. Requests rejected before dispatch cost nothing.
+
+| Code                          | Meaning                                                                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `invalid_json`                | The body is not valid JSON.                                                                                                      |
+| `invalid_request`             | A field is invalid, or the selected deployment cannot accept it. `param` names the field when known.                             |
+| `unsupported_request`         | The endpoint does not support this kind of request.                                                                              |
+| `model_unavailable`           | No deployment can serve the request. Check the model ID, credentials and routing policies.                                       |
+| `model_ambiguous`             | The request names no model, and several models match. Name one; see [Models](/docs/models#how-the-gateway-chooses-a-deployment). |
+| `provider_not_allowed`        | The model is not available from the requested provider.                                                                          |
+| `provider_unavailable`        | The requested provider is not available.                                                                                         |
+| `service_tier_unavailable`    | The model has no deployment for the requested [service tier](/docs/service-tiers).                                               |
+| `unsupported_service_tier`    | The `service_tier` value is not one of the [supported values](/docs/service-tiers#select-a-tier).                                |
+| `unsupported_tool`            | The request uses an [unavailable tool](/docs/model-tools#unavailable-tools).                                                     |
+| `parameter_limit_exceeded`    | A token limit, such as `max_output_tokens`, is outside the range that the deployment allows.                                     |
+| `byok_required`               | The provider needs [your own credential](/docs/byok) on this key.                                                                |
+| `byok_target_unavailable`     | The key's credential does not provide this deployment.                                                                           |
+| `byok_not_allowed`            | The key does not allow this credential.                                                                                          |
+| `encryption_key_required`     | An [encrypted policy](/docs/customer-encryption) needs its key in `encryption_keys`.                                             |
+| `encrypted_content_invalid`   | Encrypted policy content cannot be read.                                                                                         |
+| `input_ascii_required`        | A policy [allows only ASCII input](/docs/pii-redaction#ascii-only-input).                                                        |
+| `key_configuration_too_large` | The key's policies and credentials are too large. Remove some of them.                                                           |
+| `policy_work_limit_exceeded`  | The policies that apply need too much work for one request. Simplify them.                                                       |
+| `invalid_policy`              | Only from [Validate policy](/docs/reference/policies/validatePolicy): the policies are invalid.                                  |
+
+### 401 Unauthorized
+
+| Code              | Meaning                                                                                                     |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `invalid_api_key` | The API key is missing, wrong or deleted.                                                                   |
+| `key_exposed`     | GitHub found this secret in public, so we replaced it. See [Leaked secrets](/docs/api-keys#leaked-secrets). |
+
+### 402 Payment required
+
+| Code                   | Meaning                                                                     |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `insufficient_balance` | The organization needs more [credit](/docs/billing).                        |
+| `<scope>_spend_limit`  | A spending limit at that scope is reached. Adding credit does not raise it. |
+
+### 403 Forbidden
+
+| Code                   | Meaning                                                                     |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `<scope>_disabled`     | That scope is disabled.                                                     |
+| `<scope>_expired`      | That scope's access has expired.                                            |
+| `schedule_denied`      | A [deny period](/docs/policies/access#deny-periods) blocks requests now.    |
+| `dashboard_key_denied` | Your dashboard session cannot use this key.                                 |
+| `permission_denied`    | The key does not allow a [request policy](/docs/policies/request-policies). |
+
+### 404, 405 and 415
+
+| Status | Code                     | Meaning                                    |
+| -----: | ------------------------ | ------------------------------------------ |
+|  `404` | `route_not_found`        | The path does not exist.                   |
+|  `405` | `method_not_allowed`     | The path does not accept this HTTP method. |
+|  `415` | `unsupported_media_type` | `Content-Type` is not `application/json`.  |
+
+### 413 Content too large
+
+| Code                | Meaning                                                                                                                                |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `request_too_large` | The body is above a [request limit](/docs/reference/security#limits), or [redaction](/docs/pii-redaction#errors) reached a scan limit. |
+
+### 429 Too many requests
+
+Wait for the number of seconds in `Retry-After` when it is present.
+
+| Code                        | Meaning                                                                                      |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| `<scope>_rate_limited`      | A [request rate limit](/docs/policies/limits) at that scope is reached.                      |
+| `<scope>_token_limit`       | A token quota at that scope is reached.                                                      |
+| `<scope>_concurrency_limit` | Too many requests are running at that scope.                                                 |
+| `abuse_rate_limited`        | Requests with this secret keep failing. Wait up to two seconds.                              |
+| `ip_rate_limit_exceeded`    | Too many requests from your IP address. See [API security](/docs/reference/security#limits). |
+| `upstream_rate_limit_error` | The provider's rate limit is reached.                                                        |
+| `rate_limit_exceeded`       | Another rate limit is reached.                                                               |
+
+### 451 Unavailable for legal reasons
+
+| Code                 | Meaning                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| `region_unavailable` | The service is not available where you are. See [Availability](/docs/availability). |
+
+### 500 Internal server error
+
+| Code                                                | Meaning                                                               |
+| --------------------------------------------------- | --------------------------------------------------------------------- |
+| `internal_error`                                    | An unexpected gateway failure.                                        |
+| `catalog_unavailable`                               | The gateway has no approved catalog loaded.                           |
+| `billing_price_invalid`, `response_encoding_failed` | The provider answered, but the gateway could not finish the response. |
+| `stogas_response_proof_failed`                      | The gateway could not sign the requested [receipt](/docs/receipts).   |
+
+### 502 Bad gateway
+
+| Code                             | Meaning                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------ |
+| `upstream_authentication_failed` | The provider rejected the credential.                                          |
+| `upstream_quota_exceeded`        | The provider account has no quota left.                                        |
+| `upstream_access_denied`         | The credential cannot use the requested model.                                 |
+| `upstream_protocol_error`        | The provider sent an invalid response over its confidential connection.        |
+| `null`                           | Another provider failure, such as a dropped connection or an invalid response. |
+
+### 503 Service unavailable
+
+Send the request again later. The gateway did not send these requests to a model.
+
+| Code                            | Meaning                                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------------------- |
+| `gateway_unavailable`           | The gateway is temporarily unavailable.                                                       |
+| `gateway_draining`              | The gateway is shutting down for an update. Send new work on a new connection.                |
+| `gateway_capacity_exceeded`     | The gateway is too busy to accept the request now.                                            |
+| `ip_admission_unavailable`      | The gateway cannot track new IP addresses now.                                                |
+| `key_configuration_changed`     | The key changed, and the gateway is loading the new version.                                  |
+| `byok_unavailable`              | Your provider credential is unavailable.                                                      |
+| `upstream_capacity_unavailable` | The provider has no capacity now.                                                             |
+| `upstream_verification_failed`  | The provider's confidential evidence did not verify, so the gateway did not send the request. |
+| `upstream_configuration_error`  | Our provider configuration is unavailable.                                                    |
+
+A `503` with `"code": null` comes from the provider, and the request may have reached it.
+
+### 504 and 529
+
+| Status | Code              | Meaning                                                                              |
+| -----: | ----------------- | ------------------------------------------------------------------------------------ |
+|  `504` | `request_timeout` | A [timeout](/docs/policies/timeouts) expired. Generation may continue and be billed. |
+|  `529` | `null`            | The provider is overloaded.                                                          |
+
+## Retries
+
+The gateway does not retry a request after a provider error, timeout or unclear failure. A retry from
+your client is a new request, billed on its own. If the connection drops after the request was
+sent, the model may already have run. Check the request in [Analytics](/docs/analytics) before you
+send it again.
+
+Before dispatch, an [attempt limit](/docs/policies/routing#attempt-limit) can let the gateway try
+another credential, and Chutes can retry when it proves that the first call did not run.
+
+When a provider answers `429`, `503` or `529` with `Retry-After`, the gateway passes on its wait
+time in seconds. Responses with `upstream_authentication_failed`, `upstream_quota_exceeded` or
+`upstream_access_denied` carry `X-Should-Retry: false`, because a retry fails until the provider
+credential or account changes. The OpenAI and Anthropic SDKs obey this header.

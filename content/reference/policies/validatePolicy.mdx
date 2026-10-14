@@ -1,0 +1,27 @@
+---
+title: Validate policy
+description: Checks the policies that would apply to a request, without saving
+  them or calling a model.
+full: true
+_openapi:
+  preload:
+    - stogas
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Checks the policies that would apply to a request, without saving them
+          or calling a model.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="stogas" operations={[{ path: '/v1/policies/validate', method: 'post' }]} />
+    </>
+  );
+}

@@ -42,9 +42,11 @@ async function main() {
 								'...catalog',
 								'---Models---',
 								'...openai-compatible',
-								'---Gateway---',
-								'...gateway',
+								'---Policies---',
+								'...policies',
+								'---API behavior---',
 								'provider-behavior',
+								'errors',
 								'security',
 								'...'
 							]
@@ -60,6 +62,10 @@ async function main() {
 					if (file.path === path.join('openai-compatible', 'meta.json')) {
 						content.title = 'Models';
 						content.description = 'Model inference endpoints.';
+					}
+					if (file.path === path.join('policies', 'meta.json')) {
+						content.title = 'Policies';
+						content.description = 'Policy check endpoint.';
 					}
 					if (file.path === path.join('catalog', 'meta.json')) {
 						content.title = 'Catalog';
@@ -103,9 +109,9 @@ async function main() {
 							)
 							.replace(
 								'<OpenAPIPage ',
-								`<Callout type="info" title="Application E2EE">
-        Use the managed transport to send this request with E2EE. Your request and response types
-        stay the same; the transport handles encryption and verification. See <a href="/docs/reference/security#confidential-transport">Application E2EE</a> and <a href="/docs/reference/provider-behavior">Compatibility Notes</a>.
+								`<Callout type="info" title="Verified connections">
+        Send this request through a <a href="/docs/sdk-overview">Stogas SDK</a> to verify the gateway
+        and encrypt the request. The request and response formats stay the same. See <a href="/docs/connection-modes">Connection modes</a> and <a href="/docs/reference/provider-behavior">Compatibility notes</a>.
       </Callout>
 
       <OpenAPIPage `

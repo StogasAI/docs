@@ -3,12 +3,13 @@ import { messages } from './messages';
 import { docs, reference } from 'collections/server';
 import spec from '@/content/openapi/stogas.json';
 import type { Item, Root } from 'fumadocs-core/page-tree';
-import { loader } from 'fumadocs-core/source';
+import { loader, type LoaderPlugin } from 'fumadocs-core/source';
 import { lucideIconsPlugin } from 'fumadocs-core/source/lucide-icons';
 import { openapiPlugin } from 'fumadocs-openapi/server';
 import { BookOpen, TerminalSquare } from 'lucide-react';
 import React from 'react';
 import { stringify } from 'yaml';
+import { languageIconPaths, type LanguageIcon } from './language-icons';
 import {
 	docsContentRoute,
 	docsImageRoute,
@@ -18,11 +19,27 @@ import {
 	referenceRoute
 } from './shared';
 
+// SDK guides name a language logo as `logo:<name>`; Lucide resolves every other icon name.
+function languageIconsPlugin(): LoaderPlugin {
+	function resolve<Node extends { icon?: React.ReactNode }>(node: Node): Node {
+		if (typeof node.icon !== 'string' || !node.icon.startsWith('logo:')) return node;
+		const name = node.icon.slice('logo:'.length);
+		if (!Object.hasOwn(languageIconPaths, name)) throw new Error(`Unknown language icon: ${name}`);
+		node.icon = React.createElement(
+			'svg',
+			{ viewBox: '0 0 24 24', fill: 'currentColor', 'aria-hidden': true },
+			React.createElement('path', { d: languageIconPaths[name as LanguageIcon] })
+		);
+		return node;
+	}
+	return { name: 'stogas:language-icons', transformPageTree: { file: resolve, folder: resolve } };
+}
+
 export const source = loader({
 	baseUrl: docsRoute,
 	i18n,
 	source: docs.toFumadocsSource(),
-	plugins: [lucideIconsPlugin()]
+	plugins: [languageIconsPlugin(), lucideIconsPlugin()]
 });
 
 export const apiSource = loader({

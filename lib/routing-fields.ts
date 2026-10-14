@@ -8,6 +8,7 @@ export type RoutingFieldGroup =
 	| 'capabilities'
 	| 'data-handling'
 	| 'upstream'
+	| 'pricing'
 	| 'route-provider'
 	| 'request';
 
@@ -15,12 +16,13 @@ function groupOf(field: string): RoutingFieldGroup {
 	if (field.startsWith('deployment.capabilities.')) return 'capabilities';
 	if (field.startsWith('deployment.dataHandling.')) return 'data-handling';
 	if (field.startsWith('deployment.upstream.')) return 'upstream';
+	if (field.startsWith('deployment.pricing.')) return 'pricing';
 	if (field.startsWith('route.') || field.startsWith('provider.')) return 'route-provider';
 	return field.split('.')[0] as RoutingFieldGroup;
 }
 
 export function routingFields(group: RoutingFieldGroup) {
-	return Object.entries(registry.fields)
+	return Object.entries(registry)
 		.filter(([name]) => groupOf(name) === group)
 		.map(([name, type]) => {
 			const description = descriptions[name as keyof typeof descriptions];

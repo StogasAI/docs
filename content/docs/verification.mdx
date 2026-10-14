@@ -1,0 +1,106 @@
+---
+title: Gateway verification
+description: What the SDK checks before it trusts a gateway, and how to inspect the evidence yourself.
+icon: FingerprintPattern
+---
+
+Before the SDK sends your API key or prompt, it checks on your device that the gateway runs an
+approved release on genuine AMD SEV-SNP hardware. Native packages and browser WebAssembly use the
+same Rust verifier. If a check fails, the SDK sends nothing. Dates are checked against your device
+clock, so a wrong clock makes verification fail.
+
+## What the SDK checks
+
+| Evidence                                                   | Shows                                                                                     |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Key manifest, signed by our root key                       | Which online signing keys we have authorized                                              |
+| Approval manifest, signed by an online key                 | Which gateway releases, catalogs and hardware policy are approved                         |
+| Rekor inclusion proofs for both manifests                  | Both are in the public [Sigstore Rekor](https://docs.sigstore.dev/logging/overview/) log  |
+| Sigstore's current keys, signed by Sigstore's root keys    | Which Rekor keys check the inclusion proofs                                               |
+| GitHub build proofs in the approval manifest               | Each approved release was [built from its public source](/docs/reproducible-builds)       |
+| AMD certificate chain and revocation list                  | The hardware report comes from a genuine AMD chip that AMD has not revoked                |
+| SEV-SNP hardware report                                    | The VM booted an approved release, with debugging and migration off, on approved firmware |
+| A fresh challenge from your client, signed into the report | The report was made now, for this connection, and binds the connection's keys             |
+| The gateway's boot record and its Rekor inclusion          | The gateway's boot is in the public log                                                   |
+
+The SDK has our root key, Sigstore's root keys and AMD's root certificates built in. Downloaded
+evidence cannot replace them. The approval manifest names the exact Sigstore keys in the evidence,
+so the SDK keeps working when Sigstore changes its keys.
+
+The gateway's TLS, E2EE and receipt-signing keys are generated inside the VM and never leave it. A
+public boot record alone does not prove that a connection reaches that gateway; only the fresh
+challenge does.
+
+## Batched attestation
+
+The gateway puts the challenges of connections that arrive together into a Merkle tree, and the
+chip signs one report over the tree's root. Your client gets that report and a proof, at most 644
+bytes, that its challenge is in the tree. Every connection still gets a report made after its
+challenge, and one report serves up to 1,024 new connections. Other clients' challenges appear in
+the proof only as hashes.
+
+## Hardware policy
+
+The hardware policy lists the approved chip models and the minimum firmware and microcode versions
+for each. Each release also fixes its own VM settings, such as debugging off. A gateway must meet
+both.
+
+During a firmware update, the policy can allow more than one configuration for the same chip. A
+gateway must meet every requirement of one of them. When the update is done, we remove the old
+configuration, and gateways that still use it lose their approval.
+
+## Evidence updates
+
+The SDK loads evidence when it starts, and once more if a connection needs newer evidence. It does
+not poll in the background. Evidence comes from `evidence.stogas.ai`, with an independent AWS copy as
+a fallback. The SDK checks everything it downloads, so a server cannot make it trust invalid
+evidence. Call `refreshBundle` (`refresh_bundle` in Rust and Python, `RefreshBundle` in Go) to load
+new evidence now.
+
+Gateways check their own approval about every two minutes. When we withdraw a release, or
+required evidence expires, the gateway stops accepting new requests. Requests that are running
+finish.
+
+### Revocation
+
+AMD signs its revocation lists with an expiry date. A publisher that holds back a newer list can
+delay a revocation only until the older list expires. Once the SDK has seen a revocation, an older
+copy of the evidence cannot undo it.
+
+## Trust Center
+
+The Trust Center on the dashboard **Overview** shows the current evidence and its transparency
+history, checked in your browser with the same verifier. The history has a tab for each kind of
+record:
+
+- **Nodes:** each gateway boot, with its hardware report. **Decoded** shows the report fields,
+  including the launch measurement. **Signed JSON** shows the original document.
+- **Gateway releases**, with their GitHub build proofs.
+- **Catalogs**, **Hardware policy**, **Signing manifest** and **Release policy**.
+
+Each card has one mark that shows that its evidence passed verification. Hover over or focus the
+mark to see how long the check took. Search each history tab by ID or version, or a hardware policy
+by the start of its digest.
+
+Past boots stay checkable after keys rotate or AMD lists expire: we keep the original evidence,
+and the verifier checks it as of the time Rekor logged the boot. New connections always need
+current evidence.
+
+## Search Rekor yourself
+
+Every manifest, policy and boot record is in the public Rekor log. Each online signing key has a
+Rekor submission key, listed in the verified key manifest. Save that public key as
+`stogas-rekor-public.pem`, then use [rekor-cli](https://docs.sigstore.dev/logging/cli/):
+
+```console
+rekor-cli search --rekor_server https://rekor.sigstore.dev \
+  --pki-format x509 --public-key stogas-rekor-public.pem
+rekor-cli get --rekor_server https://rekor.sigstore.dev --uuid <entry-uuid>
+```
+
+Search with each key that was in use during the period you want to check.
+
+- Rekor's search index is best effort. An empty result does not prove that an entry does not exist.
+- A search result does not prove that we signed the document. Check the document's
+  signature and its digest against the log entry.
+- The submission key only identifies who submitted an entry. It cannot approve anything.

@@ -1,16 +1,14 @@
 ---
 title: Policies
-description: Set budgets, choose providers, control access, and configure plugins.
+description: Control spending, providers, access and plugins for your API keys.
 ---
 
-A policy is a JSON document that controls which requests an API key may make, how much it may
-use, what text reaches a provider, and which requests are exported. Save shared settings on organizations, folders, grants,
-roles, members and credentials, then add key or request settings. Every request must satisfy
-all applicable requirements.
+A policy is a JSON document that controls which requests an API key can make, how much it can use,
+what text reaches a provider and where request data goes. You can save a policy on an organization,
+folder, grant, role, member, provider credential or key. Every request follows all the policies
+that apply to it.
 
-## Start with a policy
-
-This policy requires a no-training declaration and caps lifetime upstream spending at $10:
+This policy allows only providers that do not train on prompts, and caps spending at $10:
 
 ```json title="policy.json"
 {
@@ -18,90 +16,52 @@ This policy requires a no-training declaration and caps lifetime upstream spendi
 		"filter": "deployment.dataHandling.trainingUse == false"
 	},
 	"limits": {
-		"spend": {
-			"lifetimeUsd": "10"
-		}
+		"spend": { "lifetimeUsd": "10" }
 	}
 }
 ```
 
-On an organization, that $10 is shared across all its keys. On a grant, it is shared across the
-grant's member keys. On a key, it applies only to that key. A key cannot override a parent cap.
+On an organization, all its keys share the $10. On a key, the $10 is for that key only. A key
+policy cannot raise a cap that an organization or grant policy sets.
 
-Use `null` when no policy is configured. An empty object `{}` is saved as `null`; omitted settings add no
-restriction at that scope. They do not remove parent restrictions or platform safeguards.
-
-[Edit a policy](/docs/policies/editing) explains how to save it.
-[Scopes and inheritance](/docs/policies/scopes) explains shared rules, permissions, and when
-changes take effect.
+<Cards>
+	<Card title="Edit a policy" href="/docs/policies/editing">
+		Where to edit, how to check a draft, and size limits.
+	</Card>
+	<Card title="Scopes and inheritance" href="/docs/policies/scopes">
+		Which policies apply, how they combine, and who can change them.
+	</Card>
+	<Card title="Limits" href="/docs/policies/limits">
+		Spending, request rate, tokens and concurrent requests.
+	</Card>
+	<Card title="Routing" href="/docs/policies/routing">
+		Which deployments can serve a request, and in which order.
+	</Card>
+	<Card title="Access and expiration" href="/docs/policies/access">
+		Turn resources off, expire them, or block requests on a schedule.
+	</Card>
+	<Card title="Timeouts" href="/docs/policies/timeouts">
+		How long a request can wait in total and for provider output.
+	</Card>
+	<Card title="Request policies" href="/docs/policies/request-policies">
+		Add settings to one request.
+	</Card>
+</Cards>
 
 ## Document fields
 
-Add the settings you need. Each field links to its examples, accepted values, and behavior.
-
 <PolicyFields section="document" />
 
-The same [JSON Schema](/schemas/key-config-v1.json) supplies these field types and editor
-completion. [Document rules](/docs/policies/editing#document-rules) cover validation and size limits.
-
-## Request timeouts
-
-Requests default to a **60-minute total wait** and a **five-minute wait for useful provider
-output**. These limits control how long the caller waits. Configure either in whole seconds
-from 1 through 3600:
-
-```json title="policy.json"
-{
-	"timeouts": {
-		"totalSeconds": 900,
-		"outputIdleSeconds": 120
-	}
-}
-```
-
-`totalSeconds` starts after the gateway admits the received request body and includes policy,
-preparation, authorization and provider work. It never restarts. If preparation exhausts the
-budget, the gateway rejects the request before dispatch.
-
-`outputIdleSeconds` starts when provider work is dispatched and restarts after each useful
-output, including text, reasoning, tool output or media. Headers, keepalives, usage-only updates
-and empty lifecycle events do not restart it. Buffered requests expose no intermediate output,
-so this limit applies until the complete response arrives. Increase it for long silent reasoning;
-setting it equal to the total limit leaves the total deadline as the effective bound.
-
-The earlier deadline wins. Required values combine by minimum **for each field** across applicable
-policies. A child cannot lengthen a parent's requirement. Conditional defaults can be replaced
-independently, and permitted request policies can set either field. See [scopes and inheritance](/docs/policies/scopes).
-
-Expiry ends the response with `request_timeout`: HTTP 504 before the response starts, or an
-error event after streaming begins. It never triggers an automatic retry or fallback.
-Dispatched provider work continues under the gateway's separate 60-minute execution limit.
-Stogas keeps reading its response and bills the returned usage, including usage received after
-your response ends. A short timeout does not limit the cost of already dispatched inference.
-Client-library retries are separate; configure them to avoid replaying a timed-out request
-whose outcome is unknown.
-
-<PolicyFields section="timeouts" />
+The [JSON Schema](/schemas/key-config-v1.json) gives these fields to the dashboard editor and to
+[external editors](/docs/policies/editing#use-an-external-editor).
 
 ## Plugins
 
-Plugins use the same policy scopes and inheritance rules:
+| Plugin                 | Use it to                                                                                                |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `stogasTextExtraction` | [Turn text files into prompt text](/docs/input-files#turn-text-files-into-prompt-text) before redaction. |
+| `stogasRedaction`      | [Replace sensitive text](/docs/pii-redaction) before Stogas calls the provider.                          |
+| `stogasExport`         | [Send each request and response](/docs/export) to your webhook.                                          |
 
-| Plugin                                       | Use it to                                           |
-| -------------------------------------------- | --------------------------------------------------- |
-| [PII Redaction](/docs/plugins/pii-redaction) | Remove sensitive text before provider dispatch.     |
-| [Export](/docs/plugins/export)               | Send request and response JSON to your own webhook. |
-
-[Text extraction](/docs/input-files#text-extraction) converts inline UTF-8 file content before
-input checks and redaction. [Encrypt plugin settings](/docs/cli#encrypt-plugin-settings) to keep
-private rules and destination credentials unreadable when saved.
-
-## Policies for one request
-
-The optional inference-request `policy` field accepts permitted routing, timeouts, access, input and
-plugin settings, including flat conditional rules. It cannot define shared limits. See
-[Request policies](/docs/policies/request-policies) for permissions and examples.
-
-A policy governs an existing credential. It does not create keys, grant membership, or add funds.
-See [API keys and grants](/docs/api-keys) for credential management and [BYOK](/docs/byok) for
-provider credentials.
+To keep plugin settings private, such as redaction terms or webhook tokens,
+[encrypt them](/docs/customer-encryption#encrypt-plugin-settings).

@@ -1,65 +1,113 @@
 ---
-title: Balance and billing
+title: Billing
 description: Add prepaid credit, save billing details, and download receipts.
+icon: Wallet
 ---
 
-Select the organization that will receive the credit. An inactive organization needs at least
-$1 in confirmed credited funds to activate; sending $1 before fees may not be enough.
+Usage is prepaid. Requests spend your organization's credit at the
+[catalog](https://stogas.ai/catalog) rates. A new organization needs at least $1 of confirmed
+credit, after fees, before it can send requests.
 
-1. Save the organization's [billing details](#billing-details).
-2. On **Balance**, choose Bitcoin or Monero through BTCPay, or **Choose currency** under CCPayment.
-3. Select the coin and network, then review the estimated fees and resulting USD credit.
-4. Open the current payment instructions and send from your wallet.
-5. Check **Recent payments** for confirmed credit. Activation follows the credited amount.
+## Add credit
 
-Completed requests settle from their final usage record after the response ends. If a gateway stops before it settles a request, Stogas releases that request's reservation without charge within a few minutes, and the request has no history record. A record that fails settlement checks keeps its reservation until Stogas reviews it; time alone never charges or releases it. Contact [billing@stogas.ai](mailto:billing@stogas.ai) about a reservation that does not clear.
+<Steps>
+<Step>
 
-Request history reports the charge calculated from final usage. While a gateway cannot settle requests, it returns `503` with `gateway_unavailable` to new inference requests; requests that already hold a reservation continue.
+### Save billing details
+
+Select the organization that receives the credit and save its [billing details](#billing-details).
+
+</Step>
+<Step>
+
+### Choose a payment method
+
+On **Balance**, choose Bitcoin or Monero through [BTCPay](#pay-through-btcpay), or **Choose
+currency** for [CCPayment](#pay-through-ccpayment). Select the coin and network, then check the
+estimated fees and USD credit.
+
+</Step>
+<Step>
+
+### Send the payment
+
+Open the current payment instructions and send from your wallet.
+
+</Step>
+<Step>
+
+### Check the credit
+
+**Recent payments** shows when the credit is confirmed.
+
+</Step>
+</Steps>
 
 ## Fees
 
-Adding funds carries a 2% Stogas fee, with payment processing, network, and conversion costs itemized separately. Managed requests spend your prepaid credit at the published catalog rates, with no additional Stogas request fee.
+| Charge                           | Fee                                                                                      |
+| -------------------------------- | ---------------------------------------------------------------------------------------- |
+| Adding credit                    | 2%, plus the payment processor, network and conversion costs. Each is listed separately. |
+| Requests with managed providers  | The catalog rates. No other fee.                                                         |
+| Requests with [BYOK](/docs/byok) | 2% of the usage at catalog rates. Your provider bills you for the usage.                 |
 
-With [BYOK](/docs/byok), your provider bills you directly. Stogas charges 2% of usage valued at catalog rates to your prepaid balance; the funding fee also applies when adding that credit. Negotiated provider rates do not change the catalog basis of the BYOK fee.
+Your wallet's sending fee is separate. The BYOK fee uses catalog rates even if you pay your
+provider a negotiated rate.
+
+Each request [holds](/docs/usage#how-a-request-is-charged) its largest possible cost, then charges
+its actual usage. If a request's final record cannot be recovered, contact
+[billing@stogas.ai](mailto:billing@stogas.ai).
 
 ## Billing details
 
-Each organization has its own billing details. Choose **Individual** or **Business** and a country before opening a deposit address. For the United States, add a state and ZIP code; for Canada, add a province or territory and postal code. You may add a name and postal address. Businesses can also add a billing email, tax ID, and purchase-order reference. A saved tax ID does not establish tax exemption or verified business status.
+Each organization has its own billing details. Save them before you pay: each payment keeps the
+details saved when we received it, and later changes do not change earlier payments or
+receipts.
 
-Save billing changes before paying. Each payment keeps the details saved when it was received, even when several payments use the same address. Updating billing details does not replace the address or change earlier payments and receipts.
+- Choose **Individual** or **Business**, and a country. [Sanctioned countries](/docs/availability)
+  are not accepted.
+- In the United States, add a state and ZIP code. In Canada, add a province or territory and a
+  postal code.
+- You can add a name and postal address. A business can also add a billing email, tax ID and
+  purchase order reference. A tax ID does not make you tax exempt.
 
-## Paying through BTCPay
+## Pay through BTCPay
 
-Scan the QR code, select **Open wallet**, or copy the address. The QR code and wallet link include the current estimated amount when available. Your wallet's sending fee is separate.
+Scan the QR code, select **Open wallet**, or copy the address. Send only the selected currency, on
+its own blockchain, and check the address and amount in your wallet.
 
-Send only the selected currency on its native blockchain. Check the address and amount in your wallet before sending.
+- Payment instructions expire after 24 hours. Open them again before each payment instead of saving
+  the address. Opening them in the last hour gives new instructions.
+- A payment that was detected before the instructions expired still completes. A payment to old
+  instructions may need support to recover.
+- Credit is added after the payment confirms. If a payment is missing, contact
+  [billing@stogas.ai](mailto:billing@stogas.ai) with its currency and transaction reference.
 
-Opening deposit details again returns the same address for your user and currency. Deposit instructions expire after 24 hours; opening the dialog during the final hour gets a replacement. Always open the current deposit details before sending, rather than saving an address for recurring payments. Expiry does not invalidate the blockchain address. Already detected payments continue through confirmation; an undetected payment to old instructions may need support to recover.
+## Pay through CCPayment
 
-**Recent payments** shows received payments and their credit status. Credit is added after confirmation. If a payment is missing or needs review, contact [billing@stogas.ai](mailto:billing@stogas.ai) with its currency and transaction reference. Never send wallet keys or recovery phrases.
+Choose a coin and network, then enter the USD credit that you want. The calculator estimates the
+coin amount and each fee. There is no payment deadline.
 
-## Paying through CCPayment
+- Copy the amount separately, because the QR code contains only the address.
+- Include the memo or tag when one is shown, and send at least the processor's minimum. A wrong
+  network or a missing memo can make a payment impossible to recover.
+- Each payment is credited at its price when received, after the actual processor fee, the network
+  and conversion costs shown, and the 2% fee. A late payment or a different amount is still
+  credited.
 
-Choose an available coin and network, then enter your desired USD credit. Before you send, the calculator estimates the coin amount, processor service fee, network and conversion allowances, and Stogas's 2% fee. Your wallet's sending fee is separate. The estimated USD credit can change with the payment's receipt-time price and actual processor fee.
-
-There is no payment deadline. Each successful payment is credited separately using its receipt-time USD price after the actual processor service fee, the disclosed network and conversion allowances, and Stogas's 2% fee. Delayed confirmation, an old estimate, or sending a different amount does not by itself require manual reconciliation. The disclosed network allowance applies to each transfer of that coin to that address; Stogas absorbs differences from later aggregation bills without another debit to your balance.
-
-Use only the selected coin and network. Copy the estimated amount separately: the QR contains only the address. Include the memo or tag whenever shown, and respect the processor's minimum deposit. A wrong network or missing memo may prevent recovery. Check current payment instructions before sending, even when the address is unchanged.
-
-Credit is added only after the processor confirms success and the payment passes verification. **Held for provider review** means CCPayment has withheld the transfer from the available merchant balance. Contact [billing@stogas.ai](mailto:billing@stogas.ai); sending another payment does not release the hold. **Credited · under review** means credit was already recorded but later payment evidence needs investigation. A review does not guarantee a refund or release date. The receipt records the receipt-time price, fees, and credited amount.
+| Status                       | Meaning                                                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Held for provider review** | CCPayment is holding the transfer. Contact [billing@stogas.ai](mailto:billing@stogas.ai); another payment does not release it. |
+| **Credited · under review**  | The credit is on your balance, and we are checking the payment.                                                                |
 
 ## Receipts
 
-Once a payment is settled and credited, select **Receipt** in its payment row. The PDF itemizes prepaid AI credit, our fee, network costs, and any currency-conversion fee. It includes your saved billing details, payment and issue dates, the exchange rate, and the transaction reference.
-
-USD amounts display cents; an attached record preserves exact amounts and payment evidence. The receipt number and customer details stay fixed when downloaded again. Tax collected records the amount actually collected; it does not establish tax exemption.
-
-## Accounting precision
-
-Money uses exact decimal USD strings with up to 36 fractional digits. The smallest supported amount is $10⁻³⁶. For example, a rate of $0.001 per million tokens costs exactly $0.000000001 for one token. Each meter combines its usage before rounding the charge upward once; BYOK rounds the 2% fee on the upstream total at the same precision.
-
-See [Request metrics](/docs/request-metrics) for recorded costs, usage, and Analytics statistics.
+After a payment is credited, select **Receipt** in its row. The PDF lists the AI credit, our
+fee, network costs and any conversion fee, with your billing details, the dates, the exchange rate
+and the transaction reference. It shows cents; an attached record keeps the exact amounts. The
+receipt number and details stay the same when you download it again.
 
 ## Refunds
 
-Prepaid credit is not withdrawable. Refunds follow the [Terms of Service](https://stogas.ai/tos) and applicable law. Contact [billing@stogas.ai](mailto:billing@stogas.ai) for payment errors or refund requests.
+You cannot withdraw prepaid credit. Refunds follow the [Terms of Service](https://stogas.ai/tos)
+and the law. Contact [billing@stogas.ai](mailto:billing@stogas.ai) about payment errors or refunds.

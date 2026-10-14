@@ -1,6 +1,7 @@
 ---
 title: Dart
 description: Use the OpenAI Dart client with the native Stogas verifier.
+icon: logo:dart
 ---
 
 Use the [OpenAI Dart client](https://pub.dev/packages/openai_dart) for typed
@@ -257,16 +258,13 @@ transport after its requests finish. This example does not provide Android or iO
 binaries. Flutter Web cannot use `dart:ffi`; use the [browser transport](/docs/browser-workers)
 through JavaScript interoperability.
 
-## Workload configuration
+## Options
 
 ```dart
 StogasTransport(library, {'security': 'e2ee', 'max_connections': 4})
 ```
 
-The configuration map also accepts `environment` and `base_url`. Set timeouts and cancellation on the HTTP client. The example owns stream cancellation and checks completion.
+The configuration map also accepts `base_url`. Set timeouts and cancellation on the HTTP client. The example owns stream cancellation and checks completion.
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+Native attested TLS is the default; this example selects E2EE. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

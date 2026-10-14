@@ -1,6 +1,7 @@
 ---
 title: Swift
 description: Send requests from macOS through verified transport.
+icon: logo:swift
 ---
 
 The Swift package links our Rust transport directly. Use Swift 6.2 or later; this
@@ -9,9 +10,9 @@ streaming example uses macOS Foundation. Set `STOGAS_API_KEY` and `STOGAS_MODEL`
 ## Install
 
 Download `stogas-swift-v<version>.tar.gz` from the
-[verifier release](https://github.com/StogasAI/verifier/releases). Download its complete
-asset set and verify it with an independently trusted `stogas verify-release <directory>`
-before extracting the Swift archive into `Vendor/Stogas`. Add it to your package:
+[verifier release](https://github.com/StogasAI/verifier/releases),
+[verify it](/docs/reproducible-builds#verify-an-sdk-download) and extract it into `Vendor/Stogas`.
+Add it to your package:
 
 ```swift
 // In Package.swift:
@@ -105,16 +106,13 @@ visible to callers; incomplete delivery must not become success or an automatic 
 Reuse one session in a long-running application and invalidate it before closing the transport. The release manifest lists the package’s supported targets. Use `STOGAS_BASE_URL` only when
 connecting through a separately running [verifier CLI](/docs/cli).
 
-## Workload configuration
+## Options
 
 ```swift
 try Transport(options: TransportOptions(security: "e2ee", maxConnections: 4))
 ```
 
-`environment` defaults to `prod`; `baseURL` accepts an HTTPS origin. Configure request and resource timeouts on `URLSessionConfiguration` and cancel the owning task. Startup is blocking; keep it off the main actor.
+`baseURL` accepts an HTTPS origin. Configure request and resource timeouts on `URLSessionConfiguration` and cancel the owning task. Startup is blocking; keep it off the main actor.
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+Native attested TLS is the default; this example selects E2EE. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

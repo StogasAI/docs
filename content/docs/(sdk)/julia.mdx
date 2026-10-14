@@ -1,6 +1,7 @@
 ---
 title: Julia
 description: Use Julia's OpenAI and HTTP clients with the native Stogas verifier.
+icon: logo:julia
 ---
 
 Use [OpenAI.jl](https://github.com/JuliaML/OpenAI.jl) for ordinary requests and
@@ -229,16 +230,13 @@ For signed response metadata and automatic receipt verification, add
 Keep its complete URL, including the path. When set, the example uses that
 transport instead of loading the native library.
 
-## Workload configuration
+## Options
 
 ```julia
 StogasNative.Transport(library; configuration=Dict("security" => "e2ee", "max_connections" => 4))
 ```
 
-The dictionary also accepts `environment` and `base_url`. Configure `retry`, `readtimeout` and cancellation in the HTTP client; the example also enforces an overall stream deadline.
+The dictionary also accepts `base_url`. Configure `retry`, `readtimeout` and cancellation in the HTTP client; the example also enforces an overall stream deadline.
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+Native attested TLS is the default; this example selects E2EE. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

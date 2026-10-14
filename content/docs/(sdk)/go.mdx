@@ -1,139 +1,153 @@
 ---
 title: Go
-description: Use Stogas from Go.
+description: Send verified requests from Go with the official OpenAI client.
+icon: logo:go
 ---
+
+The Go package runs a local connection to a verified gateway. Point the OpenAI client at its URL,
+and keep using Chat Completions and Responses as usual.
 
 ## Install
 
 ```console
-go get github.com/StogasAI/verifier/go
-go get github.com/openai/openai-go/v3
+go get github.com/StogasAI/verifier/go github.com/openai/openai-go/v3
 ```
 
-Use the official OpenAI Go client with the Stogas cgo binding. Tagged Stogas releases include the native Rust library.
-Enable cgo and install a C compiler for your platform. On Alpine or another musl system,
-build with `-tags musl`; other Linux builds use the glibc library. These libraries use
-the host's C runtime. The release's matching debug archive supports source-level relinking.
+The package links the Stogas Rust library with cgo, so turn cgo on and install a C compiler. On
+Alpine and other musl systems, build with `-tags musl`.
 
-## Stream with the OpenAI client
+## Send a request
+
+Create one transport and one client, and reuse them for every request:
 
 ```go
 package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
-	"os/signal"
-	"time"
 
 	stogas "github.com/StogasAI/verifier/go"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
+	"github.com/openai/openai-go/v3/responses"
 )
 
-func client(baseURL, apiKey string) (openai.Client, *http.Client) {
-	network := http.DefaultTransport.(*http.Transport).Clone()
-	network.Proxy = nil // The managed transport URL is local and must bypass proxies.
-	httpClient := &http.Client{
-		Transport:     network,
-		Timeout:       45 * time.Minute,
-		CheckRedirect: func(*http.Request, []*http.Request) error { return errors.New("redirects are disabled") },
-	}
-	return openai.NewClient(
-		option.WithAPIKey(apiKey), option.WithBaseURL(baseURL),
-		option.WithMaxRetries(0), option.WithHTTPClient(httpClient),
-	), httpClient
-}
-
 func run(ctx context.Context) error {
-	key, model := os.Getenv("STOGAS_API_KEY"), os.Getenv("STOGAS_MODEL")
-	if key == "" || model == "" {
-		return errors.New("STOGAS_API_KEY and STOGAS_MODEL are required")
-	}
-	baseURL := os.Getenv("STOGAS_BASE_URL")
-	if baseURL == "" {
-		transport, err := stogas.NewTransport(stogas.TransportOptions{})
-		if err != nil {
-			return err
-		}
-		defer transport.Close()
-		baseURL, err = transport.BaseURL()
-		if err != nil {
-			return err
-		}
-	}
-	api, network := client(baseURL, key)
-	defer network.CloseIdleConnections()
-	stream := api.Chat.Completions.NewStreaming(ctx, openai.ChatCompletionNewParams{
-		Model:    model,
-		Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Say hello in one sentence.")},
-	})
-	defer stream.Close()
-	for stream.Next() {
-		for _, choice := range stream.Current().Choices {
-			fmt.Print(choice.Delta.Content)
-		}
-	}
-	if err := stream.Err(); err != nil {
+	// Checks the gateway, then connects with attested TLS.
+	transport, err := stogas.NewTransport(stogas.TransportOptions{})
+	if err != nil {
 		return err
 	}
-	fmt.Println()
+	defer transport.Close()
+	baseURL, err := transport.BaseURL() // A local URL with a random secret.
+	if err != nil {
+		return err
+	}
+
+	network := http.DefaultTransport.(*http.Transport).Clone()
+	network.Proxy = nil // Do not send the local URL through a proxy.
+	client := openai.NewClient(
+		option.WithAPIKey(os.Getenv("STOGAS_API_KEY")),
+		option.WithBaseURL(baseURL),
+		option.WithMaxRetries(0), // A retried request can run twice.
+		option.WithHTTPClient(&http.Client{
+			Transport: network,
+			// A redirect would send the request again.
+			CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+		}),
+	)
+
+	response, err := client.Responses.New(ctx, responses.ResponseNewParams{
+		Model: "chutes-mistral-nemo-instruct-2407",
+		Input: responses.ResponseNewParamsInputUnion{OfString: openai.String("Say hello in one sentence.")},
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println(response.OutputText())
 	return nil
 }
 
 func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-	if err := run(ctx); err != nil {
+	if err := run(context.Background()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 ```
 
-Set `STOGAS_API_KEY` and `STOGAS_MODEL` before running the example. Reuse the transport and client
-for subsequent requests; close them when the application stops.
+The local URL accepts Chat Completions, Responses and the policy check endpoint. Requests through it
+can run for up to one hour. Set a shorter deadline with the request `context.Context` or
+`http.Client.Timeout`.
 
-Ctrl+C cancels the request context. Check `stream.Err()` before treating the stream as complete;
-closing it early does not verify delivery. The client disables redirects and inference retries
-and bypasses proxies for the local transport URL. Its request timeout is 45 minutes.
-
-For a buffered request, use `api.Chat.Completions.New(ctx, params)` and read
-`response.Choices[0].Message.Content`. The same client supports `api.Responses.New`.
-See the [runnable example](https://github.com/StogasAI/verifier/tree/main/examples/go-openai).
-
-Zero-valued transport options select native attested TLS and at most four connections.
-Use `Security: "e2ee"` for application encryption over HTTPS. `BaseURL` changes only the HTTPS
-origin; evidence authorities remain compiled into the package. `RefreshBundle()` is explicit.
-
-Add `option.WithHeader("Stogas-Metadata", "v1")` to a request to receive final metadata and
-an automatically verified content receipt.
-
-## Offline verification
-
-Use `NewEvidence` with an explicit environment, then `Refresh` with evidence bytes. Keep the
-returned snapshot while verifying a boot or saved receipt, and close both handles when finished.
-The snapshot remains usable after its owner is closed.
-
-`VerifyLoggedBoot` checks the archived boot and its inclusion proof. `VerifyReceipt` takes the
-complete final `stogas` object and SHA-256 hashes you computed from the exact request and response
-content. One signature covers both hashes and the canonical metadata, excluding the receipt
-itself. It does not establish when inference ran.
-These calls perform no network requests.
-
-## Workload configuration
+## Stream and cancel
 
 ```go
-stogas.TransportOptions{Security: "e2ee", MaxConnections: 4}
+stream := client.Chat.Completions.NewStreaming(ctx, openai.ChatCompletionNewParams{
+	Model:    "chutes-mistral-nemo-instruct-2407",
+	Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Say hello.")},
+})
+defer stream.Close()
+for stream.Next() {
+	for _, choice := range stream.Current().Choices {
+		fmt.Print(choice.Delta.Content)
+	}
+}
+if err := stream.Err(); err != nil {
+	return err // The stream did not complete.
+}
 ```
 
-`Environment` defaults to `prod`; `BaseURL` accepts an HTTPS origin. Set retries with `option.WithMaxRetries`, the HTTP deadline with `http.Client.Timeout`, and per-request cancellation with `context.Context`.
+Cancel `ctx` to stop a request. Output from a cancelled request is incomplete, and the request can
+still be billed. See [Streaming](/docs/streaming).
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+## Options
+
+```go
+transport, err := stogas.NewTransport(stogas.TransportOptions{Security: "e2ee", MaxConnections: 4})
+```
+
+| Option           | Effect                                                                         |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `Security`       | `"tls"` (default) or `"e2ee"`. See [Connection modes](/docs/connection-modes). |
+| `MaxConnections` | The most connections to open, as needed. Default `4`.                          |
+| `BaseURL`        | Another HTTPS origin, with no path. The trusted evidence does not change.      |
+
+`transport.RefreshBundle()` loads new evidence now. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+
+## Receipts
+
+Send `Stogas-Metadata: v1` to get a signed [receipt](/docs/receipts):
+
+```go
+response, err := client.Responses.New(ctx, params, option.WithHeader("Stogas-Metadata", "v1"))
+```
+
+The transport checks the receipt before it returns the response. If the check fails, the request
+fails, and the transport does not send it again.
+
+## Check evidence offline
+
+Check a saved receipt later, with the boot record and evidence files from
+[Check without network access](/docs/receipts#check-without-network-access). This makes no network requests:
+
+```go
+verifier, err := stogas.NewEvidence(stogas.EvidenceOptions{Environment: "prod"})
+if err != nil {
+	return err
+}
+defer verifier.Close()
+
+// stogasObject is the saved `stogas` object. The hashes are SHA-256 of the exact request
+// body and of the response without its `stogas` object.
+receipt, err := verifier.VerifyReceiptArchive(bootBytes, evidenceBytes, stogasObject,
+	sha256.Sum256(requestBytes), sha256.Sum256(responseBytes))
+```
+
+`VerifyReceiptArchive` checks the boot against the evidence that was valid when it was logged. To
+check current evidence instead, call `verifier.Refresh(bundleBytes)`, then `VerifyLoggedBoot` or
+`VerifyReceipt` on the snapshot it returns. Close each snapshot when you finish with it.

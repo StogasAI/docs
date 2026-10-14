@@ -1,0 +1,155 @@
+---
+title: Request records
+description: The record that the gateway keeps for each request, in analytics, downloads and exports.
+icon: ScrollText
+---
+
+The gateway writes one record for each request. [Analytics](/docs/analytics), record downloads and
+[Export](/docs/export) use the same record. It has no prompt, response, raw error message or
+credential. Quantities and money are decimal strings. A missing value is unknown, not zero.
+
+## Fields
+
+| Field                                                                              | Meaning                                                                                         |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `schema_version`                                                                   | Record format version, currently `1`. Check it before you read other fields.                    |
+| `request_id`                                                                       | The request ID. A [grouped record](#grouped-rejections) keeps the first ID.                     |
+| `created_at`                                                                       | Billing authorization time, or the first rejection in a group.                                  |
+| `last_request_at`                                                                  | The last rejection in a group. Equal to `created_at` for other requests.                        |
+| `request_count`                                                                    | Requests this record stands for. `1` for every admitted request.                                |
+| `stogas_organization_id`, `stogas_api_key_id`, `stogas_grant_id`, `stogas_user_id` | The organization, key, grant and member behind the request.                                     |
+| `request_type`                                                                     | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`. |
+| `request_settings`                                                                 | [Settings](#request-settings) the gateway sent to the provider. `{}` when it sent none.         |
+| `cancelled`, `client_stop_ms`                                                      | Whether the client cancelled, and when on the request clock.                                    |
+| `catalog_version`                                                                  | The approved catalog used for the request.                                                      |
+| `policy_versions`                                                                  | Revisions of the routing, access and limit policies that applied.                               |
+| `provider_attempts`                                                                | Each provider call and its result. Empty when the request was rejected before dispatch.         |
+| `node_id`                                                                          | The gateway VM that handled the request.                                                        |
+| `performance`                                                                      | [Timing](#timing).                                                                              |
+| `usage`                                                                            | [Meters, STT and cost](/docs/usage).                                                            |
+| `plugins`                                                                          | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                     |
+| `gateway_error`                                                                    | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).           |
+| `gateway_version`                                                                  | The gateway release that handled the request.                                                   |
+
+Each provider attempt has `provider`, `status` (a [provider result](#provider-results)),
+`status_code`, `latency_ms`, `output_observed`, `provider_request_id`, `finish_reason` and `byok`,
+the provider credential ID or `null` for a Stogas-managed credential.
+
+Provider results and gateway errors are separate. If the provider succeeds but the gateway cannot finish
+pricing, encoding or a requested receipt, the attempt keeps `success` and `gateway_error` records
+the gateway failure. An ordinary provider error stays in `provider_attempts` and does not set
+`gateway_error`. If the gateway stops before it sends the request, for example because the provider's
+confidential evidence did not verify, the record has no provider attempt or usage, and
+`gateway_error` records the error that you received.
+
+## Request settings
+
+`request_settings` records the settings that control what the model generates, as the gateway
+sent them to the provider. It includes values the gateway adds, such as the output limit that
+Anthropic requires. Chat Completions and Responses use the same names, and a format or tool choice
+keeps only its type. For example, this Responses request:
+
+```json
+{
+	"model": "gpt-5.5",
+	"input": "...",
+	"max_output_tokens": 2048,
+	"reasoning": { "effort": "low", "summary": "auto" },
+	"text": { "format": { "type": "json_schema", "name": "invoice", "schema": {} } }
+}
+```
+
+has this record:
+
+```json
+{
+	"max_output_tokens": 2048,
+	"reasoning_effort": "low",
+	"reasoning_summary": "auto",
+	"response_format": "json_schema"
+}
+```
+
+The names are `max_output_tokens`, `reasoning_enabled`, `reasoning_effort`, `reasoning_max_tokens`,
+`reasoning_summary`, `reasoning_display`, `task_budget_tokens`, `temperature`, `top_p`, `top_k`,
+`frequency_penalty`, `presence_penalty`, `repetition_penalty`, `seed`, `logprobs`, `top_logprobs`,
+`verbosity`, `response_format`, `include`, `tool_choice`, `parallel_tool_calls`, `max_tool_calls`
+and `truncation`.
+
+Prompts, instructions, stop sequences, tools, schemas, metadata and identifiers are never recorded.
+Other fields record streaming (`request_type`), service tier, speed and region (the
+[catalog chain](#catalog-history)) and caching (`usage`). The record leaves out a text value that
+is longer than 64 characters or not printable ASCII, a list with more than 16 entries, and an
+integer above 9007199254740991 or below -9007199254740991.
+
+## Provider results
+
+Each provider attempt has one of these results. The gateway sets it from the provider's structured error
+type, code and HTTP status, never from message text. An unrecognized failure is `provider_error`.
+
+| Result                                                                             | Meaning                                                                   |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `success`                                                                          | The provider completed the call.                                          |
+| `authentication_error`, `permission_error`                                         | The provider rejected the credential or access.                           |
+| `over_budget`, `rate_limited`                                                      | The provider account is out of credit, or rate limited.                   |
+| `invalid_request`, `context_length_exceeded`, `request_too_large`, `invalid_image` | The input is invalid or above a provider limit.                           |
+| `content_filter`                                                                   | The provider blocked or refused the content.                              |
+| `timeout`, `connection_error`                                                      | The call timed out, or the connection failed.                             |
+| `provider_unavailable`, `provider_overloaded`, `model_unavailable`                 | The provider or model was unavailable.                                    |
+| `invalid_response`                                                                 | The response could not be used.                                           |
+| `cancelled`, `unknown`, `provider_error`                                           | The call was cancelled, its outcome is unknown, or it failed another way. |
+
+## Catalog history
+
+Each attempt's `catalog_chain_hash` identifies the exact author, model, deployment, route and
+provider settings used for accounting. If the provider served a different offering than the one
+your request resolved to, such as another service tier, `resolved_catalog_chain_hash` records the
+resolved one. It is omitted when both are the same.
+
+Paste a chain hash into catalog search to open its historical settings and the catalog releases
+that contain it. Lookup checks the content against the hash and never falls back to the current
+catalog.
+
+## Timing
+
+The request clock starts when the gateway receives the decoded request body and stops when it
+writes the record. It excludes connection setup, upload, final transmission and settlement, so it is
+shorter than the latency your client sees.
+
+| Field               | Meaning                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| `total_ms`          | The full request on the gateway.                                                                |
+| `provider_start_ms` | When the provider call started. `null` if not recorded.                                         |
+| `provider_ms`       | The provider call, including upstream connection setup and, for streams, response backpressure. |
+| `first_output_ms`   | The first valid provider output, including non-token output such as citations.                  |
+| `ttft_ms`           | Time to the first generated token in a stream. `null` for buffered requests.                    |
+
+The time outside `provider_ms` is gateway preparation and response processing.
+
+## Plugin metrics
+
+`plugins.stogas_structured_pii_redaction` records the number of replacements and the scan time in
+microseconds. Zero replacements means the scan found nothing; a missing entry means no scan was
+recorded. See [PII redaction](/docs/pii-redaction).
+
+`plugins.stogas_export.capture_us` records the time spent copying content for the
+[Export](/docs/export). Plugin times overlap the request timeline; do not add them to
+`total_ms`.
+
+## Grouped rejections
+
+Requests rejected before billing authorization, such as for credit, policy or validation errors,
+appear once the gateway can tell which API key sent them. In each one-second window, the first five
+rejections with the same key, endpoint, error code and HTTP status keep their own records. Further
+repeats share one record with a `request_count`. Successful requests and provider errors are never
+grouped.
+
+For example, 99 matching credit rejections in one window produce five single records and one record
+with a count of 94. Charts sum `request_count`; costs and usage are recorded once and must not be
+multiplied by it. A grouped record keeps the first request ID and the first and last times. It has
+no model or catalog IDs, so it counts toward key and organization totals but not model totals.
+
+Records are delivered asynchronously. A gateway crash, a burst larger than the gateway can group, or
+a storage failure can lose rejection records, so grouped history is not a complete audit of every
+request. Requests that fail
+before the gateway can identify the key, such as with an invalid key, do not appear.

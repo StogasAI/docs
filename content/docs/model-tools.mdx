@@ -1,123 +1,138 @@
 ---
-title: Model Tools
-description: Supported client tools, provider-hosted tools, and how tool usage is billed.
+title: Tools
+description: Let a model call your functions, or use web tools that the provider runs.
+icon: Wrench
 ---
 
-Tools let a model call something outside normal text generation. The gateway treats tools as either client tools or provider-hosted tools:
+A request can give the model two kinds of tools:
 
-- **Client tools** are run by your application. They do not have a separate tool charge from the gateway. You pay for the model tokens the provider reports.
-- **Provider-hosted tools** are run by OpenAI or Anthropic. These can have separate provider charges, so only the hosted tools listed below are available.
+- **Your tools** run in your application. `function` tools work on both endpoints and every
+  provider. `custom` tools, which take free-form text input, work on Responses with OpenAI models.
+  You pay only for tokens.
+- **Hosted tools**, such as web search, run at the provider during the request. They can have a
+  price per call.
 
-<Callout type="info">
-	Input attachments use the selected deployment’s supported native formats. Provider file IDs
-	require BYOK. Supported hosted tools return text, citations, and control records; generated binary
-	and file artifacts are not supported.
-</Callout>
+## Call a function
 
-<Callout type="info">
-	OpenAI search-model deployments such as `gpt-5-search-api` expose web retrieval through
-	`web_search_options`, not through `tools`. Those deployments perform one priced retrieval per
-	request.
-</Callout>
+<Steps>
+<Step>
 
-## Chat Completions
+### Describe the function
 
-Chat Completions is intentionally conservative. It is best for normal function calling and simple tool routing.
+```jsonc title="Chat Completions"
+{
+	"model": "claude-sonnet-5",
+	"messages": [{ "role": "user", "content": "Is it raining in Lisbon?" }],
+	"tools": [
+		{
+			"type": "function",
+			"function": {
+				"name": "get_weather",
+				"description": "Current weather for a city.",
+				"parameters": {
+					"type": "object",
+					"properties": { "city": { "type": "string" } },
+					"required": ["city"]
+				}
+			}
+		}
+	]
+}
+```
 
-| Tool type                               | OpenAI | Anthropic | Azure | Chutes | Billing                                                         |
-| --------------------------------------- | :----: | :-------: | :---: | :----: | --------------------------------------------------------------- |
-| `function`                              |  Yes   |    Yes    |  Yes  |  Yes   | Token usage only                                                |
-| `custom`                                |   No   |    No     |  No   |   No   | Use the Responses API on an OpenAI-format deployment            |
-| Anthropic `mcp_toolset` + `mcp_servers` |   No   |    No     |  No   |   No   | Not accepted because provider execution has no request-wide cap |
-| Provider-hosted web/search tools        |   No   |    No     |  No   |   No   | Use Responses API or OpenAI search-model deployments            |
+</Step>
+<Step>
 
-Chat tool calls and tool results must form a complete adjacent pair in the same stateless request.
-Custom Chat calls cannot be replayed through the provider-neutral Chat history shape, so Chat accepts
-only `function` definitions.
+### Run the call
 
-Function-calling support does not mean every model supports every tool-choice mode. Provider
-adapters may translate or omit unsupported controls, including changing forced tool selection to
-automatic selection. Applications that depend on a tool call must check the returned calls before
-continuing; a successful response alone does not establish that a tool was selected or executed.
+The response has `finish_reason: "tool_calls"` and the calls in `message.tool_calls`. Run each call
+in your application.
 
-## Responses API
+</Step>
+<Step>
 
-Responses supports the broader tool surface. Use it when you need hosted web tools or custom tools.
+### Send the result
 
-| Tool type             | OpenAI | Anthropic | Azure | Chutes | Billing                                                                  |
-| --------------------- | :----: | :-------: | :---: | :----: | ------------------------------------------------------------------------ |
-| `function`            |  Yes   |    Yes    |  Yes  |   —    | Token usage only                                                         |
-| `custom`              |  Yes   |    No     | Yes¹  |   —    | Token usage only                                                         |
-| `mcp`                 |   No   |    No     |  No   |   —    | Remote provider execution cannot be bounded or approved per request      |
-| `web_search*`         |  Yes   |    Yes    |  No   |   —    | Web-search call charge plus provider-reported token usage                |
-| `web_search_preview*` |  Yes   |    No     |  No   |   —    | OpenAI web-search-preview call charge plus provider-reported token usage |
-| `web_fetch*`          |   No   |    Yes    |  No   |   —    | Provider-reported token usage only                                       |
+Send the conversation again, with the model's call and your result after it:
 
-Chutes does not expose a Responses route.
+```jsonc
+"messages": [
+	{ "role": "user", "content": "Is it raining in Lisbon?" },
+	{
+		"role": "assistant",
+		"tool_calls": [
+			{
+				"id": "call_1", // Copy the ID from the response.
+				"type": "function",
+				"function": { "name": "get_weather", "arguments": "{\"city\":\"Lisbon\"}" }
+			}
+		]
+	},
+	// The result must come right after the call.
+	{ "role": "tool", "tool_call_id": "call_1", "content": "{\"rain\":false,\"temp_c\":21}" }
+]
+```
 
-¹ Azure custom tools are available only on OpenAI-format deployments. Azure Claude rejects them
-because the free-form input format is not preserved by its Anthropic translation.
+</Step>
+</Steps>
 
-We accept only provider versions with known wire behavior and cataloged pricing. OpenAI accepts
-`web_search`, `web_search_2025_08_26`, `web_search_preview`, and
-`web_search_preview_2025_03_11`. Anthropic accepts the cataloged `web_search` and `web_fetch`
-versions shown by the deployment catalog. Unknown future aliases fail closed instead of inheriting a
-current tool price.
+On Responses, the call is a `function_call` output item, and you send the result as a
+`function_call_output` input item with the same `call_id`.
 
-Use `max_tool_calls` to bound provider-hosted tool calls. If you omit it, the gateway reserves an allowance for ten calls of the most expensive eligible hosted tool. This financial allowance does not add an upstream execution cap. An explicit lower cap reduces the call-fee reservation; actual usage is charged even when it exceeds the allowance.
+`tool_choice` accepts `auto`, `none`, `required` or a named function. A response can still have no
+tool call: some providers change a forced choice to `auto`, for example
+[Anthropic with reasoning on](/docs/providers/anthropic#tools). Check for tool calls before you
+continue.
 
-OpenAI search reservations include retrieved content for each budgeted call: the documented fixed
-token block where applicable, otherwise up to 128,000 tokens or the deployment's smaller input
-limit. Selection among enabled search tools includes both call and content costs. Ordinary output
-uses one response-wide budget. These allowances are estimates, not guaranteed limits on the
-provider's internal work or final bill.
+## Hosted tools
 
-Anthropic accepts one hosted tool definition per request. Its Responses translation accepts the string
-tool-choice modes `auto`, `none`, and `required`, plus a named `function` selector. Hosted-tool object
-selectors and `allowed_tools` are rejected because the Anthropic wire does not preserve them. Stogas
-reserves cumulative input for up to ten normal server-side sampling iterations and one ordinary
-request-wide output budget. A tool-use cap can produce an error result without ending the loop,
-so it does not reduce that iteration allowance. Compaction adds separate input and summary-output
-capacity. Cache hits reduce settlement costs when reported; reservations do not assume them.
+| Tool                 | Providers                          | Endpoint         |
+| -------------------- | ---------------------------------- | ---------------- |
+| `web_search`         | OpenAI, Anthropic, Claude on Azure | Responses        |
+| `web_search_preview` | OpenAI                             | Responses        |
+| `web_search_options` | OpenAI search models               | Chat Completions |
+| `web_fetch`          | Anthropic, Claude on Azure         | Responses        |
 
-<Callout type="info">
-	`tool_choice: "none"` disables provider-hosted tool calls for that request, so no hosted-tool call
-	meter is applied.
-</Callout>
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Summarize this week's Go release notes.",
+	"tools": [{ "type": "web_search" }],
+	"max_tool_calls": 3 // At most three searches. This also lowers the hold.
+}
+```
 
-## Provider-Hosted Billing
+The gateway accepts only tool versions with a price in the catalog. An unknown version returns `400`.
+Prices, versions and rules for each provider are on the
+[OpenAI](/docs/providers/openai#tools) and [Anthropic](/docs/providers/anthropic#tools) pages.
 
-OpenAI Responses web search has separate call meters:
+### Holds for hosted tools
 
-| Tool family                                   | Billing                                                                               |
-| --------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `web_search*`                                 | Web-search call price plus search content tokens at model rates                       |
-| `web_search_preview*` on reasoning models     | Web-search-preview call price plus search content tokens at model rates               |
-| `web_search_preview*` on non-reasoning models | Higher web-search-preview call price; search content tokens are not separately billed |
+Hosted tools can make many calls in one request, so the [hold](/docs/usage#how-a-request-is-charged)
+reserves for them:
 
-Anthropic Responses web tools are billed as:
+- Without `max_tool_calls`, the hold covers ten calls of the most expensive hosted tool in the
+  request. A lower `max_tool_calls` lowers the hold.
+- The hold also covers the content that the tools return. For OpenAI search, each call reserves up
+  to 128,000 tokens or the deployment's input limit, if smaller. For Anthropic, it covers input for
+  up to ten tool rounds and one output limit. With caching on, rounds after the first are held at
+  the cache-read rate, so cache misses can cost more than the hold.
+- `tool_choice: "none"` turns hosted tools off, so they cost nothing.
 
-| Tool family   | Billing                                                  |
-| ------------- | -------------------------------------------------------- |
-| `web_search*` | Web-search call price plus provider-reported token usage |
-| `web_fetch*`  | Provider-reported token usage only                       |
+The provider does not stop at the hold. Settlement charges the calls and tokens that the provider
+reports, even when they are more than the hold.
 
-Anthropic may use code execution internally as part of web search or web fetch. That bundled behavior is treated as part of the admitted web tool. Standalone code execution is not available.
+## Unavailable tools
 
-## Remote MCP Tools
+These tools return `400` before the gateway calls a provider:
 
-Remote MCP tools are not accepted on either interface for any provider. OpenAI documents `max_tool_calls` for built-in tools, not remote MCP. Anthropic does not expose a request-wide MCP call cap. Stogas also cannot mediate a provider approval round trip through its synchronous request contract. Rejecting MCP before authorization prevents unbounded remote execution and keeps third-party MCP servers outside the cataloged data-handling and E2EE boundary.
+- Remote MCP servers
+- File search and hosted retrieval
+- Code interpreter, hosted shell and standalone code execution
+- Local shell and patch tools
+- Computer use and image generation
+- Provider memory and tool loading
 
-## Unavailable Provider Tools
-
-The public API does not expose every provider-hosted tool.
-
-| Tool family                                                   | Availability  |
-| ------------------------------------------------------------- | ------------- |
-| File search and hosted retrieval                              | Not available |
-| Code interpreter, hosted shell, and standalone code execution | Not available |
-| Local shell and patch tools                                   | Not available |
-| Computer-use and image-generation tools                       | Not available |
-| Provider memory or tool-loading tools                         | Not available |
-
-Unavailable tools return `400 invalid_request_error` before a provider request is made.
+Remote MCP is not available because neither OpenAI nor Anthropic can limit MCP calls in a request,
+so the gateway could not limit the charge. A third-party MCP server would also receive your data outside
+the data handling that the catalog lists.

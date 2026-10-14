@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { chromium, expect, test as base, type Page } from '@playwright/test';
+import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 
 const test = base.extend<{ browserZoom: number }>({
@@ -64,6 +65,20 @@ async function expectReadingRegion(page: Page, id: string) {
 		.toBe(true);
 }
 
+// Radix registers the example tabs' keyboard entry point during hydration; earlier clicks are lost.
+async function waitForHydration(page: Page) {
+	await expect(
+		page.locator('.stogas-api-operation-examples [role="tablist"][tabindex="0"]').first()
+	).toBeVisible();
+}
+
+async function openPlayground(page: Page) {
+	await page.getByRole('button', { name: 'Try in Playground', exact: true }).click();
+	await expect(
+		page.getByRole('dialog').getByRole('textbox', { name: 'Request JSON' })
+	).toBeVisible();
+}
+
 async function searchForSection(page: Page, query: string, title: string) {
 	await page.keyboard.press('Control+k');
 	await page.getByRole('combobox', { name: 'Search documentation' }).fill(query);
@@ -87,10 +102,10 @@ test('page outline names its progress and follows a keyboard-selected section', 
 	await page.keyboard.press('Enter');
 	const target = page
 		.locator('[data-toc-popover-content]')
-		.getByRole('link', { name: 'Manual token limits', exact: true });
+		.getByRole('link', { name: 'Set a token budget', exact: true });
 	await target.focus();
 	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/#manual-token-limits$/);
+	await expect(page).toHaveURL(/#set-a-token-budget$/);
 	await expect(trigger).toHaveAttribute('aria-expanded', 'false');
 	await expect
 		.poll(async () =>
@@ -158,34 +173,6 @@ for (const viewport of [
 	});
 }
 
-test.describe('native browser zoom with nested navigation', () => {
-	test.use({ browserZoom: 1.5, viewport: { width: 500, height: 756 } });
-	test('search from a schema popup preserves the reading target through direct history', async ({
-		page
-	}) => {
-		await page.goto('/docs/policies/limits');
-		const fields = page.locator('[id="policy-fields.recurringSpend"]');
-		await fields.getByRole('textbox', { name: 'Filter Properties' }).fill('window');
-		await fields.getByRole('button', { name: 'object', exact: true }).click();
-		await expect(page.getByRole('dialog')).toBeVisible();
-		await page.keyboard.press('Control+k');
-		const search = page.getByRole('combobox', { name: 'Search documentation' });
-		await search.fill('i11-?!-7d6c');
-		await expect(page.getByRole('option')).toHaveCount(0);
-		await search.fill('conditional rules');
-		await expect(page.getByRole('option').first()).toContainText('Scopes and inheritance');
-		await page.keyboard.press('ArrowDown');
-		await page.keyboard.press('Enter');
-		await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
-		await expectReadingRegion(page, 'conditional-rules');
-		await page.goBack();
-		await expect(page).toHaveURL(/\/policies\/limits$/);
-		await expect(page.getByRole('dialog')).toHaveCount(0);
-		await page.goForward();
-		await expectReadingRegion(page, 'conditional-rules');
-	});
-});
-
 test.describe('native browser zoom 200% at 400 × 378', () => {
 	test.use({ browserZoom: 2, viewport: { width: 800, height: 756 } });
 	test('sidebar opening and closing preserves a search anchor through history', async ({
@@ -228,68 +215,30 @@ test.describe('native browser zoom 200% at 400 × 378', () => {
 	});
 });
 
-test('nested policy popovers keep their header and initial focus within a short viewport', async ({
+test('nested schemas open in their card with keyboard focus and their own filter', async ({
 	page
 }) => {
 	await page.setViewportSize({ width: 333, height: 504 });
-	await page.goto('/docs/policies/limits');
-	await page.keyboard.press('Control+k');
-	await page.getByRole('combobox', { name: 'Search documentation' }).fill('conditional rules');
-	await expect(page.getByRole('dialog').getByRole('option').first()).toContainText(
-		'Scopes and inheritance'
-	);
-	await page.keyboard.press('ArrowDown');
-	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
-	await expect(page.getByRole('dialog')).toHaveCount(0);
+	await page.goto('/docs/policies/scopes');
 	const schema = page.locator('[id="policy-fields.rule"]');
-	await schema.getByRole('textbox', { name: 'Filter Properties' }).fill('limits');
+	const filter = schema.getByRole('textbox', { name: 'Filter Properties' });
+	const current = schema.locator('[aria-current="page"]');
+	await filter.fill('limits');
 	await expect(schema.getByRole('button', { name: 'object', exact: true })).toHaveCount(1);
-	await schema.getByRole('button', { name: 'object', exact: true }).click();
-	const dialog = page.getByRole('dialog');
-	const filter = dialog.getByRole('textbox', { name: 'Filter Properties' });
-	await filter.fill('spend');
-	await filter.press('Enter');
+	await schema.getByRole('button', { name: 'object', exact: true }).focus();
+	await page.keyboard.press('Enter');
+	await expect(current).toHaveText('limits');
+	await expect(current).toBeFocused();
+	await expect(current).toBeInViewport({ ratio: 1 });
 	await expect(filter).toHaveValue('');
-	const expectVisiblePopover = () =>
-		expect
-			.poll(() =>
-				dialog.evaluate((element) => {
-					const bounds = element.getBoundingClientRect();
-					const focused = document.activeElement?.getBoundingClientRect();
-					return (
-						bounds.top >= 0 &&
-						bounds.bottom <= innerHeight &&
-						!!focused &&
-						focused.top >= bounds.top &&
-						focused.bottom <= bounds.bottom
-					);
-				})
-			)
-			.toBe(true);
-	await expectVisiblePopover();
-	await expect(filter).toBeFocused();
 	await filter.fill('zzznoproperty');
-	await expect(dialog).toContainText('No property matching "zzznoproperty"');
-	await expectVisiblePopover();
-	for (const viewport of [
-		{ width: 1180, height: 757 },
-		{ width: 333, height: 504 }
-	]) {
-		await page.setViewportSize(viewport);
-		await expectVisiblePopover();
-		await expect(filter).toBeFocused();
-	}
-	await page.evaluate(() => window.scrollTo(0, 0));
-	await expectVisiblePopover();
-	await filter.fill('');
-	await expect(dialog.getByText('No property matching', { exact: false })).toHaveCount(0);
-	await expectVisiblePopover();
-	await page.keyboard.press('Escape');
-	await expect(dialog).toHaveCount(0);
-	const trigger = schema.getByRole('button', { name: 'object', exact: true });
-	await expect(trigger).toBeFocused();
-	await expect(trigger).toBeInViewport({ ratio: 1 });
+	await expect(schema).toContainText('No property matching "zzznoproperty"');
+	await schema.getByRole('button', { name: 'rules.<name>', exact: true }).click();
+	await expect(current).toHaveText('rules.<name>');
+	await expect(current).toBeFocused();
+	await expect(
+		schema.getByRole('button', { name: 'Copy Link: limits', exact: true })
+	).toBeVisible();
 });
 
 test('collapsed desktop sidebar keeps an accurate action name and expanded state', async ({
@@ -316,23 +265,16 @@ test('collapsed desktop sidebar keeps an accurate action name and expanded state
 
 test('provider routing alternatives name and expose their object fields', async ({ page }) => {
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
-	for (const field of ['provider', 'rules']) {
-		const row = page
-			.getByRole('button', { name: `Copy Link: ${field}`, exact: true })
-			.locator('../..');
-		await expect(row).toContainText('Provider ID');
-		await expect(row).not.toContainText('unknown');
-		await row.getByRole('button', { name: 'Allowed providers', exact: true }).click();
-		const dialog = page.getByRole('dialog');
-		await expect(
-			dialog.getByRole('button', { name: 'Copy Link: only', exact: true })
-		).toBeVisible();
-		await expect(
-			dialog.getByRole('button', { name: 'Copy Link: order', exact: true })
-		).toBeVisible();
-		await page.keyboard.press('Escape');
-		await expect(dialog).toHaveCount(0);
-	}
+	const row = page
+		.getByRole('button', { name: 'Copy Link: provider', exact: true })
+		.locator('../..');
+	await expect(row).toContainText('Provider ID');
+	await expect(row).not.toContainText('unknown');
+	await row.getByRole('button', { name: 'Allowed providers', exact: true }).click();
+	const body = page.locator('[id="request-body.applicationjson.body"]');
+	await expect(body.locator('[aria-current="page"]')).toHaveText('provider');
+	await expect(body.getByRole('button', { name: 'Copy Link: only', exact: true })).toBeVisible();
+	await expect(body.getByRole('button', { name: 'Copy Link: order', exact: true })).toBeVisible();
 });
 
 test('API samples are formatted and highlighted with JavaScript disabled', async ({ browser }) => {
@@ -356,10 +298,6 @@ test('API samples are formatted and highlighted with JavaScript disabled', async
 					expect(text).toBe(JSON.stringify(JSON.parse(text), null, 2));
 			}
 			await expect(blocks.first()).toContainText('https://api.stogas.ai/');
-			await expect(page.getByRole('button', { name: /Server URL/ })).toContainText(
-				'https://api.stogas.ai/'
-			);
-			await expect(page.getByText('loading...', { exact: true })).toHaveCount(0);
 		}
 	} finally {
 		await context.close();
@@ -412,20 +350,23 @@ test('API reference controls and code remain accessible in both themes', async (
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
 	for (const theme of ['dark', 'light']) {
 		await expect(page.locator('html')).toHaveClass(new RegExp(theme));
-		await expect(page.getByRole('textbox', { name: 'Request JSON' })).toBeVisible();
-		await expect(page.getByText('loading...', { exact: true })).toHaveCount(0);
-		// Radix registers the tab group's keyboard entry point during hydration.
-		await expect(
-			page.getByRole('tablist').filter({ has: page.getByRole('tab', { name: '200', exact: true }) })
-		).toHaveAttribute('tabindex', '0');
+		await waitForHydration(page);
 		await page.evaluate(() => document.fonts.ready);
-		expect(
-			(
-				await new AxeBuilder({ page })
-					.withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
-					.analyze()
-			).violations
-		).toEqual([]);
+		for (const playground of [false, true]) {
+			if (playground) {
+				await openPlayground(page);
+				await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeVisible();
+			}
+			expect(
+				(
+					await new AxeBuilder({ page })
+						.withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+						.analyze()
+				).violations
+			).toEqual([]);
+		}
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('dialog')).toHaveCount(0);
 		if (theme === 'dark') {
 			await page.getByRole('button', { name: 'Toggle Theme' }).click();
 			await expect(page.locator('html')).toHaveClass(/light/);
@@ -445,16 +386,16 @@ test('static search finds guides and API reference, with keyboard navigation', a
 			.getByRole('option', { name: /Quickstart/ })
 			.first()
 	).toBeVisible();
-	await search.fill('Compatibility Notes');
+	await search.fill('Compatibility notes');
 	await expect(
 		page
 			.getByRole('dialog')
-			.getByRole('option', { name: /Compatibility Notes/ })
+			.getByRole('option', { name: /Compatibility notes/ })
 			.first()
 	).toBeVisible();
 	const result = page
 		.getByRole('dialog')
-		.getByRole('option', { name: /Compatibility Notes/ })
+		.getByRole('option', { name: /Compatibility notes/ })
 		.first();
 	expect(
 		(
@@ -463,10 +404,9 @@ test('static search finds guides and API reference, with keyboard navigation', a
 				.analyze()
 		).violations
 	).toEqual([]);
-	await result.focus();
-	await page.keyboard.press('Space');
+	await result.click();
 	await expect(page).toHaveURL(/\/docs\/reference\/provider-behavior/);
-	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Compatibility Notes');
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Compatibility notes');
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 	await page.keyboard.press('Control+k');
 	await search.fill('Quickstart');
@@ -478,7 +418,7 @@ test('static search finds guides and API reference, with keyboard navigation', a
 	await page.keyboard.press('ArrowUp');
 	await expect(firstResult).toHaveAttribute('aria-selected', 'true');
 	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/docs(?:#.*)?$/);
+	await expect(page).toHaveURL(/\/docs\/quickstart(?:#.*)?$/);
 	await expect(page.getByRole('dialog')).toHaveCount(0);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Quickstart');
 });
@@ -529,6 +469,7 @@ test('JSON copy controls clear native scrollbars and response status tabs stay u
 }) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
+	const examples = page.locator('.stogas-api-operation-examples');
 	// Short examples must not reserve space for a scrollbar that is not there.
 	const shortExample = page.getByRole('tabpanel', { name: 'cURL', exact: true });
 	const shortCopy = shortExample.getByRole('button', { name: 'Copy Text', exact: true });
@@ -546,7 +487,7 @@ test('JSON copy controls clear native scrollbars and response status tabs stay u
 	});
 	for (const width of [1440, 320]) {
 		await page.setViewportSize({ width, height: 1000 });
-		const panel = page.getByRole('tabpanel', { name: '200', exact: true });
+		const panel = examples.getByRole('tabpanel', { name: '200', exact: true });
 		const copy = panel.getByRole('button', { name: /Copy Text|Copied Text/ });
 		const viewport = panel.getByRole('region');
 		await expect(async () => {
@@ -576,53 +517,90 @@ test('JSON copy controls clear native scrollbars and response status tabs stay u
 			'choices'
 		);
 	}
-	const success = page.getByRole('tab', { name: '200', exact: true });
-	const error = page.getByRole('tab', { name: '402', exact: true });
-	const successColor = await success
-		.locator('[data-response-status]')
-		.evaluate((e) => getComputedStyle(e).color);
-	const errorColor = await error
-		.locator('[data-response-status]')
-		.evaluate((e) => getComputedStyle(e).color);
-	expect(successColor).not.toBe(errorColor);
+	for (const statuses of [page.locator('.stogas-api-operation-main'), examples]) {
+		const color = (status: string) =>
+			statuses
+				.getByRole('tab', { name: status, exact: true })
+				.locator('[data-response-status]')
+				.evaluate((e) => getComputedStyle(e).color);
+		expect(await color('200')).not.toBe(await color('402'));
+	}
+	const error = examples.getByRole('tab', { name: '402', exact: true });
 	await error.click();
 	await expect(error).toHaveAttribute('aria-selected', 'true');
-	await expect(page.getByRole('tabpanel', { name: '402', exact: true })).toContainText(
+	await expect(examples.getByRole('tabpanel', { name: '402', exact: true })).toContainText(
 		'insufficient_balance'
 	);
 });
 
-test('single-property schemas omit filtering while nested filters fit their popovers', async ({
+test('single-property schemas omit filtering and nested filters fit narrow cards', async ({
 	page
 }) => {
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
-	await page.getByRole('button', { name: '402', exact: true }).click();
-	const response = page.getByRole('region', { name: '402', exact: true });
-	await expect(response).toBeVisible();
-	await expect(response.getByPlaceholder('Filter Properties')).toHaveCount(0);
+	await waitForHydration(page);
+	const main = page.locator('.stogas-api-operation-main');
+	const status = main.getByRole('tab', { name: '402', exact: true });
+	await status.click();
+	await expect(status).toHaveAttribute('aria-selected', 'true');
+	const response = main.getByRole('tabpanel');
+	await expect(response).toContainText('more credit');
+	const filter = response.getByRole('textbox', { name: 'Filter Properties' });
+	await expect(filter).toHaveCount(0);
 	await response.getByRole('button', { name: 'object', exact: true }).click();
-	const dialog = page.getByRole('dialog');
-	const filter = dialog.getByPlaceholder('Filter Properties');
-	await expect(filter).toBeFocused();
+	await expect(response.locator('[aria-current="page"]')).toHaveText('error');
 	for (const width of [1440, 320]) {
 		await page.setViewportSize({ width, height: 1000 });
 		await expect
 			.poll(() =>
 				filter.evaluate((element) => {
 					const bounds = element.getBoundingClientRect();
-					const parent = element.parentElement!.getBoundingClientRect();
-					return (
-						bounds.left >= parent.left &&
-						bounds.right <= parent.right &&
-						parseFloat(getComputedStyle(element).outlineOffset) <= 0
-					);
+					const card = element.closest('.rounded-xl')!.getBoundingClientRect();
+					return bounds.left >= card.left && bounds.right <= card.right;
 				})
 			)
 			.toBe(true);
 	}
 	await filter.fill('message');
-	await expect(dialog.getByRole('button', { name: 'Copy Link: message' })).toBeVisible();
-	await expect(dialog.getByRole('button', { name: 'Copy Link: code' })).toHaveCount(0);
+	await expect(
+		response.getByRole('button', { name: 'Copy Link: message', exact: true })
+	).toBeVisible();
+	await expect(response.getByRole('button', { name: 'Copy Link: code', exact: true })).toHaveCount(
+		0
+	);
+});
+
+test('exported Docs reject cross-origin framing of the live playground', async ({
+	page,
+	baseURL
+}) => {
+	const path = '/docs/reference/openai-compatible/createChatCompletion';
+	const response = await page.goto(path);
+	expect(response?.headers()['content-security-policy']).toContain("frame-ancestors 'none'");
+	expect(response?.headers()['x-frame-options']).toBe('DENY');
+	await expect(page.getByRole('button', { name: 'Try in Playground', exact: true })).toBeVisible();
+	const framedUrl = new URL(path, baseURL).href;
+	const attacker = createServer((_request, response) => {
+		response.setHeader('Content-Type', 'text/html');
+		response.end(`<iframe title="Framed playground" src="${framedUrl}"></iframe>`);
+	});
+	try {
+		await new Promise<void>((resolve) => attacker.listen(0, '127.0.0.1', resolve));
+		const address = attacker.address();
+		if (!address || typeof address === 'string') throw new Error('No frame-test port available');
+		const blocked = page.waitForEvent('requestfailed', {
+			predicate: (request) => request.url() === framedUrl
+		});
+		await page.goto(`http://127.0.0.1:${address.port}/`);
+		expect((await blocked).failure()?.errorText).toBe('net::ERR_BLOCKED_BY_RESPONSE');
+		await expect(
+			page.frameLocator('iframe').getByRole('button', { name: 'Try in Playground', exact: true })
+		).toHaveCount(0);
+	} finally {
+		attacker.closeAllConnections();
+		await new Promise<void>((resolve, reject) =>
+			attacker.close((error) => (error ? reject(error) : resolve()))
+		);
+	}
 });
 
 test('request editor blocks invalid drafts and sends exact nested JSON and decimals', async ({
@@ -634,7 +612,9 @@ test('request editor blocks invalid drafts and sends exact nested JSON and decim
 		await route.fulfill({ contentType: 'application/json', body: '{"id":"test-response"}' });
 	});
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
-	const editor = page.getByRole('textbox', { name: 'Request JSON' });
+	await waitForHydration(page);
+	await openPlayground(page);
+	const editor = page.getByRole('dialog').getByRole('textbox', { name: 'Request JSON' });
 	await expect(editor).toBeVisible();
 	const body = {
 		model: 'openai/gpt-5-mini',
@@ -674,11 +654,14 @@ test.describe('touch accessibility', () => {
 				await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
 			).toBe(true);
 		}
-		await expect(page.getByRole('textbox', { name: 'Request JSON' })).toBeVisible();
+		await waitForHydration(page);
+		await openPlayground(page);
 		await expect(page.getByRole('textbox', { name: 'Request JSON' })).toHaveCSS(
 			'font-size',
 			'16px'
 		);
+		await page.keyboard.press('Escape');
+		await expect(page.getByRole('dialog')).toHaveCount(0);
 		await page.keyboard.press('Control+k');
 		await expect(page.getByRole('combobox', { name: 'Search documentation' })).toBeFocused();
 		await expect(page.getByRole('combobox', { name: 'Search documentation' })).toHaveCSS(
@@ -714,17 +697,47 @@ test('keeps English routes and search when the browser prefers another language'
 	}
 });
 
-test('SDK folder exposes separate JavaScript and TypeScript guides', async ({ page }) => {
+test('SDK folder opens its overview and lists the language guides', async ({ page }) => {
 	await page.goto('/docs');
 	const sidebar = page.locator('#nd-sidebar');
-	const folder = sidebar.getByRole('button', { name: 'SDKs', exact: true });
-	await expect(folder).toHaveAttribute('aria-expanded', 'false');
-	await folder.click();
-	await expect(folder).toHaveAttribute('aria-expanded', 'true');
-	await sidebar.getByRole('link', { name: 'JavaScript', exact: true }).click();
+	await sidebar.getByRole('link', { name: 'SDKs', exact: true }).click();
+	await expect(page).toHaveURL(/\/docs\/sdk-overview$/);
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('SDKs');
+	await sidebar.getByRole('link', { name: 'JavaScript and TypeScript', exact: true }).click();
 	await expect(page).toHaveURL(/\/docs\/javascript$/);
-	await expect(page.getByRole('heading', { name: 'JavaScript', exact: true })).toBeVisible();
-	await sidebar.getByRole('link', { name: 'TypeScript', exact: true }).click();
-	await expect(page).toHaveURL(/\/docs\/typescript$/);
-	await expect(page.getByRole('heading', { name: 'TypeScript', exact: true })).toBeVisible();
+	await expect(page.getByRole('heading', { level: 1 })).toHaveText('JavaScript and TypeScript');
+});
+
+test('sidebar shows a draggable native scrollbar only when its links overflow', async ({
+	baseURL
+}) => {
+	// Default headless runs hide native scrollbars.
+	const browser = await chromium.launch({
+		channel: 'chromium',
+		ignoreDefaultArgs: ['--hide-scrollbars']
+	});
+	try {
+		const page = await browser.newPage({ baseURL, viewport: { width: 1440, height: 700 } });
+		const viewport = page.locator('#nd-sidebar [data-radix-scroll-area-viewport]');
+		const gutter = () =>
+			viewport.evaluate((element: HTMLElement) => element.offsetWidth - element.clientWidth);
+		await page.goto('/docs/policies');
+		await expect.poll(gutter).toBeGreaterThan(0);
+		// Fumadocs scrolls the active link into view after hydration; reset the scroll after that.
+		await expect(viewport.locator('a[data-active="true"]')).toBeInViewport();
+		await viewport.evaluate((element) => element.scrollTo({ top: 0 }));
+		const box = await viewport.boundingBox();
+		expect(box).not.toBeNull();
+		const x = box!.x + box!.width - (await gutter()) / 2;
+		await page.mouse.move(x, box!.y + 20);
+		await page.mouse.down();
+		await page.mouse.move(x, box!.y + 120, { steps: 8 });
+		await page.mouse.up();
+		expect(await viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+		await page.setViewportSize({ width: 1440, height: 1400 });
+		await page.goto('/docs/reference');
+		await expect.poll(gutter).toBe(0);
+	} finally {
+		await browser.close();
+	}
 });

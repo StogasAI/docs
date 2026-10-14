@@ -1,0 +1,139 @@
+---
+title: Streaming
+description: Read output as it arrives, show progress, handle stream errors and cancel.
+icon: WavesHorizontal
+---
+
+Set `stream: true` on Chat Completions or Responses to receive output as Server-Sent Events (SSE).
+Streaming works over ordinary HTTPS and both [verified connection modes](/docs/connection-modes).
+
+## Read a stream
+
+Use an OpenAI client set up as in the [Quickstart](/docs/quickstart) or with an
+[SDK](/docs/sdk-overview):
+
+```ts tab="JavaScript" tab-group="client"
+const cancellation = new AbortController();
+
+try {
+	const stream = await client.chat.completions.create(
+		{
+			model: 'chutes-mistral-nemo-instruct-2407',
+			messages: [{ role: 'user', content: 'Say hello.' }],
+			stream: true
+		},
+		{ signal: cancellation.signal }
+	);
+
+	for await (const chunk of stream) {
+		const text = chunk.choices[0]?.delta.content;
+		if (text) process.stdout.write(text);
+	}
+} catch (error) {
+	if (!cancellation.signal.aborted) throw error;
+}
+```
+
+```python tab="Python" tab-group="client"
+with client.chat.completions.create(
+    model="chutes-mistral-nemo-instruct-2407",
+    messages=[{"role": "user", "content": "Say hello."}],
+    stream=True,
+) as stream:
+    for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            print(chunk.choices[0].delta.content, end="", flush=True)
+```
+
+A chunk need not contain text. Handle reasoning and tool-call deltas separately.
+
+## Parse SSE directly
+
+If you read the HTTP body without an OpenAI client, use an SSE parser. One event can span several
+network reads, and one read can contain several events. Lines that start with `:` are comments,
+not JSON. Join an event's `data:` lines before you parse them.
+
+| Endpoint         | Completion                                                                               |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| Chat Completions | `data: [DONE]` ends the stream. Read any final usage before it.                          |
+| Responses        | Handle named events, including `response.completed`, `response.incomplete` and failures. |
+
+End of file or a final text chunk alone does not mean success. With an [SDK](/docs/sdk-overview),
+the transport checks encrypted completion and any requested [receipt](/docs/receipts) before it
+passes on the final event.
+
+## Show progress
+
+The JavaScript transport reports each request's setup through `onProgress`:
+
+| Phase          | Meaning                                                                     |
+| -------------- | --------------------------------------------------------------------------- |
+| `securing`     | The transport opens or reuses an encrypted session and checks its evidence. |
+| `encrypting`   | The transport encrypts the request body.                                    |
+| `sending`      | The request is on its way to the gateway.                                   |
+| `acknowledged` | The gateway authenticated the request. The model may not have started.      |
+
+```ts
+const stream = await client.chat.completions.create(
+	{ model: 'gpt-5.6-sol', messages, stream: true },
+	{ signal, fetchOptions: { onProgress: (phase) => setStatus(phase) } }
+);
+```
+
+After `acknowledged`, show that the model is working until the first output arrives. Show success
+only when the stream ends without an error. Keep one status per request, so that concurrent
+requests do not overwrite each other. Other languages have no progress callback.
+
+## Keepalives
+
+A model can work for a long time before its first output. While a stream is quiet, the gateway sends
+a comment every 15 seconds so the connection stays open:
+
+```text
+: STOGAS PROCESSING
+
+```
+
+OpenAI clients and SSE parsers ignore comments. Do not count them as output or show them as chat
+content. Keepalives are automatic; no header or option turns them on. Proxies can delay them. If
+you forward a stream to another client, pass keepalives on or send your own while no output is
+available. Buffered requests over HTTPS or attested TLS get no keepalives.
+
+A keepalive shows that the gateway is working on the request. It does not mean that the provider
+accepted the request or that the request will succeed, and it is not a reason to retry. Keepalives
+are not progress events.
+
+With [E2EE](/docs/connection-modes#e2ee-over-https), keepalives are encrypted records outside the
+response body, for streaming and buffered requests. They do not fix the HTTP status, so a provider
+`429` after 30 seconds still reaches your client as `429` with its `Retry-After` header. They also
+do not reset your client's timeouts, so set those for the longest wait you expect.
+
+## Handle errors
+
+The first keepalive or output sends the response headers, including HTTP 200, and the status cannot
+change after that:
+
+| When the failure happens            | What your client receives                    |
+| ----------------------------------- | -------------------------------------------- |
+| Before the response headers         | The normal HTTP error status and JSON error. |
+| After a keepalive or output started | HTTP 200, then an error event in the stream. |
+
+Catch errors around both stream creation and iteration, as in the example above. Status-based
+retries and typed HTTP exceptions in OpenAI clients do not apply to errors inside a stream, and
+monitoring that sees only HTTP status records these as 200. Show a stream failure even when some
+output is already on screen.
+
+Your client decides whether to retry. A broken connection can leave it unclear whether the model
+ran, and a retry can run and bill the request again. See [Errors](/docs/reference/errors).
+
+## Cancel a request
+
+Abort the request from your stop action, or close the stream in Python. This ends the response to
+your client. The provider still runs to completion so the gateway can record its final usage, and
+that usage is billed. Close streams you no longer need instead of leaving them unread.
+
+## Time limits
+
+A request can run for up to 60 minutes, including quiet model processing. Keepalives do not extend
+this limit or a proxy's total-duration limit. A response write that makes no progress for one
+minute ends that response. To set shorter limits, use a [timeout policy](/docs/policies/timeouts).

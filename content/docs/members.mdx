@@ -1,0 +1,137 @@
+---
+title: Members and roles
+description: Invite members, assign roles and control who can use each key, grant and credential.
+icon: Users
+---
+
+**Members** in an external organization manages its members, roles and invitations. Roles give
+organization-wide permissions, and View, Use, Manage or Admin on selected folders, grants, service
+keys and provider credentials. A [grant](/docs/grants) controls which member keys a person can
+create. Personal organizations have no members, roles or grants; see
+[organization types](/docs/quickstart#create-an-api-key).
+
+## Give a teammate API access
+
+<Steps>
+<Step>
+
+### Choose a grant
+
+Select the external organization. Reuse a grant with suitable limits, or create one in **Grants**.
+
+</Step>
+<Step>
+
+### Choose a role
+
+Reuse a role, or create one in **Members → Roles** with **Use** on that grant or its folder. It
+needs no organization-wide API key permissions.
+
+</Step>
+<Step>
+
+### Invite the teammate
+
+Invite them from **Invites**, then assign the role from **Members**. Check the default role they get
+when they join, and their other roles: broader access from another role still applies.
+
+</Step>
+<Step>
+
+### Create a member key
+
+The teammate opens **API keys** and creates their own key under the grant.
+
+</Step>
+</Steps>
+
+Inviting and assigning roles needs **Members → Manage**. Assigning a role that gives grant access
+also needs **Admin** on that grant, its folder or the organization. Creating or editing a role needs
+**Roles → Manage**.
+
+## Invite a member
+
+Create an invitation on **Invites**, choose when it expires and how many people can use it, and
+share the link. Joining assigns the organization's current default role. Deleting an invitation
+stops further joins; members who already joined stay.
+
+## Assign roles
+
+Create a role on **Roles**. Choose organization-wide permissions, then add folders, grants, service
+keys or provider credentials with the permissions for each. Assign roles from the member list, to
+one member or to a selection. Give administrative permissions only to people who need them.
+
+- A member gets the combined access of all their roles.
+- A role with no organization-wide permissions can still give access to the resources it lists.
+- Members can assign organization-wide permissions they hold. Giving new access to API keys or
+  credentials also needs **Admin** on the matching resource.
+- Taking a role from someone, or removing them, needs the same permissions as assigning that role.
+  You can drop your own roles.
+- **Roles → Manage** can create roles with permissions the manager does not hold, so give it only
+  to people you trust with full control.
+- The last role manager cannot leave or be removed while other members remain.
+
+## Remove access
+
+<Callout type="warn">
+	Removing a member's last **Use** on a grant deletes their keys under that grant. Use from another
+	role, the folder or the organization keeps them. Assigning the role again does not bring deleted
+	keys back.
+</Callout>
+
+To pause access without deleting anything, disable the grant or the key instead. Removing someone's
+access to a service key keeps the key; rotate its secret to stop copies they may hold.
+
+When a member leaves, their invitations stay valid. When an administrator removes a member, that
+member's invitations are revoked. When the last member leaves, the organization and its active
+resources are deleted; financial history is kept.
+
+## Permission reference
+
+### Resource permissions
+
+Add a folder, grant, service key or provider credential to a role and choose:
+
+| Permission | Allows                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------ |
+| **View**   | Read settings, policies and usage.                                                               |
+| **Use**    | View, plus reveal a service-key secret, create member keys from a grant, or assign a credential. |
+| **Manage** | View, plus configure, rotate, disable or delete the resource.                                    |
+| **Admin**  | Use and Manage, plus give others access within that resource.                                    |
+
+Use and Manage can be combined as **Use and manage**. Manage alone cannot reveal a secret or give
+access to someone else.
+
+- Folder permissions cover the grants and keys in the folder. Grant permissions cover its member-key
+  settings.
+- Only the owner can see a member key's secret and send requests with it. Managers can change its
+  settings.
+- Credentials are not in folders. Adding a credential to a key needs **Use** on the credential and
+  **Manage** on the key; removing or reordering needs only key **Manage**.
+
+### Organization permissions
+
+| Area         | Permission | Allows                                                                                                     |
+| ------------ | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| Activity     | Read       | Read organization audit events.                                                                            |
+| API keys     | Read all   | Read all key, grant, and folder settings and usage.                                                        |
+| API keys     | Use all    | Retrieve service-key secrets and create own keys from any grant.                                           |
+| API keys     | Manage all | Create and manage keys, grants, folders, and their policies; edit organization, member, and role policies. |
+| API keys     | Admin all  | Use and manage all API resources, and assign access within that scope.                                     |
+| Analytics    | Read own   | Read own request logs and usage.                                                                           |
+| Analytics    | Read all   | Read all organization request logs and usage.                                                              |
+| Billing      | Read       | Read balance, payment history, and receipts.                                                               |
+| Billing      | Manage     | Save billing details and create payment instructions.                                                      |
+| BYOK         | Read all   | Read all provider credential metadata and policies.                                                        |
+| BYOK         | Use all    | Assign any provider credential to keys you manage.                                                         |
+| BYOK         | Manage all | Create, edit, replace, disable, or delete provider credentials.                                            |
+| BYOK         | Admin all  | Use and manage all provider credentials, and assign access within that scope.                              |
+| Members      | Read       | Read members, roles, and invitations.                                                                      |
+| Members      | Manage     | Invite or remove members and assign existing roles, subject to assignment authority.                       |
+| Organization | Manage     | Change organization settings.                                                                              |
+| Roles        | Manage     | Create, edit, or delete roles, including roles with permissions you do not hold.                           |
+
+The editor adds the read permissions that a management permission needs. Permissions decide what a
+member can do; [policies](/docs/policies/scopes) on their roles can still narrow their requests.
+[Who can edit each policy](/docs/policies/editing#open-the-editor) also depends on the parent
+policy's delegation settings.

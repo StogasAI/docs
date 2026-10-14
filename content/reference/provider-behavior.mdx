@@ -1,215 +1,53 @@
 ---
-title: Compatibility Notes
-description: The small set of Stogas behaviors that differ from a direct provider API.
+title: Compatibility notes
+description: Where the API differs from calling a provider directly.
 ---
 
-Stogas supports the cataloged interfaces for OpenAI, Anthropic, Azure, and Chutes deployments. Operation pages show accepted fields; rejected compatibility fields are collected here.
-
-## Routing
-
-The `model` field accepts three forms:
-
-| Form               | Example              | Meaning                                     |
-| ------------------ | -------------------- | ------------------------------------------- |
-| Model ID           | `gpt-5.6-sol`        | Consider eligible deployments of this model |
-| Provider and model | `azure/gpt-5.6-sol`  | Use that provider's deployment of the model |
-| Deployment ID      | `openai-gpt-5.6-sol` | Pin the exact catalog deployment            |
-
-Provider and deployment IDs come from `/v1/models` and the catalog. A deployment ID stays pinned;
-Stogas does not move it to another tier, region, speed, or reasoning mode.
-
-For an unqualified model, Stogas first removes deployments that cannot satisfy the request and API
-key configuration. It then applies `provider.only` as a strict restriction and `provider.order` as
-a preference after any applicable policy sort. There is no automatic preference for the model
-author's provider. If equally ranked deployments remain, select a deployment or supply a
-[routing sort](/docs/policies/routing#sorting); otherwise the request returns `model_ambiguous`.
-A requested feature such as `service_tier: "flex"` can leave only one eligible deployment.
-
-Use `provider` or its `rules` alias to restrict or order providers:
-
-```json
-{
-	"provider": { "only": ["anthropic"] }
-}
-```
-
-Do not send both fields. Routing hints are removed before upstream dispatch.
-
-## Service tiers
-
-Service tiers are deployment capabilities, not portable promises across providers.
-
-| Provider  | Accepted values                               | Behavior                                                                                                                                                                        |
-| --------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OpenAI    | `auto`, `default`, `fast`, `flex`, `priority` | `fast` and its accepted legacy spelling `priority` select the same Fast deployment. `scale` and `provisioned` are unavailable.                                                  |
-| Azure     | `auto`, `default`, `fast`, `priority`         | `fast` and `priority` select the same cataloged Priority deployment. Azure does not accept `flex`.                                                                              |
-| Anthropic | `default`, `standard`, `standard_only`        | All values select the cataloged Standard Tier and are sent upstream as `standard_only`. `auto` and `priority` require a separate Priority Tier contract; `flex` does not exist. |
-
-An exact deployment slug rejects a `service_tier` value that selects a different deployment.
-
-[OpenAI's Ultrafast preview](https://openai.com/index/previewing-ultrafast/) is access-controlled and
-currently applies to GPT-5.6 Sol. Stogas does not route it until OpenAI publishes the price needed
-for authorization and settlement. An `ultrafast` request is therefore rejected before provider
-dispatch.
-
-## Prompt caching
-
-Prompt caching remains at the selected provider. Stogas does not store complete model responses.
-
-| Provider  | Implicit caching | Client controls                                                                                                                                                    |
-| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| OpenAI    | Yes              | Chat and Responses accept `prompt_cache_key` and model-specific legacy retention. GPT-5.6 uses `prompt_cache_options` and content-block `prompt_cache_breakpoint`. |
-| Anthropic | Opt-in           | Chat and Responses accept top-level and supported content-block `cache_control`; TTL is `5m` or `1h`.                                                              |
-| Azure     | Yes              | Chat and Responses accept `prompt_cache_key`; cataloged GPT-5.6 deployments accept `prompt_cache_retention: "24h"` but not options or breakpoints.                 |
-| Chutes    | Yes              | No client cache-control fields.                                                                                                                                    |
-
-Cache reads and writes appear in the endpoint's input-token usage details when the provider reports them. Provider-specific breakpoint formats are not translated across deployments. See [Prompt caching](/docs/prompt-caching) for the complete contract and Azure accounting limitation.
+The gateway accepts the OpenAI Chat Completions and Responses formats for every provider. It checks
+each request against the selected deployment before it calls the provider. A field that the
+deployment cannot accept, or that the gateway cannot price, returns `400` and costs nothing. Each
+[provider page](/docs/providers) lists the fields and tools that only that provider accepts.
 
 ## Rejected fields
 
-These familiar provider fields are intentionally outside the current Stogas surface:
+| Endpoint         | Field                                  | Use instead                                                          |
+| ---------------- | -------------------------------------- | -------------------------------------------------------------------- |
+| Both             | `fallbacks`                            | A [routing policy](/docs/policies/routing)                           |
+| Both             | `container`                            | Not available. See [Tools](/docs/model-tools#unavailable-tools)      |
+| Both             | `speed`                                | A `-fast` deployment ID, such as `anthropic-claude-opus-5-fast`      |
+| Both             | `inference_geo`                        | A `-us` deployment ID, or a [routing policy](/docs/policies/routing) |
+| Chat Completions | `functions`, `function_call`           | `tools` and `tool_choice`                                            |
+| Chat Completions | `audio`                                | Not available. Output is text only                                   |
+| Chat Completions | `prompt_cache_isolation_key`           | [`prompt_cache_key`](/docs/prompt-caching)                           |
+| Responses        | `previous_response_id`, `conversation` | Send the whole conversation in `input`                               |
+| Responses        | `background`                           | A normal request, or a [stream](/docs/streaming)                     |
+| Responses        | `stop`                                 | `stop_sequences`, where the provider accepts it                      |
 
-| Endpoint         | Rejected fields                                                                               | Use instead                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Chat Completions | `audio`, `container`, `fallbacks`, `function_call`, `functions`, `prompt_cache_isolation_key` | Text content; `tools` and `tool_choice`; server-owned routing and retention                               |
-| Responses        | `background`, `container`, `conversation`, `fallbacks`, `previous_response_id`                | Synchronous requests with complete client-supplied conversation state; server-owned routing and retention |
+## Fields that the gateway changes
 
-Meaningful values of known rejected fields return `400`. Unknown top-level fields are ignored for
-SDK compatibility and never forwarded. Optional `null` values and common empty SDK defaults are
-treated as omission. Client `user` and `safety_identifier` values are accepted as compatibility
-metadata but removed; Stogas owns upstream identity fields.
+- Unknown top-level fields and unknown headers are ignored, and never sent to the provider.
+- `null`, and the empty defaults that SDKs send, count as omitted.
+- `store` accepts only `false`. The gateway never asks a provider to store a response.
+- `user`, `safety_identifier` and `metadata` are accepted for SDK compatibility, and removed before
+  the gateway calls the provider.
+- `max_tokens` is another name for `max_completion_tokens` on Chat Completions.
+- Streamed Chat Completions always include usage.
+- Sampling values, such as `temperature`, go to the provider unchanged. The provider decides which
+  values its model accepts.
 
-## Other differences
+## Conversation state
 
-- Unknown extensions stay compatible at the public boundary but cannot become provider parameters.
-- `store` may be omitted or set to `false`. `store: true` is rejected, and Stogas never enables provider response storage.
-- The current public surface accepts text content only.
-- Chat accepts only exact `function` tool definitions. Assistant tool calls must be followed by one adjacent result for every call ID in the same stateless request.
-- Responses client tool calls must include valid JSON-object function arguments and one matching output in the same input. Custom calls and encrypted reasoning history are accepted only on the OpenAI-format deployments that preserve them.
-- OpenAI `max_tokens` is accepted as an alias for `max_completion_tokens` on Chat Completions.
-- Sampling values are preserved without gateway-owned numeric ranges or combination rules. The selected provider decides which values and combinations its current model accepts.
-- `task_budget` is available only on direct Anthropic Opus 4.7+, Fable 5, and Mythos 5 deployments. It requires `type: "tokens"`, a `total` of at least 20,000, and an optional `remaining` from zero through `total`. Azure Claude does not support it.
-- Anthropic-format `context_management` accepts the exact `clear_thinking_20251015`, `clear_tool_uses_20250919`, and `compact_20260112` edit shapes. Edit types must be unique, and clear-thinking must be first. Compaction is limited to supported Fable 5, Mythos 5 or Preview, Opus 4.6 through 5, and Sonnet 4.6 or 5 deployments. Stogas reserves each possible compaction iteration and settles the sum of provider `usage.iterations`.
-- Remote MCP tools are not accepted for any provider. Provider execution cannot be bounded and approved per request, and third-party MCP servers are outside the cataloged data-handling and E2EE boundary.
-- Unknown hosted-tool versions are rejected. A future provider alias cannot inherit the price or wire behavior of a current web tool.
-- Anthropic Responses accepts string tool-choice modes and named function selectors. It rejects `allowed_tools` and hosted-tool object selectors because its provider translation does not preserve those constraints.
-- Provider-specific speed and inference geography are selected with an exact deployment slug, not request parameters.
-- Provider-specific cache controls and hosted tools are accepted only where the catalog can route and bill them correctly.
+The gateway keeps no conversation state, so each request must contain the whole conversation. Every
+tool call needs its result in the same request, before the next message. Function arguments
+must be a JSON object encoded as a string.
 
-See [Model Tools](/docs/model-tools) for supported function, custom, and provider-hosted tools.
+## Output
 
-## Streaming
+Models return text, tool calls and citations. Image and audio output are not available. See
+[Images and files](/docs/input-files) for the input that each provider accepts.
 
-Chat Completions and Responses support `stream: true`. Errors before response headers use HTTP
-status codes and JSON; failures after headers arrive within the SSE stream. This includes a
-provider failure after a [keepalive](/docs/keepalives#http-status-and-errors) has started the response.
+## Streams and cancellation
 
-[Streaming](/docs/streaming) covers parsing, completion and cancellation.
-[Request progress](/docs/request-progress) covers application status updates.
-
-## Errors
-
-Errors use an OpenAI-compatible `error` object. Common status codes are:
-
-|        Status | Meaning                                    |
-| ------------: | ------------------------------------------ |
-|         `400` | Invalid or unsupported request             |
-|         `401` | Missing or invalid API key                 |
-| `402` / `403` | Billing or key policy rejected the request |
-|         `413` | Request body too large                     |
-|         `429` | Stogas or provider rate limit              |
-|         `502` | Invalid or unavailable upstream response   |
-|         `503` | Stogas or provider temporarily unavailable |
-|         `504` | Upstream request timed out                 |
-|         `529` | Provider overloaded                        |
-
-Provider validation messages may be returned when useful. Provider credentials, topology, and internal failures are never exposed.
-
-Use the HTTP status and `error.code` to handle errors in your app. Do not match the message text.
-For example, HTTP `402` with `insufficient_balance` means the organization needs more credit;
-`key_spend_limit`, `grant_spend_limit`, and `organization_spend_limit` identify a spending limit
-at that scope. Adding credit does not raise a spending limit. The `message` explains the error
-in plain text, and `param` names a related request field when known. Stogas errors have stable codes; `param` can be `null`.
-
-### Request analytics
-
-**Analytics → Requests** includes credit, policy, and request-validation rejections once Stogas
-can verify which API key they belong to. The key's **Requests** link opens this same history.
-The key's status badge shows its current settings and limits; an old error does not control it.
-
-Each request that passes billing authorization keeps its own final record, including provider
-errors, cancellations, and zero-cost outcomes. Before authorization, the first five rejections
-with the same key, endpoint, error code, and HTTP status in a one-second window keep individual
-records. Further repeats in that window share a record on that gateway node. Grouping uses the
-error code, not message text or requested catalog choices. Successful requests and provider errors never enter this grouping.
-
-| Field               | Meaning                                                                                     |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| `schema_version`    | Record format version; currently `1`. Consumers must check this before interpreting fields. |
-| `request_count`     | Requests represented by this row; `1` for every admitted request.                           |
-| `created_at`        | First rejection time in a group, or the admitted request's billing authorization time.      |
-| `last_request_at`   | Last rejection time in a group; equals `created_at` for an admitted request.                |
-| `gateway_error`     | Rejection or gateway error as `{code, status}`; `null` when absent.                         |
-| `provider_attempts` | Actual provider calls and their results; empty for a rejected request.                      |
-
-For example, 99 matching credit rejections in one window produce five individual rows and one row
-with count 94. Add one completed response and the charts show 100 requests and a 1% success rate.
-Charts sum `request_count`; costs and usage
-remain the recorded amounts and must not be multiplied by that count. Rejections add no latency
-samples. Cancelled requests count toward total requests and do not count as successes.
-
-Grouped records keep the first recorded request ID and the first and last times of those repeats.
-They do not keep every repeated request ID or individual arrival time. Rejection records omit the
-requested model and catalog IDs. A group can include different model or provider choices; these
-rejections count toward key and organization totals but cannot be assigned to individual models.
-Time filters place the
-whole group at `created_at`. The Requests column and detail page show when a row represents
-several requests. Exports preserve these same fields.
-
-Delivery is asynchronous. A hard gateway crash can lose rejection counts that have not reached
-storage; a full queue or a sustained storage failure can also leave gaps. Grouped rejection
-history is not a lossless audit of every request. Requests that fail before Stogas can verify a
-key, including invalid credentials and connection-level failures, cannot enter that customer's
-history. Stogas retains no prompt, response, raw error message, or credential in request logs.
-
-### Provider results and Stogas errors
-
-Stogas uses the structured error type, code, and HTTP status that Bifrost returns. It does not
-classify errors by reading their message text. Provider-specific details map to these shared
-categories; an unrecognized failure uses `provider_error`.
-
-| Provider result                                                                    | Meaning                                                     |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `success`                                                                          | The provider completed successfully.                        |
-| `authentication_error`, `permission_error`                                         | The provider rejected the credential or access.             |
-| `over_budget`, `rate_limited`                                                      | Provider credit or rate limit.                              |
-| `invalid_request`, `context_length_exceeded`, `request_too_large`, `invalid_image` | Invalid input or a request limit.                           |
-| `content_filter`                                                                   | The provider blocked or refused the content.                |
-| `timeout`, `connection_error`                                                      | The call timed out or the connection failed.                |
-| `provider_unavailable`, `provider_overloaded`, `model_unavailable`                 | Provider or model availability failure.                     |
-| `invalid_response`                                                                 | The response could not be used.                             |
-| `cancelled`, `unknown`, `provider_error`                                           | Cancelled call, unknown outcome, or other provider failure. |
-
-These categories describe the result, not who caused it. Each attempt also keeps the provider's
-HTTP status when available. Request filters accept these categories, Stogas error codes such as
-`insufficient_balance`, and HTTP error codes such as `402`. `status:success` requires a completed request with no cancellation or Stogas failure. Other provider error filters inspect all attempts,
-including earlier failed attempts. Local credential preparation and Chutes' exact, proven
-pre-execution retries share the [attempt limit](/docs/policies/routing#attempt-limit), which
-defaults to one. Each Chutes invocation has its own status and duration. Generic provider errors,
-timeouts and ambiguous failures never cause another dispatch. A caller or SDK retry is a separate request.
-
-Stogas processing and provider results remain separate. If a provider succeeds but Stogas cannot
-finish pricing, encode the response, or build a requested response proof, the record keeps the
-provider's success and the Stogas error. A setup failure before provider dispatch has no provider
-attempt; an interrupted provider call with no known result has an unknown outcome. Successfully
-sending the prompt alone does not mean Stogas completed the response.
-
-An ordinary provider error stays in `provider_attempts`; it does not create a gateway `gateway_error`. A handled accounting warning
-or a delayed log delivery does not change a valid response into a failure. Usable provider-reported
-usage determines the charge, which can exceed an underestimated hold; an error alone does not
-determine billing. See [holds and settlement](/docs/policies/limits#holds-and-settlement).
-Client logging preferences cannot disable accounting records.
-
-## Cancellation and billing
-
-Disconnecting does not guarantee that the upstream provider stopped. A request may still be billed for usage the provider reports after the client disconnects. Streaming responses may remain open long enough to receive final usage needed for accurate settlement.
+Errors before the response starts use an HTTP status. Later errors arrive as an event in the
+stream. A cancelled request can still be billed for the usage that the provider reports. See
+[Streaming](/docs/streaming) and [Errors](/docs/reference/errors).

@@ -1,6 +1,7 @@
 ---
 title: C and C++
-description: Use Stogas from C and C++.
+description: Send requests through the verified gateway from C and C++.
+icon: logo:c
 ---
 
 Release archives contain `stogas_verifier.h` and a native library for Linux, macOS, and Windows.
@@ -245,16 +246,13 @@ The header includes C++ linkage guards and opaque types suitable for RAII wrappe
 
 Send `Stogas-Metadata: v1` to request final metadata and automatic content-receipt verification.
 
-## Workload configuration
+## Options
 
 ```json
 { "security": "e2ee", "max_connections": 4 }
 ```
 
-Pass this JSON to `stogas_transport_start`. It also accepts `environment` and `base_url`. Set libcurl timeouts and cancellation callbacks in your application; the transport has no inference retry setting.
+Pass this JSON to `stogas_transport_start`. It also accepts `base_url`. Set libcurl timeouts and cancellation callbacks in your application; the transport has no inference retry setting.
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+Native attested TLS is the default; this example selects E2EE. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

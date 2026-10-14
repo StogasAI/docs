@@ -1,0 +1,19 @@
+---
+title: Availability
+description: Places where U.S. sanctions prevent us from serving you.
+icon: Globe
+---
+
+U.S. sanctions prevent us from serving:
+
+- Cuba
+- Iran
+- North Korea
+- The Crimea, Sevastopol, Donetsk and Luhansk regions of Ukraine
+
+The API refuses requests from these places with HTTP `451` and the error code
+`region_unavailable`. The dashboard also refuses them, and billing details cannot use these
+countries.
+
+The API finds a client's location from its IP address with
+[IP Geolocation by DB-IP](https://db-ip.com).

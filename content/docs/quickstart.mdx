@@ -1,0 +1,128 @@
+---
+title: Quickstart
+description: Create an API key and send your first request.
+icon: Rocket
+---
+
+The API accepts OpenAI-compatible requests. An existing OpenAI client works after you change its
+base URL and API key.
+
+<Steps>
+<Step>
+
+### Create an API key
+
+Open the [dashboard](https://app.stogas.ai) and select the organization that will own the
+key. Your **personal organization** is for your own work. An **external organization** is a shared
+workspace with members and roles; create one from the organization menu.
+
+If the organization is inactive, add at least $1 in credit under **Balance** to activate it. See
+[Billing](/docs/billing) for payment methods and fees.
+
+Create an API key. New keys can use Stogas-managed Chutes models immediately. OpenAI, Anthropic
+and Azure models need [your own provider key](/docs/byok), assigned under the key's **Credentials**
+tab. Copy the key and export it:
+
+```console
+export STOGAS_API_KEY="your-key"
+```
+
+</Step>
+<Step>
+
+### Send a request
+
+This request uses the Chutes deployment `chutes-mistral-nemo-instruct-2407`. The 64-token output
+limit keeps the cost hold small; without it, the gateway holds funds for the deployment's maximum output.
+
+```console tab="cURL" tab-group="client"
+curl https://api.stogas.ai/v1/chat/completions \
+  -H "Authorization: Bearer $STOGAS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "chutes-mistral-nemo-instruct-2407",
+    "messages": [{"role": "user", "content": "Say hello in one sentence."}],
+    "max_completion_tokens": 64
+  }'
+```
+
+```python tab="Python" tab-group="client"
+import os
+
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ["STOGAS_API_KEY"],
+    base_url="https://api.stogas.ai/v1",
+    max_retries=0,
+)
+
+response = client.chat.completions.create(
+    model="chutes-mistral-nemo-instruct-2407",
+    messages=[{"role": "user", "content": "Say hello in one sentence."}],
+    max_completion_tokens=64,
+)
+print(response.choices[0].message.content)
+```
+
+```ts tab="JavaScript" tab-group="client"
+import OpenAI from 'openai';
+
+const client = new OpenAI({
+	apiKey: process.env.STOGAS_API_KEY,
+	baseURL: 'https://api.stogas.ai/v1',
+	maxRetries: 0
+});
+
+const response = await client.chat.completions.create({
+	model: 'chutes-mistral-nemo-instruct-2407',
+	messages: [{ role: 'user', content: 'Say hello in one sentence.' }],
+	max_completion_tokens: 64
+});
+console.log(response.choices[0].message.content);
+```
+
+The examples turn off automatic retries: if a connection drops, the model may already have run,
+and a retry runs and bills it again. If your dashboard shows a different API base URL, use that
+URL and a key from the same environment. Each request is billed.
+
+</Step>
+<Step>
+
+### Check the result
+
+A successful request returns HTTP 200 with the reply in `choices[0].message.content`.
+
+| Error          | What to do                                                                                |
+| -------------- | ----------------------------------------------------------------------------------------- |
+| `401`          | Check that the key is copied correctly and enabled.                                       |
+| `402`          | Add credit, or check the key's [spending limits](/docs/policies/limits).                  |
+| Provider error | Open the request in **Analytics** before you retry. See [Errors](/docs/reference/errors). |
+
+</Step>
+</Steps>
+
+## Next steps
+
+<Cards>
+	<Card
+		title="Choose a model"
+		description="Browse the catalog and select deployments."
+		href="/docs/models"
+	/>
+	<Card
+		title="Stream responses"
+		description="Read output as it arrives and handle stream errors."
+		href="/docs/streaming"
+	/>
+	<Card
+		title="Verify the gateway"
+		description="Send requests through a verified, encrypted connection."
+		href="/docs/verification"
+	/>
+	<Card
+		title="Set a budget"
+		description="Limit spending and requests with a policy."
+		href="/docs/policies"
+	/>
+</Cards>

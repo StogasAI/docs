@@ -1,0 +1,87 @@
+---
+title: Service tiers
+description: Choose Standard, Flex, Fast or Ultrafast processing, and check which tier ran.
+icon: Gauge
+---
+
+A service tier sets how quickly the provider processes a request and what it costs. The gateway uses
+the same tier names for every provider and converts them to each provider's own controls.
+
+| Tier      | Processing                                   | Price   | Deployment ID suffix |
+| --------- | -------------------------------------------- | ------- | -------------------- |
+| Standard  | Normal speed                                 | Base    | None                 |
+| Flex      | Slower, and can fail when capacity is short  | Lower   | `-flex`              |
+| Fast      | Faster output                                | Higher  | `-fast`              |
+| Ultrafast | The fastest output, with its own rate limits | Highest | `-ultrafast`         |
+
+Each tier of a model is a separate deployment with its own price. Search the
+[catalog](/docs/models#find-a-model) for a model to see its tiers.
+
+## Select a tier
+
+Send `service_tier` with a model ID:
+
+```json
+{
+	"model": "gpt-5.5",
+	"input": "Summarize this report.",
+	"service_tier": "flex"
+}
+```
+
+Or send the deployment ID of the tier, such as `openai-gpt-5.5-2026-04-23-flex`.
+
+| `service_tier`          | Selects                                                             |
+| ----------------------- | ------------------------------------------------------------------- |
+| Omitted, `null`, `auto` | The tier of the `model` that you name. A model ID selects Standard. |
+| `default`, `standard`   | Standard                                                            |
+| `flex`                  | Flex                                                                |
+| `fast`, `priority`      | Fast                                                                |
+| `ultrafast`             | Ultrafast                                                           |
+
+- Other values return `unsupported_service_tier`. Values are case sensitive.
+- If the model has no deployment for the tier, the request returns `service_tier_unavailable`. The
+  gateway never moves a request to another tier.
+- A deployment ID fixes the tier, so a `service_tier` for another tier returns
+  `service_tier_unavailable`.
+
+`service_tier` works the same on every provider. For example, `fast` selects Claude's Fast mode on
+Anthropic, which Anthropic must first enable for your organization. Do not send a provider's own control, such as Anthropic's `speed`; it returns `400`.
+
+| Provider  | Flex            | Fast                    | Ultrafast                      |
+| --------- | --------------- | ----------------------- | ------------------------------ |
+| OpenAI    | Some models     | Some models             | Some models, on Responses only |
+| Azure     | Some GPT models | Some GPT models         | No                             |
+| Anthropic | No              | Some Claude Opus models | No                             |
+| Chutes    | No              | No                      | No                             |
+
+## When the provider cannot run the tier
+
+- **Flex**: the request can take longer than at Standard. When the provider has no Flex capacity, the
+  request fails with a `429` error.
+- **Fast**: OpenAI and Azure can run a Fast request at Standard, for example when your Fast traffic
+  grows too quickly. You then pay the Standard price. Claude returns an error instead.
+- **Ultrafast**: the request fails with a `429` error when you reach your Ultrafast rate limit.
+
+## Check which tier ran
+
+The response's `service_tier` is the tier that the provider reports:
+
+- OpenAI and Azure report `default`, `flex`, `fast`, `priority` or `ultrafast`. `priority` is the
+  older name for Fast. A Fast request that ran at Standard reports `default`.
+- Claude reports Fast mode as `"speed": "fast"`. Its `service_tier` is `default`.
+
+In the [request record](/docs/request-records#catalog-history), `catalog_chain_hash` identifies the
+deployment that you paid for. When the provider ran another tier, `resolved_catalog_chain_hash`
+identifies the deployment that your request resolved to.
+
+## Block a tier
+
+A [routing policy](/docs/policies/routing) can remove tiers with `deployment.upstream.serviceTier`,
+which is `standard`, `flex`, `fast` or `ultrafast`. For example, to block Ultrafast:
+
+```json
+{ "routing": { "filter": "deployment.upstream.serviceTier != 'ultrafast'" } }
+```
+
+A policy cannot move a request to another tier. The request's `model` and `service_tier` choose it.

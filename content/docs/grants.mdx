@@ -1,0 +1,59 @@
+---
+title: Grants
+description: Let members create their own API keys under shared rules and per-member allowances.
+icon: Ticket
+---
+
+A grant lets selected members create their own [member keys](/docs/api-keys#member-keys). Each key
+carries its owner's identity into request history, so you can see who used what. A grant has no
+secret and cannot call the API. For an application that must keep running without a member, use a
+[service key](/docs/api-keys#service-keys).
+
+Grants are available in external organizations. For the full setup, see
+[Give a teammate API access](/docs/members#give-a-teammate-api-access).
+
+## Create a grant
+
+Open **Grants** and create a grant. It sets:
+
+- how many keys each assigned member can create,
+- whether the grant is enabled,
+- whether members can edit their keys' policies.
+
+Each member has their own allowance. Lowering it does not delete keys; the member cannot create
+another key until they are below the new allowance.
+
+## Assign a grant
+
+In **Members → Roles**, add the grant or its folder to a role with **Use**, then assign the role to
+members. The role needs no organization-wide permissions. Members then create keys under the grant
+from **API keys** when they need them.
+
+<Callout type="warn">
+	When a member loses their last **Use** on a grant, we delete their keys under it. Use from another
+	role, the folder or the organization keeps the keys. Restoring access does not bring deleted keys
+	back. The dashboard warns you before a removal deletes keys.
+</Callout>
+
+See the [permission reference](/docs/members#permission-reference) for View, Use, Manage and Admin.
+
+## Disable or delete a grant
+
+Disabling a grant rejects new requests from all its keys at once and keeps the keys. Use it for a
+pause you can undo. Deleting a grant deletes every key under it; the dashboard shows how many
+before you confirm.
+
+Select several grants to enable, disable or delete them together. **Select all matching** includes
+every grant you can manage that matches the current filter.
+
+## Policies and shared limits
+
+A member-key request must pass the policies of the organization, folder, grant, owning member, each
+of that member's roles, the key and the selected provider credential. A grant's shared limits count
+requests from all its keys; each key can also have its own limits. See
+[Scopes and inheritance](/docs/policies/scopes) and [Limits](/docs/policies/limits).
+
+## Track use
+
+On **API keys**, filter by grant or member to see their keys. In [Analytics](/docs/analytics),
+filter by `grant:` or `member:` to see their requests and cost.

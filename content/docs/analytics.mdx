@@ -1,0 +1,103 @@
+---
+title: Analytics
+description: Inspect request volume, cost, timing and errors, and open individual requests.
+icon: ChartLine
+---
+
+**Analytics** shows your organization's requests with their usage, cost, timing and outcome. It
+never stores prompts, responses or credentials. **Analytics → Read own** shows your own requests;
+**Read all** shows every request in the organization.
+
+The query bar holds filters and text search. Beside it, the period picker sets the time range: a
+recent period such as the last hour, 24 hours (the default) or 7 days, all time, or a custom range.
+A custom range of dates covers whole local days. The group picker splits the results into groups.
+
+The page address holds the filters, period, grouping and sort order, so you can share or bookmark a
+view, and **Back** undoes the last change. When you open Analytics without a view in the address, it
+resumes your last view in that organization. This browser also remembers your metrics.
+
+## Metrics and chart
+
+The metric tiles show totals for the selected period and, except for all time, their change from
+the period of the same length just before it. Select a tile to chart it over time, and use **Add
+metric** to show token counts, cache use, costs, timing or generation speed. Timing metrics also
+have p50, p95 and p99. The menu beside the chart sets its resolution.
+
+Select an interval in the chart to see its time range, then **Zoom in** to set the period to that
+interval.
+
+Percentiles are approximate. They use only requests with a known value, and timing statistics use
+only successful requests that were not cancelled. First token also needs streamed output.
+Generation speed divides generated tokens by the full request duration.
+
+## Groups
+
+Group by model, final provider, final credential, API key, grant, member, request type, outcome or
+error code. The chart shows the first five groups and combines the rest as **Other**, and a table
+lists up to 100 groups with your metrics as columns. Select a column header to rank the groups by
+it; the table's total covers all matching requests. Model groups combine revisions of the same
+model. Requests without a value, such as requests outside a grant, form their own group, such as
+**No grant**. Select a group to filter the requests to it. These counts are analytics, not the
+counters that enforce limits.
+
+## Requests
+
+Without a grouping, the requests that match the query follow the chart. Select a column header to
+sort them by time, cost or timing. Select a request to see its timeline, provider attempts, usage,
+cost and plugin results.
+
+- The header shows the outcome. Each provider attempt keeps its own result, so a provider can
+  succeed and the request can still fail later in the gateway.
+- Each attempt shows its provider credential, or **Managed** for a Stogas-managed credential.
+- The gateway node links to its boot record in the Trust Center. Gateway versions and catalog
+  releases link to their approvals.
+- Expand **Catalog** to see the deployment settings that applied when the request ran, even if the
+  catalog has changed since.
+- A row can stand for several identical rejections in the same second. The row shows the count.
+  See [grouped rejections](/docs/request-records#grouped-rejections).
+
+An API key's **Requests** link opens the same history filtered to that key.
+
+### Filters
+
+| Filter              | Matches                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key:`              | An API key ID or name.                                                                                                                                        |
+| `grant:`, `member:` | Member keys under a grant, or keys owned by a member.                                                                                                         |
+| `model:`            | A model ID. Suggestions include current catalog names.                                                                                                        |
+| `provider:`         | Any provider attempt.                                                                                                                                         |
+| `final_provider:`   | The last provider attempt.                                                                                                                                    |
+| `byok:`             | A provider credential name or ID used by any attempt, or `stogas` for a Stogas-managed credential.                                                            |
+| `final_byok:`       | The provider credential of the last attempt.                                                                                                                  |
+| `type:`             | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.                                                               |
+| `outcome:`          | `success`, `failed`, `cancelled`, `rejected` or `unknown`.                                                                                                    |
+| `status:`           | `success`, a [provider result](/docs/request-records#provider-results), a gateway error code such as `insufficient_balance`, or an HTTP status such as `402`. |
+| `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                                    |
+| `redaction:`        | `redacted`, `no_matches` or `not_recorded`. See [PII redaction](/docs/pii-redaction).                                                                         |
+
+`status:success` matches completed requests with no cancellation or gateway error. Other `status:`
+values check every provider attempt, including earlier failed ones.
+
+`none` selects requests without a value in `grant:`, `model:`, `final_provider:`, `final_byok:` and
+`error:`. For example, `error:none` selects requests without a gateway error.
+
+Compare numbers with `>`, `>=`, `<` or `<=`:
+
+| Filter                                | Unit                                              | Example                |
+| ------------------------------------- | ------------------------------------------------- | ---------------------- |
+| `latency`, `provider_latency`, `ttft` | Milliseconds, or `ms`, `s` and `m`                | `latency>2s`           |
+| `input_tokens`, `output_tokens`       | Tokens, or `k` and `m` for thousands and millions | `input_tokens>=10k`    |
+| `tokens_per_second`                   | Generated tokens per second                       | `tokens_per_second<20` |
+| `upstream_cost`, `billed_cost`        | USD, with or without `$`                          | `billed_cost>$0.05`    |
+
+Each member can run 30 queries a minute, and an organization 60. Each member can download 3 files a
+minute. Queries also have time and memory limits. If a query cannot finish, narrow the time range or
+filters.
+
+## Download records
+
+Download the filtered requests as NDJSON, CSV or Parquet. NDJSON uses the same record as the raw
+request view; CSV and Parquet keep nested objects as JSON strings. The
+[request record reference](/docs/request-records) describes every field.
+
+To send each record to your own service as requests finish, use the [Export plugin](/docs/export).

@@ -1,129 +1,124 @@
 ---
 title: Routing
-description: Filter eligible deployments, choose ordered or random targets, and bound attempts.
+description: Choose which deployments can serve a request, in which order, and how many attempts it gets.
+icon: Route
 ---
 
-Use `routing.allowedCatalogNodes` for exact catalog IDs and `routing.filter` for a CEL condition.
-Choose among the remaining deployments with `routing.sort` or `routing.selection`.
+A **candidate** is one deployment with one of your provider credentials. For each request, the gateway:
 
-```json title="policy.json"
+1. Starts with the candidates that can serve the request's `model`, endpoint, service tier and
+   output limit.
+2. Removes the candidates that `allowedCatalogNodes` or `filter` exclude.
+3. Orders the rest with `sort` or `selection`, and sends the request to the first.
+
+```jsonc title="policy.json"
 {
 	"routing": {
-		"allowedCatalogNodes": {
-			"providers": ["openai", "chutes"]
-		},
-		"filter": "deployment.dataHandling.trainingUse == false"
+		"allowedCatalogNodes": { "providers": ["openai", "chutes"] },
+		"filter": "deployment.dataHandling.trainingUse == false", // Providers that do not train on prompts.
+		"sort": [{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" }]
 	}
 }
 ```
 
-A **candidate** is one deployment paired with one eligible provider credential.
-Several credential choices can therefore belong to the same deployment.
-The request's model or deployment selector, service tier, interface and output-token limit narrow
-the choices before their complete policies apply. An encrypted credential with no matching
-supplied root is ineligible. A policy cannot widen an explicit request selector. Other
-provider-specific parameters are validated against the selected deployment; they are not
-automatic routing preferences.
-
-Selection has three separate inputs:
-
-| Input                          | What it decides                                                                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Deployment filters             | Which deployment and credential pairs are eligible, including their privacy and location requirements.                                |
-| Deployment ordering            | Which eligible deployment to choose first: ordered targets, uniform random selection, a policy sort, or the request's provider order. |
-| Ordered credential assignments | Which eligible credential to prepare first for the chosen deployment.                                                                 |
-
-An ineligible pair is filtered out without consuming a preparation attempt. A local credential
-preparation failure consumes an attempt and can advance only with the explicit allowance below.
-Credential preference never chooses between two deployments and cannot override either one's policy.
-
-Several deployments may satisfy the same privacy requirements. Keep all matching deployments
-eligible, then order them. For example, require zero retention in the filter and sort by price;
-there is no need to weaken privacy checks or write a filter that happens to match exactly one ID.
-Catalog data-handling fields describe the resolved deployment and route, including inherited facts.
-
-For Chat Completions and Responses, `model` is optional. Omission considers all compatible
-active deployments. A model slug limits selection to that model; a deployment slug pins that
-deployment. Empty or null selectors are invalid. If several deployments remain without a selection setting or an order
-that chooses one, the request returns `model_ambiguous` with usable deployment selectors.
-There is no automatic preference for the model author's provider.
-
-A `model_unavailable` error means no eligible deployment remains. Check the requested model,
-assigned provider credentials and **Combined** policy. Required lists and filters all apply:
-an OpenAI-only requirement and a Chutes-only requirement leave no shared provider, and
-contradictory body-size filters reject every candidate. The error alone does not identify which
-restriction excluded a deployment. Repair the conflicting sources; retrying an unchanged
-request does not resolve that conflict.
-
-## Routing settings
+Filter on what you require, then sort by what you prefer. For example, require zero data retention
+and sort by price, instead of writing a filter that matches exactly one deployment.
 
 <PolicyFields section="routing" />
 
+## When no deployment fits
+
+| Error               | Cause                                                  | Fix                                                                                      |
+| ------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `model_unavailable` | No candidate is left.                                  | Check the model, the key's credentials and the key's **Combined policy**.                |
+| `model_ambiguous`   | The request names no model, and several models remain. | Name a model, filter to one, or add a `sort` or `selection`. The error lists the models. |
+
+Filters and lists from every policy apply together, so an OpenAI-only policy and a Chutes-only
+policy leave no candidate. The error does not say which policy removed a deployment, and sending the
+request again does not help. A policy cannot widen the request's `model`.
+
 ## Allowed catalog nodes
 
-Supported lists are `authors`, `models`, `deployments`, `routes`, and `providers`. They share the
-[policy size limits](/docs/policies/editing#document-rules) without a separate ID-count cap.
-Use unique canonical IDs matching `^[a-z0-9][a-z0-9._:-]{0,127}$`. Names, aliases, wildcards, and
-HTTP paths are not IDs here.
+`allowedCatalogNodes` takes lists of catalog IDs: `authors`, `models`, `deployments`, `routes` and
+`providers`.
 
-Every present list must match. Required lists intersect across applicable policies. Omission
-adds no restriction; `"providers": []` permits no providers. An empty `allowedCatalogNodes`
-object replaces default lists while preserving other required lists. IDs absent from the active
-catalog cannot match.
+- A candidate must match every list. Lists from several policies intersect.
+- Use exact IDs. Names, aliases and wildcards do not match, and IDs that are not in the current
+  catalog match nothing.
+- `"providers": []` allows no provider. `"allowedCatalogNodes": {}` replaces default lists only.
 
 ## Query syntax
 
-Filters use [Common Expression Language](https://cel.dev/), or CEL. For example:
+Filters, sorts and rule conditions use [CEL](https://cel.dev/). Put the expression in a JSON string,
+with single quotes inside it:
 
 ```cel
 provider.id in ['openai', 'chutes'] && deployment.capabilities.streaming == true
 ```
 
-Put the expression in `routing.filter`. JSON requires escaping inner double quotes;
-single-quoted CEL strings are often easier to read.
+| Expression                                                            | Meaning                               |
+| --------------------------------------------------------------------- | ------------------------------------- |
+| `provider.id == 'openai'`                                             | Compare a string                      |
+| `deployment.contextWindowTokens >= 128000`                            | Compare an integer                    |
+| `deployment.pricing.output_tokens.per_mill_tokens <= decimal('2.50')` | Compare an exact price                |
+| `'image' in deployment.inputModalities`                               | Check whether a list contains a value |
+| `model.name.contains('mini')`                                         | Check whether a string contains text  |
+| `has(deployment.deprecationDate)`                                     | Check whether a field is present      |
+| `deployment.inputModalities.exists(m, m == 'text')`                   | Check whether any list item matches   |
+| `request.time.getHours('UTC') < 18`                                   | Read the request time in a time zone  |
 
-| Expression                                                            | Meaning                                     |
-| --------------------------------------------------------------------- | ------------------------------------------- |
-| `provider.id == 'openai'`                                             | Compare a string.                           |
-| `deployment.contextWindowTokens >= 128000`                            | Compare an integer.                         |
-| `deployment.pricing.output_tokens.per_mill_tokens <= decimal('2.50')` | Compare an exact catalog price.             |
-| `'image' in deployment.inputModalities`                               | Test list membership.                       |
-| `model.name.contains('mini')`                                         | Test a substring.                           |
-| `has(deployment.deprecationDate)`                                     | Test field presence.                        |
-| `deployment.inputModalities.exists(m, m == 'text')`                   | Test whether any list element matches.      |
-| `request.time.getHours('UTC') < 18`                                   | Read the request time in a named time zone. |
+- Combine conditions with `&&`, `||`, `!` and parentheses.
+- Write prices as `decimal('...')`. You can compare and sort prices, but not calculate with them;
+  use [`blended_price`](#blended-price) to weigh input and output prices.
+- Names and strings are case sensitive. Unknown fields and wrong types are rejected when you save.
+- Write a time zone as a quoted IANA name, such as `'America/New_York'`, or a UTC offset, such as
+  `'-05:00'`. Unknown time zones are rejected when you save.
+- The [field reference](/docs/policies/routing-fields) lists every field.
 
-Use `&&`, `||`, and `!` for AND, OR, and NOT. Parentheses control grouping. CEL supports typed
-arithmetic, field comparisons, list operations and conditional expressions; it cannot perform
-network calls or execute application code. Unknown fields and incorrect types are rejected.
-Dynamic field access cannot bypass the registered field types.
+### Missing values
 
-Prices require `decimal('...')`, with up to 36 fractional digits, rather than a floating-point
-number. Exact prices support comparisons, membership and sorting; arithmetic on these values
-is not exposed. Use `blended_price` for a weighted price. Integer values use CEL's signed
-64-bit range. Names and strings are case-sensitive.
-
-## Missing values
-
-A filter permits a candidate only when it returns `true`. Missing facts produce an unknown value;
-negating an unknown comparison does not make it true. To deliberately accept a missing disclosure:
+A filter keeps a candidate only when it returns `true`. A comparison with a missing field is
+unknown, and `!` does not make it true. To accept deployments that do not state a value:
 
 ```cel
 !has(deployment.dataHandling.trainingUse) || deployment.dataHandling.trainingUse == false
 ```
 
-Use only `deployment.dataHandling.trainingUse == false` when the declaration is required.
-A true branch can resolve `||` despite an unknown branch; a false branch can resolve `&&`.
-Otherwise the result remains unknown. A [conditional rule](/docs/policies/scopes#conditional-rules)
-with an unknown condition rejects evaluation instead of silently omitting its restrictions.
+Without the `has(...)` check, only deployments that state `false` pass.
+
+## Sorting
+
+A sort has up to three criteria. Each has a CEL expression in `by` and a `direction` of `asc` or
+`desc`:
+
+```json title="Cheapest output, then largest context"
+{
+	"routing": {
+		"sort": [
+			{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" },
+			{ "by": "deployment.contextWindowTokens", "direction": "desc" }
+		]
+	}
+}
+```
+
+- Each `by` expression must read an `author`, `model`, `deployment`, `route` or `provider` field.
+- Missing values sort last. Booleans sort `false` first when ascending. Lists cannot be sorted.
+- Deployment ID breaks any tie that remains.
+- Required sorts from several policies must be the same. A policy below cannot add criteria.
+- One order applies to every candidate. So credential policies cannot set `sort` or `selection`,
+  and a rule that sets either can test only `request` fields in `when`.
+- To set a sort that other policies can replace, put it in a
+  [default rule](/docs/policies/scopes#required-settings-and-defaults).
+- Without a sort or selection, the gateway uses the request's
+  [`provider.order`](/docs/models#how-the-gateway-chooses-a-deployment), then the cheapest
+  deployment, then the deployment ID.
 
 ## Ordered and random selection
 
-Use canonical deployment IDs in `routing.selection.targets`. These targets come from the same
-eligible pool: they never bypass inherited restrictions, credential policies, or an explicit
-request model. Unavailable targets are skipped. If none remain, the request returns `model_unavailable`.
+Use `selection` instead of `sort` to list deployments in order, or to spread requests across them:
 
-```json title="Ordered deployment targets"
+```json title="Try OpenAI, then Claude"
 {
 	"routing": {
 		"selection": {
@@ -135,11 +130,7 @@ request model. Unavailable targets are skipped. If none remain, the request retu
 }
 ```
 
-Ordered mode requires a nonempty, unique target list. It prepares eligible credentials for each
-deployment in assignment order before advancing to the next deployment, within the shared
-[attempt limit](#attempt-limit). Listing a second target does not enable retries after provider errors.
-
-```json title="Distribute requests across eligible deployments"
+```json title="Spread requests evenly"
 {
 	"routing": {
 		"selection": { "mode": "random" }
@@ -147,141 +138,67 @@ deployment in assignment order before advancing to the next deployment, within t
 }
 ```
 
-Random mode gives each eligible deployment the same initial chance, regardless of its number
-of credentials. Each request shuffles deployments once without replacement; credentials retain
-their assignment order. Supply `targets` to limit the draw to those deployments. Selection runs
-independently on each gateway and keeps no shared counter, affinity, or live-load estimate.
+- `ordered` tries each target, with its credentials in their assigned order, within the
+  [attempt limit](#attempt-limit). Targets that filters exclude are skipped.
+- `random` gives each candidate deployment the same chance, whatever its number of credentials.
+  Add `targets` to choose only among those deployments. Each gateway chooses on its own, without
+  shared state.
+- Use `sort` or `selection`, not both. Required selections from several policies must be the same.
 
-Use selection or a nonempty sort, not both. All required selection settings must agree: ordered
-lists must have the same order; random lists must contain the same targets. Sort and selection
-share default replacement, so a required selection replaces a default sort and vice versa.
-Agreement includes every eligible credential's policy, even credentials beyond the attempt limit.
+### Prevent ordering below a scope
 
-## Sorting
-
-A sort is an ordered array of up to three criteria: one main criterion and two tie breakers.
-Each criterion requires a scalar CEL expression in `by` and `direction: "asc"` or `"desc"`.
-Missing values sort last in either direction. Strings sort lexically, numbers numerically,
-and Booleans as false before true when ascending. Lists cannot be sorted.
-
-```json title="Prefer lower output prices"
-{
-	"routing": {
-		"sort": [
-			{
-				"by": "deployment.pricing.output_tokens.per_mill_tokens",
-				"direction": "asc"
-			},
-			{
-				"by": "deployment.contextWindowTokens",
-				"direction": "desc"
-			}
-		]
-	}
-}
-```
-
-Top-level settings are required. All active required sort orders must agree on the complete
-ordering; a child cannot append criteria or choose an incompatible order. Conflicts reject the
-combination. Role order and rule names never decide which policy wins.
-
-To supply a replaceable preference, put the sort in a rule with `mode: "default"`:
-
-```json title="Default organization ordering"
-{
-	"rules": {
-		"prefer_lower_price": {
-			"mode": "default",
-			"routing": {
-				"sort": [
-					{
-						"by": "blended_price(3, 1, 'per_mill_tokens')",
-						"direction": "asc"
-					}
-				]
-			}
-		}
-	}
-}
-```
-
-An applicable required sort or selection replaces ordering defaults. This includes an explicit `"sort": []`,
-which adds no ordering while preserving other required orders. When only defaults apply, their
-orders must agree too. Candidate-dependent ordering must define one consistent choice across
-all remaining candidates.
-
-After an explicit sort, deployment ID breaks any remaining tie deterministically. Without a
-policy sort or selection, the request's explicit provider order applies. Equal-rank deployments still require
-a deployment selector, sort, or selection setting; neither catalog iteration order nor attempt allowance resolves
-that ambiguity.
-
-To prohibit descendant policy ordering, the organization must exclude both `routing.sort` and `routing.selection` from its
-delegation to all six saved resource types and from `delegation.request`, and suppress its own
-ordering defaults. `"sort": []` alone only replaces defaults: it does not prohibit another required
-ordering. With policy ordering prohibited, requests still need a deployment selector or an unambiguous
-provider order. See [Delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for section permissions.
+To stop other policies from setting an order, remove `routing.sort` and `routing.selection` from
+the organization's [delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for every
+resource type and for `request`, and remove the organization's own default ordering. Requests then
+use the request's `provider.order` and the [default order](/docs/models#how-the-gateway-chooses-a-deployment).
 
 ## Blended price
 
-`blended_price(inputWeight, outputWeight, 'rate')` returns an exact weighted catalog price in
-USD per million total tokens. For a 3:1 input/output ratio, it is `(3 × input price + output price) / 4`.
-An input price of $1/million and output price of $9/million therefore gives $3/million blended.
+`blended_price(inputWeight, outputWeight)` weighs a deployment's input and output prices into one
+price per million tokens. With a 3:1 ratio, GPT-6 Sol's input price of $2 and output price of $10
+blend to `(3 × 2 + 10) / 4 = $4`:
 
 ```cel
-blended_price(3, 1, 'per_mill_tokens') < decimal('5')
+blended_price(3, 1) < decimal('5')
 ```
 
-All three arguments must be constants. Each weight is an integer from 0 to 9,007,199,254,740,991;
-at least one must be positive. The rate is `per_mill_tokens`, `per_mill_context_lte_272k`, or
-`per_mill_context_gt_272k`. Equivalent ratios produce the same exact value. A zero weight ignores
-that meter. A missing participating rate produces an unknown result; zero is a valid price.
-
-This comparison does not estimate request cost, output length, cache hits, tools or provider fees.
-It never chooses a context price tier from a token estimate. To require both context tiers below $5:
+Some models charge more for every token of a request whose prompt is long. GPT-6 Sol charges $4
+for input and $15 for output when the prompt is over 272,000 tokens. Add a prompt size in tokens to
+blend the prices that a prompt of that size pays:
 
 ```cel
-blended_price(3, 1, 'per_mill_context_lte_272k') < decimal('5') &&
-blended_price(3, 1, 'per_mill_context_gt_272k') < decimal('5')
+blended_price(3, 1, 300000) < decimal('5')
 ```
 
-To allow flat pricing or two acceptable context tiers:
+At 300,000 tokens, GPT-6 Sol blends to `(3 × 4 + 15) / 4 = $6.75`, so this filter removes it.
+Without a prompt size, the function blends the prices for short prompts.
 
-```cel
-blended_price(3, 1, 'per_mill_tokens') < decimal('5') ||
-(blended_price(3, 1, 'per_mill_context_lte_272k') < decimal('5') &&
- blended_price(3, 1, 'per_mill_context_gt_272k') < decimal('5'))
-```
-
-Prices remain exact even for repeating fractions. See the [field reference](/docs/policies/routing-fields#pricing)
-for individual token prices and [spend limits](/docs/policies/limits#spend-allowances) for usage budgets.
+- Weights and the prompt size are constant integers. At least one weight must be positive, and a
+  zero weight ignores that price.
+- If a price with a positive weight is missing, the result is unknown.
+- It compares prices only. It does not estimate the cost of a request.
 
 ## Request facts and context
 
-Routing can read `request.model`, `request.route`, `request.time`, and `request.bodyBytes`.
-Body bytes are the exact incoming JSON size, including whitespace and request controls, before
-redaction. The [field reference](/docs/policies/routing-fields) lists the full catalog inventory.
-
-Token estimates and estimated total request costs are unavailable to routing and rule conditions.
-After selection, redaction and the universal text estimator run once, with separate framing allowances. The resulting estimate
-feeds reservations, token limits and the `estimated_input_tokens` usage meter. Redaction can
-increase token count. Provider context admission remains authoritative; a large local estimate
-does not truncate the request, weaken redaction, or choose another deployment.
+Filters and conditions can read `request.model`, `request.route`, `request.time` and
+`request.bodyBytes`, the size of the JSON body as sent. They cannot read token estimates or costs,
+because the gateway calculates those only after it selects a candidate.
 
 ## Query bounds
 
-Each CEL expression is limited to 16 KiB of UTF-8 source and 10,000 runtime cost units.
-Conditions, filters and sorting share a compilation budget of 4,096 parsed expression nodes
-per source and 8,192 across distinct applicable sources. Operators, values and field accesses
-count toward that budget; repeated identical expressions in one source compile once.
-All conditions, filters and sort evaluations share 100,000 units per request. Exceeding the
-allowance rejects the request before a hold. These units bound evaluator work, not elapsed time.
-The [document bounds](/docs/policies/editing#document-rules) also apply.
+| Bound                                                            | Limit              |
+| ---------------------------------------------------------------- | ------------------ |
+| One expression                                                   | 16 KiB             |
+| Work for one expression                                          | 10,000 cost units  |
+| Expression nodes in one policy, and in all policies of a request | 4,096 and 8,192    |
+| Work for all expressions of one request                          | 100,000 cost units |
+
+A request over a bound fails before the gateway holds any funds.
 
 ## Attempt limit
 
-`routing.maxAttempts` defaults to **one**. It covers failed local credential preparations and
-provider invocations, including the first invocation. Invalid encryption keys or encrypted content
-always stop the request. To allow additional attempts:
+`routing.maxAttempts` sets how many credentials and deployments a request can try, from 1 to 3. The
+default is 1:
 
 ```json title="policy.json"
 {
@@ -291,22 +208,11 @@ always stop the request. To allow additional attempts:
 }
 ```
 
-The accepted values are 1, 2 and 3. Required values combine by minimum; defaults apply only when
-no requirement supplies that setting. A failed local credential preparation can advance within
-the allowance. A lower limit encountered on a candidate remains binding for the request.
-
-The allowance is shared across credentials and deployments. With a value of 3, two failed
-credential preparations leave one provider invocation on the next eligible credential or
-deployment. Target order does not grant an extra allowance. Every candidate still satisfies its
-complete policy, and each new provider invocation uses the remaining shared budget.
-
-Redaction, tokenization and authorization begin only after a credential is selected. Failures
-from those stages do not select another candidate. Provider errors do not restart policy selection.
-Context errors, budget declines, timeouts and ambiguous network failures never trigger an
-automatic inference retry.
-
-Within the remaining allowance, Chutes can retry an exact rejection proven to precede inference
-on another verified instance with a fresh one-use ticket. This preserves the selected deployment
-and credential. An empty policy permits one invocation. Caller timeout, disconnect, or failed
-delivery stops additional retries; an invocation already in flight remains owned through usage
-collection and settlement under the separate server deadline.
+- An attempt is a failed credential preparation or a provider call. The first call counts.
+- The limit is shared across credentials and deployments. When several policies set it, the
+  smallest value applies.
+- The gateway never sends a request again after a provider error, timeout, limit decline or unclear
+  network failure.
+- Within the limit, Chutes can try another verified instance when it proves that the first
+  instance did not run the request.
+- Invalid encryption keys or encrypted content stop the request at once.

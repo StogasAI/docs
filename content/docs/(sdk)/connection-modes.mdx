@@ -1,0 +1,88 @@
+---
+title: Connection modes
+description: Compare attested TLS and E2EE over HTTPS, the two ways the SDK protects a request.
+icon: Cable
+---
+
+The [SDK](/docs/sdk-overview) and [CLI](/docs/cli) protect each request in one of two ways.
+Both check fresh hardware evidence from the gateway before they send your API key or prompt. Both
+fail closed: if the protected connection is not available, the request fails and does not fall
+back to ordinary HTTPS.
+
+| Runtime                                    | Default mode                        | Other choice                  |
+| ------------------------------------------ | ----------------------------------- | ----------------------------- |
+| Native SDKs and the CLI                    | [Attested TLS](#attested-tls)       | Select `e2ee` in the settings |
+| Browsers, Workers and other Fetch runtimes | [E2EE over HTTPS](#e2ee-over-https) | None                          |
+
+## Attested TLS
+
+The TLS connection ends inside the verified gateway. The gateway's TLS certificate carries fresh
+hardware evidence, and the SDK checks it on your device before it sends anything.
+
+- The connection uses TLS 1.3 with X25519MLKEM768, a hybrid post-quantum key exchange.
+- The API key stays in the standard `Authorization: Bearer` header. TLS encrypts the headers and
+  the body, so moving the key into the body adds no protection.
+- Traffic uses AES-256-GCM, or ChaCha20-Poly1305 on processors without AES acceleration. There is no
+  AES-128 fallback.
+- Long connections use standard TLS 1.3 key updates, at most once a minute while traffic flows in
+  both directions. Updates derive new keys from the current secrets; only a new connection makes a
+  fresh key exchange.
+
+Browsers cannot check the certificate that `fetch` uses, so they use E2EE.
+
+## E2EE over HTTPS
+
+The SDK encrypts the request inside an ordinary HTTPS body. The outer HTTPS connection can end at a
+CDN or proxy, but the inner encryption ends inside the verified gateway.
+
+- The API key is an inner `Authorization: Bearer` header, encrypted with the rest of the request
+  metadata.
+- Records are binary, so bodies are not base64-encoded. Responses stream as they arrive. Browser
+  uploads are encrypted in full before they are sent, because of Fetch limits.
+- Session setup uses X-Wing HPKE (X25519 and ML-KEM-768), bound to the gateway's evidence. After
+  that, a Double Ratchet mixes in fresh X25519 and ML-KEM-768 secrets as traffic flows in both
+  directions.
+- Every record uses its own AES-256-GCM key, which is deleted after use.
+- The first record in each direction has a fixed-size encrypted header that hides the ratchet
+  counters, public keys and key changes.
+
+## Compare the modes
+
+| Property                     | Attested TLS                                                | E2EE over HTTPS                                                                              |
+| ---------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Runtimes                     | Native SDKs and the CLI                                     | Browsers, Fetch runtimes and native SDKs                                                     |
+| Where encryption ends        | TLS ends at the verified gateway                            | E2EE ends at the verified gateway, inside ordinary HTTPS                                     |
+| What a network observer sees | Addresses, timing and encrypted traffic sizes               | The same. An HTTPS terminator also sees outer HTTP requests, session IDs and request numbers |
+| Credentials and content      | Encrypted by TLS                                            | Encrypted inside the HTTPS body, including the API key and inner HTTP headers                |
+| New key material             | Key updates derive from current secrets                     | Fresh X25519 and ML-KEM secrets as traffic flows in both directions                          |
+| Setup cost                   | Fresh attestation per connection, then ordinary TLS records | Fresh attestation per session, plus record framing and encryption inside HTTPS               |
+
+If someone steals a current TLS traffic secret, key updates do not lock them out; a new verified
+connection does. E2EE can recover once the attacker loses access to the device, as new secrets
+enter in later exchanges. Recovery needs honest delivery of those exchanges and is not
+guaranteed after every request.
+
+## Sessions
+
+The SDK manages connections and sessions. Reuse one transport for the life of your application and
+close it at shutdown. Setup costs more than ordinary HTTPS because it checks fresh evidence;
+reuse spreads that cost over many requests.
+
+The SDK opens a new session when a gateway shuts down for an update, when the gateway reclaims an
+idle E2EE session, or when a session reaches its key limit. Requests that are already running
+finish on the old session. Error responses, including rate limits and provider errors, do not end
+a session.
+
+The SDK never sends a request again after it was submitted. If a session ends during a request,
+that request fails and later requests use a new session. Your OpenAI client decides whether to
+retry; a retry can run and bill the request again.
+
+## Limits
+
+- Encryption ends inside the verified gateway. The model provider receives the request, and
+  neither mode proves how the provider runs it.
+- Neither mode hides traffic sizes and timing, or protects data on a compromised device or gateway.
+- E2EE request bodies can be up to 128 MiB and response bodies up to 64 MiB.
+
+The [security model](/docs/security-model) explains the hardware, evidence and
+metadata limits in full.

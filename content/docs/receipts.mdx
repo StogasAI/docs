@@ -1,0 +1,104 @@
+---
+title: Receipts
+description: Get a signed record of a request and its response, and check it later.
+icon: ReceiptText
+---
+
+A receipt proves that a verified gateway received an exact request and returned an exact response.
+The gateway signs it with a key bound to its hardware evidence. Use receipts when you or an auditor
+must check a request later.
+
+## Get a receipt
+
+Send this header with an inference request:
+
+```http
+Stogas-Metadata: v1
+```
+
+The response then ends with a `stogas` object. It has usage, routing and provider details, and a
+compact response receipt:
+
+```jsonc
+{
+	"id": "chatcmpl-...",
+	"choices": [ ... ],
+	"usage": { ... }, // The standard usage field does not change.
+	"stogas": {
+		// Usage, routing and provider details.
+		"receipt": {
+			"schema": "stogas.receipt.v1",
+			"boot_sha256": "9f2c...", // The gateway boot that signed it.
+			"request_sha256": "41d7...",
+			"response_sha256": "c08e...",
+			"signature": "..."
+		}
+	}
+}
+```
+
+A stream sends the `stogas` object in a `: stogas {...}` SSE comment before the last event.
+Ordinary SSE parsers ignore it.
+
+The [SDK](/docs/sdk-overview) and [CLI](/docs/cli) check the receipt before they report that the
+request completed. Streamed output arrives before that check.
+
+## What the signature covers
+
+One signature covers:
+
+- the SHA-256 of the exact request body,
+- the SHA-256 of the exact response, including the endpoint's last event, and
+- the `stogas` object, without its `receipt` field.
+
+Keepalive and metadata comments are not part of the response hash. The gateway hashes a stream as
+it passes through, so a receipt adds no delay. The
+[receipt format](/docs/reference/security#receipt-format) lists each field.
+
+## Check a receipt later
+
+Save the request body and the response exactly as they were sent. Reformatting the JSON changes
+their hashes. Then run:
+
+```console
+stogas proof --request request.json --response response.json --json
+```
+
+Add `--stream` for an SSE response. If you saved the `stogas` object on its own, pass it with
+`--proof metadata.json`, and pass only the signed response bytes with `--response`.
+
+The command downloads the boot record named by `boot_sha256` and the evidence it was verified with,
+then checks the receipt against them. It uses the evidence that was valid when the boot was logged,
+so later key changes and expired revocation lists do not invalidate a saved receipt. The
+[Trust Center](/docs/verification#trust-center) shows the same boot records.
+
+### Check without network access
+
+These records never change. To keep them with your saved receipts, download them once:
+
+```console
+stogas download-evidence --boot <boot_sha256> --output evidence/
+```
+
+Then pass them to the check, which then makes no network requests:
+
+```console
+stogas proof --boot evidence/boot.json --bundle evidence/evidence.json \
+  --request request.json --response response.json --json
+```
+
+The SDKs offer the same offline check, for example `verify_receipt` in [Python](/docs/python) and
+`VerifyReceipt` in [Go](/docs/go).
+
+## What a receipt does not prove
+
+- When the request ran.
+- That the client used a verified confidential connection. Receipts work with ordinary HTTPS too.
+- That the provider ran the model in a TEE.
+- That a new connection can trust the same gateway. A new connection needs fresh evidence.
+
+## If a check fails
+
+A failed check means that the receipt cannot prove what the gateway returned. It does not mean that the
+model did not run, and the request can still be billed. Do not retry it automatically: a retry is a
+new request.

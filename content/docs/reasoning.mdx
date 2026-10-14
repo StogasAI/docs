@@ -1,141 +1,106 @@
 ---
-title: Reasoning controls
-description: Select reasoning effort, manual token limits, Pro mode, and service tiers.
+title: Reasoning
+description: Set how much a model reasons before it answers, with one scale for every provider.
+icon: Brain
 ---
 
-We accept one portable reasoning scale across providers:
+The gateway accepts one effort scale on every provider and converts it to the control of the
+selected deployment:
 
-`none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`
+`none` · `minimal` · `low` · `medium` · `high` · `xhigh` · `max`
 
-Each catalog deployment has `reasoning`, `reasoningEfforts`, and
-`reasoningMaxTokens`. Availability is `unsupported`, `optional`, or `required`. The effort list
-contains only distinct positive levels that the deployment can select; it never contains `none`.
-An empty list can therefore mean binary on/off reasoning, required reasoning without selectable
-levels, or no reasoning. Read it with availability. If you omit reasoning, Stogas also omits the
-control from the provider request. Omission lets the provider apply its default and is not the
-same as `none`.
+## Set an effort
 
-Reasoning levels can differ by API route. Stogas applies the selected route before it maps the
-portable scale. For GPT-5.6, Responses accepts native `max`, while Chat Completions maps `max` to
-native `xhigh`.
-
-## Select an effort
-
-Use the OpenAI-compatible field for the endpoint:
-
-```json title="Chat Completions"
+```json tab="Chat Completions"
 {
 	"model": "gpt-5.6-sol",
-	"messages": [{ "role": "user", "content": "Solve this carefully." }],
+	"messages": [{ "role": "user", "content": "Find the bug in this function." }],
 	"reasoning_effort": "high"
 }
 ```
 
-```json title="Responses"
+```json tab="Responses"
 {
 	"model": "gpt-5.6-sol",
-	"input": "Solve this carefully.",
+	"input": "Find the bug in this function.",
 	"reasoning": { "effort": "high" }
 }
 ```
 
-An effort passes through unchanged when the selected deployment lists that exact value. Another
-positive effort maps to the nearest available positive level, with upward ties. Explicit `none`
-disables optional reasoning and is rejected when reasoning is required. On an optional binary
-deployment, any positive effort means on and `none` means off; we do not pretend that binary
-on is a specific effort such as `high`. A required deployment with no selectable level rejects an
-effort because there is no accurate level mapping. Check the selected deployment in the catalog
-when exact provider behavior matters.
+If you omit the effort, the gateway sends no reasoning control and the provider uses its default. This
+is different from `none`, which turns optional reasoning off.
 
-Chat Completions also accepts the OpenRouter-compatible binary form:
+Chat Completions also accepts `"reasoning": { "enabled": true }`. `true` selects the level nearest
+to `medium`, and `false` means `none`. An `enabled` value that conflicts with the effort is rejected.
 
-```json
+## How the gateway converts an effort
+
+| The deployment                       | The gateway                                              |
+| ------------------------------------ | -------------------------------------------------------- |
+| Lists the effort                     | Sends it unchanged.                                      |
+| Lists other levels                   | Sends the nearest level. A tie goes to the higher level. |
+| Has reasoning on or off only         | Turns reasoning on for any effort, and off for `none`.   |
+| Requires reasoning                   | Rejects `none`.                                          |
+| Requires reasoning but has no levels | Rejects any effort.                                      |
+| Accepts only a token budget          | Converts the effort to a budget, as described below.     |
+
+For example, `minimal` on a deployment with `low`, `medium` and `high` becomes `low`.
+
+## Check a deployment
+
+Each deployment in the [catalog](/docs/models#find-a-model) has three reasoning fields:
+
+| Field                | Value                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| `reasoning`          | `unsupported`, `optional` or `required`.                                                 |
+| `reasoningEfforts`   | The levels you can select. Empty when reasoning is only on or off, or not available.     |
+| `reasoningMaxTokens` | `{ "minimum", "maximum" }` when the deployment accepts a token budget, otherwise `null`. |
+
+Levels can differ between Chat Completions and Responses on the same deployment.
+
+## Set a token budget
+
+Some deployments accept a maximum number of reasoning tokens:
+
+```jsonc
 {
-	"reasoning": { "enabled": true }
+	"model": "claude-sonnet-4-6",
+	"messages": [{ "role": "user", "content": "Plan the migration." }],
+	"max_completion_tokens": 16000,
+	"reasoning": { "max_tokens": 8000 } // Must be below the output limit.
 }
 ```
 
-For a deployment with effort levels, `true` selects its nearest equivalent to `medium` and
-`false` disables optional reasoning. For a binary deployment, it directly selects on or off.
-Conflicting `enabled` and `effort` values are rejected. Responses uses `reasoning.effort`.
+The budget must be within the deployment's `reasoningMaxTokens` and below the request's output
+limit. The model can use fewer tokens. Send a budget or an effort, not both.
 
-## Thinking summaries
+When a deployment accepts only a budget, the gateway converts the effort to a position between the
+deployment's `minimum` and the output limit:
 
-For Anthropic models, omitting the display control preserves the provider's default.
-To request or hide a thinking summary explicitly, use `reasoning_display: "summarized"`
-or `"omitted"` on Chat Completions. On Responses, use `reasoning.summary: "auto"`
-or `"none"`. These controls change visible output, not the reasoning-token charge.
+| Effort    | Position |
+| --------- | -------- |
+| `minimal` | 2.5%     |
+| `low`     | 15%      |
+| `medium`  | 42.5%    |
+| `high`    | 80%      |
+| `xhigh`   | 92%      |
+| `max`     | 100%     |
 
-## Manual token limits
+The budget is `minimum + floor(position × (output limit − minimum))`. `none` becomes `0`. If the
+provider requires the budget to be below the output limit, `max` uses one token less.
 
-Some deployments accept a maximum reasoning-token budget:
+## Show or hide the reasoning summary
 
-```json
-{
-	"reasoning": { "max_tokens": 4096 }
-}
-```
+Some models can return a summary of their reasoning:
 
-The catalog marks these deployments with a non-null `reasoningMaxTokens` object. Its inclusive
-`minimum` and `maximum` are the exact integer bounds that the deployment accepts. The request
-value must also be less than the request's output-token limit. It is a maximum budget and does not
-guarantee that the model will use that exact number of tokens. Do not send an effort and a manual
-limit in the same request.
+- On Responses, set `reasoning.summary`. Anthropic models accept `auto` or `none`; OpenAI models
+  accept OpenAI's values.
+- On Chat Completions, Anthropic models accept `reasoning_display: "summarized"` or `"omitted"`.
 
-When a provider accepts only a manual token budget but the client sends an advertised effort,
-Stogas converts the effort within the available reasoning range:
+Omit the field to keep the provider's default. The summary changes what you see, not what you pay.
 
-| Effort    | Position in available range |
-| --------- | --------------------------- |
-| `minimal` | 2.5%                        |
-| `low`     | 15%                         |
-| `medium`  | 42.5%                       |
-| `high`    | 80%                         |
-| `xhigh`   | 92%                         |
-| `max`     | Maximum                     |
+## Billing
 
-For a positive effort, the budget calculation is
-`minimum + floor(position × (output limit - minimum))`. Explicit `none` maps to zero. If the
-provider requires reasoning tokens to be strictly below total output tokens, `max` uses one token
-less than that limit.
-
-## GPT-5.6 Pro
-
-Pro is a deployment choice, not a client-supplied `reasoning.mode` field. Select it with a model
-slug:
-
-| Model family | Standard Pro        | Flex Pro                 | Fast Pro                 |
-| ------------ | ------------------- | ------------------------ | ------------------------ |
-| Luna         | `gpt-5.6-luna-pro`  | `gpt-5.6-luna-pro-flex`  | `gpt-5.6-luna-pro-fast`  |
-| Terra        | `gpt-5.6-terra-pro` | `gpt-5.6-terra-pro-flex` | `gpt-5.6-terra-pro-fast` |
-| Sol          | `gpt-5.6-sol-pro`   | `gpt-5.6-sol-pro-flex`   | `gpt-5.6-sol-pro-fast`   |
-
-Sol also has the shorter `gpt-5.6-pro`, `gpt-5.6-pro-flex`, and `gpt-5.6-pro-fast` aliases. Pro
-deployments use the Responses API. You can still select an admitted reasoning effort within Pro.
-
-## Fast service
-
-`fast` is the canonical service-tier name. `priority` is accepted as a compatibility alias and
-selects the same `-fast` deployment and price. For example, either spelling can retarget
-`gpt-5.6-pro` to `gpt-5.6-pro-fast`.
-
-An explicit deployment slug pins its price and behavior. A conflicting `service_tier` is rejected
-instead of silently changing that deployment.
-
-## Microsoft Foundry variants
-
-Azure OpenAI has separate Pro and Priority controls:
-
-| Model family | Pro | Priority | Pro with Priority |
-| ------------ | --- | -------- | ----------------- |
-| Luna         | Yes | No       | No                |
-| Terra        | Yes | Yes      | Yes               |
-| Sol          | Yes | Yes      | Yes               |
-
-Azure calls its low-latency service tier Priority. Azure deployment IDs use `-fast`; `-priority`
-is an alias. Pro does not add a price multiplier. A Pro+Priority deployment uses the
-Priority token rates, including the long-context price tier above 272,000 input tokens.
-
-Claude Fast mode is not available through Microsoft Foundry. This applies to both Azure-hosted
-and Anthropic-hosted Claude deployments. Azure Claude deployment choices therefore represent only
-documented host and data-zone contracts, not Fast variants.
+Reasoning tokens are a separate [usage meter](/docs/usage), billed at the deployment's output rate
+unless the catalog lists a reasoning rate. The hold before the request covers the full output limit,
+including reasoning.

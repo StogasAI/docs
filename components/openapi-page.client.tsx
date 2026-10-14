@@ -6,7 +6,6 @@ import { createOpenAPIPageBase } from 'fumadocs-openapi/ui/base';
 import type { OpenAPIPageProps_Spec } from 'fumadocs-openapi/ui';
 import { apiShiki } from '@/lib/api-highlight';
 import { OpenAPIRequestBody } from './openapi-request-body';
-import { DefaultCollapsiblePanel } from 'fumadocs-openapi/ui/playground/client';
 import { codeThemes } from '@/lib/highlight';
 import { OpenAPICodeBlock } from './openapi-code-block';
 import { useTranslations } from '@fuma-translate/react';
@@ -46,11 +45,6 @@ const Page = createOpenAPIPageBase({
 	playground: {
 		enabled: true,
 		renderBodyField: () => <OpenAPIRequestBody />,
-		components: {
-			CollapsiblePanel: (props) => (
-				<DefaultCollapsiblePanel {...props} defaultOpen={props['data-type'] === 'body'} />
-			)
-		},
 		fetchOptions: {
 			requestTimeout: 45
 		}

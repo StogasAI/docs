@@ -1,6 +1,7 @@
 ---
 title: Kotlin
 description: Use the OpenAI Java client from Kotlin/JVM.
+icon: logo:kotlin
 ---
 
 Kotlin/JVM uses our Java transport package and the official OpenAI Java client. The transport
@@ -88,20 +89,35 @@ The [complete Maven example](https://github.com/StogasAI/verifier/tree/main/exam
 is also tested against streaming errors and interrupted responses. To use a separately running
 [verifier CLI](/docs/cli), set `STOGAS_BASE_URL` to its complete printed URL.
 
-Our published native archives target desktop and server systems. We do not ship Android
-or Kotlin/Native packages. Applications embedding the verifier on a supported native target
-can use the [C ABI](/docs/c-cpp).
+## Android
 
-## Workload configuration
+Android apps use `ai.stogas:stogas-android:0.1.0-alpha.1` in place of `ai.stogas:stogas`. It has
+the same API and supports ARM64 and x86-64 devices on Android 13 (API 33) or later.
+
+Your HTTP client reaches the transport over plain HTTP on `127.0.0.1`, and Android blocks
+plain HTTP by default. Allow that one address in `res/xml/network_security_config.xml`:
+
+```xml
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>
+```
+
+Then set `android:networkSecurityConfig="@xml/network_security_config"` on the `<application>`
+element of your manifest. Traffic to the gateway stays protected by the transport.
+
+We do not ship Kotlin/Native packages. Applications on a supported native target can use the
+[C ABI](/docs/c-cpp).
+
+## Options
 
 ```kotlin
 Transport(mapOf("security" to "e2ee", "max_connections" to 4))
 ```
 
-The map also accepts `environment` and `base_url`. Configure `maxRetries` and `timeout` on the OpenAI builder. The example separately prevents transparent HTTP-stack replay.
+The map also accepts `base_url`. Configure `maxRetries` and `timeout` on the OpenAI builder. The example separately prevents transparent HTTP-stack replay.
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+Native attested TLS is the default; this example selects E2EE. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

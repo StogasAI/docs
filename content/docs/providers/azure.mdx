@@ -1,0 +1,184 @@
+---
+title: Azure
+description: Connect your Azure account, choose deployments, and use GPT, Claude and open models on Microsoft Foundry.
+icon: Cloud
+---
+
+Azure deployments run GPT, Claude and open models in your own Azure account through Microsoft
+Foundry. The gateway calls your Foundry deployments with a Microsoft Entra application that you
+create. Azure bills you for inference, and we charge the [BYOK fee](/docs/byok#billing).
+
+## Connect your account
+
+<Steps>
+<Step>
+
+### Create an Entra application
+
+Create one application for the Azure subscriptions that the credential may use, and create a client
+secret for it.
+
+</Step>
+<Step>
+
+### Grant roles
+
+Give the application's service principal **Reader** on each subscription, and **Foundry User** on
+the model accounts or projects that it may call. **Owner**, **Contributor** and **Reader** let it
+manage or read an account, but not run model requests. Role changes can take several minutes to
+apply.
+
+</Step>
+<Step>
+
+### Add the credential
+
+Open **BYOK → Add → Azure** and enter the tenant ID, client ID, client secret and subscription IDs.
+We read Azure Resource Manager to find your model accounts, deployments and Foundry projects, and
+the application's permissions on each account. These reads are free, so they cannot prove quota.
+Azure checks quota when a request runs.
+
+Each account needs:
+
+- An endpoint that accepts Microsoft Entra sign-in. Accounts created in the Azure portal, Cloud
+  Shell or Azure CLI have one on their
+  [custom subdomain](https://learn.microsoft.com/azure/ai-services/cognitive-services-custom-subdomains),
+  and an Azure OpenAI account created without a subdomain has its own `openai.azure.com` endpoint.
+  A Foundry account created without a subdomain, for example from a template, has only regional
+  endpoints, which do not accept Entra sign-in. To add a subdomain, select **Generate Custom Domain
+  Name** on the account's **Overview** page, or run
+  `az cognitiveservices account update --name <account> --resource-group <group> --custom-domain <subdomain>`.
+  Apps that use the regional endpoint keep working, but you cannot change the subdomain later.
+- **All networks** selected under **Networking → Firewalls and virtual networks**. The gateway
+  reaches your account over the public internet from addresses that can change, so Azure rejects
+  its requests when you allow only selected networks or private endpoints, disable public access,
+  or use a network security perimeter.
+- A role for the application that allows model requests, such as **Foundry User**.
+
+**Azure targets** lists the accounts that miss a requirement and what each one needs. An account
+that lacks only the role keeps its targets, because a new role can take several minutes to show.
+
+</Step>
+<Step>
+
+### Assign it to a key
+
+Open an API key and select the credential under **Credentials**.
+
+</Step>
+</Steps>
+
+Customer encryption is not available for Azure credentials. Your deployment names, resource IDs,
+endpoints and locations never appear in the public catalog. We check the credential once a day and
+update its targets. After you add, remove or change deployments or projects, select **Check
+credential** in the BYOK list, or **Refresh targets** in **Azure targets**, to update them at once.
+
+## Choose Azure targets
+
+Each catalog deployment matches an exact model, version, hosting and deployment type in your
+account. Open **Azure targets** on the credential to choose which of your Azure deployments serves
+each match.
+
+- A single match is selected for you. When there are several, you choose.
+- Refreshing keeps your choices. New matches stay unselected.
+- If a check fails, requests use the targets from the last successful check, and the BYOK list
+  shows the failure.
+- If a selected deployment disappears or its model retires, requests for it fail until you choose
+  another. The gateway never guesses a deployment name or falls back to another provider.
+- The BYOK list flags a credential that has no selected target or has selected targets that are
+  unavailable. It also counts models that have targets but none selected, such as new deployments
+  that a check found.
+
+## Deployment types
+
+The deployment ID shows the Azure deployment type:
+
+| ID suffix  | Azure deployment type | Where inference runs                   |
+| ---------- | --------------------- | -------------------------------------- |
+| None       | Global Standard       | Any Azure region                       |
+| `-us`      | US Data Zone Standard | United States                          |
+| `-eu`      | EU Data Zone Standard | Europe, under Azure's EU Data Boundary |
+| `-instant` | Instant access        | A Foundry project in West US 3         |
+
+Instant access uses models that Microsoft runs for a Foundry project, without a deployment of your
+own. The gateway finds them through a West US 3 project that the credential can reach. If one of
+your deployments uses the same model name, the gateway skips the Instant target, because Azure would
+send the request to your deployment instead.
+
+`deployment.upstream.hosting` shows who runs the model. Claude runs on Azure, or on Anthropic for
+IDs that end in `-anthropic-hosted`. Partners host some open models for Azure, and their processing
+location is unknown.
+
+## Tiers and Pro
+
+Some GPT models offer Flex and Fast, which Azure calls Priority. Select a tier with `service_tier` or
+a `-flex` or `-fast` deployment ID. See [Service tiers](/docs/service-tiers). Select Pro with a `-pro`
+deployment ID; Pro works only with Responses and has no extra charge.
+
+Flex, Priority and Pro are request modes on the same Azure deployment, so one Azure target serves all
+of them. Not every model offers them; the catalog lists the deployments that exist.
+
+## Endpoints
+
+GPT and Claude deployments work with Chat Completions and Responses. Other open models work with
+Chat Completions only.
+
+On Chat Completions, Azure rejects GPT requests that combine reasoning with function tools. Use
+Responses for that combination. `max` effort works only on Responses; on Chat Completions, the
+gateway sends `xhigh` instead.
+
+The gateway sends `temperature`, `top_p` and `logprobs` unchanged, and Azure returns `400` when a GPT
+model does not accept them.
+
+## Prompt caching
+
+GPT deployments use the same cache controls as [OpenAI](/docs/providers/openai#prompt-caching).
+Azure reports cache reads and writes, and they are billed at the catalog rates.
+
+Claude deployments use `cache_control`, as on [Anthropic](/docs/providers/anthropic#prompt-caching).
+
+## Claude on Azure
+
+Claude on Azure works as on [Anthropic](/docs/providers/anthropic), with these differences:
+
+- There are no Fast deployments.
+- `task_budget` is rejected, because the gateway does not send it to Azure.
+- System messages after the first turn are rejected.
+- Claude Fable and Claude Mythos accept effort up to `xhigh`, which Microsoft says gives the same
+  result as `max`. The gateway sends `xhigh` when a request asks for `max`.
+- Claude Mythos 5.1 and Claude Mythos 5 need access from Anthropic, as on
+  [Anthropic](/docs/providers/anthropic#models-that-need-approval). Until Anthropic grants it, Azure
+  does not offer them for deployment.
+
+## Tools and files
+
+- GPT models accept `function` tools, and `custom` tools on Responses. They have no hosted tools.
+- GPT models read PDFs on Responses. Chat Completions accepts no documents.
+- DeepSeek and Kimi models can return several tool calls in one turn, even when
+  `parallel_tool_calls` is `false`.
+- Claude reads PDFs and plain text, as on [Anthropic](/docs/providers/anthropic#files).
+
+See [Images and files](/docs/input-files).
+
+## Data handling
+
+The gateway always sends `store: false`. Azure does not keep ordinary inference content, but its
+abuse monitoring can keep flagged samples for human review, so the catalog does not list Azure as
+zero data retention. Microsoft does not train on your data. Your agreement with Microsoft governs
+your account.
+
+Instant access, Flex and preview models such as Kimi K2.6 are Azure previews. Microsoft's preview
+terms do not limit where it stores your data or how long it keeps it, so the catalog lists their
+storage location as `world` and their retention as unknown. A filter such as
+`deployment.dataHandling.retentionDays == 0` skips them.
+
+Claude hosted on Azure keeps prompts and responses in Azure; Anthropic receives only usage data and
+content that its safety systems flag. Claude IDs that end in `-anthropic-hosted` follow
+[Anthropic's data handling](/docs/providers/anthropic#data-handling).
+
+## References
+
+- [Foundry deployment types](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types)
+- [Foundry Instant access](https://learn.microsoft.com/en-us/azure/foundry/concepts/instant-models)
+- [Azure prompt caching](https://learn.microsoft.com/azure/foundry/openai/how-to/prompt-caching)
+- [Claude in Microsoft Foundry](https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry)

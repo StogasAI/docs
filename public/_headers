@@ -1,9 +1,14 @@
 /*
   Link: </llms.txt>; rel="describedby"; type="text/plain", </docs/sitemap.xml>; rel="sitemap"; type="application/xml", </openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json;version=3.1", </docs/reference>; rel="service-doc"; type="text/html", </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"
   X-Content-Type-Options: nosniff
+  Content-Security-Policy: frame-ancestors 'none'
+  X-Frame-Options: DENY
 
 /llms.mdx/*/content.md
   Content-Type: text/markdown; charset=utf-8
 
 /.well-known/api-catalog
   Content-Type: application/linkset+json
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable

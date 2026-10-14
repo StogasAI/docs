@@ -38,7 +38,7 @@ export const policySectionNames: Record<PolicySection, string> = {
 const documentFields = {
 	encryption: {
 		description: 'Register customer encryption key identifiers by label on an organization policy.',
-		href: '/docs/cli#encrypt-plugin-settings'
+		href: '/docs/customer-encryption#create-a-key'
 	},
 	$schema: {
 		description: 'Optional JSON Schema URL for editor completion. It does not change enforcement.',
@@ -54,7 +54,7 @@ const documentFields = {
 	},
 	timeouts: {
 		description: 'Bound caller wait time and the wait between useful provider outputs.',
-		href: '/docs/policies#request-timeouts'
+		href: '/docs/policies/timeouts'
 	},
 	access: {
 		description: 'Deny access during scheduled periods.',
@@ -62,7 +62,7 @@ const documentFields = {
 	},
 	input: {
 		description: 'Require ASCII-only prompt text before redaction.',
-		href: '/docs/plugins/pii-redaction#ascii-only-input'
+		href: '/docs/pii-redaction#ascii-only-input'
 	},
 	plugins: {
 		description: 'Extract or redact request text, and export request JSON to your own webhook.',

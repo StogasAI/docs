@@ -1,9 +1,7 @@
 ---
 title: Chat Completions
-description: Create an OpenAI-compatible chat completion. The gateway resolves
-  the requested model and route through the compiled Stogas catalog, applies
-  deployment facts such as implied service tier, rejects unsupported parameters,
-  and then relays the request to the configured provider.
+description: Creates a chat completion. The gateway checks each field against
+  the selected deployment before it calls the provider.
 full: true
 _openapi:
   preload:
@@ -14,10 +12,8 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: Create an OpenAI-compatible chat completion. The gateway resolves the
-          requested model and route through the compiled Stogas catalog, applies
-          deployment facts such as implied service tier, rejects unsupported
-          parameters, and then relays the request to the configured provider.
+      - content: Creates a chat completion. The gateway checks each field against the
+          selected deployment before it calls the provider.
 ---
 
 export default function Layout(props) {
@@ -25,9 +21,9 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <Callout type="info" title="Application E2EE">
-        Use the managed transport to send this request with E2EE. Your request and response types
-        stay the same; the transport handles encryption and verification. See <a href="/docs/reference/security#confidential-transport">Application E2EE</a> and <a href="/docs/reference/provider-behavior">Compatibility Notes</a>.
+      <Callout type="info" title="Verified connections">
+        Send this request through a <a href="/docs/sdk-overview">Stogas SDK</a> to verify the gateway
+        and encrypt the request. The request and response formats stay the same. See <a href="/docs/connection-modes">Connection modes</a> and <a href="/docs/reference/provider-behavior">Compatibility notes</a>.
       </Callout>
 
       <OpenAPIPage document="stogas" operations={[{ path: '/v1/chat/completions', method: 'post' }]} />

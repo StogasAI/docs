@@ -1,19 +1,26 @@
 ---
-title: JavaScript
-description: Verified, encrypted inference from JavaScript.
+title: JavaScript and TypeScript
+description: Send verified, encrypted requests from Node, Bun and Deno with the OpenAI client.
+icon: logo:javascript
 ---
+
+The `stogas` package gives the OpenAI client a verified, encrypted `fetch`. The examples are
+TypeScript; in JavaScript, leave out the type annotations. For browsers and edge Workers, see
+[Browser and Workers](/docs/browser-workers).
 
 ## Install
 
-```console
+```npm
 npm install stogas openai
 ```
 
-## OpenAI client
+## Send a request
 
-Create one transport and reuse it across requests. It verifies our published evidence, establishes an attested encrypted session, and keeps API keys, provider credentials, prompts, and responses inside that session.
+Create one transport and reuse it for every request. It checks the published evidence, opens an
+attested [E2EE session](/docs/connection-modes#e2ee-over-https), and keeps your API key, provider
+credentials, prompts and responses inside that session.
 
-```js
+```ts
 import OpenAI from 'openai';
 import { StogasTransport } from 'stogas';
 
@@ -25,7 +32,7 @@ const client = new OpenAI(transport.openAIOptions(apiKey));
 
 try {
 	const response = await client.responses.create({
-		model: 'openai/gpt-5-mini',
+		model: 'chutes-mistral-nemo-instruct-2407',
 		input: 'Say hello in one sentence.'
 	});
 	console.log(response.output_text);
@@ -34,20 +41,18 @@ try {
 }
 ```
 
-The Fetch transport supports Chat Completions and Responses over E2EE. It sends binary encrypted records through `https://e2ee.stogas.ai/v1/session`; your OpenAI client still uses its normal request methods. Unsupported paths and methods fail before credentials are sent.
-
-One session opens on first use. More open when existing sessions reach capacity, up to `maxConnections` (four by default). Session reuse is automatic. An idle session can be replaced before a new request; the transport never repeats interrupted inference. Your OpenAI client may retry according to its own policy. `openAIOptions` supplies the URL, key and Fetch adapter; it leaves the OpenAI client's retry and timeout settings unchanged.
+`openAIOptions` supplies the base URL, the API key and the `fetch` adapter. Requests go as binary
+encrypted records to `https://e2ee.stogas.ai/v1/session`. The transport supports Chat Completions
+and Responses; other paths fail before credentials are sent.
 
 ## Stream and cancel
 
-Use the same client and transport:
-
-```js
+```ts
 const cancellation = new AbortController();
-// Your cancellation handler calls cancellation.abort().
+// Your stop action calls cancellation.abort().
 const stream = await client.chat.completions.create(
 	{
-		model: 'openai/gpt-5-mini',
+		model: 'chutes-mistral-nemo-instruct-2407',
 		messages: [{ role: 'user', content: 'Say hello.' }],
 		stream: true
 	},
@@ -58,23 +63,25 @@ for await (const chunk of stream) {
 }
 ```
 
-Consume the iterator to completion and handle errors. The transport withholds the terminal event
-until it verifies encrypted completion. Cancellation or a broken stream does not establish success;
-account for possibly repeated execution when choosing retry policy.
+Read the stream to the end and handle errors. The transport holds back the last event until it has
+checked encrypted completion. See [Streaming](/docs/streaming) for errors, cancellation and
+[progress](/docs/streaming#show-progress) with `onProgress`.
 
-For per-request UI updates, follow [Request progress](/docs/request-progress). In JavaScript, omit the type import
-and `StogasRequestInit` annotation.
+## Retries and timeouts
 
-## Client policy
+`openAIOptions` leaves the OpenAI client's retry and timeout settings unchanged. Set them for your
+application:
 
-Set `maxRetries` and `timeout` on `new OpenAI({ ...transport.openAIOptions(apiKey), ... })`
-according to your application. Stogas preserves status errors and `Retry-After`; it never retries
-inference itself. An interrupted request may already have executed. Use `AbortSignal` to cancel
-and bound application concurrency separately from `maxConnections`.
+```ts
+const client = new OpenAI({ ...transport.openAIOptions(apiKey), maxRetries: 0, timeout: 600_000 });
+```
+
+The transport keeps HTTP status errors and `Retry-After`, and never retries a request itself. A request
+that was interrupted may already have run, so a retry can run it again. Use `AbortSignal` to cancel.
 
 ## Options
 
-```js
+```ts
 const transport = await StogasTransport.create({
 	maxConnections: 4,
 	fetch: globalThis.fetch.bind(globalThis),
@@ -82,34 +89,45 @@ const transport = await StogasTransport.create({
 });
 ```
 
-The default maximum is four; see [workload settings](/docs/sdk-overview#choose-settings-for-your-workload) for interactive, server and constrained clients.
+| Option           | Effect                                                                                    |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| `maxConnections` | The most sessions to open, as needed. Default `4`.                                        |
+| `fetch`          | The `fetch` function to send requests with.                                               |
+| `onMetadata`     | Receives the `stogas` object of a [receipt](/docs/receipts) after the receipt is checked. |
+| `baseURL`        | Another HTTPS address ending in `/v1`. The trusted evidence does not change.              |
 
-`baseURL` may select another HTTPS `/v1` address, but does not change the pinned evidence authorities. A staging build also accepts `environment: 'staging'`; production builds reject it.
+See [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every
+SDK.
 
-Evidence comes from our R2 endpoint first, with our independent AWS endpoint as fallback. The transport verifies evidence at initialization and shares a bounded refresh when setup needs newer evidence. It does not poll in the background. Gateways monitor current approvals and stop accepting new work when they lose authorization. Normal fleet updates preserve admitted requests.
+The transport loads evidence when it starts, and once more if a session needs newer evidence. It
+does not poll.
 
-Use `await transport.refreshBundle()` to refresh explicitly. `transport.bundleSnapshot` provides the verified approval summary, selected evidence URL, fetch time, verification duration, and status. `transport.subscribe(listener)` returns an unsubscribe function. The current evidence describes approved releases and hardware, not a list of live nodes.
+- `await transport.refreshBundle()` loads new evidence now.
+- `transport.bundleSnapshot` shows the verified approvals, evidence URL, fetch time, verification
+  time and status.
+- `transport.subscribe(listener)` reports changes and returns an unsubscribe function.
 
-## Request metadata and receipts
+The evidence lists approved releases and hardware, not live gateways.
 
-Request our optional metadata with one header:
+## Receipts
 
-```js
+Send `Stogas-Metadata: v1` to get a signed [receipt](/docs/receipts):
+
+```ts
 const response = await client.responses.create(
-	{ model: 'openai/gpt-5-mini', input: 'Say hello.' },
+	{ model: 'chutes-mistral-nemo-instruct-2407', input: 'Say hello.' },
 	{ headers: { 'Stogas-Metadata': 'v1' } }
 );
 ```
 
-The transport verifies the content receipt automatically. For streaming requests, consume the stream to completion; partial output alone does not establish a valid final receipt. A failed receipt verification raises an error without repeating inference.
+The transport checks the receipt automatically. For a stream, read it to the end; the receipt comes
+last. A failed check throws an error and does not send the request again.
 
-Buffered responses carry a final `stogas` object. Streams carry that object in an SSE comment immediately before the terminal event. `onMetadata` receives it after receipt verification. One signature covers the request, response and canonical `stogas` metadata, including any provider details and excluding the receipt itself.
+## Check evidence offline
 
-## Offline verification
+The same Rust core checks evidence that your application supplies, without network requests:
 
-The same Rust core can verify evidence supplied by your application without making network requests:
-
-```js
+```ts
 import { EvidenceVerifier } from 'stogas';
 
 const verifier = EvidenceVerifier.for_stogas('prod');
@@ -127,4 +145,5 @@ try {
 }
 ```
 
-Reuse the verifier when accepting updates so learned key retirements and vendor revocations remain effective. Free owned snapshots when their work finishes.
+Reuse one verifier when you accept evidence updates, so it keeps the key retirements and AMD
+revocations it has learned. Free each snapshot when you finish with it.

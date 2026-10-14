@@ -24,20 +24,17 @@ export function OpenAPIRequestBody() {
 	}, [value]);
 
 	return (
-		<div className="flex min-w-0 flex-col gap-2">
-			<label htmlFor={id} className="text-fd-muted-foreground text-sm">
-				{t(messages.requestJson)}
-			</label>
+		<div className="flex min-w-0 flex-col">
 			<textarea
 				ref={input}
-				id={id}
+				aria-label={t(messages.requestJson)}
 				name="request-body"
 				value={text}
 				spellCheck={false}
 				autoComplete="off"
 				aria-invalid={Boolean(error)}
 				aria-describedby={error ? `${id}-error` : undefined}
-				className="bg-fd-background text-fd-foreground min-h-64 w-full resize-y rounded-lg p-3 font-mono text-sm leading-relaxed"
+				className="focus-visible:ring-fd-ring field-sizing-content min-h-60 w-full resize-none bg-transparent px-4 py-3 font-mono text-[0.8125rem] leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-inset"
 				onChange={(event) => {
 					const nextText = event.target.value;
 					setText(nextText);
@@ -57,7 +54,11 @@ export function OpenAPIRequestBody() {
 					setError(message);
 				}}
 			/>
-			<p id={`${id}-error`} role="status" className="text-fd-error text-sm empty:hidden">
+			<p
+				id={`${id}-error`}
+				role="status"
+				className="text-fd-error border-t px-4 py-2 font-mono text-xs empty:hidden"
+			>
 				{error}
 			</p>
 		</div>

@@ -1,192 +1,77 @@
 ---
-title: Protect requests with the SDK
-description: Add gateway verification and encrypted transport to an OpenAI client.
+title: SDKs
+description: Verify the gateway and encrypt the connection, with the OpenAI client you already use.
 ---
 
-The Stogas SDK works with the OpenAI client you already use. Before sending a request, it checks the
-selected gateway and opens a protected connection. Session setup verifies current evidence locally;
-the transport does not poll in the background.
+The SDK works with the OpenAI client you already use. Before it sends your API key or a
+prompt, it checks on your device that the gateway runs an approved release on confidential
+hardware. Then it opens a connection that ends inside that gateway. Your code keeps calling Chat
+Completions and Responses.
 
-Published SDK packages trust production gateways only. Each approved release binds its
-package manifest, GitHub build provenance, independent rebuild and qualification reports
-to a Stogas signature. See the [CLI guide](/docs/cli#install) to verify downloaded releases.
+Published packages trust production gateways only. Native packages need a 64-bit x86-64 or ARM64
+processor. To check a download, see [Verify an SDK download](/docs/reproducible-builds#verify-an-sdk-download).
 
-Native release targets use 64-bit AMD64 or ARM64 processors. Native 32-bit packages
-are not provided; browser and JavaScript packages use WebAssembly.
+## How the SDK connects
 
-<Cards>
-	<Card
-		title="Make a protected request"
-		description="Install the SDK for your language and connect an OpenAI client."
-		href="/docs/typescript"
-	/>
-	<Card
-		title="Understand verification"
-		description="See what the SDK checks before using a gateway."
-		href="/docs/trusted-gateways"
-	/>
-</Cards>
+| SDK                                          | Connection                                                                                                      | Protection                       |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Rust, Python, Go, C, Java, .NET, Ruby, Swift | Runs the Rust connection engine in your process, and gives your client a local URL protected by a random secret | Attested TLS, or E2EE on request |
+| JavaScript, browsers and Workers             | Gives your client a `fetch` function that runs the same engine as WebAssembly                                   | E2EE                             |
 
-## How it works
+Kotlin, Scala, Clojure and F# use the Java or .NET package. Other languages embed the C library, or
+run [`stogas serve`](/docs/cli) on the same machine. [Connection modes](/docs/connection-modes)
+compares attested TLS and E2EE, and [Gateway verification](/docs/verification) lists each check.
 
-<Steps>
-	<Step>
+## Connection settings
 
-### Check the gateway
+Create one transport when your application starts, reuse it for every request, and close it at
+shutdown. In async native applications, start and close it away from the event loop or UI thread.
 
-The SDK checks the gateway's software, confidential hardware, freshness, and connection keys on
-your device.
+| Setting                         | Native SDKs                              | JavaScript SDKs                                |
+| ------------------------------- | ---------------------------------------- | ---------------------------------------------- |
+| Protection                      | `tls` (default) or `e2ee`                | E2EE                                           |
+| Connection maximum              | `max_connections`, default `4`           | `maxConnections`, default `4`                  |
+| Origin                          | `base_url`: an HTTPS origin with no path | `baseURL`: an HTTPS address that ends in `/v1` |
+| Retries, timeouts, cancellation | Your OpenAI client                       | Your OpenAI client and `AbortSignal`           |
 
-    </Step>
-    <Step>
+Each language page gives the exact names. The origin setting cannot change the trusted keys or the
+evidence sources.
 
-### Connect
+- The transport opens one connection, and more only when requests wait, up to the maximum. A
+  higher maximum does not spread requests across gateways.
+- Connection setup, including the wait for a free connection, can take up to 15 seconds of your
+  request deadline.
+- A request through a native SDK's local URL can run for up to one hour.
+- E2EE request bodies can be up to 128 MiB, and response bodies up to 64 MiB.
+- JavaScript SDKs keep each encrypted upload in memory until it is sent. Limit how many large
+  uploads run at once, especially in browsers.
 
-It opens a protected connection to a gateway that passed those checks.
+## Retries
 
-    </Step>
-    <Step>
+The OpenAI client decides whether to retry. The SDK never sends a request again, and it keeps the
+HTTP status, the body and headers such as `Retry-After`.
 
-### Request
+If a connection drops after a request was sent, the model may already have run, and a retry runs it
+again. The examples set retries to zero for this reason. When a gateway restarts for an update, the
+request in progress returns an error, and the SDK opens a new connection for later requests.
 
-Your existing OpenAI client sends normal Responses or Chat Completions requests through that
-channel.
+## Check evidence offline
 
-    </Step>
+The Rust core, and its WebAssembly and C APIs, also verify caller-supplied evidence without network
+access, with the same checks as the transport. See [JavaScript](/docs/javascript#check-evidence-offline),
+[Python](/docs/python#check-evidence-offline) and the [CLI](/docs/cli).
 
-</Steps>
-
-## Connection protection
-
-| Mode            | Use it in                                   | Guide                                                     |
-| --------------- | ------------------------------------------- | --------------------------------------------------------- |
-| Attested TLS    | Native runtimes, default                    | [TLS connection and key updates](/docs/attested-tls)      |
-| E2EE over HTTPS | All runtimes; default for browser and Fetch | [Encrypted records, sessions and concurrency](/docs/e2ee) |
-
-Both verify fresh session evidence before releasing credentials or content. Ordinary HTTPS
-remains a compatibility option without gateway attestation. Encryption protects the client-to-gateway
-path; the selected model provider receives the forwarded request.
-
-## Configuration
-
-The transport opens one channel initially and more only when needed, up to `maxConnections`
-(`max_connections` in Python and the C ABI, `MaxConnections` in Go). The default maximum is four.
-Connections may reach the same gateway; this setting does not promise separate machines.
-
-One E2EE session can carry many concurrent requests. Another session opens only when every
-eligible session has 256 starts still awaiting an authenticated acknowledgement. An ACK releases
-that capacity before the provider finishes. Native TLS instead follows the gateway's advertised
-HTTP/2 stream capacity. Slow model output alone does not exhaust E2EE start capacity.
-
-When a gateway drains, the transport retires the affected channel for new work and lets admitted
-responses finish. A replacement performs fresh attestation. At most one additional channel can
-temporarily overlap the configured maximum during replacement. The request that encountered
-draining is returned to your client; its retry policy controls another inference attempt.
-
-Evidence comes from our compiled R2 origin first, with our independent AWS replica as fallback.
-The transport verifies evidence locally at initialization and performs one bounded recovery when
-setup needs newer evidence. It does not poll in the background. Our gateways monitor their own
-approval and stop admitting work when it is withdrawn. `refreshBundle` (`refresh_bundle` in Rust/Python, `RefreshBundle` in Go) lets an application refresh explicitly. Verified objects are reused when unchanged.
-
-Reuse one transport and close it during graceful shutdown. Native options select the environment,
-security mode, connection maximum and an optional HTTPS origin. The origin override cannot change
-the trusted signing keys or evidence endpoints. Staging requires a staging build.
-
-### Choose settings for your workload
-
-Keep the lazy maximum of four for a mix of interactive and server work. The transport uses one
-channel until protocol capacity requires another; a higher maximum does not open spare channels
-or promise traffic distribution. Set the maximum to one when predictable session use matters
-more than burst capacity. Servers should reuse a transport across requests and bound application
-concurrency and queued body bytes independently.
-
-| Setting                                         | Native bindings                                      | Fetch bindings                               |
-| ----------------------------------------------- | ---------------------------------------------------- | -------------------------------------------- |
-| Security                                        | `tls` by default; select `e2ee` explicitly           | E2EE                                         |
-| Channel maximum                                 | `max_connections: 4` in the underlying configuration | `maxConnections: 4`                          |
-| Environment                                     | `prod`; `staging` requires a staging build           | Same                                         |
-| Origin override                                 | `base_url`: HTTPS origin without a path              | `baseURL`: HTTPS API address ending in `/v1` |
-| Retry policy, request deadline and cancellation | Your HTTP/OpenAI client                              | Your HTTP/OpenAI client and `AbortSignal`    |
-
-Channel maxima count reusable TLS connections or E2EE sessions, not requests, threads or guaranteed
-distinct gateways. They do not limit all HTTP sockets owned by a Fetch runtime. Setup and waiting
-for channel capacity share a 15-second budget, bounded by the caller's deadline. Native loopback
-requests have a one-hour total ceiling; choose a shorter application deadline when appropriate.
-Keepalives do not extend either deadline. E2EE limits each request body to 128 MiB and each response
-body to 64 MiB; these are protocol ceilings, not suggested application budgets.
-
-Fetch uploads retain ciphertext for the HTTP request. Bound simultaneous large uploads, especially
-in browsers. Consume responses incrementally and cancel work when its consumer goes away. In native
-async applications, perform blocking transport startup and shutdown away from the event-loop or UI
-thread. Close the transport after active work has finished.
-
-## OpenAI client integration
-
-Rust, Python, Go, C, Java, .NET, Ruby and Swift bindings run the shared Rust connection engine inside your process. They provide a
-capability-protected loopback URL for your existing OpenAI client. Rust handles fresh attestation,
-TLS or E2EE, evidence recovery, streaming and requested receipt verification.
-
-Other native languages can use the Java/.NET packages, the [verifier CLI](/docs/cli) on the same machine or embed the C ABI.
-The language guides use real client APIs; they do not require a separate Stogas OpenAI client.
-
-Browser, Worker, Node, Bun and Deno integrations provide a managed `fetch` function with the same
-verification core compiled to WebAssembly. E2EE carries binary records without base64 body expansion.
-
-The OpenAI SDK owns retries. Stogas does not replay inference or override the SDK's retry policy.
-It preserves the decrypted HTTP status, supported headers including `Retry-After`, and body.
-An encrypted acknowledgement does not turn a later HTTP error into HTTP 200.
-
-Set retry counts and request deadlines in your OpenAI client. The native examples explicitly choose
-zero retries; this is an application policy, not a transport requirement. A disconnect after
-submission can leave execution unknown, so a retry can execute the request again. Stream errors
-after response headers are separate from HTTP status errors.
-
-Send `Stogas-Metadata: v1` to request the final `stogas` metadata. Its receipt signs the exact request
-and response content. The transport verifies that receipt before reporting successful completion.
-Streaming content can arrive before that final check; receipt failure does not undo execution.
-
-## Build the request experience
+## Next steps
 
 <Cards>
 	<Card
 		title="Streaming"
-		description="Read output as it arrives, handle errors and cancel requests."
+		description="Read output as it arrives, show progress, and cancel requests."
 		href="/docs/streaming"
 	/>
 	<Card
-		title="Keepalives"
-		description="Handle quiet requests and understand acknowledgements."
-		href="/docs/keepalives"
-	/>
-	<Card
-		title="Request progress"
-		description="Connect transport events to per-message UI state."
-		href="/docs/request-progress"
+		title="Receipts"
+		description="Get a signed record of a request, and check it later."
+		href="/docs/receipts"
 	/>
 </Cards>
-
-## Choose your runtime
-
-| Runtime                                     | Start here                                                      |
-| ------------------------------------------- | --------------------------------------------------------------- |
-| JavaScript, TypeScript, Node, Bun, and Deno | [JavaScript](/docs/javascript) · [TypeScript](/docs/typescript) |
-| Browser and edge Worker                     | [Browser and Workers](/docs/browser-workers)                    |
-| Python                                      | [Python](/docs/python)                                          |
-| Go                                          | [Go](/docs/go)                                                  |
-| Rust                                        | [Rust](/docs/rust)                                              |
-| Ruby                                        | [Ruby](/docs/ruby)                                              |
-| Java and other JVM languages                | [Java](/docs/java)                                              |
-| C#                                          | [.NET](/docs/dotnet)                                            |
-| F#                                          | [F#](/docs/fsharp)                                              |
-| Swift on macOS                              | [Swift](/docs/swift)                                            |
-| Kotlin/JVM                                  | [Kotlin](/docs/kotlin)                                          |
-| Scala                                       | [Scala](/docs/scala)                                            |
-| Clojure                                     | [Clojure](/docs/clojure)                                        |
-| C and C++                                   | [C and C++](/docs/c-cpp)                                        |
-| Other runtimes                              | [More languages](/docs/other-languages)                         |
-
-## Verify evidence directly
-
-The Rust core and its Wasm/C evidence APIs also verify caller-supplied evidence without network
-access. They share the same approval, hardware, transparency and revocation checks used by the
-managed transport.

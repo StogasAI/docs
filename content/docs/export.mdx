@@ -1,0 +1,114 @@
+---
+title: Export
+description: Send each request and its response to your own webhook as JSON.
+icon: Webhook
+---
+
+The `stogasExport` plugin posts one JSON record to your webhook when each request finishes. The
+record has the request, the response or stream events, and every field of the
+[request record](/docs/request-records). Use it to keep your own history of prompts and responses,
+or to process them in another service.
+
+<Callout type="warn">
+	Export sends prompt and response content to your receiver. Turn it on only for content that you
+	want the receiver to keep.
+</Callout>
+
+## Add a webhook
+
+Add a destination to a [policy](/docs/policies/editing):
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"stogasExport": {
+			"destinations": [
+				{
+					"url": "https://receiver.contoso.com/stogas", // The full URL. No path is added.
+					"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" } // Optional.
+				}
+			]
+		}
+	}
+}
+```
+
+<PolicyFields section="exportDestination" />
+
+- The URL must use HTTPS and reach a public address.
+- Headers go only to your webhook. To keep them private, [encrypt the plugin
+  settings](/docs/customer-encryption#encrypt-plugin-settings).
+- Destinations from every policy that applies to a request add together, up to eight. Exact
+  duplicates are sent once.
+- An empty `destinations` array replaces
+  [default plugin settings](/docs/policies/scopes#required-settings-and-defaults), but it cannot
+  remove a destination that another scope requires.
+- A [request policy](/docs/policies/request-policies) can add a destination when delegation permits
+  `plugins.stogasExport` or `plugins`.
+
+## Record format
+
+Each record is the request record with four more fields:
+
+```jsonc
+{
+	"schema_version": 1,
+	"request_id": "req_...",
+	// ...the other request record fields, such as usage, performance and provider_attempts.
+	"request": { "model": "...", "input": "..." }, // As sent to the provider, after redaction.
+	"response": { "id": "resp_...", "output": [ ... ] }, // A buffered request.
+	"events": [ ... ], // A stream. Replaces "response".
+	"stogas": { ... } // Usage, routing, gateway and provider details, and the receipt if requested.
+}
+```
+
+| Field      | Content                                                                                                                                   |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if preparation did not finish. |
+| `response` | The response of a buffered request, or the error that ended it.                                                                           |
+| `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.                 |
+| `stogas`   | The same object that [`Stogas-Metadata: v1`](/docs/receipts) returns. Every record has it, whether or not the request sent the header.    |
+
+- Records don't carry file contents. Each inline file in the request, such as a base64 image,
+  audio clip or PDF, is replaced by an object with its declared `media_type`, and the `size` in bytes
+  and hex `sha256` of the decoded file. Use the hash to match a file that you keep. File URLs and
+  file IDs stay as sent.
+
+  ```json
+  {
+  	"media_type": "image/png",
+  	"size": 48213,
+  	"sha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  }
+  ```
+
+- Requests that fail before the gateway selects a deployment have no record.
+- If the client disconnects, the provider still finishes, and the record has the whole output and
+  final usage.
+- The record never contains API keys, provider credentials or webhook headers. Your prompt text is
+  only [redacted](/docs/pii-redaction) if a policy turns redaction on.
+- The record is processed JSON, not a copy of the bytes that the client received, so you cannot
+  check a receipt against it. Keep the original bytes for that.
+
+## Delivery
+
+Each record is a `POST` with `Content-Type: application/json` and an `Idempotency-Key` header equal
+to its `request_id`. Any `2xx` response acknowledges it. The gateway ignores the response body and does
+not follow redirects. Each destination receives records on its own, so a slow receiver does not
+delay the others.
+
+| Rule        | Behavior                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| Retry       | One retry after a connection failure or `429`, `502`, `503` or `504`. Other responses are final. |
+| Retry delay | `Retry-After` if present. Otherwise about five seconds, randomized.                              |
+| Time limits | Ten seconds each to connect, finish TLS, and receive response headers after the upload.          |
+| Lifetime    | One minute from capture, including the retry. A longer `Retry-After` ends delivery.              |
+| Shutdown    | A gateway that shuts down has five seconds to finish deliveries in progress.                     |
+
+A retry can send a record that your receiver already accepted, so ignore duplicate
+`Idempotency-Key` values. The gateway does not store records for later delivery. If the gateway needs
+memory for requests, it drops the oldest records that wait for delivery. It never cuts a record
+short, and an export never makes a request fail.
+
+`plugins.stogas_export.capture_us` in the request record shows the time that the request spent
+copying content for export.

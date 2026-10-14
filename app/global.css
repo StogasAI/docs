@@ -100,6 +100,12 @@
 	background-color: var(--color-response-error-background);
 }
 
+/* The Response Body switch already draws a pill around the selected status. */
+.stogas-api-operation-main [data-response-status] {
+	padding: 0;
+	background-color: transparent;
+}
+
 html {
 	color-scheme: only dark;
 	scrollbar-gutter: stable;
@@ -181,12 +187,23 @@ html.light {
 	cursor: not-allowed;
 }
 
-/* Preserve native, discoverable scrolling for long code and schemas. */
-.fd-scroll-container {
+/* Preserve native, discoverable scrolling for long code, schemas and sidebar navigation. */
+.fd-scroll-container,
+:is(#nd-sidebar, #nd-sidebar-mobile) [data-radix-scroll-area-viewport] {
 	scrollbar-width: auto;
 	scrollbar-color: var(--color-fd-muted-foreground) var(--color-fd-card);
 }
 
+/* The sidebar's Radix scrollbar appears only while scrolling; the native scrollbar replaces it.
+   `scrollbar-color` also disables Radix's hidden `::-webkit-scrollbar` in Chrome and Safari.
+   Radix sets `overflow-y: scroll` inline, which would show an empty track when links fit. */
+:is(#nd-sidebar, #nd-sidebar-mobile) [data-radix-scroll-area-viewport] {
+	overflow-y: auto !important;
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) [data-radix-scroll-area-viewport] ~ [data-orientation] {
+	display: none;
+}
 .stogas-api-operation-layout {
 	display: flex;
 	flex-direction: column;

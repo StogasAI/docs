@@ -1,22 +1,17 @@
 ---
 title: Routing field reference
 description: Every field available to routing filters and sort expressions, with types and pricing units.
+icon: ListTree
 ---
 
-A routing query reads the catalog chain for each candidate: its author, model, deployment,
-route, and provider. `request` exposes the caller's selector, route, request time and exact
-incoming JSON byte size. These are read-only fields, not settings you assign in policy JSON.
+Filters, sorts and rule conditions read these fields for each candidate: its author, model,
+deployment, route and provider, and the request. For example,
+`deployment.contextWindowTokens >= 128000` keeps deployments with a context window of at least
+128,000 tokens.
 
-For example, `deployment.contextWindowTokens >= 128000` keeps deployments with a
-context window of at least 128,000 tokens. It does not change their context window.
-`deployment.maxInputTokens` is the separate input ceiling; `deployment.maxOutputTokens`
-is the output ceiling. The context window bounds the active input and output sequence,
-not cumulative billed input across provider-hosted tool iterations.
-
-The tables below list every registered field. Unknown paths are rejected. A registered field
-can still be missing on a particular candidate; see [Missing values](/docs/policies/routing#missing-values).
-Inspect the [catalog](https://stogas.ai/catalog) for current IDs and values. A catalog capability
-does not by itself enable a request feature that the Stogas API does not accept.
+Unknown fields are rejected. A field can still be missing on a candidate; see
+[Missing values](/docs/policies/routing#missing-values). The [catalog](https://stogas.ai/catalog)
+shows current IDs and values.
 
 ## Types
 
@@ -29,7 +24,8 @@ does not by itself enable a request feature that the Stogas API does not accept.
 | `string_list` | `deployment.inputModalities` | Membership and CEL list macros.                          |
 | `timestamp`   | `request.time`               | CEL time comparisons and time-zone methods.              |
 
-Use `has(field)` to check presence. IDs and strings are case-sensitive. Catalog dates remain
+Use `has(field)` to check presence. On a group such as `deployment.pricing`, `has` is true when
+any field in the group is present. IDs and strings are case-sensitive. Catalog dates remain
 strings; request time is a timestamp. See [Query syntax](/docs/policies/routing#query-syntax).
 
 ## Author
@@ -56,20 +52,48 @@ supports that capability.
 
 ### Data handling
 
-These are the catalog's resolved data-handling properties. A missing disclosure is not a `false`
-value or a guarantee. Require the property explicitly when your application depends on it.
+These fields describe what the provider can do with request and response content for the
+selected deployment and route. Each value is the worst case across every configuration and
+optional feature that the offering allows. For example, a persistent cache that the offering
+allows counts even when your request does not use it. A more private configuration gets a
+stronger value only when the gateway enforces it on every request.
 
-`zeroDataRetention: true` requires no persistent retention throughout the selected offering.
-An allowed persistent cache counts even when an individual request does not use it.
-A ZDR guarantee must cover every permitted configuration; a more private configuration must
-be enforced before it can carry a stronger guarantee.
+A missing disclosure is not a `false` value or a guarantee. Require the property explicitly when
+your application depends on it.
 
 <RoutingFields group="data-handling" />
 
 Temporary in-memory prompt caching is compatible with zero data retention and is excluded from
-`retentionDays`. Persistent caches are not exempt. Training use is recorded separately; a promise
-not to train does not establish zero retention. These facts apply to the selected offering and
-must not be assumed to cover other provider services or optional features.
+`retentionDays`. Persistent caches are not exempt. `retentionDays` covers routine retention only.
+Exceptional retention, such as a legal hold or review of content flagged for abuse, follows the
+provider's terms, and a provider that keeps flagged content for review does not have zero data
+retention. A promise not to train does not establish zero retention. These facts apply to the
+selected offering and do not cover other provider services.
+
+`processingLocation` covers model inference. It does not cover where the provider's API endpoint
+receives and routes the request. `tee` and `teeVerified` describe the provider's inference
+workload; `endToEndEncrypted` describes the connection from the gateway to that workload.
+None of them is proof that every component that can read content is trustworthy.
+
+#### Location values
+
+| Value         | Meaning                                                                                                                                                                                                                                                                           |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `US`, `DE`, … | One country, by uppercase ISO 3166-1 alpha-2 code.                                                                                                                                                                                                                                |
+| `eu`          | European Union member states: AT, BE, BG, CY, CZ, DE, DK, EE, ES, FI, FR, GR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK.                                                                                                                                         |
+| `europe`      | Every `eu` country and the rest of Europe: AD, AL, AT, AX, BA, BE, BG, BY, CH, CY, CZ, DE, DK, EE, ES, FI, FO, FR, GB, GG, GI, GR, HR, HU, IE, IM, IS, IT, JE, LI, LT, LU, LV, MC, MD, ME, MK, MT, NL, NO, PL, PT, RO, RS, RU, SE, SI, SJ, SK, SM, UA, VA.                        |
+| `apac`        | Asia-Pacific: AF, AM, AS, AU, AZ, BD, BN, BT, CC, CK, CN, CX, FJ, FM, GE, GU, HK, ID, IN, IO, JP, KG, KH, KI, KP, KR, KZ, LA, LK, MH, MM, MN, MO, MP, MV, MY, NC, NF, NP, NR, NU, NZ, PF, PG, PH, PK, PN, PW, SB, SG, TH, TJ, TK, TL, TM, TO, TR, TV, TW, UM, UZ, VN, VU, WF, WS. |
+| `world`       | No narrower boundary. Content can be processed or stored in any country.                                                                                                                                                                                                          |
+| `unknown`     | The provider does not disclose a usable boundary. Treat it as `world`.                                                                                                                                                                                                            |
+| `none`        | `storageLocation` only. The provider does not keep request or response content after the response.                                                                                                                                                                                |
+
+A value names the widest area where the activity can happen. `DE` is inside `eu`, and `eu` is
+inside `europe`. Routing comparisons are exact text matches, so
+`deployment.dataHandling.processingLocation == 'europe'` does not match a deployment whose value
+is `eu` or `DE`. List every value you accept, for example
+`deployment.dataHandling.processingLocation in ['eu', 'DE', 'FR']`. Prefer such lists to
+exclusions: `deployment.dataHandling.processingLocation != 'US'` also accepts `world` and
+`unknown`.
 
 ### Upstream deployment details
 
@@ -89,52 +113,31 @@ HTTP request path. `request.route` below identifies the inference interface inst
 
 <RoutingFields group="request" />
 
-`request.route` is `chat-completions` or `responses`. `request.bodyBytes` includes the exact
-incoming JSON, whitespace and request controls before redaction. Token estimates and estimated
-request costs cannot be used by routing or conditional rules. They are computed once after
-selection for reservations and usage diagnostics. See [Request facts](/docs/policies/routing#request-facts-and-context).
+`request.route` is `chat-completions` or `responses`. `request.bodyBytes` is the size of the JSON
+body as sent, before redaction. Token estimates and costs are not available; see
+[Request facts](/docs/policies/routing#request-facts-and-context).
 
 ## Pricing
 
-Pricing fields use `deployment.pricing.<meter>.<rate>`. Their type is `decimal` and their
-unit is USD per catalog rate unit. For example, `2` means $2 per million tokens when the rate
-is `per_mill_tokens`. Comparisons preserve up to 36 fractional digits without floating point.
+Each field is the price of one meter in USD per million tokens, as an exact decimal. Some models
+charge more for every token of a request whose prompt is over a size, such as 272,000 tokens. These
+fields hold the prices for shorter prompts. To compare prices for a long prompt, use
+[`blended_price`](/docs/policies/routing#blended-price) with a prompt size.
 
-For example, this policy keeps deployments whose standard output price is at most $2 per million:
+<RoutingFields group="pricing" />
+
+This policy keeps deployments whose output price is at most $2 per million tokens:
 
 ```json title="policy.json"
 {
 	"routing": {
-		"filter": "deployment.pricing.output_tokens.per_mill_tokens <= decimal(\"2\")"
+		"filter": "deployment.pricing.output_tokens.per_mill_tokens <= decimal('2')"
 	}
 }
 ```
 
-The comparison stays exact because the decimal literal is part of the query string. A missing rate does not count as zero. The filter above does not
-match deployments that define only context-tiered prices; include the relevant tier explicitly.
+A missing price does not count as zero, so this filter does not match a deployment without an
+output price.
 
-For a weighted input/output comparison, use
-[`blended_price(inputWeight, outputWeight, 'rate')`](/docs/policies/routing#blended-price).
-It uses the same explicit rates below, without estimating or selecting a request's context tier.
-
-### Token meters
-
-Each meter below accepts `per_mill_tokens`, `per_mill_context_lte_272k`, or
-`per_mill_context_gt_272k`. Each rate is the price per million tokens in that meter and tier.
-
-| Meter                         | Meaning                                                                     |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| `input_tokens`                | Uncached input.                                                             |
-| `cached_input_tokens`         | Cached input reads.                                                         |
-| `cache_write_input_tokens`    | Cache writes without a separate duration tier.                              |
-| `cache_write_5m_input_tokens` | Five-minute cache writes.                                                   |
-| `cache_write_1h_input_tokens` | One-hour cache writes.                                                      |
-| `output_tokens`               | Output tokens.                                                              |
-| `reasoning_tokens`            | Reasoning tokens; may use the output rate when no separate rate is defined. |
-
-Only the token meters and rates above are available to routing queries.
-Provider-hosted tool charges are described in [Model tools](/docs/model-tools#provider-hosted-billing).
-
-Pricing fields describe catalog rates, not an all-in request estimate or the amount charged to
-your Stogas balance. Sorting on output price alone does not account for input, caching, tools,
-or BYOK fees. For a spending ceiling, use a [spend limit](/docs/policies/limits#spend-allowances).
+Routing cannot read [hosted tool prices](/docs/model-tools#hosted-tools). Prices are catalog
+rates, not the cost of a request. To cap spending, use a [spend limit](/docs/policies/limits#spending).

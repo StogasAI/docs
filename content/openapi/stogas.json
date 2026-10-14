@@ -3,7 +3,7 @@
 	"info": {
 		"title": "Stogas Gateway API",
 		"summary": "OpenAI-compatible public API gateway.",
-		"description": "The Stogas Gateway exposes an OpenAI-compatible surface. Authenticate requests with your Stogas API key, and the gateway will relay the request to the configured upstream provider.",
+		"description": "OpenAI-compatible API for every catalog model. Authenticate with your API key, and the gateway sends the request to the provider that your policies select.",
 		"version": "1.0.0"
 	},
 	"jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
@@ -26,6 +26,10 @@
 		{
 			"name": "OpenAI-compatible",
 			"description": "Model inference endpoints."
+		},
+		{
+			"name": "Policies",
+			"description": "Policy checks."
 		}
 	],
 	"security": [
@@ -53,7 +57,7 @@
 					"Catalog"
 				],
 				"summary": "Catalog",
-				"description": "Returns the active public gateway catalog used for model discovery, aliases, routing, and prices.",
+				"description": "Returns the approved public catalog: models, deployments, routes and prices.",
 				"security": [],
 				"responses": {
 					"200": {
@@ -70,10 +74,6 @@
 											"sequence": 184,
 											"runtimeDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 											"publicDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-											"archive": {
-												"sha256": "9a493fe01f0c037f9b777db57d089f535f0c2ade7c2340933467dc43db5fd267",
-												"size_bytes": 130
-											},
 											"graph": {
 												"authors": {},
 												"groups": {},
@@ -100,8 +100,8 @@
 				"tags": [
 					"Catalog"
 				],
-				"summary": "List Models",
-				"description": "Returns an OpenAI-compatible list of catalog model IDs accepted by the gateway.",
+				"summary": "List models",
+				"description": "Lists the model IDs that the API accepts, in the OpenAI format.",
 				"security": [],
 				"responses": {
 					"200": {
@@ -142,7 +142,7 @@
 					"OpenAI-compatible"
 				],
 				"summary": "Chat Completions",
-				"description": "Create an OpenAI-compatible chat completion. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
+				"description": "Creates a chat completion. The gateway checks each field against the selected deployment before it calls the provider.",
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Metadata"
@@ -197,12 +197,6 @@
 					"403": {
 						"$ref": "#/components/responses/Forbidden"
 					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"409": {
-						"$ref": "#/components/responses/Conflict"
-					},
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
 					},
@@ -212,8 +206,17 @@
 					"500": {
 						"$ref": "#/components/responses/InternalError"
 					},
+					"502": {
+						"$ref": "#/components/responses/BadGateway"
+					},
 					"503": {
 						"$ref": "#/components/responses/ServiceUnavailable"
+					},
+					"504": {
+						"$ref": "#/components/responses/GatewayTimeout"
+					},
+					"529": {
+						"$ref": "#/components/responses/ProviderOverloaded"
 					}
 				}
 			}
@@ -225,7 +228,7 @@
 					"OpenAI-compatible"
 				],
 				"summary": "Responses",
-				"description": "Create an OpenAI-compatible Responses API response. The gateway resolves the requested model and route through the compiled Stogas catalog, applies deployment facts such as implied service tier, rejects unsupported parameters, and then relays the request to the configured provider.",
+				"description": "Creates a model response. The gateway checks each field against the selected deployment before it calls the provider.",
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Metadata"
@@ -275,12 +278,6 @@
 					"403": {
 						"$ref": "#/components/responses/Forbidden"
 					},
-					"404": {
-						"$ref": "#/components/responses/NotFound"
-					},
-					"409": {
-						"$ref": "#/components/responses/Conflict"
-					},
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
 					},
@@ -290,8 +287,17 @@
 					"500": {
 						"$ref": "#/components/responses/InternalError"
 					},
+					"502": {
+						"$ref": "#/components/responses/BadGateway"
+					},
 					"503": {
 						"$ref": "#/components/responses/ServiceUnavailable"
+					},
+					"504": {
+						"$ref": "#/components/responses/GatewayTimeout"
+					},
+					"529": {
+						"$ref": "#/components/responses/ProviderOverloaded"
 					}
 				}
 			}
@@ -299,16 +305,16 @@
 		"/v1/policies/validate": {
 			"post": {
 				"operationId": "validatePolicy",
-				"summary": "Validate proposed policy execution rules",
+				"summary": "Validate policy",
 				"tags": [
-					"Gateway"
+					"Policies"
 				],
 				"security": [
 					{
 						"bearerAuth": []
 					}
 				],
-				"description": "Checks the supplied scoped execution policies without saving or creating a hold. Include organization and key, every applicable folder, grant, role and member, and only the selected credential. Without a decryption key, encrypted plugin sections are reported unchecked. Limits and editing permissions are checked on save.",
+				"description": "Checks the policies that would apply to a request, without saving them or calling a model.",
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -355,7 +361,8 @@
 													]
 												}
 											}
-										}
+										},
+										"description": "Exactly one organization and one key policy, plus each folder, grant, member and credential policy that applies, and up to 30 role policies. Each entry has its scope, its `id` where the scope has one, and its policy object or `null`."
 									},
 									"encryption_keys": {
 										"type": "object",
@@ -369,7 +376,7 @@
 											"maxLength": 43,
 											"pattern": "^[A-Za-z0-9_-]{43}$"
 										},
-										"description": "Customer roots by registered label, canonical unpadded base64url. Supply the roots required by applicable encrypted plugins and eligible encrypted credentials. Accepted over all supported transports. Removed before provider dispatch; never cached or logged."
+										"description": "Encryption keys by registered label, as unpadded base64url. Supply the keys of encrypted policies to check their plugin settings. The gateway never stores or logs them."
 									}
 								}
 							}
@@ -378,25 +385,22 @@
 				},
 				"responses": {
 					"200": {
-						"description": "Execution check result",
+						"description": "The policies are valid.",
 						"content": {
 							"application/json": {
 								"schema": {
 									"type": "object",
 									"required": [
-										"scope",
 										"status",
 										"uncheckedPlugins"
 									],
 									"properties": {
-										"scope": {
-											"const": "execution"
-										},
 										"status": {
 											"enum": [
 												"valid",
 												"partial"
-											]
+											],
+											"description": "`valid` when every policy was checked. `partial` when some encrypted plugin settings were not."
 										},
 										"uncheckedPlugins": {
 											"type": "array",
@@ -429,21 +433,30 @@
 														"description": "Rule name when the unchecked plugins belong to a conditional rule."
 													}
 												}
-											}
+											},
+											"description": "Policies whose encrypted plugin settings were not checked."
 										}
 									}
+								},
+								"example": {
+									"status": "partial",
+									"uncheckedPlugins": [
+										{
+											"scope": "organization"
+										}
+									]
 								}
 							}
 						}
 					},
 					"400": {
-						"description": "Invalid configuration, key, or transport"
+						"description": "The policies are invalid (`invalid_policy`), or an encryption key is missing or wrong. See [400 errors](/docs/reference/errors#400-bad-request)."
 					},
 					"401": {
-						"description": "Invalid API key"
+						"$ref": "#/components/responses/Unauthorized"
 					},
 					"503": {
-						"description": "Gateway unavailable"
+						"$ref": "#/components/responses/ServiceUnavailable"
 					}
 				}
 			}
@@ -455,31 +468,31 @@
 				"type": "http",
 				"scheme": "bearer",
 				"bearerFormat": "Stogas API key",
-				"description": "Pass the Stogas API key as `Authorization: Bearer <token>`. This is the canonical OpenAI-compatible header."
+				"description": "Send the API key as `Authorization: Bearer <api_key>`."
 			},
 			"authorizationHeader": {
 				"type": "apiKey",
 				"in": "header",
 				"name": "Authorization",
-				"description": "Pass the Stogas API key directly as `Authorization: <token>`. The gateway normalizes this to the canonical Bearer authentication path."
+				"description": "Also accepted: `Authorization: <api_key>`."
 			},
 			"apiKeyHeader": {
 				"type": "apiKey",
 				"in": "header",
 				"name": "api-key",
-				"description": "Catalog-defined authentication alias. The gateway canonicalizes `api-key: <token>` to `Authorization: Bearer <token>`."
+				"description": "Also accepted: `api-key: <api_key>`, for SDKs that send it."
 			},
 			"xApiKeyHeader": {
 				"type": "apiKey",
 				"in": "header",
 				"name": "x-api-key",
-				"description": "Catalog-defined authentication alias. The gateway canonicalizes `x-api-key: <token>` to `Authorization: Bearer <token>`."
+				"description": "Also accepted: `x-api-key: <api_key>`, for SDKs that send it."
 			},
 			"xGoogApiKeyHeader": {
 				"type": "apiKey",
 				"in": "header",
 				"name": "x-goog-api-key",
-				"description": "Catalog-defined authentication alias. The gateway canonicalizes `x-goog-api-key: <token>` to `Authorization: Bearer <token>`."
+				"description": "Also accepted: `x-goog-api-key: <api_key>`, for SDKs that send it."
 			}
 		},
 		"parameters": {
@@ -492,12 +505,12 @@
 						"v1"
 					]
 				},
-				"description": "Set to `v1` for the final Stogas metadata, including a signed request/response content receipt. Omit to leave normal responses unchanged."
+				"description": "Set to `v1` to add the `stogas` object, with usage, cost and a signed [receipt](/docs/receipts), to the response."
 			}
 		},
 		"responses": {
 			"BadRequest": {
-				"description": "<span className=\"text-red-500 font-bold\">Bad Request:</span> The request was malformed, missing required fields, or specifying an unavailable model.",
+				"description": "The request is invalid, or the selected deployment cannot accept it. See [400 errors](/docs/reference/errors#400-bad-request).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -513,7 +526,7 @@
 				}
 			},
 			"Unauthorized": {
-				"description": "<span className=\"text-red-500 font-bold\">Unauthorized:</span> The API key provided was missing or invalid.",
+				"description": "The API key is missing, wrong or deleted.",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -529,7 +542,7 @@
 				}
 			},
 			"PaymentRequired": {
-				"description": "<span className=\"text-red-500 font-bold\">Payment Required:</span> Returned when your organization has insufficient credit or a key, grant, or organization spend limit is exhausted. Use error.code to distinguish insufficient_balance from key_spend_limit, grant_spend_limit, and organization_spend_limit.",
+				"description": "The organization needs more credit, or a spending limit is reached. See [402 errors](/docs/reference/errors#402-payment-required).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -547,7 +560,7 @@
 				}
 			},
 			"Forbidden": {
-				"description": "<span className=\"text-red-500 font-bold\">Forbidden:</span> The API key is disabled or expired, or a key policy denied the request.",
+				"description": "The key or a policy scope is disabled or expired, or a deny period blocks requests now. See [403 errors](/docs/reference/errors#403-forbidden).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -562,40 +575,8 @@
 					}
 				}
 			},
-			"NotFound": {
-				"description": "<span className=\"text-red-500 font-bold\">Not Found:</span> The requested endpoint route does not exist.",
-				"content": {
-					"application/json": {
-						"schema": {
-							"$ref": "#/components/schemas/ErrorResponse"
-						},
-						"example": {
-							"error": {
-								"message": "Not Found: The requested endpoint '/v1/chat/compl' does not exist.",
-								"type": "invalid_request_error"
-							}
-						}
-					}
-				}
-			},
-			"Conflict": {
-				"description": "<span className=\"text-red-500 font-bold\">Conflict:</span> The gateway request ID was already finalized, expired, or reused with different hold parameters. Generate a new request ID and retry.",
-				"content": {
-					"application/json": {
-						"schema": {
-							"$ref": "#/components/schemas/ErrorResponse"
-						},
-						"example": {
-							"error": {
-								"message": "Request already finalized; generate a new requestId",
-								"type": "invalid_request_error"
-							}
-						}
-					}
-				}
-			},
 			"PayloadTooLarge": {
-				"description": "<span className=\"text-red-500 font-bold\">Payload Too Large:</span> The decoded JSON request body exceeds 128 MiB.",
+				"description": "The body is above 128 MiB after decompression, or above another request limit. See [413 errors](/docs/reference/errors#413-content-too-large).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -611,7 +592,7 @@
 				}
 			},
 			"RateLimited": {
-				"description": "<span className=\"text-red-500 font-bold\">Rate Limited:</span> An applicable platform, organization, grant, or API-key request bucket does not currently have capacity for another request.",
+				"description": "A request, token or concurrency limit is reached. Wait for `Retry-After` when it is present. See [429 errors](/docs/reference/errors#429-too-many-requests).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -627,7 +608,7 @@
 				}
 			},
 			"InternalError": {
-				"description": "<span className=\"text-red-500 font-bold\">Internal Server Error:</span> An unexpected error occurred within the gateway or upstream provider.",
+				"description": "The gateway could not complete the request. See [500 errors](/docs/reference/errors#500-internal-server-error).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -643,7 +624,7 @@
 				}
 			},
 			"CatalogUnavailable": {
-				"description": "<span className=\"text-red-500 font-bold\">Internal Server Error:</span> The gateway catalog is not available.",
+				"description": "The gateway has no approved catalog loaded.",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -658,8 +639,8 @@
 					}
 				}
 			},
-			"ServiceUnavailable": {
-				"description": "<span className=\"text-red-500 font-bold\">Service Unavailable:</span> The gateway could not reach the billing database while placing the authorization hold. The provider is not called and no usage telemetry is written.",
+			"BadGateway": {
+				"description": "The provider failed, or rejected the gateway's request. See [502 errors](/docs/reference/errors#502-bad-gateway).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -667,8 +648,64 @@
 						},
 						"example": {
 							"error": {
-								"message": "Gateway billing database unavailable",
-								"type": "gateway_error"
+								"message": "The configured provider credential was rejected",
+								"type": "gateway_error",
+								"code": "upstream_authentication_failed",
+								"param": null
+							}
+						}
+					}
+				}
+			},
+			"ServiceUnavailable": {
+				"description": "The gateway or the provider is temporarily unavailable. Send the request again later. See [503 errors](/docs/reference/errors#503-service-unavailable).",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "The gateway is temporarily unavailable. Retry the request later.",
+								"type": "gateway_error",
+								"code": "gateway_unavailable",
+								"param": null
+							}
+						}
+					}
+				}
+			},
+			"GatewayTimeout": {
+				"description": "A [timeout](/docs/policies/timeouts) expired. Generation may continue and be billed.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "The response timed out. Generation may continue and be billed.",
+								"type": "request_timed_out",
+								"code": "request_timeout",
+								"param": null
+							}
+						}
+					}
+				}
+			},
+			"ProviderOverloaded": {
+				"description": "The provider is overloaded.",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Upstream provider is overloaded",
+								"type": "overloaded_error",
+								"code": null,
+								"param": null
 							}
 						}
 					}
@@ -683,7 +720,6 @@
 					"sequence",
 					"runtimeDigest",
 					"publicDigest",
-					"archive",
 					"graph"
 				],
 				"properties": {
@@ -705,28 +741,8 @@
 					},
 					"graph": {
 						"type": "object",
-						"description": "Active catalog: authors, groups, models, deployments, routes, and providers. Groups describe model organization and do not supply execution facts.",
+						"description": "The catalog: authors, models, deployments, routes and providers.",
 						"additionalProperties": true
-					},
-					"archive": {
-						"type": "object",
-						"description": "Digest and exact byte length of the separate retired catalog at /catalog/blobs/sha256/{sha256}.json on an evidence origin. Verify both before merging it with this public catalog.",
-						"additionalProperties": false,
-						"required": [
-							"sha256",
-							"size_bytes"
-						],
-						"properties": {
-							"sha256": {
-								"type": "string",
-								"pattern": "^[0-9a-f]{64}$"
-							},
-							"size_bytes": {
-								"type": "integer",
-								"minimum": 1,
-								"maximum": 8388608
-							}
-						}
 					}
 				}
 			},
@@ -768,7 +784,7 @@
 					},
 					"created": {
 						"type": "integer",
-						"description": "Stable OpenAI-compatible creation timestamp."
+						"description": "A fixed timestamp, for OpenAI compatibility."
 					},
 					"owned_by": {
 						"type": "string",
@@ -783,7 +799,8 @@
 						"type": "object",
 						"properties": {
 							"message": {
-								"type": "string"
+								"type": "string",
+								"description": "A description for people. The text can change."
 							},
 							"type": {
 								"type": "string"
@@ -793,7 +810,7 @@
 									"string",
 									"null"
 								],
-								"description": "A code for handling a specific error in your app. May be absent or null when only a broad error type is available. Do not match message text."
+								"description": "A stable code for handling the error. Every gateway error has one; a provider error can have `null`. See [Errors](/docs/reference/errors)."
 							},
 							"param": {
 								"type": [
@@ -802,15 +819,24 @@
 								],
 								"description": "The request field related to the error, when known."
 							}
-						}
+						},
+						"required": [
+							"message",
+							"type",
+							"code",
+							"param"
+						]
 					}
-				}
+				},
+				"required": [
+					"error"
+				]
 			},
 			"ProviderRoutingPreference": {
 				"oneOf": [
 					{
 						"type": "string",
-						"description": "Known provider ID or provider slug, such as `openai`, `open-ai`, or `anthropic`.",
+						"description": "One provider ID, such as `openai` or `anthropic`.",
 						"title": "Provider ID"
 					},
 					{
@@ -837,7 +863,7 @@
 									"type": "string"
 								},
 								"minItems": 1,
-								"description": "Provider IDs or provider slugs allowed to serve this request."
+								"description": "Providers that can serve the request."
 							},
 							"order": {
 								"type": "array",
@@ -845,18 +871,18 @@
 									"type": "string"
 								},
 								"minItems": 1,
-								"description": "Preferred provider order after the optional `only` filter is applied."
+								"description": "Providers to try first, in order."
 							}
 						},
-						"description": "Stogas-owned provider routing rules. At least one of `only` or `order` is required.",
+						"description": "Provider rules. Set `only`, `order` or both.",
 						"title": "Provider constraints"
 					}
 				],
-				"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+				"description": "Providers to allow or prefer for this request. The gateway removes it before it calls the provider. See [Choose a model](/docs/models#choose-a-model)."
 			},
 			"ChatCompletionRequest": {
 				"type": "object",
-				"description": "OpenAI-compatible chat request fields parsed by the Stogas HTTP API. Unknown top-level fields are accepted for SDK compatibility, ignored, and never forwarded upstream.",
+				"description": "Request body. The gateway ignores unknown top-level fields and never forwards them. See [Compatibility notes](/docs/reference/provider-behavior).",
 				"additionalProperties": true,
 				"required": [
 					"messages"
@@ -867,20 +893,16 @@
 					},
 					"model": {
 						"type": "string",
-						"description": "Optional catalog model or deployment slug, optionally provider-qualified. Omit to select among compatible deployments using saved routing restrictions and sorting. If multiple models match without a routing sort order, the request returns model_ambiguous. An explicit selector always narrows the candidates; empty or null selectors are invalid.",
+						"description": "A model ID, a provider and model such as `azure/gpt-5.6-sol`, or a deployment ID. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models).",
 						"minLength": 1
 					},
 					"provider": {
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
-						"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
-					},
-					"rules": {
-						"$ref": "#/components/schemas/ProviderRoutingPreference",
-						"description": "Alias for `provider`. Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+						"description": "Providers to allow or prefer for this request. The gateway removes it before it calls the provider. See [Choose a model](/docs/models#choose-a-model)."
 					},
 					"messages": {
 						"type": "array",
-						"description": "Non-empty conversation. Assistant function calls must be followed immediately by one tool result for every call ID in the same stateless request.",
+						"description": "The conversation. Each assistant tool call needs its tool result in the same request.",
 						"minItems": 1,
 						"items": {
 							"$ref": "#/components/schemas/ChatMessage"
@@ -888,42 +910,43 @@
 					},
 					"stream": {
 						"type": "boolean",
-						"default": false
+						"default": false,
+						"description": "Return Server-Sent Events. See [Streaming](/docs/streaming)."
 					},
 					"store": {
 						"type": "boolean",
 						"const": false,
 						"default": false,
-						"description": "Provider response storage is disabled."
+						"description": "Only `false` is accepted. The gateway never asks a provider to store a response."
 					},
 					"frequency_penalty": {
 						"type": "number",
-						"description": "OpenAI-only Chat Completions frequency penalty. Anthropic deployments reject this field."
+						"description": "Lowers the chance of repeating tokens by how often they appear. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"logit_bias": {
 						"type": "object",
-						"description": "OpenAI-only token bias map. Values must be numbers because the gateway decodes the request into the OpenAI-compatible schema; provider-owned key semantics are left upstream. Anthropic deployments reject this field.",
+						"description": "Raises or lowers the chance of specific token IDs. Not every provider accepts it; see [Providers](/docs/providers).",
 						"additionalProperties": {
 							"type": "number"
 						}
 					},
 					"logprobs": {
 						"type": "boolean",
-						"description": "OpenAI-only Chat Completions log probability output. Anthropic deployments reject this field."
+						"description": "Return the log probability of each output token. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"max_tokens": {
 						"type": "integer",
 						"minimum": 0,
-						"description": "Legacy maximum completion token field. Zero is only accepted for Anthropic cache prewarm requests that include an allowed cache_control marker."
+						"description": "Another name for `max_completion_tokens`."
 					},
 					"max_completion_tokens": {
 						"type": "integer",
 						"minimum": 0,
-						"description": "Maximum completion token cap. Zero is only accepted for Anthropic cache prewarm requests that include an allowed cache_control marker."
+						"description": "The most output tokens, including reasoning. Each deployment sets its own maximum."
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Application metadata for Stogas telemetry only. Stogas validates this object, logs it internally, and removes it before upstream dispatch.",
+						"description": "Up to 16 string keys and values, for SDK compatibility. The gateway checks the size and removes it before it calls the provider.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",
@@ -937,7 +960,7 @@
 					},
 					"modalities": {
 						"type": "array",
-						"description": "Text-only MVP: when present, this must be exactly [\"text\"]. Image and audio modalities are rejected before upstream dispatch.",
+						"description": "Output types. Only `[\"text\"]` is accepted.",
 						"items": {
 							"type": "string",
 							"enum": [
@@ -947,31 +970,35 @@
 					},
 					"n": {
 						"type": "integer",
-						"description": "Number of choices to generate. Stogas currently accepts only omitted or `1`; larger values are rejected before upstream dispatch.",
+						"description": "Number of choices. Only `1` is accepted.",
 						"minimum": 1,
 						"maximum": 1
 					},
 					"parallel_tool_calls": {
 						"type": "boolean",
-						"description": "Whether the model may call multiple tools in parallel."
+						"description": "Whether the model can call several tools at once."
 					},
 					"prediction": {
 						"type": "object",
-						"description": "Predicted output content used by compatible OpenAI models to reduce latency."
+						"description": "Expected output, which lets some OpenAI models respond faster."
 					},
 					"presence_penalty": {
 						"type": "number",
-						"description": "OpenAI-only Chat Completions presence penalty. Anthropic deployments reject this field."
+						"description": "Lowers the chance of repeating tokens that already appear. Not every provider accepts it; see [Providers](/docs/providers)."
+					},
+					"repetition_penalty": {
+						"type": "number",
+						"description": "Penalizes tokens that already appear, where `1` means no penalty. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"prompt_cache_key": {
 						"type": "string",
-						"description": "OpenAI and Azure prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
+						"description": "Groups requests that share a prompt prefix, up to 256 bytes. Not every provider accepts it; see [Prompt caching](/docs/prompt-caching).",
 						"minLength": 1,
 						"maxLength": 256
 					},
 					"prompt_cache_retention": {
 						"type": "string",
-						"description": "Legacy OpenAI retention control for models before GPT-5.6, and Azure retention policy. GPT-5.6 OpenAI requests should use `prompt_cache_options.ttl`; current Azure GPT-5.6 deployments accept only `24h`.",
+						"description": "How long the provider keeps the cache. See [Prompt caching](/docs/prompt-caching).",
 						"enum": [
 							"in_memory",
 							"24h"
@@ -979,7 +1006,7 @@
 					},
 					"prompt_cache_options": {
 						"type": "object",
-						"description": "OpenAI GPT-5.6 prompt caching mode. `implicit` keeps the provider-managed breakpoint; `explicit` writes only marked prompt blocks. OpenAI tracks at most four active breakpoints and reports cache writes as one input-token partition.",
+						"description": "Choose automatic caching or explicit breakpoints. See [Prompt caching](/docs/prompt-caching).",
 						"properties": {
 							"mode": {
 								"type": "string",
@@ -999,7 +1026,7 @@
 					},
 					"cache_control": {
 						"type": "object",
-						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on text content/tool blocks, and prices cache writes conservatively for holds.",
+						"description": "Anthropic prompt caching: `{\"type\": \"ephemeral\"}` with an optional `ttl` of `5m` or `1h`. See [Prompt caching](/docs/prompt-caching).",
 						"properties": {
 							"type": {
 								"type": "string",
@@ -1022,15 +1049,15 @@
 					},
 					"reasoning": {
 						"type": "object",
-						"description": "Reasoning configuration for models that expose reasoning controls.",
+						"description": "Reasoning settings. See [Reasoning](/docs/reasoning).",
 						"properties": {
 							"enabled": {
 								"type": "boolean",
-								"description": "OpenRouter-compatible binary control. On a deployment with effort levels, true selects the nearest level to medium."
+								"description": "`true` turns reasoning on at the level nearest to `medium`. `false` turns it off."
 							},
 							"effort": {
 								"type": "string",
-								"description": "Canonical Stogas effort. Unsupported positive values map to the nearest deployment level, with upward ties; `none` is rejected when reasoning cannot be disabled.",
+								"description": "How much the model reasons. Each deployment lists the levels it accepts as `reasoningEfforts` in the [catalog](/docs/reasoning#check-a-deployment), and the gateway sends the nearest one. `none` fails when the model cannot turn reasoning off.",
 								"enum": [
 									"none",
 									"minimal",
@@ -1047,14 +1074,14 @@
 							"max_tokens": {
 								"type": "integer",
 								"minimum": 1,
-								"description": "Maximum reasoning-token budget. The selected deployment supplies the exact inclusive minimum and maximum."
+								"description": "The most reasoning tokens. Each deployment sets its own range."
 							}
 						},
 						"additionalProperties": false
 					},
 					"reasoning_effort": {
 						"type": "string",
-						"description": "Compatibility shortcut for `reasoning.effort`.",
+						"description": "Another name for `reasoning.effort`. Send only one.",
 						"enum": [
 							"none",
 							"minimal",
@@ -1068,11 +1095,11 @@
 					"reasoning_max_tokens": {
 						"type": "integer",
 						"minimum": 1,
-						"description": "Compatibility shortcut for `reasoning.max_tokens`."
+						"description": "Another name for `reasoning.max_tokens`. Send only one."
 					},
 					"response_format": {
 						"type": "object",
-						"description": "Provider-owned output format constraint. Stogas forwards supported OpenAI-compatible fields and leaves provider-specific format details to the selected upstream provider.",
+						"description": "Ask for JSON, or JSON that matches a schema. Not every provider accepts it; see [Providers](/docs/providers).",
 						"properties": {
 							"type": {
 								"type": "string"
@@ -1103,11 +1130,14 @@
 					},
 					"seed": {
 						"type": "integer",
-						"description": "Best-effort deterministic sampling seed for providers that support it."
+						"description": "Asks the provider to sample the same way each time. Results can still differ."
 					},
 					"service_tier": {
-						"type": "string",
-						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
+						"type": [
+							"string",
+							"null"
+						],
+						"description": "The service tier. A model without a deployment for the tier returns `service_tier_unavailable`. See [Service tiers](/docs/service-tiers).",
 						"enum": [
 							"auto",
 							"default",
@@ -1115,12 +1145,13 @@
 							"flex",
 							"priority",
 							"standard",
-							"standard_only"
+							"ultrafast",
+							null
 						]
 					},
 					"stream_options": {
 						"type": "object",
-						"description": "Additional options for streamed Chat Completions. Requires `stream:true`. Stogas accepts `include_usage` and always forces it to `true`; `include_obfuscation` is not supported on Chat Completions.",
+						"description": "Requires `stream: true`. Usage is always included, so `include_usage` is always `true`.",
 						"properties": {
 							"include_usage": {
 								"type": "boolean"
@@ -1140,11 +1171,11 @@
 								}
 							}
 						],
-						"description": "OpenAI-compatible stop sequence or stop sequence array. Stogas validates JSON shape and normalizes the string shorthand to an array before upstream dispatch; provider-owned value limits are left to the selected provider."
+						"description": "A string, or a list of strings, that ends the output."
 					},
 					"stop_sequences": {
 						"type": "array",
-						"description": "Anthropic-only stop sequence alias. Stogas rejects this field on OpenAI deployments and rejects requests that set both `stop` and `stop_sequences`.",
+						"description": "Anthropic name for stop sequences. Send `stop` or `stop_sequences`, not both.",
 						"items": {
 							"type": "string"
 						}
@@ -1152,18 +1183,18 @@
 					"temperature": {
 						"type": "number",
 						"default": 1,
-						"description": "Sampling temperature. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
+						"description": "Passed to the provider as is. The provider decides which values its model accepts."
 					},
 					"tool_choice": {
 						"type": [
 							"string",
 							"object"
 						],
-						"description": "Tool choice. Chat Completions accepts `auto`, `none`, `required`, or an exact `{type:\"function\",function:{name}}` selector for a declared function."
+						"description": "`auto`, `none`, `required`, or one named function."
 					},
 					"tools": {
 						"type": "array",
-						"description": "At most 128 exact function definitions. Chat custom and hosted tools are not accepted because their calls cannot be replayed losslessly through the provider-neutral stateless Chat history shape. Remote MCP tools are not accepted because provider execution cannot be bounded or approved per request.",
+						"description": "Up to 128 function tools. See [Tools](/docs/model-tools).",
 						"maxItems": 128,
 						"items": {
 							"$ref": "#/components/schemas/ChatFunctionTool"
@@ -1171,36 +1202,37 @@
 					},
 					"top_logprobs": {
 						"type": "integer",
-						"description": "Provider-owned OpenAI Chat Completions log probability detail."
+						"description": "How many likely tokens to return at each position. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"top_k": {
 						"type": "integer",
-						"description": "Anthropic-only sampling control. Rejected for OpenAI deployments."
+						"description": "Sample from the K most likely tokens. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"top_p": {
 						"type": "number",
-						"description": "Nucleus sampling control. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
+						"description": "Passed to the provider as is. The provider decides which values its model accepts."
 					},
 					"safety_identifier": {
 						"type": [
 							"string",
 							"null"
 						],
-						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream safety identity from the authenticated API key."
+						"description": "Accepted for SDK compatibility. The gateway removes it before it calls the provider."
 					},
 					"user": {
 						"type": [
 							"string",
 							"null"
 						],
-						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream user identity from the authenticated API key."
+						"description": "Accepted for SDK compatibility. The gateway removes it before it calls the provider."
 					},
 					"verbosity": {
 						"type": "string",
-						"description": "Text verbosity preference for models that support it."
+						"description": "How long the answer is: `low`, `medium` or `high`. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"reasoning_display": {
-						"type": "string"
+						"type": "string",
+						"description": "Anthropic only: `summarized` or `omitted`. See [Reasoning](/docs/reasoning#show-or-hide-the-reasoning-summary)."
 					},
 					"web_search_options": {
 						"type": "object",
@@ -1244,7 +1276,8 @@
 								"additionalProperties": false
 							}
 						},
-						"additionalProperties": false
+						"additionalProperties": false,
+						"description": "Search settings for search models such as `gpt-5-search-api`. See [OpenAI](/docs/providers/openai#tools)."
 					},
 					"encryption_keys": {
 						"type": "object",
@@ -1258,7 +1291,7 @@
 							"maxLength": 43,
 							"pattern": "^[A-Za-z0-9_-]{43}$"
 						},
-						"description": "Customer roots by registered label, canonical unpadded base64url. Supply the roots required by applicable encrypted plugins and eligible encrypted credentials. Accepted over all supported transports. Removed before provider dispatch; never cached or logged."
+						"description": "Encryption keys by registered label, as unpadded base64url, for [encrypted policies](/docs/customer-encryption). The gateway removes them before it calls the provider and never stores or logs them."
 					}
 				},
 				"example": {
@@ -1338,7 +1371,7 @@
 			"ChatMessage": {
 				"type": "object",
 				"additionalProperties": false,
-				"description": "Exact Chat history item. Tool call IDs must be unique and every assistant call must have one adjacent tool result. Native attachments require a user message and a compatible deployment.",
+				"description": "A message. Images, files and audio go only in user messages.",
 				"required": [
 					"role"
 				],
@@ -1374,7 +1407,7 @@
 					},
 					"reasoning_details": {
 						"type": "array",
-						"description": "Signed Anthropic-format reasoning history. Rejected on OpenAI-format and Chutes deployments.",
+						"description": "Signed reasoning from an earlier Anthropic response. Send it back unchanged.",
 						"items": {
 							"type": "object"
 						}
@@ -1424,7 +1457,7 @@
 			},
 			"ChatUsage": {
 				"type": "object",
-				"description": "Token usage statistics",
+				"description": "Token usage. Prices and meters are in the [`stogas` object](/docs/receipts).",
 				"properties": {
 					"prompt_tokens": {
 						"type": "integer",
@@ -1440,6 +1473,43 @@
 					},
 					"prompt_tokens_details": {
 						"$ref": "#/components/schemas/PromptTokenDetails"
+					},
+					"completion_tokens_details": {
+						"type": "object",
+						"properties": {
+							"reasoning_tokens": {
+								"type": "integer",
+								"minimum": 0
+							},
+							"text_tokens": {
+								"type": "integer",
+								"minimum": 0
+							},
+							"audio_tokens": {
+								"type": "integer",
+								"minimum": 0
+							},
+							"image_tokens": {
+								"type": "integer",
+								"minimum": 0
+							},
+							"citation_tokens": {
+								"type": "integer",
+								"minimum": 0
+							},
+							"num_search_queries": {
+								"type": "integer",
+								"minimum": 0
+							},
+							"accepted_prediction_tokens": {
+								"type": "integer",
+								"minimum": 0
+							},
+							"rejected_prediction_tokens": {
+								"type": "integer",
+								"minimum": 0
+							}
+						}
 					}
 				},
 				"required": [
@@ -1574,7 +1644,7 @@
 			},
 			"ChatContentBlock": {
 				"type": "object",
-				"description": "Text-only chat content block accepted by Stogas.",
+				"description": "A text block.",
 				"required": [
 					"type"
 				],
@@ -1590,17 +1660,17 @@
 					},
 					"prompt_cache_breakpoint": {
 						"$ref": "#/components/schemas/PromptCacheBreakpoint",
-						"description": "OpenAI GPT-5.6 explicit prompt-cache breakpoint."
+						"description": "Marks the end of a cached prefix when `prompt_cache_options` is explicit."
 					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
-						"description": "Anthropic prompt-cache control for this text block."
+						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
 					}
 				}
 			},
 			"ResponsesRequest": {
 				"type": "object",
-				"description": "OpenAI-compatible Responses API request fields parsed by the Stogas HTTP API. Unknown top-level fields are accepted for SDK compatibility, ignored, and never forwarded upstream.",
+				"description": "Request body. The gateway ignores unknown top-level fields and never forwards them. See [Compatibility notes](/docs/reference/provider-behavior).",
 				"additionalProperties": true,
 				"required": [
 					"input"
@@ -1612,18 +1682,14 @@
 					"model": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Optional catalog model or deployment slug, optionally provider-qualified. Omit to select among compatible deployments using saved routing restrictions and sorting. If multiple models match without a routing sort order, the request returns model_ambiguous. An explicit selector always narrows the candidates; empty or null selectors are invalid."
+						"description": "A model ID, a provider and model such as `azure/gpt-5.6-sol`, or a deployment ID. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models)."
 					},
 					"provider": {
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
-						"description": "Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
-					},
-					"rules": {
-						"$ref": "#/components/schemas/ProviderRoutingPreference",
-						"description": "Alias for `provider`. Optional Stogas-owned routing preference used to select a provider when a public model slug is available from more than one provider. This field is never forwarded upstream."
+						"description": "Providers to allow or prefer for this request. The gateway removes it before it calls the provider. See [Choose a model](/docs/models#choose-a-model)."
 					},
 					"input": {
-						"description": "A non-empty string or exact stateless input-item array. Client function/custom calls require one matching output in the same array before another message.",
+						"description": "A string, or a list of input items. Each tool call needs its output in the same list.",
 						"oneOf": [
 							{
 								"type": "string",
@@ -1640,37 +1706,39 @@
 					},
 					"stream": {
 						"type": "boolean",
-						"default": false
+						"default": false,
+						"description": "Return Server-Sent Events. See [Streaming](/docs/streaming)."
 					},
 					"store": {
 						"type": "boolean",
 						"const": false,
 						"default": false,
-						"description": "Provider response storage is disabled."
+						"description": "Only `false` is accepted. The gateway never asks a provider to store a response."
 					},
 					"include": {
 						"type": "array",
-						"description": "Additional OpenAI Responses fields to request. Values are provider-owned and not enum-mirrored by Stogas; Anthropic-backed deployments reject this OpenAI-only field.",
+						"description": "Extra output to return, such as `reasoning.encrypted_content`. Not every provider accepts it; see [Providers](/docs/providers).",
 						"items": {
 							"type": "string"
 						}
 					},
 					"instructions": {
-						"type": "string"
+						"type": "string",
+						"description": "A system message that comes before `input`."
 					},
 					"max_output_tokens": {
 						"type": "integer",
 						"minimum": 0,
-						"description": "Maximum output token cap. Zero is only accepted for Anthropic cache prewarm requests that include an allowed cache_control marker."
+						"description": "The most output tokens, including reasoning. Each deployment sets its own maximum."
 					},
 					"max_tool_calls": {
 						"type": "integer",
 						"minimum": 1,
-						"description": "Optional cap for priced hosted Responses tools. If omitted for a priced hosted tool, Stogas injects an effective cap of 50 before dispatch. Anthropic translates this cap to hosted-tool max_uses; function-only and custom-only requests must omit it."
+						"description": "The most hosted tool calls, such as web searches, in the request. Default `50` when the request has a hosted tool. Omit it otherwise. See [Hosted tools](/docs/model-tools#hosted-tools)."
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Application metadata for Stogas telemetry only. Stogas validates this object, logs it internally, and removes it before upstream dispatch.",
+						"description": "Up to 16 string keys and values, for SDK compatibility. The gateway checks the size and removes it before it calls the provider.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",
@@ -1684,7 +1752,7 @@
 					},
 					"parallel_tool_calls": {
 						"type": "boolean",
-						"description": "Whether the model may call multiple tools in parallel."
+						"description": "Whether the model can call several tools at once."
 					},
 					"task_budget": {
 						"$ref": "#/components/schemas/AnthropicTaskBudget"
@@ -1694,13 +1762,13 @@
 					},
 					"prompt_cache_key": {
 						"type": "string",
-						"description": "OpenAI and Azure prompt cache key. Must be non-empty UTF-8 up to 256 bytes and must not contain NUL, CR, or LF. Anthropic deployments reject this field; use `cache_control` instead.",
+						"description": "Groups requests that share a prompt prefix, up to 256 bytes. Not every provider accepts it; see [Prompt caching](/docs/prompt-caching).",
 						"minLength": 1,
 						"maxLength": 256
 					},
 					"prompt_cache_retention": {
 						"type": "string",
-						"description": "Legacy OpenAI retention control for models before GPT-5.6, and Azure retention policy. GPT-5.6 OpenAI requests should use `prompt_cache_options.ttl`; current Azure GPT-5.6 deployments accept only `24h`.",
+						"description": "How long the provider keeps the cache. See [Prompt caching](/docs/prompt-caching).",
 						"enum": [
 							"in_memory",
 							"24h"
@@ -1708,11 +1776,11 @@
 					},
 					"reasoning": {
 						"type": "object",
-						"description": "Reasoning configuration for models that expose reasoning controls.",
+						"description": "Reasoning settings. See [Reasoning](/docs/reasoning).",
 						"properties": {
 							"effort": {
 								"type": "string",
-								"description": "Canonical Stogas effort. Unsupported positive values map to the nearest deployment level, with upward ties; `none` is rejected when reasoning cannot be disabled.",
+								"description": "How much the model reasons. Each deployment lists the levels it accepts as `reasoningEfforts` in the [catalog](/docs/reasoning#check-a-deployment), and the gateway sends the nearest one. `none` fails when the model cannot turn reasoning off.",
 								"enum": [
 									"none",
 									"minimal",
@@ -1728,19 +1796,22 @@
 							},
 							"generate_summary": {
 								"type": "string",
-								"description": "Deprecated upstream alias for `summary`."
+								"description": "Another name for `summary`."
 							},
 							"max_tokens": {
 								"type": "integer",
 								"minimum": 1,
-								"description": "Maximum reasoning-token budget. The selected deployment supplies the exact inclusive minimum and maximum."
+								"description": "The most reasoning tokens. Each deployment sets its own range."
 							}
 						},
 						"additionalProperties": false
 					},
 					"service_tier": {
-						"type": "string",
-						"description": "Provider service tier. Availability and normalization depend on the selected deployment; see [Compatibility Notes](/docs/reference/provider-behavior#service-tiers).",
+						"type": [
+							"string",
+							"null"
+						],
+						"description": "The service tier. A model without a deployment for the tier returns `service_tier_unavailable`. See [Service tiers](/docs/service-tiers).",
 						"enum": [
 							"auto",
 							"default",
@@ -1748,12 +1819,13 @@
 							"flex",
 							"priority",
 							"standard",
-							"standard_only"
+							"ultrafast",
+							null
 						]
 					},
 					"stream_options": {
 						"type": "object",
-						"description": "Additional options for streamed Responses. Requires `stream:true`. Stogas accepts `include_obfuscation`; `include_usage` is server-owned and rejected on this route.",
+						"description": "Requires `stream: true`. Usage is always included.",
 						"properties": {
 							"include_obfuscation": {
 								"type": "boolean"
@@ -1764,23 +1836,23 @@
 					"temperature": {
 						"type": "number",
 						"default": 1,
-						"description": "Sampling temperature. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
+						"description": "Passed to the provider as is. The provider decides which values its model accepts."
 					},
 					"frequency_penalty": {
 						"type": "number",
-						"description": "OpenAI-only Responses frequency penalty. Anthropic deployments reject this field."
+						"description": "Lowers the chance of repeating tokens by how often they appear. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"presence_penalty": {
 						"type": "number",
-						"description": "OpenAI-only Responses presence penalty. Anthropic deployments reject this field."
+						"description": "Lowers the chance of repeating tokens that already appear. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"text": {
 						"type": "object",
-						"description": "Text output configuration, including structured output format and verbosity.",
+						"description": "Output format and verbosity.",
 						"properties": {
 							"format": {
 								"type": "object",
-								"description": "Provider-owned Responses text format. Stogas forwards supported OpenAI-compatible fields and leaves provider-specific format details to the selected upstream provider.",
+								"description": "Plain text, JSON, or JSON that matches a schema. Not every provider accepts it; see [Providers](/docs/providers).",
 								"properties": {
 									"type": {
 										"type": "string"
@@ -1805,51 +1877,52 @@
 					},
 					"top_logprobs": {
 						"type": "integer",
-						"description": "Provider-owned Responses log probability detail. Anthropic deployments reject this OpenAI-only field."
+						"description": "How many likely tokens to return at each position. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"top_k": {
 						"type": "integer",
-						"description": "Anthropic-only sampling control passed through the explicit Stogas allowlist. Rejected for OpenAI deployments."
+						"description": "Sample from the K most likely tokens. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"top_p": {
 						"type": "number",
-						"description": "Nucleus sampling control. Stogas validates JSON shape and preserves the value; provider-owned bounds, combinations, and model support are left to the selected provider."
+						"description": "Passed to the provider as is. The provider decides which values its model accepts."
 					},
 					"tool_choice": {
 						"type": [
 							"string",
 							"object"
 						],
-						"description": "Exact tool choice. OpenAI-format deployments accept `auto`, `none`, `required`, named function/custom selectors, exact declared hosted selectors, or `{type:\"allowed_tools\",mode:\"auto\"|\"required\",tools:[...]}`. Anthropic-format deployments accept only the string modes or a named function selector."
+						"description": "`auto`, `none`, `required`, one named tool, or `allowed_tools`. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"tools": {
 						"type": "array",
-						"description": "At most 128 exact Responses tool definitions. Stogas admits function tools, custom tools on OpenAI-format deployments, known and priced OpenAI/Anthropic web-search versions, and known Anthropic `web_fetch` versions. Unknown future versions fail closed instead of inheriting current pricing. Remote MCP tools are rejected because provider execution cannot be bounded or approved per request and third-party servers are outside the cataloged data-handling boundary. See the Model Tools guide for the current provider matrix and billing behavior.",
+						"description": "Up to 128 tools: functions, custom tools, web search and web fetch. See [Tools](/docs/model-tools).",
 						"maxItems": 128,
 						"items": {
 							"type": "object"
 						}
 					},
 					"truncation": {
-						"type": "string"
+						"type": "string",
+						"description": "What the provider does with input longer than the context window. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"safety_identifier": {
 						"type": [
 							"string",
 							"null"
 						],
-						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream safety identity from the authenticated API key."
+						"description": "Accepted for SDK compatibility. The gateway removes it before it calls the provider."
 					},
 					"user": {
 						"type": [
 							"string",
 							"null"
 						],
-						"description": "Accepted for SDK compatibility and removed before dispatch. Stogas sets upstream user identity from the authenticated API key."
+						"description": "Accepted for SDK compatibility. The gateway removes it before it calls the provider."
 					},
 					"prompt_cache_options": {
 						"type": "object",
-						"description": "OpenAI GPT-5.6 prompt caching mode. `implicit` keeps the provider-managed breakpoint; `explicit` writes only marked prompt blocks. OpenAI tracks at most four active breakpoints and reports cache writes as one input-token partition.",
+						"description": "Choose automatic caching or explicit breakpoints. See [Prompt caching](/docs/prompt-caching).",
 						"properties": {
 							"mode": {
 								"type": "string",
@@ -1869,14 +1942,14 @@
 					},
 					"stop_sequences": {
 						"type": "array",
-						"description": "Anthropic-only stop sequence alias passed through the explicit Stogas allowlist. Stogas rejects this field on OpenAI deployments. Responses does not admit top-level `stop`; Chat rejects requests that set both `stop` and `stop_sequences`.",
+						"description": "Anthropic name for stop sequences. Send `stop` or `stop_sequences`, not both.",
 						"items": {
 							"type": "string"
 						}
 					},
 					"cache_control": {
 						"type": "object",
-						"description": "Anthropic-only prompt caching control. Stogas accepts `{type:\"ephemeral\"}` with optional `ttl:\"5m\"` or `\"1h\"`, validates explicit cache controls on input content/tool blocks, and prices cache writes conservatively for holds.",
+						"description": "Anthropic prompt caching: `{\"type\": \"ephemeral\"}` with an optional `ttl` of `5m` or `1h`. See [Prompt caching](/docs/prompt-caching).",
 						"properties": {
 							"type": {
 								"type": "string",
@@ -1899,7 +1972,7 @@
 					},
 					"reasoning.effort": {
 						"type": "string",
-						"description": "Compatibility shortcut for `reasoning.effort`.",
+						"description": "Another name for `reasoning.effort`. Send only one.",
 						"enum": [
 							"none",
 							"minimal",
@@ -1922,7 +1995,7 @@
 							"maxLength": 43,
 							"pattern": "^[A-Za-z0-9_-]{43}$"
 						},
-						"description": "Customer roots by registered label, canonical unpadded base64url. Supply the roots required by applicable encrypted plugins and eligible encrypted credentials. Accepted over all supported transports. Removed before provider dispatch; never cached or logged."
+						"description": "Encryption keys by registered label, as unpadded base64url, for [encrypted policies](/docs/customer-encryption). The gateway removes them before it calls the provider and never stores or logs them."
 					}
 				},
 				"example": {
@@ -1933,12 +2006,12 @@
 			},
 			"ResponseObject": {
 				"type": "object",
-				"description": "Non-streaming OpenAI-compatible Responses API response.",
+				"description": "A buffered Responses API response.",
 				"properties": {
 					"id": {
 						"type": "string",
 						"format": "uuid",
-						"description": "Unique response identifier generated by the gateway."
+						"description": "Response ID, set by the gateway."
 					},
 					"object": {
 						"type": "string",
@@ -2007,7 +2080,7 @@
 					},
 					"output_text": {
 						"type": "string",
-						"description": "Convenience concatenation of output text content when available."
+						"description": "All output text joined, when there is any."
 					},
 					"background": {
 						"type": "boolean"
@@ -2187,7 +2260,7 @@
 			},
 			"ResponsesInputItem": {
 				"type": "object",
-				"description": "Responses API output item returned by the supported text, client-tool, reasoning, web-search, and web-fetch paths.",
+				"description": "An output item: a message, a tool call, reasoning or a hosted tool result.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -2245,7 +2318,7 @@
 			},
 			"ResponsesUsage": {
 				"type": "object",
-				"description": "Responses API token usage statistics.",
+				"description": "Token usage. Prices and meters are in the [`stogas` object](/docs/receipts).",
 				"properties": {
 					"input_tokens": {
 						"type": "integer",
@@ -2284,13 +2357,6 @@
 								"type": "integer"
 							}
 						}
-					},
-					"cost": {
-						"type": [
-							"number",
-							"null"
-						],
-						"description": "Upstream inference cost when available."
 					}
 				},
 				"required": [
@@ -2359,7 +2425,7 @@
 			"ResponsesRequestInputItem": {
 				"type": "object",
 				"additionalProperties": false,
-				"description": "Exact stateless Responses input item. Function and custom calls require one matching output in the same array. Custom history is OpenAI-format only; encrypted reasoning history is OpenAI reasoning-deployment only. Native attachments require a user message and a compatible deployment.",
+				"description": "An input item: a message, a tool call, a tool output or reasoning from an earlier response.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -2424,7 +2490,7 @@
 				}
 			},
 			"ResponsesRequestMessageContent": {
-				"description": "Message text or supported content blocks. Native attachments require a user message.",
+				"description": "Text, or a list of content blocks. See [Images and files](/docs/input-files).",
 				"oneOf": [
 					{
 						"type": "string"
@@ -2490,7 +2556,7 @@
 			},
 			"AnthropicTaskBudget": {
 				"type": "object",
-				"description": "Advisory agent-loop budget for direct Anthropic Opus 4.7+, Fable 5, and Mythos 5 deployments. Azure Claude and other models reject it. This value does not reduce the Stogas billing hold; remaining must not exceed total.",
+				"description": "Anthropic only. See [Anthropic request fields](/docs/providers/anthropic#anthropic-request-fields). It guides the model and does not lower the hold.",
 				"properties": {
 					"type": {
 						"type": "string",
@@ -2499,12 +2565,10 @@
 						]
 					},
 					"total": {
-						"type": "integer",
-						"minimum": 20000
+						"type": "integer"
 					},
 					"remaining": {
-						"type": "integer",
-						"minimum": 0
+						"type": "integer"
 					}
 				},
 				"required": [
@@ -2515,7 +2579,7 @@
 			},
 			"AnthropicContextManagement": {
 				"type": "object",
-				"description": "Strict Anthropic-wire context editing. Edit types must be unique, and clear_thinking_20251015 must be first when present. compact_20260112 is accepted only for Fable 5, Mythos 5 or Preview, Opus 4.6 through 5, and Sonnet 4.6 or 5 deployments, including matching Azure Claude deployments. Compaction does not reduce the billing hold; Stogas reserves a possible compaction sampling step before every bounded model sampling iteration and settles the sum of provider usage.iterations.",
+				"description": "Anthropic only. See [Anthropic request fields](/docs/providers/anthropic#anthropic-request-fields).",
 				"properties": {
 					"edits": {
 						"type": "array",
@@ -2760,7 +2824,7 @@
 					},
 					"value": {
 						"type": "integer",
-						"minimum": 50000
+						"minimum": 0
 					}
 				},
 				"required": [
@@ -2779,7 +2843,7 @@
 			},
 			"PromptTokenDetails": {
 				"type": "object",
-				"description": "Provider-reported input-token partitions. `cached_tokens` is the OpenAI-compatible cache-read field and `cache_write_tokens` is the OpenAI-compatible cache-write field.",
+				"description": "Input token details. `cached_tokens` were read from the cache, and `cache_write_tokens` were written to it.",
 				"properties": {
 					"text_tokens": {
 						"type": "integer",
@@ -2852,7 +2916,7 @@
 						"type": "string",
 						"format": "date-time",
 						"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$",
-						"description": "Gateway-reported request time; not an independent freshness proof."
+						"description": "When the gateway handled the request, by its own clock."
 					},
 					"node_id": {
 						"type": "string",
@@ -2925,14 +2989,14 @@
 							"ttft_ms": {
 								"type": "integer",
 								"minimum": 0,
-								"description": "Gateway-observed time from request start until the first generated token-bearing streaming payload is accepted for sending. It includes Stogas processing, retries, and provider time. It is omitted for non-streaming responses and streams without generated output."
+								"description": "Time to the first generated token in a stream."
 							}
 						}
 					},
 					"provider": {
 						"type": "object",
 						"additionalProperties": true,
-						"description": "Useful upstream facts selected by the provider adapter, covered by the same receipt signature."
+						"description": "Provider details, such as the provider request ID. The receipt covers them."
 					},
 					"receipt": {
 						"$ref": "#/components/schemas/StogasReceipt"
@@ -2956,7 +3020,7 @@
 									"type": "string",
 									"maxLength": 77,
 									"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-									"description": "Canonical exact USD, with at most 36 fractional digits."
+									"description": "Exact USD amount as a decimal string."
 								},
 								"rateKey": {
 									"type": "string",
@@ -2967,7 +3031,7 @@
 									"type": "string",
 									"maxLength": 77,
 									"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-									"description": "Canonical exact USD, with at most 36 fractional digits."
+									"description": "Exact USD amount as a decimal string."
 								}
 							},
 							"oneOf": [
@@ -3006,13 +3070,13 @@
 						"type": "string",
 						"maxLength": 77,
 						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Canonical exact USD, with at most 36 fractional digits."
+						"description": "Exact USD amount as a decimal string."
 					},
 					"billed_cost_usd": {
 						"type": "string",
 						"maxLength": 77,
 						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Canonical exact USD, with at most 36 fractional digits."
+						"description": "Exact USD amount as a decimal string."
 					},
 					"cache_read_savings_usd": {
 						"type": [
@@ -3021,7 +3085,7 @@
 						],
 						"maxLength": 77,
 						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Canonical exact USD, with at most 36 fractional digits."
+						"description": "Exact USD amount as a decimal string."
 					},
 					"cache_write_overhead_usd": {
 						"type": [
@@ -3030,10 +3094,10 @@
 						],
 						"maxLength": 77,
 						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Canonical exact USD, with at most 36 fractional digits."
+						"description": "Exact USD amount as a decimal string."
 					}
 				},
-				"description": "Optional final response metadata. One receipt signature covers the exact request and response hashes and the RFC 8785 canonical metadata object with its top-level receipt removed."
+				"description": "Added to the response when the request sends `Stogas-Metadata: v1`. The receipt signs the request hash, the response hash and the rest of this object. See [Receipts](/docs/receipts)."
 			},
 			"StogasReceipt": {
 				"type": "object",
@@ -3069,7 +3133,7 @@
 				}
 			},
 			"ChatInputMessageContent": {
-				"description": "Text or content blocks. Native attachments are accepted only in user messages and must be supported by the selected deployment.",
+				"description": "Text, or a list of content blocks. See [Images and files](/docs/input-files).",
 				"oneOf": [
 					{
 						"type": "string"
@@ -3119,7 +3183,7 @@
 							"url": {
 								"type": "string",
 								"minLength": 1,
-								"description": "HTTP(S) URL or base64 data URL."
+								"description": "An HTTPS URL that the provider downloads, or a base64 data URL."
 							},
 							"detail": {
 								"type": "string",
@@ -3129,7 +3193,7 @@
 					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
-						"description": "Anthropic prompt-cache control for this text block."
+						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
 					}
 				}
 			},
@@ -3151,27 +3215,27 @@
 							"file_data": {
 								"type": "string",
 								"minLength": 1,
-								"description": "Inline base64 data URL."
+								"description": "The file as a base64 data URL, such as `data:application/pdf;base64,...`."
 							},
 							"file_url": {
 								"type": "string",
 								"minLength": 1,
-								"description": "Native provider HTTP(S) URL. Chat requires an Anthropic-format deployment."
+								"description": "An HTTPS URL that the provider downloads. Not every provider accepts it; see [Providers](/docs/providers)."
 							},
 							"file_id": {
 								"type": "string",
 								"minLength": 1,
-								"description": "Provider file identifier. Requires BYOK."
+								"description": "A file uploaded to your provider account. Requires [BYOK](/docs/byok)."
 							},
 							"filename": {
 								"type": "string",
 								"minLength": 1,
-								"description": "Optional filename."
+								"description": "The filename. Required when the data URL has no specific MIME type."
 							},
 							"file_type": {
 								"type": "string",
 								"minLength": 1,
-								"description": "MIME type for Anthropic-format deployments; inline text extraction also accepts it."
+								"description": "The MIME type, such as `text/plain`."
 							}
 						},
 						"oneOf": [
@@ -3194,7 +3258,7 @@
 					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
-						"description": "Anthropic prompt-cache control for this text block."
+						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
 					}
 				}
 			},
@@ -3229,12 +3293,12 @@
 						}
 					}
 				},
-				"description": "OpenAI-format Chat only, on a deployment supporting audio input."
+				"description": "Audio input, on deployments that accept audio. Chat Completions only."
 			},
 			"ResponsesRequestTextBlock": {
 				"type": "object",
 				"additionalProperties": false,
-				"description": "Text-only Responses content block accepted by Stogas.",
+				"description": "A text block.",
 				"required": [
 					"type"
 				],
@@ -3255,11 +3319,11 @@
 					},
 					"prompt_cache_breakpoint": {
 						"$ref": "#/components/schemas/PromptCacheBreakpoint",
-						"description": "OpenAI GPT-5.6 explicit prompt-cache breakpoint."
+						"description": "Marks the end of a cached prefix when `prompt_cache_options` is explicit."
 					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
-						"description": "Anthropic prompt-cache control for this text block."
+						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
 					}
 				}
 			},
@@ -3276,12 +3340,12 @@
 					"image_url": {
 						"type": "string",
 						"minLength": 1,
-						"description": "HTTP(S) URL or base64 data URL."
+						"description": "An HTTPS URL that the provider downloads, or a base64 data URL."
 					},
 					"file_id": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Provider image identifier. BYOK and OpenAI-format deployments only."
+						"description": "An image uploaded to your provider account. Requires [BYOK](/docs/byok)."
 					},
 					"detail": {
 						"type": "string",
@@ -3289,7 +3353,7 @@
 					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
-						"description": "Anthropic prompt-cache control for this text block."
+						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
 					}
 				},
 				"oneOf": [
@@ -3312,34 +3376,34 @@
 					"file_data": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Inline base64 data URL."
+						"description": "The file as a base64 data URL, such as `data:application/pdf;base64,...`."
 					},
 					"file_url": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Native provider HTTP(S) URL. Chat requires an Anthropic-format deployment."
+						"description": "An HTTPS URL that the provider downloads. Not every provider accepts it; see [Providers](/docs/providers)."
 					},
 					"file_id": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Provider file identifier. Requires BYOK."
+						"description": "A file uploaded to your provider account. Requires [BYOK](/docs/byok)."
 					},
 					"filename": {
 						"type": "string",
 						"minLength": 1,
-						"description": "Optional filename."
+						"description": "The filename. Required when the data URL has no specific MIME type."
 					},
 					"file_type": {
 						"type": "string",
 						"minLength": 1,
-						"description": "MIME type for Anthropic-format deployments; inline text extraction also accepts it."
+						"description": "The MIME type, such as `text/plain`."
 					},
 					"type": {
 						"const": "input_file"
 					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
-						"description": "Anthropic prompt-cache control for this text block."
+						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
 					}
 				},
 				"oneOf": [
@@ -3759,7 +3823,8 @@
 										"direction"
 									],
 									"additionalProperties": false
-								}
+								},
+								"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 							},
 							"selection": {
 								"type": "object",
@@ -3789,7 +3854,7 @@
 									"mode"
 								],
 								"additionalProperties": false,
-								"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+								"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 								"allOf": [
 									{
 										"if": {
@@ -4220,7 +4285,8 @@
 													"direction"
 												],
 												"additionalProperties": false
-											}
+											},
+											"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 										},
 										"selection": {
 											"type": "object",
@@ -4250,7 +4316,7 @@
 												"mode"
 											],
 											"additionalProperties": false,
-											"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+											"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 											"allOf": [
 												{
 													"if": {

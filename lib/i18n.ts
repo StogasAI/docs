@@ -17,7 +17,7 @@ export const translations = i18n
 	.extend(uiTranslations())
 	.extend(openapiTranslations())
 	.extend({ keys: Object.values(messages) })
-	.extend({ keys: ['Schema type(schema UI)', 'Content variant'] })
+	.extend({ keys: ['Content variant'] })
 	.add({ en: { 'Collapse Sidebar(sidebar)(aria-label)': 'Toggle Sidebar' } });
 
 // Server metadata and exports use the same registered messages as the UI provider.

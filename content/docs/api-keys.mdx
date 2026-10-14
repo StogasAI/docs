@@ -1,0 +1,102 @@
+---
+title: API keys
+description: Create, rotate and manage service keys and member keys.
+icon: KeyRound
+---
+
+An API key authenticates inference requests. Each key belongs to one organization and has its own
+policy, provider credentials and usage.
+
+| Key type                     | Owner            | Use it for                                                   |
+| ---------------------------- | ---------------- | ------------------------------------------------------------ |
+| [Service key](#service-keys) | The organization | Servers, applications and CI jobs that must outlive a member |
+| [Member key](#member-keys)   | One member       | A member's own work, within the limits of a grant            |
+
+A [grant](/docs/grants) lets selected members create member keys. It is not a key itself: it has
+no secret and cannot call the API.
+
+## Service keys
+
+Create a service key under **API keys → Create key**. The secret appears when you create or rotate
+the key. With **Use** permission, **Reveal secret** shows it again later.
+
+Removing someone's access hides the secret from them in the dashboard at once, but they can still
+use a copy they saved. Rotate the key to stop old copies. Access assignments do not change the
+key's owner or add the assignees' policies to its requests.
+
+Organization-wide API key managers and folder managers can create service keys. Give other
+members access in **Members → Roles**; the
+[permission reference](/docs/members#permission-reference) lists what View, Use, Manage and Admin
+allow. Personal organizations have no shared access.
+
+## Member keys
+
+A member creates a member key from a grant assigned to them. The member names, rotates, disables
+and deletes their own keys. Administrators can see and manage every key in the organization.
+
+**Allow key policy edits by default** on the grant decides whether members can edit their keys'
+policies. It sets the default in `delegation.keys` and keeps any
+[ID exceptions](/docs/policies/scopes#id-exceptions). Turning it off for existing keys removes
+their key policies after you confirm; the grant's restrictions still apply. Request policies have
+their [own permission](/docs/policies/request-policies#grant-permission).
+
+## Key status
+
+Open a key to see its **Overview**: enabled state, lifetime and recurring spend, pending holds,
+remaining allowance, reset times, request capacity, dates and the last rejected request. Counters
+show the values at the displayed update time. Organization and grant allowances apply in addition
+to the key's own counters.
+
+The enabled switch saves at once. **Settings** holds the name, policy and secret actions;
+**Credentials** holds provider credentials. A disabled key can still be rotated, and rotation does
+not change whether it is enabled. The key's **Requests** link opens its history in
+[Analytics](/docs/analytics).
+
+## Leaked secrets
+
+GitHub reports API key secrets that it finds in public repositories and other public GitHub
+content. If the secret still belongs to a key, we replace it at once. The key keeps its ID, settings
+and history, and requests with the old secret fail with
+[`key_exposed`](/docs/reference/errors#401-unauthorized).
+
+The key page shows when and where GitHub found the secret, and **API keys** lists every key with an
+open report. Reveal the new secret and update your apps, then select **Acknowledge** to clear the
+notice. [Activity](/docs/activity) keeps the report and who acknowledged it.
+
+## Policies
+
+A key policy can narrow the models a key uses, limit spending, request rates, tokens and
+concurrent requests, set access periods and add redaction rules. Every request must pass the key
+policy, the policies above it and the organization balance. Start with
+[Edit a policy](/docs/policies/editing), or see [Scopes and inheritance](/docs/policies/scopes) for
+how the levels combine. To keep redaction rules and export credentials private, use
+[customer encryption](/docs/customer-encryption#encrypt-plugin-settings).
+
+## Provider credentials
+
+Each key has an ordered credential list for each provider. New keys start with Stogas-managed
+credentials for providers that offer them, currently Chutes. OpenAI, Anthropic and Azure lists
+start empty; an empty list turns that provider off for the key. See
+[Bring your own provider key](/docs/byok) to add, order, encrypt and rotate credentials.
+
+## Folders
+
+Folders group service keys and grants. Member keys follow their grant's folder. Folder policies,
+permissions and shared limits apply to everything inside. Open **Manage folders** next to the search
+field on **API keys** or **Grants** to create, rename, color and configure folders.
+
+- An organization can have up to 50 folders, with names that are unique regardless of case.
+  Folders cannot contain other folders.
+- Moving a key or grant needs Admin on both folders, or organization-wide Admin for the
+  organization root. A move changes the inherited policies, permissions and shared limits.
+- Deleting a folder moves its keys and grants to the organization root.
+- A move or deletion deletes a member's keys under a grant if the member loses their last Use
+  permission on that grant. Other keys keep their IDs and secrets.
+
+## Search and bulk actions
+
+Search and sorting cover every key you can view. Type a filter such as `folder:` and press Enter
+to keep it as a chip. Keys are newest first; **Load more** adds the next results.
+
+Select keys with the checkboxes, or use **Select all matching** to select every match you can
+manage. Bulk actions check your permissions again when they run.

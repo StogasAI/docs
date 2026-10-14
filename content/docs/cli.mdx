@@ -1,25 +1,62 @@
 ---
 title: CLI
-description: Run verified requests, encrypt credentials and plugins, and check saved evidence.
+description: Run a verified local endpoint for any OpenAI client, and check evidence offline.
+icon: Terminal
 ---
 
-Use `stogas` to run a verified local endpoint, encrypt customer content, or check evidence offline.
-Your OpenAI-compatible client keeps its normal API surface; only the base URL changes.
+The `stogas` CLI runs a local endpoint that verifies the gateway and protects each request. Point
+any OpenAI-compatible client at it; only the base URL changes. Use it from languages without an
+[SDK](/docs/sdk-overview), or from tools you cannot change. It also creates and uses keys for
+[customer encryption](/docs/customer-encryption).
+
+No command signs in to a Stogas account. `serve` passes on the API key that your client sends, and
+the other commands need no key.
 
 ## Install
 
-Download the complete asset set from a published [GitHub release](https://github.com/StogasAI/verifier/releases).
-Use an independently trusted CLI to verify the manifest, GitHub build provenance,
-Stogas approval, qualification reports and every artifact:
+<Steps>
+<Step>
+
+### Download the archive
+
+Each [release](https://github.com/StogasAI/verifier/releases) has an archive for each platform,
+named `stogas-v<version>-<platform>.tar.gz`, or `.zip` for Windows. The platforms are
+`linux-amd64`, `linux-arm64`, `darwin-amd64`, `darwin-arm64`, `windows-amd64` and `windows-arm64`.
+On Alpine and other musl systems, use `linux-musl-amd64` or `linux-musl-arm64`.
 
 ```console
-stogas verify-release /path/to/downloaded-release
+gh release download v<version> --repo StogasAI/verifier --pattern 'stogas-v<version>-linux-amd64.tar.gz'
 ```
 
-Then extract the archive for your platform and place `stogas` on your `PATH`.
-`release-manifest.json` lists the release's exact platforms and artifacts. Linux glibc
-and musl archives are separate; choose musl for Alpine. Matching debug archives retain
-source-level diagnostics. Draft releases have not completed approval.
+</Step>
+<Step>
+
+### Verify it
+
+Check that the release workflow built the archive from its tag:
+
+```console
+gh attestation verify stogas-v<version>-linux-amd64.tar.gz --repo StogasAI/verifier \
+  --signer-workflow StogasAI/verifier/.github/workflows/release.yml \
+  --source-ref refs/tags/v<version> --deny-self-hosted-runners
+```
+
+</Step>
+<Step>
+
+### Put it on your PATH
+
+```console
+tar -xzf stogas-v<version>-linux-amd64.tar.gz
+sudo install stogas-v<version>-linux-amd64/stogas /usr/local/bin/
+stogas --version
+```
+
+</Step>
+</Steps>
+
+With a Rust toolchain, you can instead build it from source with
+`cargo install stogas --locked --features cli`.
 
 ## Start
 
@@ -33,10 +70,10 @@ The command prints a private URL such as:
 OpenAI base URL: http://127.0.0.1:8787/<random-capability>/v1
 ```
 
-Use the complete printed URL in your OpenAI-compatible client and disable its automatic retries.
-The listener accepts only loopback traffic with the capability. It installs no certificate authority.
-Native mode verifies fresh attestation during a hybrid TLS 1.3 handshake before sending credentials
-or content.
+Use the complete URL as your client's base URL, and turn off the client's automatic retries. The
+endpoint accepts only local connections that include the random part of the URL. It installs no
+certificate authority. It accepts Chat Completions, Responses and the policy check endpoint; other
+routes fail.
 
 ## Options
 
@@ -45,26 +82,23 @@ stogas serve --security tls --max-connections 4
 stogas serve --security e2ee
 ```
 
-`tls` is the default. `e2ee` uses the same verified binary encryption protocol as the browser SDK.
-Connections open as needed up to the configured maximum. Chat Completions, Responses, and the optional policy validation endpoint
-are accepted; unsupported routes do not bypass verification.
-Stop the process with Ctrl+C or, on Unix, SIGTERM. Both close the listener and
-allow up to five seconds for transport cleanup. A cancelled request is not a
-successful completion.
+| Option                  | Effect                                                                                        |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| `--security`            | `tls` (default) or `e2ee`. See [connection modes](/docs/connection-modes).                    |
+| `--max-connections`     | The most connections to open, as needed. Default `4`.                                         |
+| `--browser-origin`      | Allow one [browser origin](#browser-applications).                                            |
+| `--upstream`            | Another HTTPS origin, without a path, credentials or query. Trusted evidence does not change. |
+| `--exit-on-stdin-close` | Stop when the parent process closes stdin. Use it when another program starts the CLI.        |
 
-When launching the CLI as a child process, pass `--exit-on-stdin-close` and keep
-its stdin connected to a pipe owned by the parent. Closing the pipe requests the
-same cleanup, including when the parent crashes. Ordinary foreground use does
-not need this option.
+The CLI loads evidence when a session starts, and once more if a session needs newer evidence. It
+does not poll. A local application can force a refresh with a `POST` to the separately printed
+refresh URL. Published packages trust production gateways only.
 
-The CLI loads evidence from our R2 endpoint first and uses the AWS replica for recovery.
-It does not poll. A setup failure can trigger one bounded evidence refresh before request
-submission. The separately printed refresh URL accepts a manual `POST` from a local application.
+## Stop
 
-The optional `--upstream` accepts an HTTPS origin without a path, credentials or query.
-It does not change trusted evidence origins or signing roots. Published packages trust
-production only. `--environment staging` is available only in a source build with the
-explicit `staging` feature.
+Press Ctrl+C or, on Unix, send SIGTERM. The CLI stops new work and allows up to five seconds for
+active streams and sessions to close. A request that was cancelled did not complete, but it may
+have run; do not send it again automatically.
 
 ## Check gateway availability
 
@@ -79,8 +113,7 @@ readiness and memory admission checks. No API key or provider request is involve
 
 The command prints a `stogas.probe.v1` JSON report with `security`, `ready`, the verified `node_id`
 when available, `http_status`, and a fixed `error_code`. It exits zero only when `ready` is true.
-The timeout covers evidence, connection setup and the response. `--upstream` and `--environment`
-use the same restrictions as `serve`.
+The timeout covers evidence, connection setup and the response. `--upstream` works as for `serve`.
 
 This checks connection and admission availability from the caller's location. It does not measure
 provider health, database-backed authorization, or the success rate of all customer requests.
@@ -91,165 +124,23 @@ provider health, database-backed authorization, or the success rate of all custo
 stogas serve --browser-origin https://app.example.com
 ```
 
-Use the complete printed capability URL. Only the specified browser origin is permitted.
-The CLI handles CORS and local-network preflights without forwarding those headers to the gateway.
-It keeps the selected native transport mode; browser access does not change the mode implicitly.
-The browser may require local-network permission.
+Use the complete printed URL. Only that origin can call the endpoint. The CLI answers CORS and
+local-network preflight requests itself and keeps its `--security` mode. The browser can ask the
+user for local-network permission.
 
 ```js
 import OpenAI from 'openai';
 
 const client = new OpenAI({
-	apiKey: userProvidedStogasKey,
+	apiKey: userApiKey,
 	baseURL: pastedCliBaseUrl,
 	dangerouslyAllowBrowser: true,
 	maxRetries: 0
 });
 ```
 
-An HTTP loopback browser origin is accepted for local applications. Public origins require HTTPS.
-Never embed a shared API key in shipped browser code.
-
-## Encrypt credentials and plugins
-
-Generate a customer encryption key locally:
-
-```console
-stogas encryption-key --output org.key
-```
-
-The command creates a private file and prints only its public identifier. Keep a secure backup;
-we cannot recover the key. Add the printed identifier to the organization policy, preserving
-its other settings:
-
-```json title="Organization policy"
-{
-	"version": 1,
-	"encryption": { "keys": { "providers": "THE_PRINTED_IDENTIFIER" } }
-}
-```
-
-Only the organization policy registers key identifiers. Labels use a lowercase letter followed
-by up to 47 lowercase letters, digits, underscores or hyphens. Register each identifier once.
-Generate and register separate keys when credentials and plugins need different access.
-The encryption purpose determines which input the command accepts:
-
-| Purpose          | Input                                                       |
-| ---------------- | ----------------------------------------------------------- |
-| `plugins`        | The inner plugin JSON object, without a `plugins` wrapper.  |
-| `byok/openai`    | The exact OpenAI credential, without a trailing newline.    |
-| `byok/anthropic` | The exact Anthropic credential, without a trailing newline. |
-| `byok/chutes`    | The exact Chutes credential, without a trailing newline.    |
-
-For provider credentials, follow [customer-encrypted BYOK](/docs/byok#customer-encryption).
-
-### Encrypt plugin settings
-
-Encrypt the entire `plugins` object to keep redaction rules, export URLs and destination credentials
-private when saved. Limits, routing, access and delegation stay readable. Plugin settings and
-provider credentials can use separate registered keys.
-
-1. Save the contents of `plugins` in a local file, without its outer wrapper:
-
-   ```json title="plugins.json"
-   {
-   	"stogasRedaction": {
-   		"literals": [{ "values": ["Project Aurora"] }]
-   	},
-   	"stogasExport": {
-   		"destinations": [
-   			{
-   				"url": "https://receiver.example.com/events",
-   				"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }
-   			}
-   		]
-   	}
-   }
-   ```
-
-   Include only the plugins you need. See [PII Redaction](/docs/plugins/pii-redaction) and
-   [Export](/docs/plugins/export) for their settings.
-
-2. Encrypt the file using a key registered on the organization policy:
-
-   ```console
-   stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
-     --purpose plugins --input plugins.json --output plugins.encrypted.json
-   ```
-
-   Neither this command nor `encryption-key` uploads the key or input. They refuse to overwrite
-   an existing output file.
-
-3. Replace the entire policy's `plugins` value with an object whose `encrypted` property contains
-   the generated envelope. The saved policy has this shape:
-
-   ```jsonc title="Policy shape (replace placeholders)"
-   {
-   	"plugins": {
-   		"encrypted": {
-   			"version": 1,
-   			"keyId": "64_LOWERCASE_HEX_CHARACTERS",
-   			"salt": "BASE64URL_32_BYTES",
-   			"nonce": "BASE64URL_12_BYTES",
-   			"blob": "BASE64URL_CIPHERTEXT_AND_TAG"
-   		}
-   	}
-   }
-   ```
-
-   Preserve the other settings and [save the policy](/docs/policies/editing).
-   Each encrypted section selects its registered key by `keyId`.
-
-4. [Send the key with each request](#send-the-key-with-a-request). Saving checks the readable
-   settings and envelope format; the gateway decrypts and validates the plugin settings before
-   inference. Missing or wrong keys, invalid settings and excessive combined rules reject the request.
-   Use the optional [execution check](/docs/policies/editing#check-execution-before-saving) before inference.
-
-Compiled settings can be reused in a bounded cache. Every request still needs the correct key
-and current authorization. [Policy size limits](/docs/policies/editing#document-rules) count
-decrypted plugin bytes; encryption adds only bounded storage overhead.
-
-### Send the key with a request
-
-Include the required keys under their registered labels in `encryption_keys` in each inference
-request's JSON body. Keep your API key in the `Authorization` header. The gateway removes this
-map before provider dispatch and never stores the roots in its cache, database or analytics.
-
-```json title="Responses request body"
-{
-	"model": "openai/gpt-5-mini",
-	"input": "Hello",
-	"encryption_keys": { "providers": "CONTENTS_OF_ORG_KEY_FILE" }
-}
-```
-
-The gateway accepts this field over ordinary HTTPS, attested TLS, and binary E2EE. You choose
-the transport before sending it. We recommend locally verified **attested TLS** or **binary E2EE**
-to keep the key inside the verified gateway connection. Ordinary HTTPS protects the connection
-to its TLS endpoint; it does not verify the gateway, and TLS intermediaries can read the body.
-With E2EE, `encryption_keys` is inside the encrypted body.
-
-Supply every root needed by applicable encrypted plugins. An encrypted provider credential is
-eligible only when its matching root is supplied. Other registered roots are optional. Every
-supplied label must match its registered identifier, including on cache hits.
-
-The optional [policy check](/docs/policies/editing#check-execution-before-saving) accepts the
-same field. Keep the key out of URLs, command-line arguments, and application logs.
-
-### Key sharing and rotation
-
-Anyone who obtains both a root and its ciphertext can decrypt that content. Separate roots
-provide separate cryptographic access; labels alone do not. Removing a member cannot make
-them forget a root. A caller must know every key needed by that caller's encrypted plugin settings.
-
-Keep original policies and provider credentials for replacement or rotation. Prepare new
-ciphertexts locally and register the new root under a new label. Update clients to supply both
-roots, replace affected plugin sections and credentials, then remove the old registration and
-stop sending it. These are separate saves; each checks the current policy revisions.
-
-Each encryption uses a fresh salt and nonce to derive an AES-256-GCM key with HKDF-SHA-256.
-The authenticated context binds the organization, purpose, and root identifier. ML-KEM protects
-key establishment in verified transports; it does not replace content encryption.
+Local applications can use an HTTP loopback origin; public origins need HTTPS. Never put a shared
+API key in browser code that you ship.
 
 ## Verify an evidence file
 
@@ -257,40 +148,19 @@ key establishment in verified transports; it does not replace content encryption
 stogas verify bundle.json --json
 ```
 
-Use `-` for standard input. This command performs no network access. It verifies the root-signed
-key manifest, complete signed approvals, release evidence, hardware policy and bundled collateral.
-It reports approved software, not a list of live gateways; fresh session verification establishes
-a gateway's identity. `--environment` selects an authority already compiled into the build.
+Use `-` for standard input. The command makes no network requests. It checks the root-signed key
+manifest, signed approvals, release evidence, hardware policy and AMD collateral in the bundle. It
+reports the approved software, not a list of live gateways; only a fresh session proves which
+gateway you reach. See [Gateway verification](/docs/verification).
 
-## Verify a saved receipt
+## Other commands
 
-```console
-stogas proof --bundle bundle.json --boot boot-archive.json \
-  --request request.json --response response.json --json
-```
+| Command                    | Use                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| `stogas encryption-key`    | Create an organization key for [customer encryption](/docs/customer-encryption). |
+| `stogas encrypt`           | Encrypt plugin settings or a provider credential with that key.                  |
+| `stogas proof`             | Check a saved [receipt](/docs/receipts#check-a-receipt-later).                   |
+| `stogas download-evidence` | Save the evidence that a receipt names, to check it without network access.      |
+| `stogas verify-release`    | Check a [downloaded release](/docs/reproducible-builds#verify-an-sdk-download).  |
 
-Supply the immutable boot archive and the exact evidence bundle named by its `evidence_sha256`.
-The command verifies the boot at its authenticated transparency-log time, so later key rotations
-or expired archived revocation lists do not invalidate the saved receipt. This historical check
-does not authorize a new connection.
-
-The default reads a buffered response with its final `stogas` metadata. Add `--stream` for a
-complete SSE response, including metadata and the terminal event. For detached verification,
-pass the complete `stogas` bag with `--proof metadata.json` and the exact signed response bytes
-with `--response`.
-Preserve the original request and response bytes; reformatting JSON changes their hashes.
-
-The result confirms the signed content, metadata and boot identity. It does not establish
-when the request ran.
-
-## Metadata and shutdown
-
-Send `Stogas-Metadata: v1` to request final metadata and a signed content receipt. The transport
-verifies the receipt before releasing normal completion. SSE keepalive comments are safe to ignore.
-
-Ctrl-C stops new work and allows bounded graceful cleanup of active streams and encrypted sessions.
-A disconnect after submission may mean the inference executed; do not automatically replay it.
-
-```console
-stogas serve --help
-```
+Run `stogas <command> --help` for every option.

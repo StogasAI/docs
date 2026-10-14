@@ -1,26 +1,17 @@
 ---
 title: Request policies
-description: Add permitted restrictions and default overrides to one inference request.
+description: Add policy settings to one inference request.
+icon: FileBraces
 ---
 
-A request policy lasts for one inference request. It uses the saved policy syntax for permitted
-routing, timeouts, scheduled access, input restrictions and plugins. It can replace defaults, but it
-cannot remove required restrictions.
-
-Plugin settings include [PII Redaction](/docs/plugins/pii-redaction) and
-[Export](/docs/plugins/export).
-
-Request policies cannot define persistent spend, request-rate, token or concurrency counters,
-register encryption roots, or delegate permission. This includes stricter limits and limits
-inside conditional rules. Save them on the relevant resource instead. The complete
-[scope differences](/docs/policies/scopes#scope-differences) also distinguish permissions,
-document size, root registration and rule syntax.
+A request policy adds settings to one request. It can add restrictions and replace
+[defaults](/docs/policies/scopes#required-settings-and-defaults), but it cannot remove a required
+setting from a saved policy.
 
 ## Grant permission
 
-Request policies require an explicit allowance in at least one applicable saved policy.
-All explicit allowances intersect; omission adds no restriction. Use `true` to permit every
-request-supported section, `false` to deny them, or a list of section paths:
+Request policies are off until a saved policy allows them. Set `delegation.request` on any saved
+scope that applies to the key:
 
 ```json title="Saved policy"
 {
@@ -30,80 +21,58 @@ request-supported section, `false` to deny them, or a list of section paths:
 }
 ```
 
-That example permits filters, sort preferences and plaintext redaction. It does not permit
-allowed-node lists or other unlisted settings. A broader path such as `routing` permits that
-whole section. Rules require permission for every setting they contain, whether or not their
-condition would match this request. See [Delegation](/docs/policies/scopes#permission-to-edit-saved-policies).
+- Use `true` for every section, or a list of section paths. A path such as `routing` allows the
+  whole section.
+- When several policies set `delegation.request`, a section must be allowed by all of them.
+- A rule needs permission for every setting in it, whether or not its condition matches.
+- Encrypted plugin settings need permission for all of `plugins`, because they can hold any plugin
+  setting.
 
 ## Add a policy to a request
 
-Send `policy` in the JSON body of Chat Completions or Responses:
+Send `policy` in the body of a Chat Completions or Responses request:
 
 ```json title="Chat Completions request"
 {
-	"model": "gpt-5.5",
-	"messages": [
-		{
-			"role": "user",
-			"content": "Contact élise@stogas.ai."
-		}
-	],
+	"model": "gpt-5.6-sol",
+	"messages": [{ "role": "user", "content": "Reply to élise@contoso.com." }],
 	"policy": {
-		"routing": {
-			"filter": "provider.id == 'openai'"
-		},
-		"plugins": {
-			"stogasRedaction": {
-				"email_address": true
-			}
-		}
+		"routing": { "filter": "provider.id == 'openai'" },
+		"plugins": { "stogasRedaction": { "email_address": true } }
 	}
 }
 ```
 
-The synthetic email example becomes `Contact <EMAIL_ADDRESS>.` before provider dispatch.
-Reserved documentation domains such as `example.com` are deliberately excluded from the
-email detector and will not demonstrate a positive match.
+The provider receives `Reply to <EMAIL_ADDRESS>.`. The gateway removes `policy` from the request before
+it calls the provider.
 
-```json title="Responses request"
+```json title="Responses request: cheapest output first"
 {
-	"model": "gpt-5.5",
+	"model": "gpt-5.6-sol",
 	"input": "Hello",
 	"policy": {
 		"routing": {
-			"sort": [
-				{
-					"by": "deployment.pricing.output_tokens.per_mill_tokens",
-					"direction": "asc"
-				}
-			]
+			"sort": [{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" }]
 		}
 	}
 }
 ```
 
-A request sort replaces sort defaults and must agree with every required saved ordering.
-Required saved filters and redaction still apply. Conditional rules use the same
-[pre-selection facts](/docs/policies/routing#request-facts-and-context).
+A request sort replaces default sorts, and must agree with every required sort.
 
-## Request document
+## What a request policy can contain
 
-The document contains only the settings being supplied and is limited to **16 KiB as sent**, including whitespace.
-The saved [expression and node-list bounds](/docs/policies/routing) also apply. There is no policy
-header. `enabled` and expiration remain resource settings; `limits`, `delegation` and `encryption`
-are rejected, including inside rules.
+- `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`, if permitted.
+- [Encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) whose key the
+  organization registered. Send the key in `encryption_keys`.
+- Up to 16 KiB, as sent.
 
-For permitted encrypted plugins, supply their registered roots in the request's `encryption_keys`
-map. The policy cannot register a new root. Empty settings can replace defaults only; they never
-clear required restrictions from another policy.
-
-The gateway consumes `policy` before dispatch and does not send it to the provider. Standard
-model and provider selectors remain available when request policies are disabled, subject to
-the saved restrictions.
+`limits`, `delegation` and `encryption` are rejected, also inside rules. Save limits on a key or
+another resource.
 
 ## Rejected policies
 
-| Response | Cause                                                                                | Fix                                                        |
-| -------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
-| `403`    | A supplied section lacks permission.                                                 | Remove it or ask a policy manager to change the allowance. |
-| `400`    | Invalid syntax, unsupported fields, conflicting required orders, or exceeded bounds. | Correct the document or make its required ordering agree.  |
+| Status | Cause                                                                         |
+| ------ | ----------------------------------------------------------------------------- |
+| `403`  | `permission_denied`: a section is not allowed by `delegation.request`.        |
+| `400`  | The policy is invalid, too large, or its sort conflicts with a required sort. |

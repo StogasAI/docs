@@ -1,6 +1,7 @@
 ---
 title: Zig
 description: Send HTTP requests through the verifier's native C interface.
+icon: logo:zig
 ---
 
 Use Zig's C interoperability with the native verifier and libcurl. This example
@@ -274,16 +275,13 @@ Keep one transport alive while making multiple requests.
 `STOGAS_BASE_URL` is only for an already running local verifier, not a gateway
 URL. See [verification and receipts](/docs/verification) for checking saved responses.
 
-## Workload configuration
+## Options
 
 ```zig
 try native.Transport.init(allocator, "{\"security\":\"e2ee\",\"max_connections\":4}")
 ```
 
-The JSON also accepts `environment` and `base_url`. Configure libcurl timeouts and cancellation in the HTTP client.
+The JSON also accepts `base_url`. Configure libcurl timeouts and cancellation in the HTTP client.
 
-Native attested TLS is the default; this configuration selects E2EE and retains the default
-maximum of four channels. Reuse one transport, bound application concurrency separately, and
-close it at shutdown. The OpenAI or HTTP client owns retry policy; the examples choose no retries
-because interrupted execution can be uncertain. See [shared settings and workload guidance](/docs/sdk-overview#choose-settings-for-your-workload)
-for channel limits, staging builds, origin overrides and deadline behavior.
+Native attested TLS is the default; this example selects E2EE. See
+[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
