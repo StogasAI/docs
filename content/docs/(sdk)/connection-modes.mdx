@@ -73,9 +73,12 @@ idle E2EE session, or when a session reaches its key limit. Requests that are al
 finish on the old session. Error responses, including rate limits and provider errors, do not end
 a session.
 
-The SDK never sends a request again after it was submitted. If a session ends during a request,
-that request fails and later requests use a new session. Your OpenAI client decides whether to
-retry; a retry can run and bill the request again.
+With attested TLS, the SDK sends a request once more only when the gateway refused it before
+starting it, for example because the gateway closed the connection as the request arrived. With
+E2EE, the SDK never sends a request again: if a gateway ends a session between requests, for
+example for an update, the next request on that session fails and later requests use a new session.
+If a connection or session ends during a request, that request fails. Your OpenAI client decides
+whether to retry; a retry can run and bill the request again.
 
 ## Limits
 

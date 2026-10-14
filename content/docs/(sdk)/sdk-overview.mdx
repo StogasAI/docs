@@ -48,12 +48,15 @@ evidence sources.
 
 ## Retries
 
-The OpenAI client decides whether to retry. The SDK never sends a request again, and it keeps the
-HTTP status, the body and headers such as `Retry-After`.
+The OpenAI client decides whether to retry. The SDK keeps the HTTP status, the body and headers
+such as `Retry-After`.
 
 If a connection drops after a request was sent, the model may already have run, and a retry runs it
-again. The examples set retries to zero for this reason. When a gateway restarts for an update, the
-request in progress returns an error, and the SDK opens a new connection for later requests.
+again. The examples set retries to zero for this reason. With attested TLS, the SDK sends a request
+once more only when the gateway refused it before starting it, for example because the gateway
+closed an idle connection or began an update as the request arrived. Requests that are already
+running when a gateway begins an update finish. [Sessions](/docs/connection-modes#sessions)
+explains what happens to later requests.
 
 ## Check evidence offline
 
