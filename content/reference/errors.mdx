@@ -58,10 +58,10 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 
 ### 401 Unauthorized
 
-| Code              | Meaning                                                                                                     |
-| ----------------- | ----------------------------------------------------------------------------------------------------------- |
-| `invalid_api_key` | The API key is missing, wrong or deleted.                                                                   |
-| `key_exposed`     | GitHub found this secret in public, so we replaced it. See [Leaked secrets](/docs/api-keys#leaked-secrets). |
+| Code                  | Meaning                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `invalid_api_key`     | The API key is missing, wrong or deleted.                                                                             |
+| `key_secret_replaced` | The key's secret was rotated, or GitHub [found it in public](/docs/api-keys#leaked-secrets). Copy the current secret. |
 
 ### 402 Payment required
 

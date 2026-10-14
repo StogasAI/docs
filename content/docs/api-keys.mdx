@@ -21,8 +21,9 @@ Create a service key under **API keys → Create key**. The secret appears when 
 the key. With **Use** permission, **Reveal secret** shows it again later.
 
 Removing someone's access hides the secret from them in the dashboard at once, but they can still
-use a copy they saved. Rotate the key to stop old copies. Access assignments do not change the
-key's owner or add the assignees' policies to its requests.
+use a copy they saved. Rotate the key to stop old copies: requests with an old secret fail with
+[`key_secret_replaced`](/docs/reference/errors#401-unauthorized). Access assignments do not change
+the key's owner or add the assignees' policies to its requests.
 
 Organization-wide API key managers and folder managers can create service keys. Give other
 members access in **Members → Roles**; the
@@ -57,11 +58,11 @@ not change whether it is enabled. The key's **Requests** link opens its history 
 GitHub reports API key secrets that it finds in public repositories and other public GitHub
 content. If the secret still belongs to a key, we replace it at once. The key keeps its ID, settings
 and history, and requests with the old secret fail with
-[`key_exposed`](/docs/reference/errors#401-unauthorized).
+[`key_secret_replaced`](/docs/reference/errors#401-unauthorized).
 
-The key page shows when and where GitHub found the secret, and **API keys** lists every key with an
-open report. Reveal the new secret and update your apps, then select **Acknowledge** to clear the
-notice. [Activity](/docs/activity) keeps the report and who acknowledged it.
+The key page shows when and where GitHub found the secret, and **API keys** lists every key with a
+leak notice. Reveal the new secret and update your apps. Revealing or rotating the secret removes
+the notice; [Activity](/docs/activity) keeps the report.
 
 ## Policies
 
