@@ -1,16 +1,17 @@
 ---
 title: CLI
-description: Run a verified local endpoint for any OpenAI client, and check evidence offline.
+description: Run a verified local endpoint for any OpenAI client, check evidence offline, sign in and add credit.
 icon: Terminal
 ---
 
 The `stogas` CLI runs a local endpoint that verifies the gateway and protects each request. Point
 any OpenAI-compatible client at it; only the base URL changes. Use it from languages without an
 [SDK](/docs/sdk-overview), or from tools you cannot change. It also creates and uses keys for
-[customer encryption](/docs/customer-encryption).
+[customer encryption](/docs/customer-encryption), and it can create an account, add credit and call
+the dashboard API.
 
-No command signs in to a Stogas account. `serve` passes on the API key that your client sends, and
-the other commands need no key.
+Only `signup`, `login`, `logout`, `topup` and `api` use your account. `serve` passes on the API key
+that your client sends, and the other commands need no key.
 
 ## Install
 
@@ -152,6 +153,61 @@ Use `-` for standard input. The command makes no network requests. It checks the
 manifest, signed approvals, release evidence, hardware policy and AMD collateral in the bundle. It
 reports the approved software, not a list of live gateways; only a fresh session proves which
 gateway you reach. See [Gateway verification](/docs/verification).
+
+## Sign in
+
+```console
+stogas signup
+stogas login
+```
+
+`signup` creates an account and prints its password once. Save the password; it cannot be
+recovered. `login` asks for the password and, when the account uses an authenticator app, a code.
+An account whose only second step is a passkey must create its token on the **Account** page.
+
+Each sign-in creates an access token named `Stogas CLI on <host>` that can read and change all of
+your organizations and does not expire. The CLI keeps it in the system keychain: Keychain on
+macOS, Credential Manager on Windows, or a Secret Service such as GNOME Keyring or KWallet on
+Linux. Without a keychain, as on most servers, the CLI prints the token instead. Signing in again
+deletes the token that the new one replaces, and `stogas logout` deletes the current one.
+
+For servers and CI, create a token on the **Account** page with only the access and organizations
+that the job needs, and set it as `STOGAS_TOKEN`. The CLI then uses it instead of the keychain, and
+`signup`, `login` and `logout` refuse to run. A token stops working when it expires, when you
+delete it, and when you change your password.
+
+## Add credit
+
+```console
+stogas topup 25 BTC
+stogas topup 25 USDT --network TRX
+stogas topup 25 XMR --organization <organization-id>
+```
+
+The amount is the USD credit you want; the CLI prints the coin amount to send and the estimated
+fees, which are added on top. Bitcoin and Monero pay through
+[BTCPay](/docs/billing#pay-through-btcpay), and other coins through
+[CCPayment](/docs/billing#pay-through-ccpayment). Use `--network` when a coin is available on
+several networks; the error lists them. Without `--organization`, the credit goes to your personal
+organization.
+
+When the organization has no billing location yet, the CLI asks for its country, and in the
+United States and Canada its state or province and postal code. The CLI then prints the address,
+any memo, and a QR code on a terminal, and waits until the payment is credited. Press Ctrl+C to
+stop waiting; the payment is still credited, and **Balance** shows it.
+
+## Call the dashboard API
+
+```console
+stogas api GET /api/account
+stogas api POST /api/<organization-id>/keys --input key.json
+```
+
+The CLI sends the request with your token and prints the response. On a terminal it formats JSON;
+otherwise it writes the exact response, ready for `jq` or a file. `--input` reads a JSON body from
+a file, or from standard input with `-`. A refused request prints the error, and the command exits
+with status 1. A read-only token can only use `GET`. Tokens cannot create tokens, change sign-in
+methods, delete the account or use the Playground; those need the dashboard.
 
 ## Other commands
 
