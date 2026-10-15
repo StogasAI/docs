@@ -197,6 +197,9 @@
 					"403": {
 						"$ref": "#/components/responses/Forbidden"
 					},
+					"408": {
+						"$ref": "#/components/responses/RequestTimeout"
+					},
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
 					},
@@ -277,6 +280,9 @@
 					},
 					"403": {
 						"$ref": "#/components/responses/Forbidden"
+					},
+					"408": {
+						"$ref": "#/components/responses/RequestTimeout"
 					},
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
@@ -455,6 +461,15 @@
 					"401": {
 						"$ref": "#/components/responses/Unauthorized"
 					},
+					"408": {
+						"$ref": "#/components/responses/RequestTimeout"
+					},
+					"413": {
+						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"429": {
+						"$ref": "#/components/responses/RateLimited"
+					},
 					"503": {
 						"$ref": "#/components/responses/ServiceUnavailable"
 					}
@@ -570,6 +585,23 @@
 							"error": {
 								"message": "API key is disabled",
 								"type": "permission_denied"
+							}
+						}
+					}
+				}
+			},
+			"RequestTimeout": {
+				"description": "The request body took longer than five minutes to arrive. See [408 errors](/docs/reference/errors#404-405-408-and-415).",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "The request body did not arrive within 5 minutes.",
+								"type": "invalid_request_error",
+								"code": "request_body_timeout"
 							}
 						}
 					}
