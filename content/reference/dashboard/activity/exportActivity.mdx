@@ -1,0 +1,29 @@
+---
+title: Export activity
+description: Returns every matching event with its changes. More than 50,000
+  matches fail with 503; narrow the time range. Each export is recorded as
+  activity.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns every matching event with its changes. More than 50,000 matches
+          fail with 503; narrow the time range. Each export is recorded as
+          activity.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/activity/export', method: 'get' }]} />
+    </>
+  );
+}

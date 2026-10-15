@@ -32,6 +32,7 @@ ${entries(apiSource.getPages())}
 ## ${t(messages.machineResources)}
 
 - [${t(messages.openapiSpecification)}](https://stogas.ai/openapi.json): ${t(messages.openapiDescription)}
+- [${t(messages.dashboardOpenapiSpecification)}](https://stogas.ai/dashboard-openapi.json): ${t(messages.dashboardOpenapiDescription)}
 - [${t(messages.apiCatalog)}](https://stogas.ai/.well-known/api-catalog): ${t(messages.apiCatalogDescription)}
 - [${t(messages.allDocumentation)}](https://stogas.ai/llms-full.txt): ${t(messages.allDocumentationDescription)}
 `,

@@ -1,0 +1,29 @@
+---
+title: List requests
+description: Lists the matching requests with their provider attempts, usage and
+  cost. The time range is the last 24 hours unless you set from, to or allTime.
+  filter takes the query syntax of the Analytics page.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Lists the matching requests with their provider attempts, usage and
+          cost. The time range is the last 24 hours unless you set from, to or
+          allTime. filter takes the query syntax of the Analytics page.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/analytics', method: 'get' }]} />
+    </>
+  );
+}

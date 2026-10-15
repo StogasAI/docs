@@ -1,0 +1,25 @@
+---
+title: List activity
+description: Lists events from the last 365 days, newest first.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Lists events from the last 365 days, newest first.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/activity', method: 'get' }]} />
+    </>
+  );
+}

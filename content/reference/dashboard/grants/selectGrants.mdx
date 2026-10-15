@@ -1,0 +1,26 @@
+---
+title: Select grants
+description: Returns the IDs of every grant that matches the filter, for a bulk change.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the IDs of every grant that matches the filter, for a bulk
+          change.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/grants/selection', method: 'get' }]} />
+    </>
+  );
+}

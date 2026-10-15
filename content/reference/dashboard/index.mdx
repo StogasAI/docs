@@ -1,0 +1,39 @@
+---
+title: Dashboard API
+description: Manage organizations, members, API keys, policies, balance, analytics and activity from your own programs.
+---
+
+The base URL is `https://app.stogas.ai`. Send an access token as `Authorization: Bearer <token>`.
+Create a token on the **Account** page, or sign in with the [CLI](/docs/cli#sign-in) and send
+requests with `stogas api`. Each request acts as the user who created the token, with that user's
+roles. Browsers do not let web pages on other sites call the API, so call it from a server or a
+script.
+
+## Access tokens
+
+- A **Read only** token can call only `GET` operations. Operations with the scope `write` return
+  `403 TOKEN_READ_ONLY` to it.
+- A token for **Selected organizations** gets `404` for every other organization. Operations with
+  the scope `all-organizations` return `403 TOKEN_ORGANIZATIONS_LIMITED` to it.
+- A token stops working when it expires, when you delete it, and when you change your password.
+  When GitHub finds a token in public, requests with it return `401 TOKEN_EXPOSED` and the place
+  where GitHub found it.
+
+Tokens cannot create tokens, change sign-in methods, delete the account or use the Playground. Use
+the dashboard for those.
+
+## Organizations
+
+Paths that start with `/api/{orgId}` act on one organization. `GET /api/organizations/summary`
+lists the organizations that your token covers.
+
+## Errors
+
+Every error has a JSON body with a `message`, and most have a `code` that a program can check. When
+the code is `INVALID_REQUEST`, `issues` lists each field to fix.
+
+## Limits
+
+Each user can send 60 requests a minute, shared by the dashboard and all of the user's tokens.
+Further requests return `429 RATE_LIMITED` with `Retry-After`. [Analytics](/docs/analytics) queries
+and downloads have lower limits of their own.

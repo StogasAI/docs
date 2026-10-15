@@ -1,0 +1,23 @@
+---
+title: Remove members
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: DELETE
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents: []
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/members', method: 'delete' }]} />
+    </>
+  );
+}

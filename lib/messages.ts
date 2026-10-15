@@ -43,12 +43,15 @@ export const messages = {
 	llmsSummary:
 		'Stogas is a verifiable, OpenAI-compatible AI gateway. Use it to access models through one API, manage access and spending, and verify the software serving requests.',
 	llmsAccess:
-		'Inference requests use https://api.stogas.ai and a bearer API key from https://app.stogas.ai. The model and catalog endpoints are public. Existing OpenAI clients work with Stogas; verification and encrypted requests use the Stogas SDKs.',
+		'Inference requests use https://api.stogas.ai and a bearer API key from https://app.stogas.ai. The model and catalog endpoints are public. Existing OpenAI clients work with Stogas; verification and encrypted requests use the Stogas SDKs. Programs manage organizations, keys, policies and balance through the dashboard API at https://app.stogas.ai with a bearer access token.',
 	llmsApiReference: 'API reference',
 	machineResources: 'Machine-readable resources',
-	openapiSpecification: 'OpenAPI specification',
+	openapiSpecification: 'Gateway API OpenAPI specification',
 	openapiDescription:
-		"Complete API contract. Each operation's Markdown page includes its scoped OpenAPI YAML.",
+		"Inference, catalog and policy checks. Each operation's Markdown page includes its scoped OpenAPI YAML.",
+	dashboardOpenapiSpecification: 'Dashboard API OpenAPI specification',
+	dashboardOpenapiDescription:
+		'Organizations, members, API keys, policies, balance, analytics and activity.',
 	apiCatalog: 'API catalog',
 	apiCatalogDescription: 'API and documentation discovery.',
 	allDocumentation: 'All documentation',

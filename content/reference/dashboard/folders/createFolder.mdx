@@ -1,0 +1,23 @@
+---
+title: Create a folder
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents: []
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/folders', method: 'post' }]} />
+    </>
+  );
+}

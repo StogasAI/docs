@@ -1,0 +1,25 @@
+---
+title: Delete an access token
+description: The token stops working at once. A token can delete itself.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: DELETE
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: The token stops working at once. A token can delete itself.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/account/tokens/{tokenId}', method: 'delete' }]} />
+    </>
+  );
+}

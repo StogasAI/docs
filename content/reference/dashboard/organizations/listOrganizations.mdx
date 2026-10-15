@@ -1,0 +1,30 @@
+---
+title: List your organizations
+description: Lists the organizations the token covers, with your roles and
+  capabilities in each. selectedOrganizationId is selectedOrgId when the list
+  includes it, otherwise your personal organization or the first one listed.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Lists the organizations the token covers, with your roles and
+          capabilities in each. selectedOrganizationId is selectedOrgId when the
+          list includes it, otherwise your personal organization or the first
+          one listed.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/summary', method: 'get' }]} />
+    </>
+  );
+}

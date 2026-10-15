@@ -1,0 +1,29 @@
+---
+title: Get the receipt of a payment
+description: Returns a PDF. The first request creates the receipt from the
+  billing profile at that time, so it needs write access; later requests return
+  the same receipt.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns a PDF. The first request creates the receipt from the billing
+          profile at that time, so it needs write access; later requests return
+          the same receipt.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/funding/payments/{paymentId}/receipt', method: 'post' }]} />
+    </>
+  );
+}

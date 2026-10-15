@@ -28,14 +28,34 @@ export function GET() {
 						type: 'text/plain'
 					}
 				]
+			},
+			{
+				anchor: 'https://app.stogas.ai/api',
+				'service-desc': [
+					{
+						href: 'https://stogas.ai/dashboard-openapi.json',
+						type: 'application/vnd.oai.openapi+json;version=3.1'
+					}
+				],
+				'service-doc': [
+					{
+						href: 'https://stogas.ai/docs/reference/dashboard',
+						type: 'text/html'
+					}
+				],
+				'service-meta': [
+					{
+						href: 'https://stogas.ai/apis.json',
+						type: 'application/json'
+					},
+					{
+						href: 'https://stogas.ai/llms.txt',
+						type: 'text/plain'
+					}
+				]
 			}
 		]
 	};
 
-	return new Response(JSON.stringify(catalog, null, '\t'), {
-		headers: {
-			'Content-Type': 'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"',
-			Link: '<https://stogas.ai/.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"'
-		}
-	});
+	return new Response(JSON.stringify(catalog, null, '\t'));
 }

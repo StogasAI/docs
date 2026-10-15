@@ -3,15 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const docsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const spec = jsonObject(
-	JSON.parse(readFileSync(path.join(docsRoot, 'content/openapi/stogas.json'), 'utf8'))
-);
-if (!spec) throw new TypeError('OpenAPI document must be a JSON object.');
 const errors: string[] = [];
+const spec = readDocument('stogas.json');
+readDocument('dashboard.json');
 
-if (containsPrivateExtension(spec)) {
-	errors.push('Public OpenAPI must not contain x-stogas extensions.');
-}
 for (const pathname of ['/v1/chat/completions', '/v1/responses', '/v1/catalog', '/v1/models']) {
 	if (!jsonObject(spec.paths)?.[pathname]) errors.push(`OpenAPI is missing ${pathname}.`);
 }
@@ -46,6 +41,17 @@ if (
 }
 if (errors.length) throw new Error(`OpenAPI validation failed:\n- ${errors.join('\n- ')}`);
 console.log('OpenAPI validation passed.');
+
+function readDocument(name: string) {
+	const document = jsonObject(
+		JSON.parse(readFileSync(path.join(docsRoot, 'content/openapi', name), 'utf8'))
+	);
+	if (!document) throw new TypeError(`${name} must be a JSON object.`);
+	if (containsPrivateExtension(document)) {
+		errors.push(`${name} must not contain x-stogas extensions.`);
+	}
+	return document;
+}
 
 function containsPrivateExtension(value: unknown): boolean {
 	if (Array.isArray(value)) return value.some(containsPrivateExtension);

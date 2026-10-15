@@ -1,0 +1,25 @@
+---
+title: Create an API key
+description: The response contains the secret if you may use the key.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: The response contains the secret if you may use the key.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/keys', method: 'post' }]} />
+    </>
+  );
+}

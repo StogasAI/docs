@@ -551,7 +551,7 @@ function ObjectProperty({
 				</button>
 				{actions}
 			</div>
-			<SchemaDescription schema={schema} className="mt-1" />
+			<SchemaDescription schema={schema} className="mt-2" />
 			{children}
 		</div>
 	);

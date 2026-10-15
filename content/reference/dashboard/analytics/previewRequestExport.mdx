@@ -1,0 +1,30 @@
+---
+title: Preview a request export
+description: Counts the requests an export with the same filters would contain,
+  up to one more than rowLimit. The time range is the last 24 hours unless you
+  set from, to or allTime. filter takes the query syntax of the Analytics page.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Counts the requests an export with the same filters would contain, up
+          to one more than rowLimit. The time range is the last 24 hours unless
+          you set from, to or allTime. filter takes the query syntax of the
+          Analytics page.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/analytics/export/preview', method: 'get' }]} />
+    </>
+  );
+}

@@ -1,10 +1,10 @@
 import {
 	apiSource,
 	getLLMText,
+	getOpenApiDocument,
 	getOpenApiOperationSpec,
 	getOpenApiJsonUrl,
-	getPageMarkdownUrl,
-	isOpenApiOperationPage
+	getPageMarkdownUrl
 } from '@/lib/source';
 import { notFound } from 'next/navigation';
 
@@ -41,7 +41,7 @@ export function generateStaticParams() {
 			}
 		];
 
-		if (isOpenApiOperationPage(page)) {
+		if (getOpenApiDocument(page)) {
 			params.push({
 				lang: page.locale,
 				slug: getOpenApiJsonUrl(page).segments

@@ -1,0 +1,27 @@
+---
+title: Change organization settings
+description: Changing name needs organization management. displayName is your
+  name in this organization.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PATCH
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Changing name needs organization management. displayName is your name
+          in this organization.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/settings', method: 'patch' }]} />
+    </>
+  );
+}

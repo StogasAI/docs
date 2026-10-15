@@ -1,0 +1,27 @@
+---
+title: Delete roles
+description: Members left without a role get the default role. To delete the
+  default role, name a new one in replacementDefaultRoleId.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: DELETE
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Members left without a role get the default role. To delete the default
+          role, name a new one in replacementDefaultRoleId.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/roles', method: 'delete' }]} />
+    </>
+  );
+}

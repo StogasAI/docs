@@ -1,0 +1,23 @@
+---
+title: Get the resources of a role
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents: []
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/roles/{roleId}/resources', method: 'get' }]} />
+    </>
+  );
+}

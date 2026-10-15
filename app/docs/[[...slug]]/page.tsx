@@ -3,8 +3,8 @@ import { messages } from '@/lib/messages';
 import {
 	getOpenApiJsonUrl,
 	getPageImage,
+	getOpenApiDocument,
 	getPageMarkdownUrl,
-	isOpenApiOperationPage,
 	source,
 	apiSource
 } from '@/lib/source';
@@ -34,9 +34,9 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
 
 	const MDX = page.data.body;
 	const markdownUrl = getPageMarkdownUrl(page).url;
-	const isOpenApiOperation = isOpenApiOperationPage(page);
-	const jsonUrl = isOpenApiOperation ? getOpenApiJsonUrl(page).url : undefined;
-	const githubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/${isOpenApiOperation ? 'openapi/stogas.json' : `${isReference ? 'reference' : 'docs'}/${page.path}`}`;
+	const openApiDocument = getOpenApiDocument(page);
+	const jsonUrl = openApiDocument ? getOpenApiJsonUrl(page).url : undefined;
+	const githubUrl = `https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/${openApiDocument ? `openapi/${openApiDocument}.json` : `${isReference ? 'reference' : 'docs'}/${page.path}`}`;
 
 	return (
 		<DocsPage

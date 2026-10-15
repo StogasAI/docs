@@ -1,3 +1,4 @@
+import dashboard from '@/content/openapi/dashboard.json';
 import spec from '@/content/openapi/stogas.json';
 
 export const revalidate = false;
@@ -35,14 +36,31 @@ export function GET() {
 						url: 'https://stogas.ai/llms.txt'
 					}
 				]
+			},
+			{
+				name: dashboard.info.title,
+				description: dashboard.info.description,
+				humanURL: 'https://stogas.ai/docs/reference/dashboard',
+				baseURL: 'https://app.stogas.ai',
+				version: dashboard.info.version,
+				tags: ['Dashboard', 'OpenAPI'],
+				properties: [
+					{
+						type: 'OpenAPI',
+						url: 'https://stogas.ai/dashboard-openapi.json'
+					},
+					{
+						type: 'Documentation',
+						url: 'https://stogas.ai/docs/reference/dashboard'
+					},
+					{
+						type: 'LLMs',
+						url: 'https://stogas.ai/llms.txt'
+					}
+				]
 			}
 		]
 	};
 
-	return new Response(JSON.stringify(catalog, null, '\t'), {
-		headers: {
-			'Content-Type': 'application/json',
-			Link: '<https://stogas.ai/openapi.json>; rel="service-desc"; type="application/vnd.oai.openapi+json;version=3.1", <https://stogas.ai/docs/reference>; rel="service-doc"; type="text/html"'
-		}
-	});
+	return new Response(JSON.stringify(catalog, null, '\t'));
 }

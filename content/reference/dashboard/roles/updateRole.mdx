@@ -1,0 +1,23 @@
+---
+title: Update a role
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PATCH
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents: []
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/roles/{roleId}', method: 'patch' }]} />
+    </>
+  );
+}

@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { parse } from 'yaml';
+import dashboard from '../content/openapi/dashboard.json';
+import stogas from '../content/openapi/stogas.json';
 
 function parseMarkdown(text: string) {
 	const match = text.match(/^---\n([\s\S]+?)\n---\n\n# (.+)\n/);
@@ -69,13 +71,14 @@ test('every indexed page exports readable Markdown and complete operation schema
 		expect(json.headers()['content-type']).toContain('application/json');
 		expect(await json.json()).toEqual(document);
 	}
-	expect(operations.sort()).toEqual([
-		'createChatCompletion',
-		'createResponse',
-		'getCatalog',
-		'listModels',
-		'validatePolicy'
-	]);
+	// Each operation of both documents has exactly one page.
+	expect(operations.sort()).toEqual(
+		[stogas, dashboard]
+			.flatMap((document) => Object.values(document.paths))
+			.flatMap((pathItem) => Object.values(pathItem))
+			.map((operation) => (operation as { operationId: string }).operationId)
+			.sort()
+	);
 	const sitemap = await request.get('/docs/sitemap.xml');
 	expect(sitemap.status()).toBe(200);
 	expect(sitemap.headers()['content-type']).toContain('application/xml');
@@ -97,7 +100,8 @@ test('every indexed page exports readable Markdown and complete operation schema
 for (const path of [
 	'/docs/go',
 	'/docs/reference/security',
-	'/docs/reference/openai-compatible/createChatCompletion'
+	'/docs/reference/openai-compatible/createChatCompletion',
+	'/docs/reference/dashboard/api-keys/createApiKey'
 ]) {
 	test(`page actions use the same readable document on ${path}`, async ({
 		page,
@@ -132,11 +136,18 @@ for (const path of [
 			await expect(link).toHaveAttribute('rel', 'noreferrer noopener');
 		}
 		const github = resources.getByRole('link', { name: 'Open in GitHub', exact: true });
+		const source = path.includes('createChatCompletion')
+			? 'openapi/stogas.json'
+			: path.includes('createApiKey')
+				? 'openapi/dashboard.json'
+				: path.includes('security')
+					? 'reference/security.mdx'
+					: 'docs/(sdk)/go.mdx';
 		await expect(github).toHaveAttribute(
 			'href',
-			`https://github.com/StogasAI/docs/blob/main/content/${path.includes('createChatCompletion') ? 'openapi/stogas.json' : path.includes('security') ? 'reference/security.mdx' : 'docs/(sdk)/go.mdx'}`
+			`https://github.com/StogasAI/docs/blob/main/content/${source}`
 		);
-		if (path.includes('createChatCompletion')) {
+		if (source.startsWith('openapi/')) {
 			await expect(
 				resources.getByRole('link', { name: 'View OpenAPI specification', exact: true })
 			).toHaveAttribute('href', resource.replace(/content\.md$/, 'openapi.json'));

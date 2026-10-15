@@ -1,0 +1,27 @@
+---
+title: Get a CCPayment deposit address
+description: Returns the organization's deposit address for this coin and
+  network, creating it the first time.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the organization's deposit address for this coin and network,
+          creating it the first time.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/funding/ccpayment/address', method: 'post' }]} />
+    </>
+  );
+}

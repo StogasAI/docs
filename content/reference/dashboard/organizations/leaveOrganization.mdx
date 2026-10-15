@@ -1,0 +1,27 @@
+---
+title: Leave an organization
+description: Deletes the keys you created from its grants. When the last member
+  leaves, the organization and its balance are deleted.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: DELETE
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Deletes the keys you created from its grants. When the last member
+          leaves, the organization and its balance are deleted.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/membership', method: 'delete' }]} />
+    </>
+  );
+}

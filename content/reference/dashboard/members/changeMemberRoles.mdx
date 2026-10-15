@@ -1,0 +1,25 @@
+---
+title: Give or take a role from members
+description: Members left without a role get the default role.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Members left without a role get the default role.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/members/roles', method: 'post' }]} />
+    </>
+  );
+}

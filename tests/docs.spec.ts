@@ -304,6 +304,32 @@ test('API samples are formatted and highlighted with JavaScript disabled', async
 	}
 });
 
+test('dashboard API pages document the operation without a playground', async ({
+	page,
+	request
+}) => {
+	const path = '/docs/reference/dashboard/api-keys/createApiKey';
+	await page.goto(path);
+	await waitForHydration(page);
+	const main = page.locator('.stogas-api-operation-main');
+	await expect(main).toContainText('/api/{orgId}/keys');
+	await expect(main).toContainText('Read and write');
+	await expect(page.getByRole('button', { name: 'Try in Playground', exact: true })).toHaveCount(0);
+	await expect(main).not.toContainText('Live endpoint');
+	await expect(page.locator('.stogas-api-operation-examples pre').first()).toContainText(
+		'https://app.stogas.ai/api/'
+	);
+	expect(
+		(
+			await new AxeBuilder({ page })
+				.withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+				.analyze()
+		).violations
+	).toEqual([]);
+	// The page carries only its own operation, not the whole document.
+	expect(await (await request.get(path)).text()).not.toContain('/api/{orgId}/members');
+});
+
 test('switching sample languages preserves highlighting', async ({ page }) => {
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
 	for (const name of ['JavaScript', 'Go', 'Python', 'Java', 'C#', 'Rust', 'cURL']) {
@@ -734,8 +760,12 @@ test('sidebar shows a draggable native scrollbar only when its links overflow', 
 		await page.mouse.move(x, box!.y + 120, { steps: 8 });
 		await page.mouse.up();
 		expect(await viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
-		await page.setViewportSize({ width: 1440, height: 1400 });
 		await page.goto('/docs/reference');
+		// Grow the window until every link fits.
+		const hidden = await viewport.evaluate(
+			(element) => element.scrollHeight - element.clientHeight
+		);
+		await page.setViewportSize({ width: 1440, height: 700 + hidden + 50 });
 		await expect.poll(gutter).toBe(0);
 	} finally {
 		await browser.close();

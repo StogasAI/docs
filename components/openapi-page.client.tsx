@@ -18,18 +18,18 @@ function PlaygroundEndpoint() {
 	);
 }
 
-const Page = createOpenAPIPageBase({
+const options = {
 	shiki: apiShiki,
 	codeUsages,
 	shikiOptions: { themes: codeThemes },
 	generateTypeScriptDefinitions: false,
 	components: { CodeBlock: OpenAPICodeBlock, SchemaUI: Schema },
 	content: {
-		renderOperationLayout: (slots) => (
+		renderOperationLayout: (slots, { ctx }) => (
 			<div className="stogas-api-operation-layout">
 				<div className="stogas-api-operation-main">
 					{slots.header}
-					<PlaygroundEndpoint />
+					{ctx.playground?.enabled !== false && <PlaygroundEndpoint />}
 					{slots.apiPlayground}
 					{slots.description}
 					{slots.authSchemes}
@@ -41,7 +41,11 @@ const Page = createOpenAPIPageBase({
 				<div className="stogas-api-operation-examples">{slots.apiExample}</div>
 			</div>
 		)
-	},
+	}
+} satisfies Parameters<typeof createOpenAPIPageBase>[0];
+
+const PlaygroundPage = createOpenAPIPageBase({
+	...options,
 	playground: {
 		enabled: true,
 		renderBodyField: () => <OpenAPIRequestBody />,
@@ -51,6 +55,13 @@ const Page = createOpenAPIPageBase({
 	}
 });
 
-export function OpenAPIPageClient(props: OpenAPIPageProps_Spec) {
+// Without a playground, the page shows the method and path where the playground would be.
+const ReferencePage = createOpenAPIPageBase({ ...options, playground: { enabled: false } });
+
+export function OpenAPIPageClient({
+	playground,
+	...props
+}: OpenAPIPageProps_Spec & { playground: boolean }) {
+	const Page = playground ? PlaygroundPage : ReferencePage;
 	return <Page {...props} />;
 }
