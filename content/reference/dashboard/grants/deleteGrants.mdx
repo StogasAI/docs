@@ -1,15 +1,17 @@
 ---
 title: Delete grants
+description: Deletes the member keys made from the grants.
 full: true
 _openapi:
   preload:
     - dashboard
-  method: DELETE
+  method: POST
   webhook: false
   toc: []
   structuredData:
     headings: []
-    contents: []
+    contents:
+      - content: Deletes the member keys made from the grants.
 ---
 
 export default function Layout(props) {
@@ -17,7 +19,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/grants/bulk', method: 'delete' }]} />
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/grants/bulk/delete', method: 'post' }]} />
     </>
   );
 }

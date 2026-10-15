@@ -6,7 +6,7 @@ full: true
 _openapi:
   preload:
     - dashboard
-  method: DELETE
+  method: POST
   webhook: false
   toc: []
   structuredData:
@@ -21,7 +21,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/roles', method: 'delete' }]} />
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/roles/bulk/delete', method: 'post' }]} />
     </>
   );
 }

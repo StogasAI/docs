@@ -24,8 +24,13 @@ the dashboard for those.
 
 ## Organizations
 
-Paths that start with `/api/{orgId}` act on one organization. `GET /api/organizations/summary`
-lists the organizations that your token covers.
+Paths that start with `/api/{orgId}` act on one organization. `GET /api/organizations` lists the
+organizations that your token covers.
+
+## Lists
+
+Lists return their entries in `items`. If `nextCursor` is not `null`, send it as the `cursor` query
+parameter to get the next page.
 
 ## Errors
 

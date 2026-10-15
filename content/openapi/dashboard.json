@@ -106,6 +106,7 @@
 					"Account"
 				],
 				"summary": "Change your display name",
+				"description": "Organizations you create or join later start with this name. To change your name in an organization you already belong to, change its settings.",
 				"security": [
 					{
 						"accessToken": [
@@ -143,13 +144,14 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"success": {
-											"type": "boolean",
-											"const": true
+										"displayName": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 100
 										}
 									},
 									"required": [
-										"success"
+										"displayName"
 									],
 									"additionalProperties": false
 								}
@@ -184,7 +186,7 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"tokens": {
+										"items": {
 											"maxItems": 50,
 											"type": "array",
 											"items": {
@@ -207,9 +209,12 @@
 													"organizationIds": {
 														"anyOf": [
 															{
+																"minItems": 1,
+																"maxItems": 30,
 																"type": "array",
 																"items": {
-																	"type": "string"
+																	"type": "string",
+																	"format": "uuid"
 																}
 															},
 															{
@@ -297,7 +302,7 @@
 										}
 									},
 									"required": [
-										"tokens"
+										"items"
 									],
 									"additionalProperties": false
 								}
@@ -345,13 +350,16 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"success": {
-											"type": "boolean",
-											"const": true
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
 										}
 									},
 									"required": [
-										"success"
+										"deletedIds"
 									],
 									"additionalProperties": false
 								}
@@ -524,6 +532,23 @@
 															"null"
 														]
 													},
+													"actorTokenId": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "uuid"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"actorTokenName": {
+														"type": [
+															"string",
+															"null"
+														]
+													},
 													"createdAt": {
 														"type": "string",
 														"format": "date-time"
@@ -587,6 +612,8 @@
 													"organizationId",
 													"actorId",
 													"actorName",
+													"actorTokenId",
+													"actorTokenName",
 													"createdAt",
 													"action",
 													"targetIds",
@@ -753,6 +780,23 @@
 													"null"
 												]
 											},
+											"actorTokenId": {
+												"anyOf": [
+													{
+														"type": "string",
+														"format": "uuid"
+													},
+													{
+														"type": "null"
+													}
+												]
+											},
+											"actorTokenName": {
+												"type": [
+													"string",
+													"null"
+												]
+											},
 											"createdAt": {
 												"type": "string",
 												"format": "date-time"
@@ -837,6 +881,8 @@
 											"organizationId",
 											"actorId",
 											"actorName",
+											"actorTokenId",
+											"actorTokenName",
 											"createdAt",
 											"action",
 											"targetIds",
@@ -904,6 +950,23 @@
 											"maxLength": 128
 										},
 										"actorName": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"actorTokenId": {
+											"anyOf": [
+												{
+													"type": "string",
+													"format": "uuid"
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"actorTokenName": {
 											"type": [
 												"string",
 												"null"
@@ -993,6 +1056,8 @@
 										"organizationId",
 										"actorId",
 										"actorName",
+										"actorTokenId",
+										"actorTokenName",
 										"createdAt",
 										"action",
 										"targetIds",
@@ -1546,13 +1611,16 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"success": {
-											"type": "boolean",
-											"const": true
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
 										}
 									},
 									"required": [
-										"success"
+										"deletedIds"
 									],
 									"additionalProperties": false
 								}
@@ -2030,24 +2098,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"deletedKeyIds": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"format": "uuid"
-											}
-										},
-										"grant": {
-											"$ref": "#/components/schemas/Grant"
-										}
-									},
-									"required": [
-										"deletedKeyIds",
-										"grant"
-									],
-									"additionalProperties": false
+									"$ref": "#/components/schemas/Grant"
 								}
 							}
 						}
@@ -2203,6 +2254,7 @@
 					"Grants"
 				],
 				"summary": "Update a grant",
+				"description": "Moving the grant to another folder deletes the keys made from it by members who lose access. deletedKeyIds lists them.",
 				"security": [
 					{
 						"accessToken": [
@@ -2335,6 +2387,7 @@
 					"Grants"
 				],
 				"summary": "Delete a grant",
+				"description": "Deletes the member keys made from the grant.",
 				"security": [
 					{
 						"accessToken": [
@@ -2364,21 +2417,24 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"deletedKeyIds": {
+										"deletedIds": {
 											"type": "array",
 											"items": {
 												"type": "string",
 												"format": "uuid"
 											}
 										},
-										"success": {
-											"type": "boolean",
-											"const": true
+										"deletedKeyIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
 										}
 									},
 									"required": [
-										"deletedKeyIds",
-										"success"
+										"deletedIds",
+										"deletedKeyIds"
 									],
 									"additionalProperties": false
 								}
@@ -2473,13 +2529,16 @@
 						"$ref": "#/components/responses/Error"
 					}
 				}
-			},
-			"delete": {
+			}
+		},
+		"/api/{orgId}/grants/bulk/delete": {
+			"post": {
 				"operationId": "deleteGrants",
 				"tags": [
 					"Grants"
 				],
 				"summary": "Delete grants",
+				"description": "Deletes the member keys made from the grants.",
 				"security": [
 					{
 						"accessToken": [
@@ -2538,16 +2597,11 @@
 												"type": "string",
 												"format": "uuid"
 											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
 										}
 									},
 									"required": [
 										"deletedIds",
-										"deletedKeyIds",
-										"success"
+										"deletedKeyIds"
 									],
 									"additionalProperties": false
 								}
@@ -3473,1186 +3527,17 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ApiKey"
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"patch": {
-				"operationId": "updateApiKey",
-				"tags": [
-					"API keys"
-				],
-				"summary": "Update an API key",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"config": {
-										"anyOf": [
-											{
-												"$ref": "#/components/schemas/Policy"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"enabled": {
-										"type": "boolean"
-									},
-									"expiresAt": {
-										"anyOf": [
-											{
-												"type": "string",
-												"format": "date-time",
-												"allOf": [
-													{
-														"pattern": "^(?!0000-)"
-													}
-												]
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"folderId": {
-										"anyOf": [
-											{
-												"type": "string",
-												"format": "uuid"
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"configRevision": {
-										"type": "integer",
-										"minimum": 1,
-										"maximum": 2147483647
-									},
-									"keyId": {
-										"type": "string",
-										"format": "uuid"
-									},
-									"name": {
-										"type": "string",
-										"minLength": 1,
-										"maxLength": 100
-									}
-								},
-								"required": [
-									"keyId"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
 									"type": "object",
 									"properties": {
-										"config": {
-											"anyOf": [
-												{
-													"$ref": "#/components/schemas/Policy"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"access": {
-											"type": "object",
-											"properties": {
-												"roles": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"id": {
-																"type": "string",
-																"format": "uuid"
-															},
-															"name": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															"permissions": {
-																"minItems": 1,
-																"maxItems": 4,
-																"type": "array",
-																"items": {
-																	"type": "string",
-																	"enum": [
-																		"view",
-																		"use",
-																		"manage",
-																		"access"
-																	]
-																}
-															}
-														},
-														"required": [
-															"id",
-															"name",
-															"permissions"
-														],
-														"additionalProperties": false
-													}
-												}
-											},
-											"required": [
-												"roles"
-											],
-											"additionalProperties": false
-										},
-										"configCompilerVersion": {
-											"type": "integer",
-											"exclusiveMinimum": 0,
-											"maximum": 9007199254740991
-										},
-										"configDigest": {
-											"anyOf": [
-												{
-													"type": "string",
-													"pattern": "^[a-f0-9]{64}$"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"configRevision": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 2147483647
-										},
-										"policies": {
-											"maxItems": 36,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"config": {
-														"anyOf": [
-															{
-																"$ref": "#/components/schemas/Policy"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"revision": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 2147483647
-													},
-													"enabled": {
-														"type": "boolean"
-													},
-													"expiresAt": {
-														"anyOf": [
-															{
-																"type": "string",
-																"format": "date-time"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"scope": {
-														"type": "string",
-														"enum": [
-															"organization",
-															"folder",
-															"grant",
-															"role",
-															"member",
-															"credential",
-															"key"
-														]
-													},
-													"id": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
-													},
-													"name": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
-													}
-												},
-												"required": [
-													"config",
-													"revision",
-													"enabled",
-													"expiresAt",
-													"scope",
-													"id",
-													"name"
-												],
-												"additionalProperties": false
-											}
-										},
-										"createdAt": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"enabled": {
-											"type": "boolean"
-										},
-										"effectiveEnabled": {
-											"type": "boolean"
-										},
-										"effectiveExpiresAt": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "date-time"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"effectiveConfig": {
-											"anyOf": [
-												{
-													"$ref": "#/components/schemas/EffectivePolicy"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"effectiveConfigError": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 512
-										},
-										"limitDefinitions": {
-											"maxItems": 36,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"scope": {
-														"type": "string",
-														"enum": [
-															"organization",
-															"folder",
-															"grant",
-															"role",
-															"member",
-															"credential",
-															"key"
-														]
-													},
-													"id": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
-													},
-													"config": {
-														"type": "object",
-														"properties": {
-															"lifetimeTokens": {
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 1000000000000
-															},
-															"concurrentRequests": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 10000
-															},
-															"requests": {
-																"minProperties": 1,
-																"maxProperties": 5,
-																"type": "object",
-																"propertyNames": {
-																	"type": "string",
-																	"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-																},
-																"additionalProperties": {
-																	"type": "object",
-																	"properties": {
-																		"burst": {
-																			"type": "integer",
-																			"minimum": 1,
-																			"maximum": 120
-																		},
-																		"max": {
-																			"type": "integer",
-																			"minimum": 1,
-																			"maximum": 1000000000000
-																		},
-																		"window": {
-																			"type": "object",
-																			"properties": {
-																				"count": {
-																					"type": "integer",
-																					"minimum": 1,
-																					"maximum": 999999
-																				},
-																				"unit": {
-																					"type": "string",
-																					"enum": [
-																						"second",
-																						"minute",
-																						"hour",
-																						"day",
-																						"week"
-																					]
-																				}
-																			},
-																			"required": [
-																				"count",
-																				"unit"
-																			],
-																			"additionalProperties": false
-																		}
-																	},
-																	"required": [
-																		"max",
-																		"window"
-																	],
-																	"additionalProperties": false
-																}
-															},
-															"tokens": {
-																"minProperties": 1,
-																"maxProperties": 5,
-																"type": "object",
-																"propertyNames": {
-																	"type": "string",
-																	"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-																},
-																"additionalProperties": {
-																	"type": "object",
-																	"properties": {
-																		"max": {
-																			"type": "integer",
-																			"minimum": 1,
-																			"maximum": 1000000000000
-																		},
-																		"unit": {
-																			"type": "string",
-																			"enum": [
-																				"tokens",
-																				"stt"
-																			],
-																			"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
-																		},
-																		"window": {
-																			"type": "object",
-																			"properties": {
-																				"count": {
-																					"type": "integer",
-																					"minimum": 1,
-																					"maximum": 999999
-																				},
-																				"unit": {
-																					"type": "string",
-																					"enum": [
-																						"second",
-																						"minute",
-																						"hour",
-																						"day",
-																						"week"
-																					]
-																				}
-																			},
-																			"required": [
-																				"count",
-																				"unit"
-																			],
-																			"additionalProperties": false
-																		}
-																	},
-																	"required": [
-																		"max",
-																		"window"
-																	],
-																	"additionalProperties": false
-																}
-															},
-															"spend": {
-																"type": "object",
-																"properties": {
-																	"lifetimeUsd": {
-																		"type": "string",
-																		"maxLength": 49,
-																		"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-																		"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-																	},
-																	"recurring": {
-																		"minProperties": 1,
-																		"maxProperties": 5,
-																		"type": "object",
-																		"propertyNames": {
-																			"type": "string",
-																			"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-																		},
-																		"additionalProperties": {
-																			"type": "object",
-																			"properties": {
-																				"anchor": {
-																					"type": "string",
-																					"format": "date-time",
-																					"allOf": [
-																						{
-																							"pattern": "^(?!0000-)"
-																						}
-																					]
-																				},
-																				"maxUsd": {
-																					"type": "string",
-																					"maxLength": 49,
-																					"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-																					"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-																				},
-																				"timeZone": {
-																					"type": "string",
-																					"minLength": 1,
-																					"maxLength": 64,
-																					"pattern": "^[A-Za-z0-9_+\\-/]+$",
-																					"description": "An IANA time zone name, such as America/New_York or UTC."
-																				},
-																				"window": {
-																					"type": "object",
-																					"properties": {
-																						"count": {
-																							"type": "integer",
-																							"minimum": 1,
-																							"maximum": 1000
-																						},
-																						"unit": {
-																							"type": "string",
-																							"enum": [
-																								"minute",
-																								"hour",
-																								"day",
-																								"week",
-																								"month",
-																								"year"
-																							]
-																						}
-																					},
-																					"required": [
-																						"count",
-																						"unit"
-																					],
-																					"additionalProperties": false
-																				}
-																			},
-																			"required": [
-																				"maxUsd",
-																				"timeZone",
-																				"window"
-																			],
-																			"additionalProperties": false
-																		}
-																	}
-																},
-																"additionalProperties": false,
-																"minProperties": 1
-															}
-														},
-														"additionalProperties": false,
-														"minProperties": 1,
-														"description": "At most 5 counter slots per saved policy, shared across spending windows, request buckets, and token windows. Top-level lifetime spending, lifetime tokens, and concurrency do not use a slot; together within one conditional rule, they use one shared slot. Request-time policies cannot define limits."
-													}
-												},
-												"required": [
-													"scope",
-													"config"
-												],
-												"additionalProperties": false
-											}
-										},
-										"expiresAt": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "date-time"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"exposure": {
-											"anyOf": [
-												{
-													"type": "object",
-													"properties": {
-														"reportedAt": {
-															"type": "string",
-															"format": "date-time"
-														},
-														"source": {
-															"type": "string",
-															"pattern": "^[a-z_]{1,64}$"
-														},
-														"url": {
-															"anyOf": [
-																{
-																	"type": "string",
-																	"maxLength": 2048,
-																	"format": "uri"
-																},
-																{
-																	"type": "null"
-																}
-															]
-														}
-													},
-													"required": [
-														"reportedAt",
-														"source",
-														"url"
-													],
-													"additionalProperties": false
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"grantAllowMemberKeySettings": {
-											"type": [
-												"boolean",
-												"null"
-											]
-										},
-										"grantEnabled": {
-											"type": [
-												"boolean",
-												"null"
-											]
-										},
-										"grantId": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "uuid"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"grantName": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"id": {
-											"type": "string",
-											"format": "uuid"
-										},
 										"key": {
 											"type": "string"
 										},
-										"kind": {
-											"type": "string",
-											"enum": [
-												"service",
-												"member"
-											]
-										},
-										"lastUsedAt": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "date-time"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"limitStates": {
-											"maxItems": 649,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"scope": {
-														"type": "string",
-														"enum": [
-															"organization",
-															"folder",
-															"grant",
-															"role",
-															"member",
-															"credential",
-															"key",
-															"platform"
-														]
-													},
-													"scopeId": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
-													},
-													"scopeName": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
-													},
-													"ruleName": {
-														"type": "string",
-														"maxLength": 48
-													},
-													"schedule": {
-														"anyOf": [
-															{
-																"type": "object",
-																"properties": {
-																	"anchor": {
-																		"type": "string",
-																		"format": "date-time"
-																	},
-																	"timeZone": {
-																		"type": "string",
-																		"minLength": 1,
-																		"maxLength": 100
-																	},
-																	"window": {
-																		"type": "object",
-																		"properties": {
-																			"count": {
-																				"type": "integer",
-																				"exclusiveMinimum": 0,
-																				"maximum": 9007199254740991
-																			},
-																			"unit": {
-																				"type": "string",
-																				"enum": [
-																					"minute",
-																					"hour",
-																					"day",
-																					"week",
-																					"month",
-																					"year"
-																				]
-																			}
-																		},
-																		"required": [
-																			"count",
-																			"unit"
-																		],
-																		"additionalProperties": false
-																	}
-																},
-																"required": [
-																	"anchor",
-																	"timeZone",
-																	"window"
-																],
-																"additionalProperties": false
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"kind": {
-														"type": "string",
-														"enum": [
-															"lifetime_spend",
-															"lifetime_tokens",
-															"recurring_spend",
-															"requests",
-															"tokens",
-															"stt",
-															"concurrent_requests"
-														]
-													},
-													"name": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 48
-													},
-													"maximum": {
-														"anyOf": [
-															{
-																"type": "string",
-																"maxLength": 78,
-																"pattern": "^\\d+(?:\\.\\d+)?$"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"used": {
-														"type": "string",
-														"maxLength": 78,
-														"pattern": "^\\d+(?:\\.\\d+)?$"
-													},
-													"held": {
-														"type": "string",
-														"maxLength": 78,
-														"pattern": "^\\d+(?:\\.\\d+)?$"
-													},
-													"available": {
-														"anyOf": [
-															{
-																"type": "string",
-																"maxLength": 78,
-																"pattern": "^\\d+(?:\\.\\d+)?$"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"exhausted": {
-														"type": "boolean"
-													},
-													"refillPerSecond": {
-														"anyOf": [
-															{
-																"type": "string",
-																"maxLength": 78,
-																"pattern": "^\\d+(?:\\.\\d+)?$"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"windowStart": {
-														"anyOf": [
-															{
-																"type": "string",
-																"format": "date-time"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"resetAt": {
-														"anyOf": [
-															{
-																"type": "string",
-																"format": "date-time"
-															},
-															{
-																"type": "null"
-															}
-														]
-													}
-												},
-												"required": [
-													"scope",
-													"scopeId",
-													"scopeName",
-													"ruleName",
-													"kind",
-													"name",
-													"maximum",
-													"used",
-													"held",
-													"available",
-													"exhausted",
-													"refillPerSecond",
-													"windowStart",
-													"resetAt"
-												],
-												"additionalProperties": false
-											}
-										},
-										"memberDisplayName": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"name": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 100
-										},
-										"onHoldUsd": {
-											"default": "0",
-											"type": "string",
-											"maxLength": 78,
-											"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-										},
-										"organizationId": {
-											"type": "string",
-											"minLength": 1
-										},
-										"preview": {
-											"type": "string",
-											"minLength": 1
-										},
-										"policyEditable": {
-											"type": "boolean"
-										},
-										"canManage": {
-											"type": "boolean"
-										},
-										"canUse": {
-											"type": "boolean"
-										},
-										"canChangeAccess": {
-											"type": "boolean"
-										},
-										"retrievedAt": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"spendLimitUsd": {
-											"anyOf": [
-												{
-													"type": "string",
-													"maxLength": 49,
-													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"totalSpentUsd": {
-											"default": "0",
-											"type": "string",
-											"maxLength": 78,
-											"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-										},
-										"updatedAt": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "date-time"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"upstreamByok": {
-											"type": "object",
-											"properties": {
-												"anthropic": {
-													"maxItems": 1001,
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"byokId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"mode": {
-																"type": "string",
-																"enum": [
-																	"managed",
-																	"stored",
-																	"encrypted"
-																]
-															}
-														},
-														"required": [
-															"byokId",
-															"mode"
-														],
-														"additionalProperties": false
-													}
-												},
-												"azure": {
-													"maxItems": 1001,
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"byokId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"mode": {
-																"type": "string",
-																"enum": [
-																	"managed",
-																	"stored",
-																	"encrypted"
-																]
-															}
-														},
-														"required": [
-															"byokId",
-															"mode"
-														],
-														"additionalProperties": false
-													}
-												},
-												"chutes": {
-													"maxItems": 1001,
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"byokId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"mode": {
-																"type": "string",
-																"enum": [
-																	"managed",
-																	"stored",
-																	"encrypted"
-																]
-															}
-														},
-														"required": [
-															"byokId",
-															"mode"
-														],
-														"additionalProperties": false
-													}
-												},
-												"openai": {
-													"maxItems": 1001,
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"byokId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"mode": {
-																"type": "string",
-																"enum": [
-																	"managed",
-																	"stored",
-																	"encrypted"
-																]
-															}
-														},
-														"required": [
-															"byokId",
-															"mode"
-														],
-														"additionalProperties": false
-													}
-												}
-											},
-											"required": [
-												"anthropic",
-												"azure",
-												"chutes",
-												"openai"
-											],
-											"additionalProperties": false
-										},
-										"userId": {
-											"type": "string",
-											"format": "uuid"
-										},
-										"folderId": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "uuid"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"records": {
-											"minItems": 1,
-											"maxItems": 1,
-											"type": "array",
-											"items": {
-												"$ref": "#/components/schemas/ApiKey"
-											}
+										"record": {
+											"$ref": "#/components/schemas/ApiKey"
 										}
 									},
 									"required": [
-										"config",
-										"access",
-										"configCompilerVersion",
-										"configDigest",
-										"configRevision",
-										"policies",
-										"createdAt",
-										"enabled",
-										"effectiveEnabled",
-										"effectiveExpiresAt",
-										"effectiveConfig",
-										"exposure",
-										"grantId",
-										"id",
-										"kind",
-										"limitStates",
-										"name",
-										"onHoldUsd",
-										"organizationId",
-										"preview",
-										"policyEditable",
-										"canManage",
-										"canUse",
-										"canChangeAccess",
-										"retrievedAt",
-										"totalSpentUsd",
-										"upstreamByok",
-										"userId",
-										"folderId",
-										"records"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"delete": {
-				"operationId": "deleteApiKey",
-				"tags": [
-					"API keys"
-				],
-				"summary": "Delete an API key",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"keyId": {
-										"type": "string",
-										"format": "uuid"
-									}
-								},
-								"required": [
-									"keyId"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"deletedIds": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"format": "uuid"
-											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"deletedIds",
-										"success"
+										"record"
 									],
 									"additionalProperties": false
 								}
@@ -4803,6 +3688,168 @@
 						"$ref": "#/components/responses/Error"
 					}
 				}
+			},
+			"patch": {
+				"operationId": "updateApiKey",
+				"tags": [
+					"API keys"
+				],
+				"summary": "Update an API key",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"config": {
+										"anyOf": [
+											{
+												"$ref": "#/components/schemas/Policy"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"enabled": {
+										"type": "boolean"
+									},
+									"expiresAt": {
+										"anyOf": [
+											{
+												"type": "string",
+												"format": "date-time",
+												"allOf": [
+													{
+														"pattern": "^(?!0000-)"
+													}
+												]
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"folderId": {
+										"anyOf": [
+											{
+												"type": "string",
+												"format": "uuid"
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"configRevision": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 2147483647
+									},
+									"name": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 100
+									}
+								},
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiKey"
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deleteApiKey",
+				"tags": [
+					"API keys"
+				],
+				"summary": "Delete an API key",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"deletedIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
 			}
 		},
 		"/api/{orgId}/keys/bulk": {
@@ -4887,8 +3934,10 @@
 						"$ref": "#/components/responses/Error"
 					}
 				}
-			},
-			"delete": {
+			}
+		},
+		"/api/{orgId}/keys/bulk/delete": {
+			"post": {
 				"operationId": "deleteApiKeys",
 				"tags": [
 					"API keys"
@@ -4945,15 +3994,10 @@
 												"type": "string",
 												"format": "uuid"
 											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
 										}
 									},
 									"required": [
-										"deletedIds",
-										"success"
+										"deletedIds"
 									],
 									"additionalProperties": false
 								}
@@ -4966,7 +4010,7 @@
 				}
 			}
 		},
-		"/api/{orgId}/keys/secret/reveal": {
+		"/api/{orgId}/keys/{keyId}/reveal": {
 			"post": {
 				"operationId": "revealApiKeySecret",
 				"tags": [
@@ -4983,28 +4027,17 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"keyId": {
-										"type": "string",
-										"format": "uuid"
-									}
-								},
-								"required": [
-									"keyId"
-								],
-								"additionalProperties": false
-							}
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
 						}
 					}
-				},
+				],
 				"responses": {
 					"200": {
 						"description": "OK",
@@ -5035,7 +4068,7 @@
 				}
 			}
 		},
-		"/api/{orgId}/keys/secret/rotate": {
+		"/api/{orgId}/keys/{keyId}/rotate": {
 			"post": {
 				"operationId": "rotateApiKeySecret",
 				"tags": [
@@ -5053,28 +4086,17 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"keyId": {
-										"type": "string",
-										"format": "uuid"
-									}
-								},
-								"required": [
-									"keyId"
-								],
-								"additionalProperties": false
-							}
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
 						}
 					}
-				},
+				],
 				"responses": {
 					"200": {
 						"description": "OK",
@@ -5231,20 +4253,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"records": {
-											"minItems": 1,
-											"type": "array",
-											"items": {
-												"$ref": "#/components/schemas/ApiKey"
-											}
-										}
-									},
-									"required": [
-										"records"
-									],
-									"additionalProperties": false
+									"$ref": "#/components/schemas/ApiKey"
 								}
 							}
 						}
@@ -5815,16 +4824,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"record": {
-											"$ref": "#/components/schemas/ByokCredential"
-										}
-									},
-									"required": [
-										"record"
-									],
-									"additionalProperties": false
+									"$ref": "#/components/schemas/ByokCredential"
 								}
 							}
 						}
@@ -5944,7 +4944,8 @@
 														"enum": [
 															"anthropic",
 															"azure",
-															"fireworks"
+															"fireworks",
+															"nvidia"
 														]
 													},
 													"id": {
@@ -6007,7 +5008,7 @@
 																	"apac",
 																	"eu",
 																	"europe",
-																	"world",
+																	"global",
 																	"unknown"
 																]
 															},
@@ -6034,7 +5035,7 @@
 																			"apac",
 																			"eu",
 																			"europe",
-																			"world",
+																			"global",
 																			"unknown"
 																		]
 																	},
@@ -6087,40 +5088,6 @@
 												}
 											]
 										},
-										"unusableAccounts": {
-											"maxItems": 512,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 2048
-													},
-													"location": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128
-													},
-													"reason": {
-														"type": "string",
-														"enum": [
-															"network",
-															"subdomain",
-															"endpoint",
-															"role"
-														]
-													}
-												},
-												"required": [
-													"id",
-													"location",
-													"reason"
-												],
-												"additionalProperties": false
-											}
-										},
 										"updatedAt": {
 											"type": "string",
 											"format": "date-time"
@@ -6129,7 +5096,6 @@
 									"required": [
 										"items",
 										"nextCursor",
-										"unusableAccounts",
 										"updatedAt"
 									],
 									"additionalProperties": false
@@ -6210,16 +5176,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"record": {
-											"$ref": "#/components/schemas/ByokCredential"
-										}
-									},
-									"required": [
-										"record"
-									],
-									"additionalProperties": false
+									"$ref": "#/components/schemas/ByokCredential"
 								}
 							}
 						}
@@ -6286,7 +5243,7 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"records": {
+										"items": {
 											"minItems": 1,
 											"type": "array",
 											"items": {
@@ -6295,7 +5252,7 @@
 										}
 									},
 									"required": [
-										"records"
+										"items"
 									],
 									"additionalProperties": false
 								}
@@ -6306,8 +5263,10 @@
 						"$ref": "#/components/responses/Error"
 					}
 				}
-			},
-			"delete": {
+			}
+		},
+		"/api/{orgId}/byok/bulk/delete": {
+			"post": {
 				"operationId": "deleteByokCredentials",
 				"tags": [
 					"BYOK"
@@ -6364,15 +5323,10 @@
 												"type": "string",
 												"format": "uuid"
 											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
 										}
 									},
 									"required": [
-										"deletedIds",
-										"success"
+										"deletedIds"
 									],
 									"additionalProperties": false
 								}
@@ -6516,16 +5470,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"record": {
-											"$ref": "#/components/schemas/ByokCredential"
-										}
-									},
-									"required": [
-										"record"
-									],
-									"additionalProperties": false
+									"$ref": "#/components/schemas/ByokCredential"
 								}
 							}
 						}
@@ -6570,13 +5515,16 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"success": {
-											"type": "boolean",
-											"const": true
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
 										}
 									},
 									"required": [
-										"success"
+										"deletedIds"
 									],
 									"additionalProperties": false
 								}
@@ -6589,7 +5537,7 @@
 				}
 			}
 		},
-		"/api/{orgId}/byok/{byokId}/check": {
+		"/api/{orgId}/byok/{byokId}/refresh": {
 			"post": {
 				"operationId": "checkByokCredential",
 				"tags": [
@@ -6623,16 +5571,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"record": {
-											"$ref": "#/components/schemas/ByokCredential"
-										}
-									},
-									"required": [
-										"record"
-									],
-									"additionalProperties": false
+									"$ref": "#/components/schemas/ByokCredential"
 								}
 							}
 						}
@@ -6643,7 +5582,7 @@
 				}
 			}
 		},
-		"/api/organizations/summary": {
+		"/api/organizations": {
 			"get": {
 				"operationId": "listOrganizations",
 				"tags": [
@@ -6676,7 +5615,7 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"organizations": {
+										"items": {
 											"maxItems": 30,
 											"type": "array",
 											"items": {
@@ -6844,7 +5783,8 @@
 											}
 										},
 										"retrievedAt": {
-											"type": "string"
+											"type": "string",
+											"format": "date-time"
 										},
 										"selectedOrganizationId": {
 											"type": [
@@ -6857,7 +5797,7 @@
 										}
 									},
 									"required": [
-										"organizations",
+										"items",
 										"retrievedAt",
 										"selectedOrganizationId",
 										"version"
@@ -6871,9 +5811,7 @@
 						"$ref": "#/components/responses/Error"
 					}
 				}
-			}
-		},
-		"/api/organizations": {
+			},
 			"post": {
 				"operationId": "createOrganization",
 				"tags": [
@@ -6916,7 +5854,7 @@
 									"properties": {
 										"organizationId": {
 											"type": "string",
-											"minLength": 1
+											"format": "uuid"
 										}
 									},
 									"required": [
@@ -6933,13 +5871,14 @@
 				}
 			}
 		},
-		"/api/organizations/invites/consume": {
+		"/api/organizations/join": {
 			"post": {
 				"operationId": "joinOrganization",
 				"tags": [
 					"Organizations"
 				],
 				"summary": "Join an organization",
+				"description": "Uses one use of an invite code.",
 				"security": [
 					{
 						"accessToken": [
@@ -6977,2063 +5916,13 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"membershipId": {
-											"type": "string",
-											"minLength": 1
-										},
 										"organizationId": {
 											"type": "string",
-											"minLength": 1
+											"format": "uuid"
 										}
 									},
 									"required": [
-										"membershipId",
 										"organizationId"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/invites": {
-			"get": {
-				"operationId": "listInvites",
-				"tags": [
-					"Invites"
-				],
-				"summary": "List invites",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "cursor",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"name": "filter",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"default": "",
-							"type": "string",
-							"maxLength": 4096
-						}
-					},
-					{
-						"name": "limit",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"default": 50,
-							"type": "integer",
-							"minimum": 1,
-							"maximum": 100
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"filteredCount": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"items": {
-											"maxItems": 100,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"name": {
-														"anyOf": [
-															{
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"code": {
-														"type": "string",
-														"minLength": 1
-													},
-													"createdAt": {
-														"type": "string",
-														"format": "date-time"
-													},
-													"createdByUserId": {
-														"anyOf": [
-															{
-																"type": "string",
-																"minLength": 1
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"expiresAt": {
-														"type": "string",
-														"format": "date-time"
-													},
-													"id": {
-														"type": "string",
-														"minLength": 1
-													},
-													"maxUses": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 9007199254740991
-													},
-													"usedCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													}
-												},
-												"required": [
-													"name",
-													"code",
-													"createdAt",
-													"createdByUserId",
-													"expiresAt",
-													"id",
-													"maxUses",
-													"usedCount"
-												],
-												"additionalProperties": false
-											}
-										},
-										"nextCursor": {
-											"type": [
-												"string",
-												"null"
-											]
-										},
-										"reservedInviteUses": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"retrievedAt": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"total": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										}
-									},
-									"required": [
-										"filteredCount",
-										"items",
-										"nextCursor",
-										"reservedInviteUses",
-										"retrievedAt",
-										"total"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"post": {
-				"operationId": "createInvite",
-				"tags": [
-					"Invites"
-				],
-				"summary": "Create an invite",
-				"description": "An invite lasts 7 days and has one use unless you set expiresInSeconds or maxUses. Until it expires, each unused use holds a seat.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"name": {
-										"anyOf": [
-											{
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 100
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"expiresInSeconds": {
-										"type": "integer",
-										"minimum": 60,
-										"maximum": 2592000
-									},
-									"maxUses": {
-										"type": "integer",
-										"minimum": 1,
-										"maximum": 30
-									}
-								},
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"201": {
-						"description": "Created",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"name": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"code": {
-											"type": "string",
-											"minLength": 1
-										},
-										"expiresAt": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"id": {
-											"type": "string",
-											"minLength": 1
-										},
-										"maxUses": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 9007199254740991
-										},
-										"usedCount": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										}
-									},
-									"required": [
-										"name",
-										"code",
-										"expiresAt",
-										"id",
-										"maxUses",
-										"usedCount"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/invites/bulk/delete": {
-			"post": {
-				"operationId": "deleteInvites",
-				"tags": [
-					"Invites"
-				],
-				"summary": "Delete invites",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"inviteIds": {
-										"minItems": 1,
-										"maxItems": 100,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128
-										}
-									}
-								},
-								"required": [
-									"inviteIds"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/invites/{inviteId}": {
-			"delete": {
-				"operationId": "deleteInvite",
-				"tags": [
-					"Invites"
-				],
-				"summary": "Delete an invite",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "inviteId",
-						"in": "path",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"minLength": 1,
-							"maxLength": 128
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/settings": {
-			"patch": {
-				"operationId": "updateOrganization",
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Change organization settings",
-				"description": "Changing name needs organization management. displayName is your name in this organization.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"displayName": {
-										"type": "string",
-										"minLength": 1,
-										"maxLength": 100
-									},
-									"name": {
-										"anyOf": [
-											{
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 100
-											},
-											{
-												"type": "null"
-											}
-										]
-									}
-								},
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/members": {
-			"get": {
-				"operationId": "listMembers",
-				"tags": [
-					"Members"
-				],
-				"summary": "List members",
-				"security": [
-					{
-						"accessToken": []
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "cursor",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"name": "filter",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"default": "",
-							"type": "string",
-							"maxLength": 4096
-						}
-					},
-					{
-						"name": "limit",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"default": 50,
-							"type": "integer",
-							"minimum": 1,
-							"maximum": 100
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"filteredCount": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"items": {
-											"maxItems": 100,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"createdAt": {
-														"type": "string",
-														"format": "date-time"
-													},
-													"displayName": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
-													},
-													"id": {
-														"type": "string",
-														"minLength": 1
-													},
-													"invitedByUserId": {
-														"type": [
-															"string",
-															"null"
-														]
-													},
-													"roles": {
-														"maxItems": 30,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"id": {
-																	"type": "string",
-																	"minLength": 1
-																},
-																"isDefault": {
-																	"type": "boolean"
-																},
-																"name": {
-																	"type": "string",
-																	"minLength": 1,
-																	"maxLength": 100
-																}
-															},
-															"required": [
-																"id",
-																"isDefault",
-																"name"
-															],
-															"additionalProperties": false
-														}
-													},
-													"userId": {
-														"type": "string",
-														"minLength": 1
-													}
-												},
-												"required": [
-													"createdAt",
-													"displayName",
-													"id",
-													"invitedByUserId",
-													"roles",
-													"userId"
-												],
-												"additionalProperties": false
-											}
-										},
-										"memberCount": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"membersManagerCount": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"nextCursor": {
-											"type": [
-												"string",
-												"null"
-											]
-										},
-										"reservedInviteUses": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"retrievedAt": {
-											"type": "string",
-											"format": "date-time"
-										},
-										"rolesManagerCount": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"seatLimit": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										}
-									},
-									"required": [
-										"filteredCount",
-										"items",
-										"memberCount",
-										"membersManagerCount",
-										"nextCursor",
-										"reservedInviteUses",
-										"retrievedAt",
-										"rolesManagerCount",
-										"seatLimit"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"delete": {
-				"operationId": "removeMembers",
-				"tags": [
-					"Members"
-				],
-				"summary": "Remove members",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"userIds": {
-										"minItems": 1,
-										"maxItems": 100,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128
-										}
-									}
-								},
-								"required": [
-									"userIds"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"removedUserIds": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1
-											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/roles": {
-			"get": {
-				"operationId": "listRoles",
-				"tags": [
-					"Roles"
-				],
-				"summary": "List roles",
-				"security": [
-					{
-						"accessToken": []
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"items": {
-											"maxItems": 30,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "string",
-														"minLength": 1
-													},
-													"isDefault": {
-														"type": "boolean"
-													},
-													"name": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
-													},
-													"assignedMemberCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													},
-													"resourceScopeCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													},
-													"capabilities": {
-														"maxItems": 17,
-														"type": "array",
-														"items": {
-															"type": "string",
-															"enum": [
-																"api_keys.read_all",
-																"api_keys.use_all",
-																"api_keys.manage_all",
-																"api_keys.manage_access",
-																"analytics.read_own",
-																"analytics.read_all",
-																"activity.read",
-																"billing.read",
-																"billing.manage",
-																"byok.read_all",
-																"byok.use_all",
-																"byok.manage_all",
-																"byok.manage_access",
-																"members.read",
-																"members.manage",
-																"organization.manage",
-																"roles.manage"
-															]
-														}
-													},
-													"createdAt": {
-														"type": "string",
-														"format": "date-time"
-													},
-													"updatedAt": {
-														"type": "string",
-														"format": "date-time"
-													}
-												},
-												"required": [
-													"id",
-													"isDefault",
-													"name",
-													"assignedMemberCount",
-													"resourceScopeCount",
-													"capabilities",
-													"createdAt",
-													"updatedAt"
-												],
-												"additionalProperties": false
-											}
-										},
-										"limit": {
-											"type": "number",
-											"const": 30
-										},
-										"retrievedAt": {
-											"type": "string",
-											"format": "date-time"
-										}
-									},
-									"required": [
-										"items",
-										"limit",
-										"retrievedAt"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"post": {
-				"operationId": "createRole",
-				"tags": [
-					"Roles"
-				],
-				"summary": "Create a role",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"capabilities": {
-										"default": [],
-										"maxItems": 17,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"enum": [
-												"api_keys.read_all",
-												"api_keys.use_all",
-												"api_keys.manage_all",
-												"api_keys.manage_access",
-												"analytics.read_own",
-												"analytics.read_all",
-												"activity.read",
-												"billing.read",
-												"billing.manage",
-												"byok.read_all",
-												"byok.use_all",
-												"byok.manage_all",
-												"byok.manage_access",
-												"members.read",
-												"members.manage",
-												"organization.manage",
-												"roles.manage"
-											]
-										}
-									},
-									"resourceScopes": {
-										"default": [],
-										"maxItems": 2150,
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"scope": {
-													"type": "string",
-													"enum": [
-														"folder",
-														"grant",
-														"key",
-														"credential"
-													]
-												},
-												"id": {
-													"type": "string",
-													"format": "uuid"
-												},
-												"permissions": {
-													"minItems": 1,
-													"maxItems": 4,
-													"type": "array",
-													"items": {
-														"type": "string",
-														"enum": [
-															"view",
-															"use",
-															"manage",
-															"access"
-														]
-													}
-												}
-											},
-											"required": [
-												"scope",
-												"id",
-												"permissions"
-											],
-											"additionalProperties": false
-										}
-									},
-									"makeDefault": {
-										"type": "boolean"
-									},
-									"name": {
-										"type": "string",
-										"minLength": 1,
-										"maxLength": 100
-									}
-								},
-								"required": [
-									"name"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"201": {
-						"description": "Created",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"role": {
-											"type": "object",
-											"properties": {
-												"id": {
-													"type": "string",
-													"minLength": 1
-												},
-												"isDefault": {
-													"type": "boolean"
-												},
-												"name": {
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												"assignedMemberCount": {
-													"type": "integer",
-													"minimum": 0,
-													"maximum": 9007199254740991
-												},
-												"resourceScopeCount": {
-													"type": "integer",
-													"minimum": 0,
-													"maximum": 9007199254740991
-												},
-												"capabilities": {
-													"maxItems": 17,
-													"type": "array",
-													"items": {
-														"type": "string",
-														"enum": [
-															"api_keys.read_all",
-															"api_keys.use_all",
-															"api_keys.manage_all",
-															"api_keys.manage_access",
-															"analytics.read_own",
-															"analytics.read_all",
-															"activity.read",
-															"billing.read",
-															"billing.manage",
-															"byok.read_all",
-															"byok.use_all",
-															"byok.manage_all",
-															"byok.manage_access",
-															"members.read",
-															"members.manage",
-															"organization.manage",
-															"roles.manage"
-														]
-													}
-												},
-												"createdAt": {
-													"type": "string",
-													"format": "date-time"
-												},
-												"updatedAt": {
-													"type": "string",
-													"format": "date-time"
-												}
-											},
-											"required": [
-												"id",
-												"isDefault",
-												"name",
-												"assignedMemberCount",
-												"resourceScopeCount",
-												"capabilities",
-												"createdAt",
-												"updatedAt"
-											],
-											"additionalProperties": false
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"role",
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"delete": {
-				"operationId": "deleteRoles",
-				"tags": [
-					"Roles"
-				],
-				"summary": "Delete roles",
-				"description": "Members left without a role get the default role. To delete the default role, name a new one in replacementDefaultRoleId.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"replacementDefaultRoleId": {
-										"type": "string",
-										"minLength": 1
-									},
-									"roleIds": {
-										"minItems": 1,
-										"maxItems": 30,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128
-										}
-									}
-								},
-								"required": [
-									"roleIds"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"defaultedUserIds": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1
-											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"defaultedUserIds",
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/role-resources": {
-			"get": {
-				"operationId": "listRoleResourceChoices",
-				"tags": [
-					"Roles"
-				],
-				"summary": "List resources a role can cover",
-				"description": "Lists folders, grants, BYOK credentials or keys by name, for scoping a role.",
-				"security": [
-					{
-						"accessToken": []
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "scope",
-						"in": "query",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"enum": [
-								"folder",
-								"grant",
-								"key",
-								"credential"
-							]
-						}
-					},
-					{
-						"name": "query",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"default": "",
-							"type": "string",
-							"maxLength": 100
-						}
-					},
-					{
-						"name": "cursor",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"type": "string",
-							"format": "uuid"
-						}
-					},
-					{
-						"name": "limit",
-						"in": "query",
-						"required": false,
-						"schema": {
-							"default": 50,
-							"type": "integer",
-							"minimum": 1,
-							"maximum": 100
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"items": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "string",
-														"format": "uuid"
-													},
-													"name": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
-													}
-												},
-												"required": [
-													"id",
-													"name"
-												],
-												"additionalProperties": false
-											}
-										},
-										"nextCursor": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "uuid"
-												},
-												{
-													"type": "null"
-												}
-											]
-										}
-									},
-									"required": [
-										"items",
-										"nextCursor"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/roles/{roleId}/resources": {
-			"get": {
-				"operationId": "getRoleResources",
-				"tags": [
-					"Roles"
-				],
-				"summary": "Get the resources of a role",
-				"security": [
-					{
-						"accessToken": []
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "roleId",
-						"in": "path",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"minLength": 1,
-							"maxLength": 128
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"resourceScopes": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"scope": {
-														"type": "string",
-														"enum": [
-															"folder",
-															"grant",
-															"key",
-															"credential"
-														]
-													},
-													"id": {
-														"type": "string",
-														"format": "uuid"
-													},
-													"permissions": {
-														"minItems": 1,
-														"maxItems": 4,
-														"type": "array",
-														"items": {
-															"type": "string",
-															"enum": [
-																"view",
-																"use",
-																"manage",
-																"access"
-															]
-														}
-													},
-													"name": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
-													}
-												},
-												"required": [
-													"scope",
-													"id",
-													"permissions",
-													"name"
-												],
-												"additionalProperties": false
-											}
-										}
-									},
-									"required": [
-										"resourceScopes"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/roles/{roleId}": {
-			"patch": {
-				"operationId": "updateRole",
-				"tags": [
-					"Roles"
-				],
-				"summary": "Update a role",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "roleId",
-						"in": "path",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"minLength": 1,
-							"maxLength": 128
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"capabilities": {
-										"maxItems": 17,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"enum": [
-												"api_keys.read_all",
-												"api_keys.use_all",
-												"api_keys.manage_all",
-												"api_keys.manage_access",
-												"analytics.read_own",
-												"analytics.read_all",
-												"activity.read",
-												"billing.read",
-												"billing.manage",
-												"byok.read_all",
-												"byok.use_all",
-												"byok.manage_all",
-												"byok.manage_access",
-												"members.read",
-												"members.manage",
-												"organization.manage",
-												"roles.manage"
-											]
-										}
-									},
-									"resourceScopes": {
-										"maxItems": 2150,
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"scope": {
-													"type": "string",
-													"enum": [
-														"folder",
-														"grant",
-														"key",
-														"credential"
-													]
-												},
-												"id": {
-													"type": "string",
-													"format": "uuid"
-												},
-												"permissions": {
-													"minItems": 1,
-													"maxItems": 4,
-													"type": "array",
-													"items": {
-														"type": "string",
-														"enum": [
-															"view",
-															"use",
-															"manage",
-															"access"
-														]
-													}
-												}
-											},
-											"required": [
-												"scope",
-												"id",
-												"permissions"
-											],
-											"additionalProperties": false
-										}
-									},
-									"makeDefault": {
-										"type": "boolean",
-										"const": true
-									},
-									"name": {
-										"type": "string",
-										"minLength": 1,
-										"maxLength": 100
-									}
-								},
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"role": {
-											"type": "object",
-											"properties": {
-												"id": {
-													"type": "string",
-													"minLength": 1
-												},
-												"isDefault": {
-													"type": "boolean"
-												},
-												"name": {
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												"assignedMemberCount": {
-													"type": "integer",
-													"minimum": 0,
-													"maximum": 9007199254740991
-												},
-												"resourceScopeCount": {
-													"type": "integer",
-													"minimum": 0,
-													"maximum": 9007199254740991
-												},
-												"capabilities": {
-													"maxItems": 17,
-													"type": "array",
-													"items": {
-														"type": "string",
-														"enum": [
-															"api_keys.read_all",
-															"api_keys.use_all",
-															"api_keys.manage_all",
-															"api_keys.manage_access",
-															"analytics.read_own",
-															"analytics.read_all",
-															"activity.read",
-															"billing.read",
-															"billing.manage",
-															"byok.read_all",
-															"byok.use_all",
-															"byok.manage_all",
-															"byok.manage_access",
-															"members.read",
-															"members.manage",
-															"organization.manage",
-															"roles.manage"
-														]
-													}
-												},
-												"createdAt": {
-													"type": "string",
-													"format": "date-time"
-												},
-												"updatedAt": {
-													"type": "string",
-													"format": "date-time"
-												}
-											},
-											"required": [
-												"id",
-												"isDefault",
-												"name",
-												"assignedMemberCount",
-												"resourceScopeCount",
-												"capabilities",
-												"createdAt",
-												"updatedAt"
-											],
-											"additionalProperties": false
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"role",
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"delete": {
-				"operationId": "deleteRole",
-				"tags": [
-					"Roles"
-				],
-				"summary": "Delete a role",
-				"description": "Members left without a role get the default role. To delete the default role, name a new one in replacementDefaultRoleId.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "roleId",
-						"in": "path",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"minLength": 1,
-							"maxLength": 128
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"replacementDefaultRoleId": {
-										"type": "string",
-										"minLength": 1
-									}
-								},
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"defaultedUserIds": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1
-											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										}
-									},
-									"required": [
-										"defaultedUserIds",
-										"success"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/members/roles": {
-			"post": {
-				"operationId": "changeMemberRoles",
-				"tags": [
-					"Members"
-				],
-				"summary": "Give or take a role from members",
-				"description": "Members left without a role get the default role.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"action": {
-										"type": "string",
-										"enum": [
-											"assign",
-											"remove"
-										]
-									},
-									"roleId": {
-										"type": "string",
-										"minLength": 1
-									},
-									"userIds": {
-										"minItems": 1,
-										"maxItems": 100,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128
-										}
-									}
-								},
-								"required": [
-									"action",
-									"roleId",
-									"userIds"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"action": {
-											"type": "string",
-											"enum": [
-												"assign",
-												"remove"
-											]
-										},
-										"defaultedUserIds": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1
-											}
-										},
-										"roleId": {
-											"type": "string",
-											"minLength": 1
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										},
-										"userIds": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1
-											}
-										}
-									},
-									"required": [
-										"action",
-										"defaultedUserIds",
-										"roleId",
-										"success",
-										"userIds"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/members/{userId}/roles": {
-			"put": {
-				"operationId": "setMemberRoles",
-				"tags": [
-					"Members"
-				],
-				"summary": "Set a member's roles",
-				"description": "An empty list gives the member the default role.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "userId",
-						"in": "path",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"minLength": 1,
-							"maxLength": 128
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"roleIds": {
-										"maxItems": 30,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1
-										}
-									}
-								},
-								"required": [
-									"roleIds"
-								],
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"defaulted": {
-											"type": "boolean"
-										},
-										"roleIds": {
-											"minItems": 1,
-											"maxItems": 30,
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1
-											}
-										},
-										"success": {
-											"type": "boolean",
-											"const": true
-										},
-										"userId": {
-											"type": "string",
-											"minLength": 1
-										}
-									},
-									"required": [
-										"defaulted",
-										"roleIds",
-										"success",
-										"userId"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/leave-preview": {
-			"get": {
-				"operationId": "previewLeavingOrganization",
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Preview leaving an organization",
-				"security": [
-					{
-						"accessToken": []
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"availableUsd": {
-											"type": "string",
-											"maxLength": 78,
-											"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-										},
-										"blockedByLastRoleManager": {
-											"type": "boolean"
-										},
-										"hasPendingPayment": {
-											"type": "boolean"
-										},
-										"organizationId": {
-											"type": "string",
-											"minLength": 1
-										},
-										"organizationName": {
-											"type": [
-												"string",
-												"null"
-											]
-										},
-										"organizationType": {
-											"type": "string",
-											"enum": [
-												"personal",
-												"external"
-											]
-										},
-										"pendingInvitesDeleted": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"apiKeysDeleted": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
-										},
-										"willDeleteOrganization": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"availableUsd",
-										"blockedByLastRoleManager",
-										"hasPendingPayment",
-										"organizationId",
-										"organizationName",
-										"organizationType",
-										"pendingInvitesDeleted",
-										"apiKeysDeleted",
-										"willDeleteOrganization"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/organizations/{orgId}/membership": {
-			"delete": {
-				"operationId": "leaveOrganization",
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Leave an organization",
-				"description": "Deletes the keys you created from its grants. When the last member leaves, the organization and its balance are deleted.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"deletedOrg": {
-											"type": "boolean"
-										},
-										"result": {
-											"type": "string",
-											"enum": [
-												"left",
-												"org_deleted"
-											]
-										}
-									},
-									"required": [
-										"deletedOrg",
-										"result"
 									],
 									"additionalProperties": false
 								}
@@ -11181,109 +8070,6 @@
 													"request_type": {
 														"type": "string"
 													},
-													"request_settings": {
-														"default": {},
-														"type": "object",
-														"properties": {
-															"max_output_tokens": {
-																"type": "integer",
-																"minimum": -9007199254740991,
-																"maximum": 9007199254740991
-															},
-															"reasoning_enabled": {
-																"type": "boolean"
-															},
-															"reasoning_effort": {
-																"type": "string",
-																"pattern": "^[\\x20-\\x7e]{1,64}$"
-															},
-															"reasoning_max_tokens": {
-																"type": "integer",
-																"minimum": -9007199254740991,
-																"maximum": 9007199254740991
-															},
-															"reasoning_summary": {
-																"type": "string",
-																"pattern": "^[\\x20-\\x7e]{1,64}$"
-															},
-															"reasoning_display": {
-																"type": "string",
-																"pattern": "^[\\x20-\\x7e]{1,64}$"
-															},
-															"task_budget_tokens": {
-																"type": "integer",
-																"minimum": -9007199254740991,
-																"maximum": 9007199254740991
-															},
-															"temperature": {
-																"type": "number"
-															},
-															"top_p": {
-																"type": "number"
-															},
-															"top_k": {
-																"type": "integer",
-																"minimum": -9007199254740991,
-																"maximum": 9007199254740991
-															},
-															"frequency_penalty": {
-																"type": "number"
-															},
-															"presence_penalty": {
-																"type": "number"
-															},
-															"repetition_penalty": {
-																"type": "number"
-															},
-															"seed": {
-																"type": "integer",
-																"minimum": -9007199254740991,
-																"maximum": 9007199254740991
-															},
-															"logprobs": {
-																"type": "boolean"
-															},
-															"top_logprobs": {
-																"type": "integer",
-																"minimum": -9007199254740991,
-																"maximum": 9007199254740991
-															},
-															"verbosity": {
-																"type": "string",
-																"pattern": "^[\\x20-\\x7e]{1,64}$"
-															},
-															"response_format": {
-																"type": "string",
-																"pattern": "^[\\x20-\\x7e]{1,64}$"
-															},
-															"include": {
-																"minItems": 1,
-																"maxItems": 16,
-																"type": "array",
-																"items": {
-																	"type": "string",
-																	"pattern": "^[\\x20-\\x7e]{1,64}$"
-																}
-															},
-															"tool_choice": {
-																"type": "string",
-																"pattern": "^[\\x20-\\x7e]{1,64}$"
-															},
-															"parallel_tool_calls": {
-																"type": "boolean"
-															},
-															"max_tool_calls": {
-																"type": "integer",
-																"minimum": -9007199254740991,
-																"maximum": 9007199254740991
-															},
-															"truncation": {
-																"type": "string",
-																"pattern": "^[\\x20-\\x7e]{1,64}$"
-															}
-														},
-														"additionalProperties": false
-													},
 													"cancelled": {
 														"type": "boolean"
 													},
@@ -11362,7 +8148,7 @@
 														"items": {
 															"type": "object",
 															"properties": {
-																"resolved_catalog_chain_hash": {
+																"selected_catalog_chain_hash": {
 																	"type": "string",
 																	"pattern": "^sha256:[a-f0-9]{64}$"
 																},
@@ -11651,7 +8437,6 @@
 													"stogas_user_id",
 													"stogas_organization_id",
 													"request_type",
-													"request_settings",
 													"cancelled",
 													"client_stop_ms",
 													"catalog_version",
@@ -12800,18 +9585,7 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"nextCursor": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"payments": {
+										"items": {
 											"type": "array",
 											"items": {
 												"type": "object",
@@ -12924,14 +9698,25 @@
 												"additionalProperties": false
 											}
 										},
+										"nextCursor": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
 										"retrievedAt": {
 											"type": "string",
 											"format": "date-time"
 										}
 									},
 									"required": [
+										"items",
 										"nextCursor",
-										"payments",
 										"retrievedAt"
 									],
 									"additionalProperties": false
@@ -13739,6 +10524,1989 @@
 					}
 				}
 			}
+		},
+		"/api/{orgId}/invites": {
+			"get": {
+				"operationId": "listInvites",
+				"tags": [
+					"Invites"
+				],
+				"summary": "List invites",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"filteredCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"items": {
+											"maxItems": 100,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"name": {
+														"anyOf": [
+															{
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"code": {
+														"type": "string",
+														"minLength": 1
+													},
+													"createdAt": {
+														"type": "string",
+														"format": "date-time"
+													},
+													"createdByUserId": {
+														"anyOf": [
+															{
+																"type": "string",
+																"minLength": 1
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"expiresAt": {
+														"type": "string",
+														"format": "date-time"
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1
+													},
+													"maxUses": {
+														"type": "integer",
+														"minimum": 1,
+														"maximum": 9007199254740991
+													},
+													"usedCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													}
+												},
+												"required": [
+													"name",
+													"code",
+													"createdAt",
+													"createdByUserId",
+													"expiresAt",
+													"id",
+													"maxUses",
+													"usedCount"
+												],
+												"additionalProperties": false
+											}
+										},
+										"nextCursor": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"reservedInviteUses": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"retrievedAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"total": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										}
+									},
+									"required": [
+										"filteredCount",
+										"items",
+										"nextCursor",
+										"reservedInviteUses",
+										"retrievedAt",
+										"total"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"post": {
+				"operationId": "createInvite",
+				"tags": [
+					"Invites"
+				],
+				"summary": "Create an invite",
+				"description": "An invite lasts 7 days and has one use unless you set expiresInSeconds or maxUses. Until it expires, each unused use holds a seat.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"anyOf": [
+											{
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 100
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"expiresInSeconds": {
+										"type": "integer",
+										"minimum": 60,
+										"maximum": 2592000
+									},
+									"maxUses": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 30
+									}
+								},
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"name": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 100
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"code": {
+											"type": "string",
+											"minLength": 1
+										},
+										"expiresAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1
+										},
+										"maxUses": {
+											"type": "integer",
+											"minimum": 1,
+											"maximum": 9007199254740991
+										},
+										"usedCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										}
+									},
+									"required": [
+										"name",
+										"code",
+										"expiresAt",
+										"id",
+										"maxUses",
+										"usedCount"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/invites/bulk/delete": {
+			"post": {
+				"operationId": "deleteInvites",
+				"tags": [
+					"Invites"
+				],
+				"summary": "Delete invites",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"inviteIds": {
+										"minItems": 1,
+										"maxItems": 100,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"format": "uuid"
+										}
+									}
+								},
+								"required": [
+									"inviteIds"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"deletedIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/invites/{inviteId}": {
+			"delete": {
+				"operationId": "deleteInvite",
+				"tags": [
+					"Invites"
+				],
+				"summary": "Delete an invite",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "inviteId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"deletedIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/settings": {
+			"patch": {
+				"operationId": "updateOrganization",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Change organization settings",
+				"description": "Changing name needs organization management. displayName is your name in this organization.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"displayName": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 100
+									},
+									"name": {
+										"anyOf": [
+											{
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 100
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"displayName": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 100
+										},
+										"name": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 100
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"displayName",
+										"name"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/members": {
+			"get": {
+				"operationId": "listMembers",
+				"tags": [
+					"Members"
+				],
+				"summary": "List members",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"filteredCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"items": {
+											"maxItems": 100,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"createdAt": {
+														"type": "string",
+														"format": "date-time"
+													},
+													"displayName": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1
+													},
+													"invitedByUserId": {
+														"type": [
+															"string",
+															"null"
+														]
+													},
+													"roles": {
+														"maxItems": 30,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"id": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"isDefault": {
+																	"type": "boolean"
+																},
+																"name": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 100
+																}
+															},
+															"required": [
+																"id",
+																"isDefault",
+																"name"
+															],
+															"additionalProperties": false
+														}
+													},
+													"userId": {
+														"type": "string",
+														"minLength": 1
+													}
+												},
+												"required": [
+													"createdAt",
+													"displayName",
+													"id",
+													"invitedByUserId",
+													"roles",
+													"userId"
+												],
+												"additionalProperties": false
+											}
+										},
+										"memberCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"membersManagerCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"nextCursor": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"reservedInviteUses": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"retrievedAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"rolesManagerCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"seatLimit": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										}
+									},
+									"required": [
+										"filteredCount",
+										"items",
+										"memberCount",
+										"membersManagerCount",
+										"nextCursor",
+										"reservedInviteUses",
+										"retrievedAt",
+										"rolesManagerCount",
+										"seatLimit"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/members/bulk/delete": {
+			"post": {
+				"operationId": "removeMembers",
+				"tags": [
+					"Members"
+				],
+				"summary": "Remove members",
+				"description": "Deletes the keys they made from grants and the invites they created. Each removal permanently lowers the seat limit by one.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"userIds": {
+										"minItems": 1,
+										"maxItems": 100,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"format": "uuid"
+										}
+									}
+								},
+								"required": [
+									"userIds"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"removedUserIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"removedUserIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/roles": {
+			"get": {
+				"operationId": "listRoles",
+				"tags": [
+					"Roles"
+				],
+				"summary": "List roles",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"items": {
+											"maxItems": 30,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"minLength": 1
+													},
+													"isDefault": {
+														"type": "boolean"
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"assignedMemberCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"resourceScopeCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"capabilities": {
+														"maxItems": 17,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"enum": [
+																"api_keys.read_all",
+																"api_keys.use_all",
+																"api_keys.manage_all",
+																"api_keys.manage_access",
+																"analytics.read_own",
+																"analytics.read_all",
+																"activity.read",
+																"billing.read",
+																"billing.manage",
+																"byok.read_all",
+																"byok.use_all",
+																"byok.manage_all",
+																"byok.manage_access",
+																"members.read",
+																"members.manage",
+																"organization.manage",
+																"roles.manage"
+															]
+														}
+													},
+													"createdAt": {
+														"type": "string",
+														"format": "date-time"
+													},
+													"updatedAt": {
+														"type": "string",
+														"format": "date-time"
+													}
+												},
+												"required": [
+													"id",
+													"isDefault",
+													"name",
+													"assignedMemberCount",
+													"resourceScopeCount",
+													"capabilities",
+													"createdAt",
+													"updatedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"limit": {
+											"type": "number",
+											"const": 30
+										},
+										"retrievedAt": {
+											"type": "string",
+											"format": "date-time"
+										}
+									},
+									"required": [
+										"items",
+										"limit",
+										"retrievedAt"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"post": {
+				"operationId": "createRole",
+				"tags": [
+					"Roles"
+				],
+				"summary": "Create a role",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"capabilities": {
+										"default": [],
+										"maxItems": 17,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"enum": [
+												"api_keys.read_all",
+												"api_keys.use_all",
+												"api_keys.manage_all",
+												"api_keys.manage_access",
+												"analytics.read_own",
+												"analytics.read_all",
+												"activity.read",
+												"billing.read",
+												"billing.manage",
+												"byok.read_all",
+												"byok.use_all",
+												"byok.manage_all",
+												"byok.manage_access",
+												"members.read",
+												"members.manage",
+												"organization.manage",
+												"roles.manage"
+											]
+										}
+									},
+									"resourceScopes": {
+										"default": [],
+										"maxItems": 2150,
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"scope": {
+													"type": "string",
+													"enum": [
+														"folder",
+														"grant",
+														"key",
+														"credential"
+													]
+												},
+												"id": {
+													"type": "string",
+													"format": "uuid"
+												},
+												"permissions": {
+													"minItems": 1,
+													"maxItems": 4,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"view",
+															"use",
+															"manage",
+															"access"
+														]
+													}
+												}
+											},
+											"required": [
+												"scope",
+												"id",
+												"permissions"
+											],
+											"additionalProperties": false
+										}
+									},
+									"makeDefault": {
+										"type": "boolean"
+									},
+									"name": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 100
+									}
+								},
+								"required": [
+									"name"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"id": {
+											"type": "string",
+											"minLength": 1
+										},
+										"isDefault": {
+											"type": "boolean"
+										},
+										"name": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 100
+										},
+										"assignedMemberCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"resourceScopeCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"capabilities": {
+											"maxItems": 17,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"api_keys.read_all",
+													"api_keys.use_all",
+													"api_keys.manage_all",
+													"api_keys.manage_access",
+													"analytics.read_own",
+													"analytics.read_all",
+													"activity.read",
+													"billing.read",
+													"billing.manage",
+													"byok.read_all",
+													"byok.use_all",
+													"byok.manage_all",
+													"byok.manage_access",
+													"members.read",
+													"members.manage",
+													"organization.manage",
+													"roles.manage"
+												]
+											}
+										},
+										"createdAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"updatedAt": {
+											"type": "string",
+											"format": "date-time"
+										}
+									},
+									"required": [
+										"id",
+										"isDefault",
+										"name",
+										"assignedMemberCount",
+										"resourceScopeCount",
+										"capabilities",
+										"createdAt",
+										"updatedAt"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/role-resources": {
+			"get": {
+				"operationId": "listRoleResourceChoices",
+				"tags": [
+					"Roles"
+				],
+				"summary": "List resources a role can cover",
+				"description": "Lists folders, grants, BYOK credentials or keys by name, for scoping a role.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "scope",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"folder",
+								"grant",
+								"key",
+								"credential"
+							]
+						}
+					},
+					{
+						"name": "query",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 100
+						}
+					},
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"items": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"id",
+													"name"
+												],
+												"additionalProperties": false
+											}
+										},
+										"nextCursor": {
+											"anyOf": [
+												{
+													"type": "string",
+													"format": "uuid"
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"items",
+										"nextCursor"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/roles/{roleId}/resources": {
+			"get": {
+				"operationId": "getRoleResources",
+				"tags": [
+					"Roles"
+				],
+				"summary": "Get the resources of a role",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "roleId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"resourceScopes": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"folder",
+															"grant",
+															"key",
+															"credential"
+														]
+													},
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"permissions": {
+														"minItems": 1,
+														"maxItems": 4,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"enum": [
+																"view",
+																"use",
+																"manage",
+																"access"
+															]
+														}
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"scope",
+													"id",
+													"permissions",
+													"name"
+												],
+												"additionalProperties": false
+											}
+										}
+									},
+									"required": [
+										"resourceScopes"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/roles/{roleId}": {
+			"patch": {
+				"operationId": "updateRole",
+				"tags": [
+					"Roles"
+				],
+				"summary": "Update a role",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "roleId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"capabilities": {
+										"maxItems": 17,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"enum": [
+												"api_keys.read_all",
+												"api_keys.use_all",
+												"api_keys.manage_all",
+												"api_keys.manage_access",
+												"analytics.read_own",
+												"analytics.read_all",
+												"activity.read",
+												"billing.read",
+												"billing.manage",
+												"byok.read_all",
+												"byok.use_all",
+												"byok.manage_all",
+												"byok.manage_access",
+												"members.read",
+												"members.manage",
+												"organization.manage",
+												"roles.manage"
+											]
+										}
+									},
+									"resourceScopes": {
+										"maxItems": 2150,
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"scope": {
+													"type": "string",
+													"enum": [
+														"folder",
+														"grant",
+														"key",
+														"credential"
+													]
+												},
+												"id": {
+													"type": "string",
+													"format": "uuid"
+												},
+												"permissions": {
+													"minItems": 1,
+													"maxItems": 4,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"view",
+															"use",
+															"manage",
+															"access"
+														]
+													}
+												}
+											},
+											"required": [
+												"scope",
+												"id",
+												"permissions"
+											],
+											"additionalProperties": false
+										}
+									},
+									"makeDefault": {
+										"type": "boolean",
+										"const": true
+									},
+									"name": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 100
+									}
+								},
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"id": {
+											"type": "string",
+											"minLength": 1
+										},
+										"isDefault": {
+											"type": "boolean"
+										},
+										"name": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 100
+										},
+										"assignedMemberCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"resourceScopeCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"capabilities": {
+											"maxItems": 17,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"api_keys.read_all",
+													"api_keys.use_all",
+													"api_keys.manage_all",
+													"api_keys.manage_access",
+													"analytics.read_own",
+													"analytics.read_all",
+													"activity.read",
+													"billing.read",
+													"billing.manage",
+													"byok.read_all",
+													"byok.use_all",
+													"byok.manage_all",
+													"byok.manage_access",
+													"members.read",
+													"members.manage",
+													"organization.manage",
+													"roles.manage"
+												]
+											}
+										},
+										"createdAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"updatedAt": {
+											"type": "string",
+											"format": "date-time"
+										}
+									},
+									"required": [
+										"id",
+										"isDefault",
+										"name",
+										"assignedMemberCount",
+										"resourceScopeCount",
+										"capabilities",
+										"createdAt",
+										"updatedAt"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"delete": {
+				"operationId": "deleteRole",
+				"tags": [
+					"Roles"
+				],
+				"summary": "Delete a role",
+				"description": "Members left without a role get the default role. To delete the default role, name a new one in replacementDefaultRoleId.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "roleId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					},
+					{
+						"name": "replacementDefaultRoleId",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"defaultedUserIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										},
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"defaultedUserIds",
+										"deletedIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/roles/bulk/delete": {
+			"post": {
+				"operationId": "deleteRoles",
+				"tags": [
+					"Roles"
+				],
+				"summary": "Delete roles",
+				"description": "Members left without a role get the default role. To delete the default role, name a new one in replacementDefaultRoleId.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"replacementDefaultRoleId": {
+										"type": "string",
+										"format": "uuid"
+									},
+									"roleIds": {
+										"minItems": 1,
+										"maxItems": 30,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"format": "uuid"
+										}
+									}
+								},
+								"required": [
+									"roleIds"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"defaultedUserIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										},
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"defaultedUserIds",
+										"deletedIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/members/roles": {
+			"post": {
+				"operationId": "changeMemberRoles",
+				"tags": [
+					"Members"
+				],
+				"summary": "Give or take a role from members",
+				"description": "Members left without a role get the default role.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"action": {
+										"type": "string",
+										"enum": [
+											"assign",
+											"remove"
+										]
+									},
+									"roleId": {
+										"type": "string",
+										"format": "uuid"
+									},
+									"userIds": {
+										"minItems": 1,
+										"maxItems": 100,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"format": "uuid"
+										}
+									}
+								},
+								"required": [
+									"action",
+									"roleId",
+									"userIds"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"defaultedUserIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"defaultedUserIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/members/{userId}/roles": {
+			"put": {
+				"operationId": "setMemberRoles",
+				"tags": [
+					"Members"
+				],
+				"summary": "Set a member's roles",
+				"description": "An empty list gives the member the default role.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "userId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"roleIds": {
+										"maxItems": 30,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"format": "uuid"
+										}
+									}
+								},
+								"required": [
+									"roleIds"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"defaulted": {
+											"type": "boolean"
+										},
+										"roleIds": {
+											"minItems": 1,
+											"maxItems": 30,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										}
+									},
+									"required": [
+										"defaulted",
+										"roleIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/leave-preview": {
+			"get": {
+				"operationId": "previewLeavingOrganization",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Preview leaving an organization",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"availableUsd": {
+											"type": "string",
+											"maxLength": 78,
+											"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+										},
+										"blockedByLastRoleManager": {
+											"type": "boolean"
+										},
+										"hasPendingPayment": {
+											"type": "boolean"
+										},
+										"organizationId": {
+											"type": "string",
+											"minLength": 1
+										},
+										"organizationName": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"organizationType": {
+											"type": "string",
+											"enum": [
+												"personal",
+												"external"
+											]
+										},
+										"pendingInvitesDeleted": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"apiKeysDeleted": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"willDeleteOrganization": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"availableUsd",
+										"blockedByLastRoleManager",
+										"hasPendingPayment",
+										"organizationId",
+										"organizationName",
+										"organizationType",
+										"pendingInvitesDeleted",
+										"apiKeysDeleted",
+										"willDeleteOrganization"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/membership": {
+			"delete": {
+				"operationId": "leaveOrganization",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Leave an organization",
+				"description": "Deletes the keys you created from its grants. When the last member leaves, the organization and its balance are deleted.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"organizationDeleted": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"organizationDeleted"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
 		}
 	},
 	"components": {
@@ -13755,7 +12523,7 @@
 				"name": "orgId",
 				"in": "path",
 				"required": true,
-				"description": "The organization. List the organizations that your token covers with GET /api/organizations/summary.",
+				"description": "The organization. List the organizations that your token covers with GET /api/organizations.",
 				"schema": {
 					"type": "string",
 					"format": "uuid"
@@ -14289,9 +13057,6 @@
 					"id": {
 						"type": "string",
 						"format": "uuid"
-					},
-					"key": {
-						"type": "string"
 					},
 					"kind": {
 						"type": "string",
@@ -14837,62 +13602,6 @@
 						"minimum": 0,
 						"maximum": 9007199254740991
 					},
-					"checkedAt": {
-						"anyOf": [
-							{
-								"type": "string",
-								"format": "date-time"
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"checkError": {
-						"anyOf": [
-							{
-								"type": "string",
-								"minLength": 1,
-								"maxLength": 500
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
-					"azureTargets": {
-						"anyOf": [
-							{
-								"type": "object",
-								"properties": {
-									"selected": {
-										"type": "integer",
-										"minimum": 0,
-										"maximum": 9007199254740991
-									},
-									"unavailable": {
-										"type": "integer",
-										"minimum": 0,
-										"maximum": 9007199254740991
-									},
-									"unselected": {
-										"type": "integer",
-										"minimum": 0,
-										"maximum": 9007199254740991
-									}
-								},
-								"required": [
-									"selected",
-									"unavailable",
-									"unselected"
-								],
-								"additionalProperties": false
-							},
-							{
-								"type": "null"
-							}
-						]
-					},
 					"encryptionKeyId": {
 						"anyOf": [
 							{
@@ -14956,9 +13665,6 @@
 					"canManage",
 					"canChangeAccess",
 					"assignedKeyCount",
-					"checkedAt",
-					"checkError",
-					"azureTargets",
 					"encryptionKeyId",
 					"createdAt",
 					"enabled",
@@ -15658,8 +14364,7 @@
 															"direction"
 														],
 														"additionalProperties": false
-													},
-													"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+													}
 												},
 												"selection": {
 													"type": "object",
@@ -15689,7 +14394,7 @@
 														"mode"
 													],
 													"additionalProperties": false,
-													"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+													"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 													"allOf": [
 														{
 															"if": {
@@ -16581,8 +15286,7 @@
 										"direction"
 									],
 									"additionalProperties": false
-								},
-								"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+								}
 							},
 							"selection": {
 								"type": "object",
@@ -16612,7 +15316,7 @@
 									"mode"
 								],
 								"additionalProperties": false,
-								"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+								"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 								"allOf": [
 									{
 										"if": {
@@ -18431,8 +17135,7 @@
 										"direction"
 									],
 									"additionalProperties": false
-								},
-								"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+								}
 							},
 							"selection": {
 								"type": "object",
@@ -18462,7 +17165,7 @@
 									"mode"
 								],
 								"additionalProperties": false,
-								"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+								"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 								"allOf": [
 									{
 										"if": {
@@ -19104,8 +17807,7 @@
 													"direction"
 												],
 												"additionalProperties": false
-											},
-											"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+											}
 										},
 										"selection": {
 											"type": "object",
@@ -19135,7 +17837,7 @@
 												"mode"
 											],
 											"additionalProperties": false,
-											"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+											"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 											"allOf": [
 												{
 													"if": {

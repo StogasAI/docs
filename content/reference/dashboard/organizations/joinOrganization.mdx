@@ -1,5 +1,6 @@
 ---
 title: Join an organization
+description: Uses one use of an invite code.
 full: true
 _openapi:
   preload:
@@ -9,7 +10,8 @@ _openapi:
   toc: []
   structuredData:
     headings: []
-    contents: []
+    contents:
+      - content: Uses one use of an invite code.
 ---
 
 export default function Layout(props) {
@@ -17,7 +19,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/invites/consume', method: 'post' }]} />
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/join', method: 'post' }]} />
     </>
   );
 }

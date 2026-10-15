@@ -1,15 +1,19 @@
 ---
 title: Remove members
+description: Deletes the keys they made from grants and the invites they
+  created. Each removal permanently lowers the seat limit by one.
 full: true
 _openapi:
   preload:
     - dashboard
-  method: DELETE
+  method: POST
   webhook: false
   toc: []
   structuredData:
     headings: []
-    contents: []
+    contents:
+      - content: Deletes the keys they made from grants and the invites they created.
+          Each removal permanently lowers the seat limit by one.
 ---
 
 export default function Layout(props) {
@@ -17,7 +21,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/{orgId}/members', method: 'delete' }]} />
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/members/bulk/delete', method: 'post' }]} />
     </>
   );
 }
