@@ -139,15 +139,18 @@ recorded. See [PII redaction](/docs/pii-redaction).
 ## Grouped rejections
 
 Requests rejected before billing authorization, such as for credit, policy or validation errors,
-appear once the gateway can tell which API key sent them. In each one-second window, the first five
-rejections with the same key, endpoint, error code and HTTP status keep their own records. Further
-repeats share one record with a `request_count`. Successful requests and provider errors are never
-grouped.
+appear once the gateway can tell which API key sent them. In each UTC minute, the first five
+rejections with the same key, endpoint, error code and HTTP status keep their own records and appear
+within seconds. Further repeats in that minute share one record with a `request_count`, which
+appears after the minute ends. Each gateway groups its own requests, so a client whose requests
+reach several gateways can see more single records. Successful requests and provider errors are
+never grouped.
 
-For example, 99 matching credit rejections in one window produce five single records and one record
+For example, 99 matching credit rejections in one minute produce five single records and one record
 with a count of 94. Charts sum `request_count`; costs and usage are recorded once and must not be
-multiplied by it. A grouped record keeps the first request ID and the first and last times. It has
-no model or catalog IDs, so it counts toward key and organization totals but not model totals.
+multiplied by it. A grouped record keeps the first request ID and the first and last times; the
+other request IDs it counts have no record of their own. It has no model or catalog IDs, so it
+counts toward key and organization totals but not model totals.
 
 Records are delivered asynchronously. A gateway crash, a burst larger than the gateway can group, or
 a storage failure can lose rejection records, so grouped history is not a complete audit of every

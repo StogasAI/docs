@@ -53,7 +53,7 @@ cost and plugin results.
   releases link to their approvals.
 - Expand **Catalog** to see the deployment settings that applied when the request ran, even if the
   catalog has changed since.
-- A row can stand for several identical rejections in the same second. The row shows the count.
+- A row can stand for several identical rejections in the same minute. The row shows the count.
   See [grouped rejections](/docs/request-records#grouped-rejections).
 
 An API key's **Requests** link opens the same history filtered to that key.
@@ -72,7 +72,7 @@ An API key's **Requests** link opens the same history filtered to that key.
 | `type:`             | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.                                                               |
 | `outcome:`          | `success`, `failed`, `cancelled`, `rejected` or `unknown`.                                                                                                    |
 | `status:`           | `success`, a [provider result](/docs/request-records#provider-results), a gateway error code such as `insufficient_balance`, or an HTTP status such as `402`. |
-| `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                                    |
+| `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                               |
 | `redaction:`        | `redacted`, `no_matches` or `not_recorded`. See [PII redaction](/docs/pii-redaction).                                                                         |
 
 `status:success` matches completed requests with no cancellation or gateway error. Other `status:`
