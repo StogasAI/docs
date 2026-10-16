@@ -93,9 +93,10 @@ and fails with `schedule_denied` when none remain.
 
 ## Timestamps and time zones
 
-`expiresAt` and recurring `anchor` values are ISO 8601 timestamps with `Z` or an explicit offset,
-for example `2026-12-01T00:00:00Z` or `2026-12-01T09:00:00+09:00`. Local times without an offset
-and year zero are invalid. Saved timestamps are normalized to UTC with millisecond precision.
+`expiresAt` and recurring `anchor` values are ISO 8601 timestamps with `Z` or an explicit offset
+in years 1 to 9999 UTC, for example `2026-12-01T00:00:00Z` or `2026-12-01T09:00:00+09:00`. Local
+times without an offset are invalid. Saved timestamps are normalized to UTC with millisecond
+precision.
 
 `timeZone` accepts `UTC` or an IANA name with its exact capitalization, such as `America/New_York`
 or `Europe/Berlin`, up to 64 characters. Abbreviations such as `CET` and offsets such as `+05` are
