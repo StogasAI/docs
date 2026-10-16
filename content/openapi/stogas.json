@@ -3929,6 +3929,18 @@
 								"x-stogas-maxBytes": 16384,
 								"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
 							},
+							"order": {
+								"minItems": 1,
+								"type": "array",
+								"items": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 128,
+									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+								},
+								"uniqueItems": true,
+								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+							},
 							"sort": {
 								"maxItems": 3,
 								"type": "array",
@@ -3946,77 +3958,20 @@
 											"enum": [
 												"asc",
 												"desc"
-											]
+											],
+											"description": "Defaults to asc. Missing values sort last in either direction."
 										}
 									},
 									"required": [
-										"by",
-										"direction"
+										"by"
 									],
 									"additionalProperties": false
 								},
-								"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
-							},
-							"selection": {
-								"type": "object",
-								"properties": {
-									"mode": {
-										"type": "string",
-										"enum": [
-											"ordered",
-											"random"
-										],
-										"description": "Ordered uses the listed deployment order. Random selects uniformly across eligible deployments without replacement."
-									},
-									"targets": {
-										"minItems": 1,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128,
-											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true,
-										"description": "Canonical deployment IDs from the eligible catalog pool. Required for ordered selection; omission in random mode uses every eligible deployment."
-									}
-								},
-								"required": [
-									"mode"
-								],
-								"additionalProperties": false,
-								"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
-								"allOf": [
-									{
-										"if": {
-											"properties": {
-												"mode": {
-													"const": "ordered"
-												}
-											}
-										},
-										"then": {
-											"required": [
-												"targets"
-											]
-										}
-									}
-								]
+								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 							}
 						},
 						"additionalProperties": false,
-						"minProperties": 1,
-						"not": {
-							"required": [
-								"selection",
-								"sort"
-							],
-							"properties": {
-								"sort": {
-									"minItems": 1
-								}
-							}
-						}
+						"minProperties": 1
 					},
 					"rules": {
 						"minProperties": 1,
@@ -4396,6 +4351,18 @@
 											"x-stogas-maxBytes": 16384,
 											"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
 										},
+										"order": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+										},
 										"sort": {
 											"maxItems": 3,
 											"type": "array",
@@ -4413,77 +4380,20 @@
 														"enum": [
 															"asc",
 															"desc"
-														]
+														],
+														"description": "Defaults to asc. Missing values sort last in either direction."
 													}
 												},
 												"required": [
-													"by",
-													"direction"
+													"by"
 												],
 												"additionalProperties": false
 											},
-											"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
-										},
-										"selection": {
-											"type": "object",
-											"properties": {
-												"mode": {
-													"type": "string",
-													"enum": [
-														"ordered",
-														"random"
-													],
-													"description": "Ordered uses the listed deployment order. Random selects uniformly across eligible deployments without replacement."
-												},
-												"targets": {
-													"minItems": 1,
-													"type": "array",
-													"items": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128,
-														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-													},
-													"uniqueItems": true,
-													"description": "Canonical deployment IDs from the eligible catalog pool. Required for ordered selection; omission in random mode uses every eligible deployment."
-												}
-											},
-											"required": [
-												"mode"
-											],
-											"additionalProperties": false,
-											"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
-											"allOf": [
-												{
-													"if": {
-														"properties": {
-															"mode": {
-																"const": "ordered"
-															}
-														}
-													},
-													"then": {
-														"required": [
-															"targets"
-														]
-													}
-												}
-											]
+											"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 										}
 									},
 									"additionalProperties": false,
-									"minProperties": 1,
-									"not": {
-										"required": [
-											"selection",
-											"sort"
-										],
-										"properties": {
-											"sort": {
-												"minItems": 1
-											}
-										}
-									}
+									"minProperties": 1
 								},
 								"when": {
 									"type": "string",

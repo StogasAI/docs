@@ -9,7 +9,7 @@ A **candidate** is one deployment with one of your provider credentials. For eac
 1. Starts with the candidates that can serve the request's `model`, endpoint, service tier and
    output limit.
 2. Removes the candidates that `allowedCatalogNodes` or `filter` exclude.
-3. Orders the rest with `sort` or `selection`, and sends the request to the first.
+3. Puts the rest in [order](#ordering) and sends the request to the first.
 
 ```jsonc title="policy.json"
 {
@@ -28,10 +28,10 @@ and sort by price, instead of writing a filter that matches exactly one deployme
 
 ## When no deployment fits
 
-| Error               | Cause                                                                                                   | Fix                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `model_unavailable` | No candidate is left.                                                                                   | Check the model, the key's credentials and the key's **Combined policy**.                |
-| `model_ambiguous`   | The request names no model, or a [group](/docs/models#groups) whose newest models share a release date. | Name a model, filter to one, or add a `sort` or `selection`. The error lists the models. |
+| Error               | Cause                                                                                                   | Fix                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `model_unavailable` | No candidate is left.                                                                                   | Check the model, the key's credentials and the key's **Combined policy**.             |
+| `model_ambiguous`   | The request names no model, or a [group](/docs/models#groups) whose newest models share a release date. | Name a model, filter to one, or add an `order` or `sort`. The error lists the models. |
 
 Filters and lists from every policy apply together, so an OpenAI-only policy and a Chutes-only
 policy leave no candidate. The error does not say which policy removed a deployment, and sending the
@@ -62,6 +62,7 @@ provider.id in ['openai', 'chutes'] && deployment.capabilities.streaming == true
 | `deployment.contextWindowTokens >= 128000`                            | Compare an integer                    |
 | `deployment.pricing.output_tokens.per_mill_tokens <= decimal('2.50')` | Compare an exact price                |
 | `'image' in deployment.inputModalities`                               | Check whether a list contains a value |
+| `author.headquarteredCountry in ['US', 'FR']`                         | Match one of several values           |
 | `model.name.contains('mini')`                                         | Check whether a string contains text  |
 | `has(deployment.deprecationDate)`                                     | Check whether a field is present      |
 | `deployment.inputModalities.exists(m, m == 'text')`                   | Check whether any list item matches   |
@@ -86,16 +87,41 @@ unknown, and `!` does not make it true. To accept deployments that do not state 
 
 Without the `has(...)` check, only deployments that state `false` pass.
 
-## Sorting
+## Ordering
 
-A sort has up to three criteria. Each has a CEL expression in `by` and a `direction` of `asc` or
-`desc`:
+The gateway tries candidates in this order:
+
+1. Deployments in `order`, in list order.
+2. The rest by `sort`.
+3. Ties by the default order: newest model, model ID, the request's
+   [`provider.order`](/docs/models#how-the-gateway-chooses-a-deployment), cheapest
+   [blended price](#blended-price) at 3:1, and deployment ID.
+
+The credentials of one deployment stay together, in the order that the key assigns them. The
+[fallbacks](#retries-and-fallbacks) follow the same order.
+
+```json title="Prefer OpenAI, then Claude, then the cheapest"
+{
+	"routing": {
+		"order": ["openai-gpt-5.6-sol", "anthropic-claude-sonnet-4-6"],
+		"sort": [{ "by": "blended_price(3, 1)" }]
+	}
+}
+```
+
+`order` skips listed deployments that the request cannot use. It never adds a deployment that the
+request's `model`, filters, lists or credentials exclude.
+
+### Sort
+
+A sort has up to three criteria. Each has a CEL expression in `by` and a `direction`, `asc` by
+default or `desc`:
 
 ```json title="Cheapest output, then largest context"
 {
 	"routing": {
 		"sort": [
-			{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" },
+			{ "by": "deployment.pricing.output_tokens.per_mill_tokens" },
 			{ "by": "deployment.contextWindowTokens", "direction": "desc" }
 		]
 	}
@@ -104,52 +130,66 @@ A sort has up to three criteria. Each has a CEL expression in `by` and a `direct
 
 - Each `by` expression must read an `author`, `model`, `deployment`, `route` or `provider` field.
 - Missing values sort last. Booleans sort `false` first when ascending. Lists cannot be sorted.
-- Deployment ID breaks any tie that remains.
-- Required sorts from several policies must be the same. A policy below cannot add criteria.
-- One order applies to every candidate. So credential policies cannot set `sort` or `selection`,
-  and a rule that sets either can test only `request` fields in `when`.
-- To set a sort that other policies can replace, put it in a
+
+When a request names no model, a sort can choose the model:
+
+```json title="Newest OpenAI model"
+{
+	"routing": {
+		"filter": "author.id == 'openai'",
+		"sort": [{ "by": "model.releaseDate", "direction": "desc" }]
+	}
+}
+```
+
+```json title="Cheapest Claude model"
+{
+	"routing": {
+		"filter": "'claude' in model.groupIds",
+		"sort": [{ "by": "blended_price(3, 1)" }]
+	}
+}
+```
+
+### Random order
+
+`random()` as the last criterion puts deployments in a random order, which spreads requests evenly.
+`random(weight)` gives each deployment a chance to come first in proportion to an integer weight:
+
+```json title="Azure three times as often as each other provider"
+{
+	"routing": {
+		"sort": [{ "by": "random(provider.id == 'azure' ? 3 : 1)" }]
+	}
+}
+```
+
+With one Azure and one OpenAI deployment, Azure comes first in about three of four requests, and
+the other deployment is its fallback.
+
+- Each deployment draws once, so its number of credentials does not change its chance.
+- A weight below 1 puts the deployment after the others.
+- `random` takes no `direction`, and filters and rule conditions cannot use it.
+- Criteria before `random()` come first:
+  `[{ "by": "provider.id == 'azure'", "direction": "desc" }, { "by": "random()" }]` tries Azure
+  deployments in random order, then the others in random order.
+- Each gateway draws on its own, without shared state.
+
+### Orders from several policies
+
+`order` and `sort` together are one setting.
+
+- All policies that set an `order` or `sort` must set the same `order` and the same `sort`. A
+  policy below cannot add criteria.
+- To set an order that other policies can replace, put it in a
   [default rule](/docs/policies/scopes#required-settings-and-defaults).
-- Without a sort or selection, the gateway uses the request's
-  [`provider.order`](/docs/models#how-the-gateway-chooses-a-deployment), then the cheapest
-  deployment, then the deployment ID.
+- One order applies to every candidate. So credential policies cannot set `order` or `sort`, and a
+  rule that sets either can test only `request` fields in `when`.
 
-## Ordered and random selection
-
-Use `selection` instead of `sort` to list deployments in order, or to spread requests across them:
-
-```json title="Prefer OpenAI, then Claude"
-{
-	"routing": {
-		"selection": {
-			"mode": "ordered",
-			"targets": ["openai-gpt-5.6-sol", "anthropic-claude-sonnet-4-6"]
-		}
-	}
-}
-```
-
-```json title="Spread requests evenly"
-{
-	"routing": {
-		"selection": { "mode": "random" }
-	}
-}
-```
-
-- `ordered` uses the first target that filters leave, with its credentials in their assigned
-  order. Later targets and credentials are the [fallbacks](#retries-and-fallbacks).
-- `random` gives each candidate deployment the same chance, whatever its number of credentials.
-  Add `targets` to choose only among those deployments. Each gateway chooses on its own, without
-  shared state.
-- Use `sort` or `selection`, not both. Required selections from several policies must be the same.
-
-### Prevent ordering below a scope
-
-To stop other policies from setting an order, remove `routing.sort` and `routing.selection` from
-the organization's [delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for every
-resource type and for `request`, and remove the organization's own default ordering. Requests then
-use the request's `provider.order` and the [default order](/docs/models#how-the-gateway-chooses-a-deployment).
+To stop other policies from setting an order, remove `routing.order` and `routing.sort` from the
+organization's [delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for every
+resource type and for `request`, and remove the organization's own default order. Requests then use
+the default order.
 
 ## Blended price
 

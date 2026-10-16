@@ -32,7 +32,7 @@ key. Each is a scope. A request must follow every policy that applies to it, and
 | Request                       | No       | No                          | -                                                     |
 
 - Every scope accepts `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`, but
-  credential policies cannot [set an order](/docs/policies/routing#sorting).
+  credential policies cannot [set an order](/docs/policies/routing#orders-from-several-policies).
 - Every saved scope can [permit request policies](/docs/policies/request-policies#grant-permission).
 - A saved policy can be up to 256 KiB, and a request policy up to 16 KiB. See
   [Document rules](/docs/policies/editing#document-rules).
@@ -65,11 +65,12 @@ when no required setting of the same kind applies:
 }
 ```
 
-A key policy with its own `routing.sort` replaces this default. Each of these is one kind of
-setting: `access`, `input`, each timeout, each routing field, and `plugins`. Replacing a default
-filter does not replace a default sort. All plugin settings are one kind, because encrypted plugin
-settings do not show which plugins they set. So a required plugin setting, such as text extraction,
-also replaces default redaction and default export destinations.
+A key policy with its own `routing.sort` or `routing.order` replaces this default. Each of these is
+one kind of setting: `access`, `input`, each timeout, each routing field, and `plugins`, except that
+`routing.order` and `routing.sort` are one kind. Replacing a default filter does not replace a
+default sort. All plugin settings are one kind, because encrypted plugin settings do not show which
+plugins they set. So a required plugin setting, such as text extraction, also replaces default
+redaction and default export destinations.
 
 When several policies set the same kind of setting, they combine. No policy wins because of its
 scope, role or order:
@@ -78,7 +79,7 @@ scope, role or order:
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | [Routing filters](/docs/policies/routing)                             | Every filter must match.                                               |
 | [Allowed catalog nodes](/docs/policies/routing#allowed-catalog-nodes) | Only nodes in every list. An empty list allows none.                   |
-| [Sort order](/docs/policies/routing#sorting)                          | The orders must agree, with at most three criteria.                    |
+| [Order](/docs/policies/routing#orders-from-several-policies)          | Every policy that sets an order must set the same one.                 |
 | [Deny periods](/docs/policies/access#deny-periods)                    | Every period applies.                                                  |
 | [Redaction](/docs/pii-redaction)                                      | Every preset, literal and pattern applies to the original text.        |
 | [ASCII-only input](/docs/pii-redaction#ascii-only-input)              | Required if any policy requires it.                                    |
@@ -120,8 +121,9 @@ when the request goes to OpenAI.
   gateway skips that choice and tries the others. Check optional facts with `has(...)`. An error
   in a condition, such as division by zero, fails the request.
 - Rules can contain `access`, `input`, `timeouts`, `limits`, `plugins` and `routing`, but not
-  other rules, `delegation` or `encryption`. A rule that [sets an order](/docs/policies/routing#sorting)
-  or [fallbacks](/docs/policies/routing#retries-and-fallbacks) can test only `request` fields.
+  other rules, `delegation` or `encryption`. A rule that
+  [sets an order](/docs/policies/routing#orders-from-several-policies) or
+  [fallbacks](/docs/policies/routing#retries-and-fallbacks) can test only `request` fields.
 - Rules have no order. A name only identifies a rule and its [limits](/docs/policies/limits#conditional-limits).
   Names use 1–48 lowercase letters, digits, `_` or `-`, start with a letter, and cannot be
   `constructor` or `prototype`.

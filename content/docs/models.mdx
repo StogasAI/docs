@@ -51,21 +51,22 @@ Models belong to groups, such as `claude-opus` for every Claude Opus model and `
 Claude model. In the web catalog, search a group with `group:`. Models do not inherit prices,
 features or data handling from their groups.
 
-A group ID selects the group's newest model by release date, so requests move to a new model on the
-day it joins the catalog. To stay on one model, send its model ID. A provider prefix works on groups
-too: `openai/gpt-6` selects the newest GPT-6 model that OpenAI serves.
+A group ID selects the group's newest model that your credentials and policies allow, by release
+date, so requests move to a new model on the day it joins the catalog. To stay on one model, send
+its model ID. A provider prefix works on groups too: `openai/gpt-6` selects the newest GPT-6 model
+that OpenAI serves.
 
 - When the newest models share a release date, the request returns `model_ambiguous` with their
-  IDs. For example, GPT-5.6 Luna, Sol and Terra came out on the same day, so `gpt-5.6` needs a model
-  ID or a policy order.
-- A routing policy's `sort` or `selection` chooses among all of the group's models instead. With the
-  policy below, `gpt-5.6` selects the cheapest GPT-5.6 model.
+  IDs, unless a routing policy sets an `order` or `sort`. For example, GPT-5.6 Luna, Sol and Terra
+  came out on the same day, so with the policy below, `gpt-5.6` selects the cheapest of them.
+- A policy cannot select an older model of the group. Send its model ID, or send no model and
+  [sort the group's models](/docs/policies/routing#sort).
 - Groups leave out deployments that need approval. Send their model or deployment ID instead.
 
-```json title="Cheapest model of the requested group"
+```json title="Cheapest of the group's newest models"
 {
 	"routing": {
-		"sort": [{ "by": "blended_price(3, 1)", "direction": "asc" }]
+		"sort": [{ "by": "blended_price(3, 1)" }]
 	}
 }
 ```
@@ -83,8 +84,8 @@ For a model ID, the gateway:
 
 1. Removes deployments that cannot serve the request, for example because they lack a requested
    feature, have no credential on your API key, or are excluded by a [policy](/docs/policies/routing).
-2. Orders the rest by the policy's `sort` or `selection`. Without either, it orders them by the
-   request's `provider.order`, then by price, cheapest first, then by deployment ID.
+2. Orders the rest by the policy's [`order` and `sort`](/docs/policies/routing#ordering), then by
+   the request's `provider.order`, then by price, cheapest first, then by deployment ID.
 3. Sends the request to the first deployment.
 
 The price order weighs input three times output, like
@@ -98,8 +99,7 @@ after both.
 Chat Completions and Responses requests can leave out `model`. The gateway then considers the
 Standard tier, or the tier in `service_tier`, of every model that your credentials and policies
 allow, except deployments that need approval. Price never chooses a model: unless one model remains,
-or a policy `sort` or `selection` orders the deployments, the request returns `model_ambiguous` with
-the model IDs.
+or a policy sets an `order` or `sort`, the request returns `model_ambiguous` with the model IDs.
 
 There is no automatic preference for the model author's own provider. To limit or order providers
 for one request, add `provider`:
