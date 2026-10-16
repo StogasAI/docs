@@ -1071,16 +1071,18 @@
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Up to 16 string keys and values, for SDK compatibility. The gateway checks the size and removes it before it calls the provider.",
+						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. The gateway does not send metadata to the provider.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",
 							"minLength": 1,
-							"maxLength": 64
+							"maxLength": 64,
+							"pattern": "^[^\\u0000-\\u001f]*$"
 						},
 						"additionalProperties": {
 							"type": "string",
-							"maxLength": 512
+							"maxLength": 512,
+							"pattern": "^[^\\u0000-\\u001f]*$"
 						}
 					},
 					"modalities": {
@@ -1861,16 +1863,18 @@
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Up to 16 string keys and values, for SDK compatibility. The gateway checks the size and removes it before it calls the provider.",
+						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. The gateway does not send metadata to the provider.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",
 							"minLength": 1,
-							"maxLength": 64
+							"maxLength": 64,
+							"pattern": "^[^\\u0000-\\u001f]*$"
 						},
 						"additionalProperties": {
 							"type": "string",
-							"maxLength": 512
+							"maxLength": 512,
+							"pattern": "^[^\\u0000-\\u001f]*$"
 						}
 					},
 					"parallel_tool_calls": {

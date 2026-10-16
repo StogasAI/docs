@@ -62,26 +62,28 @@ An API key's **Requests** link opens the same history filtered to that key.
 
 ### Filters
 
-| Filter              | Matches                                                                                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `key:`              | An API key ID or name.                                                                                                                                        |
-| `grant:`, `member:` | Member keys under a grant, or keys owned by a member.                                                                                                         |
-| `model:`            | A model ID. Suggestions include current catalog names.                                                                                                        |
-| `provider:`         | Any provider attempt.                                                                                                                                         |
-| `final_provider:`   | The last provider attempt.                                                                                                                                    |
-| `byok:`             | A provider credential name or ID used by any attempt, or `stogas` for a Stogas-managed credential.                                                            |
-| `final_byok:`       | The provider credential of the last attempt.                                                                                                                  |
-| `type:`             | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.                                                               |
-| `outcome:`          | `success`, `failed`, `cancelled`, `rejected` or `unknown`.                                                                                                    |
-| `status:`           | `success`, a [provider result](/docs/request-records#provider-results), a gateway error code such as `insufficient_balance`, or an HTTP status such as `402`. |
-| `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                               |
-| `redaction:`        | `redacted`, `no_matches` or `not_recorded`. See [PII redaction](/docs/pii-redaction).                                                                         |
+| Filter              | Matches                                                                                                                                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key:`              | An API key ID or name.                                                                                                                                                                            |
+| `grant:`, `member:` | Member keys under a grant, or keys owned by a member.                                                                                                                                             |
+| `model:`            | A model ID. Suggestions include current catalog names.                                                                                                                                            |
+| `provider:`         | Any provider attempt.                                                                                                                                                                             |
+| `final_provider:`   | The last provider attempt.                                                                                                                                                                        |
+| `byok:`             | A provider credential name or ID used by any attempt, or `stogas` for a Stogas-managed credential.                                                                                                |
+| `final_byok:`       | The provider credential of the last attempt.                                                                                                                                                      |
+| `type:`             | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.                                                                                                   |
+| `transport:`        | `https`, `attested_tls` or `e2ee`. See [connection modes](/docs/connection-modes).                                                                                                                |
+| `metadata.<key>:`   | A value of a [metadata](/docs/request-records#metadata) key, such as `metadata.team:search`. Keys and values are case-sensitive. Keys with spaces or `:`, `!`, `<`, `>` or `=` can't be filtered. |
+| `outcome:`          | `success`, `failed`, `cancelled`, `rejected` or `unknown`.                                                                                                                                        |
+| `status:`           | `success`, a [provider result](/docs/request-records#provider-results), a gateway error code such as `insufficient_balance`, or an HTTP status such as `402`.                                     |
+| `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                                                                   |
+| `redaction:`        | `redacted`, `no_matches` or `not_recorded`. See [PII redaction](/docs/pii-redaction).                                                                                                             |
 
 `status:success` matches completed requests with no cancellation or gateway error. Other `status:`
 values check every provider attempt, including earlier failed ones.
 
-`none` selects requests without a value in `grant:`, `model:`, `final_provider:`, `final_byok:` and
-`error:`. For example, `error:none` selects requests without a gateway error.
+`none` selects requests without a value in `grant:`, `model:`, `final_provider:`, `final_byok:`,
+`error:` and `metadata.<key>:`. For example, `error:none` selects requests without a gateway error.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
 

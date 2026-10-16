@@ -20,6 +20,8 @@ credential. Quantities and money are decimal strings. A missing value is unknown
 | `stogas_organization_id`, `stogas_api_key_id`, `stogas_grant_id`, `stogas_user_id` | The organization, key, grant and member behind the request.                                     |
 | `request_type`                                                                     | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`. |
 | `request_settings`                                                                 | [Settings](#request-settings) the gateway sent to the provider. `{}` when it sent none.         |
+| `metadata`                                                                         | The request's [metadata](#metadata). `{}` when it had none.                                     |
+| `transport`                                                                        | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.      |
 | `cancelled`, `client_stop_ms`                                                      | Whether the client cancelled, and when on the request clock.                                    |
 | `catalog_version`                                                                  | The approved catalog used for the request.                                                      |
 | `policy_versions`                                                                  | Revisions of the routing, access and limit policies that applied.                               |
@@ -79,11 +81,23 @@ The names are `max_output_tokens`, `reasoning_enabled`, `reasoning_effort`, `rea
 `verbosity`, `response_format`, `include`, `tool_choice`, `parallel_tool_calls`, `max_tool_calls`
 and `truncation`.
 
-Prompts, instructions, stop sequences, tools, schemas, metadata and identifiers are never recorded.
+Prompts, instructions, stop sequences, tools, schemas and identifiers such as `user` are never
+recorded.
 Other fields record streaming (`request_type`), service tier, speed and region (the
 [catalog chain](#catalog-history)) and caching (`usage`). The record leaves out a text value that
 is longer than 64 characters or not printable ASCII, a list with more than 16 entries, and an
 integer above 9007199254740991 or below -9007199254740991.
+
+## Metadata
+
+Send a `metadata` object with a Chat Completions or Responses request to label it, for example by
+team, feature or session. The record keeps it, so you can [filter analytics](/docs/analytics#filters)
+by it and find it in downloads and exports. The gateway never sends it to the provider.
+
+Metadata has up to 16 pairs. Keys have 1 to 64 bytes and values up to 512 bytes, counted as UTF-8,
+and neither can contain control characters such as line breaks. The gateway rejects other metadata
+with `invalid_request`. [PII redaction](/docs/pii-redaction) does not scan metadata, so keep
+personal data out of it. Rejection records have no metadata.
 
 ## Provider results
 
@@ -144,11 +158,11 @@ recorded. See [PII redaction](/docs/pii-redaction).
 
 Requests rejected before billing authorization, such as for credit, policy or validation errors,
 appear once the gateway can tell which API key sent them. In each UTC minute, the first five
-rejections with the same key, endpoint, error code and HTTP status keep their own records and appear
-within seconds. Further repeats in that minute share one record with a `request_count`, which
-appears after the minute ends. Each gateway groups its own requests, so a client whose requests
-reach several gateways can see more single records. Successful requests and provider errors are
-never grouped.
+rejections with the same key, endpoint, `transport`, error code and HTTP status keep their own
+records and appear within seconds. Further repeats in that minute share one record with a
+`request_count`, which appears after the minute ends. Each gateway groups its own requests, so a
+client whose requests reach several gateways can see more single records. Successful requests and
+provider errors are never grouped.
 
 On each gateway, only an organization's first 32 groups in a minute keep single records. Its later
 groups have only the counted record, and after 256 groups the gateway records none of the

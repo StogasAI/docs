@@ -28,8 +28,9 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
 - Unknown top-level fields and unknown headers are ignored, and never sent to the provider.
 - `null`, and the empty defaults that SDKs send, count as omitted.
 - `store` accepts only `false`. The gateway never asks a provider to store a response.
-- `user`, `safety_identifier` and `metadata` are accepted for SDK compatibility, and removed before
-  the gateway calls the provider.
+- `user` and `safety_identifier` are accepted for SDK compatibility, and removed before the gateway
+  calls the provider.
+- `metadata` goes to the [request record](/docs/request-records#metadata), not to the provider.
 - `max_tokens` is another name for `max_completion_tokens` on Chat Completions.
 - Streamed Chat Completions always include usage.
 - Sampling values, such as `temperature`, go to the provider unchanged. The provider decides which

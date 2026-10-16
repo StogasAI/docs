@@ -8306,6 +8306,27 @@
 														},
 														"additionalProperties": false
 													},
+													"metadata": {
+														"default": {},
+														"type": "object",
+														"propertyNames": {
+															"type": "string",
+															"pattern": "^[^\\u0000-\\u001f]*$"
+														},
+														"additionalProperties": {
+															"type": "string",
+															"pattern": "^[^\\u0000-\\u001f]*$"
+														}
+													},
+													"transport": {
+														"default": "https",
+														"type": "string",
+														"enum": [
+															"https",
+															"attested_tls",
+															"e2ee"
+														]
+													},
 													"cancelled": {
 														"type": "boolean"
 													},
@@ -8680,6 +8701,8 @@
 													"stogas_organization_id",
 													"request_type",
 													"request_settings",
+													"metadata",
+													"transport",
 													"cancelled",
 													"client_stop_ms",
 													"catalog_version",
