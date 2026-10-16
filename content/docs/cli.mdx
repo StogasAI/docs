@@ -125,9 +125,10 @@ provider health, database-backed authorization, or the success rate of all custo
 stogas serve --browser-origin https://app.example.com
 ```
 
-Use the complete printed URL. Only that origin can call the endpoint. The CLI answers CORS and
-local-network preflight requests itself and keeps its `--security` mode. The browser can ask the
-user for local-network permission.
+Use the complete printed URL. Only pages from that origin can call the endpoint, and without the
+option no web page can. Programs that are not browsers send no origin and need no option. The CLI
+answers CORS and local-network preflight requests itself and keeps its `--security` mode. The
+browser can ask the user for local-network permission.
 
 ```js
 import OpenAI from 'openai';
