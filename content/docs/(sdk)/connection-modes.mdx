@@ -68,17 +68,17 @@ The SDK manages connections and sessions. Reuse one transport for the life of yo
 close it at shutdown. Setup costs more than ordinary HTTPS because it checks fresh evidence;
 reuse spreads that cost over many requests.
 
-The SDK opens a new session when a gateway shuts down for an update, when the gateway reclaims an
-idle E2EE session, or when a session reaches its key limit. Requests that are already running
+The SDK opens a new session when a gateway shuts down for an update, when a session has started no
+request for one minute, or when a session reaches its key limit. Requests that are already running
 finish on the old session. Error responses, including rate limits and provider errors, do not end
 a session.
 
-With attested TLS, the SDK sends a request once more only when the gateway refused it before
-starting it, for example because the gateway closed the connection as the request arrived. With
-E2EE, the SDK never sends a request again: if a gateway ends a session between requests, for
-example for an update, the next request on that session fails and later requests use a new session.
-If a connection or session ends during a request, that request fails. Your OpenAI client decides
-whether to retry; a retry can run and bill the request again.
+The SDK sends a request once more, on a new connection or session, only when the gateway refused it
+before starting it: for example, because the gateway is shutting down for an update or closed the
+connection as the request arrived. With E2EE, the refusal arrives inside the encrypted session, so
+no proxy can fake it. If no new connection or session can start, you get the gateway's `503`
+response. If a connection or session ends during a request, that request fails. Your OpenAI client
+decides whether to retry; a retry can run and bill the request again.
 
 ## Limits
 
