@@ -6360,6 +6360,28 @@
 								"auto"
 							]
 						}
+					},
+					{
+						"name": "percentiles",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"maxItems": 8,
+							"type": "array",
+							"items": {
+								"type": "string",
+								"enum": [
+									"latency",
+									"provider_latency",
+									"ttft",
+									"input_tokens",
+									"output_tokens",
+									"tokens_per_second",
+									"upstream_cost",
+									"billed_cost"
+								]
+							}
+						}
 					}
 				],
 				"responses": {
@@ -6421,16 +6443,37 @@
 																	"minimum": 0
 																},
 																"p50": {
-																	"type": "number",
-																	"minimum": 0
+																	"anyOf": [
+																		{
+																			"type": "number",
+																			"minimum": 0
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
 																},
 																"p95": {
-																	"type": "number",
-																	"minimum": 0
+																	"anyOf": [
+																		{
+																			"type": "number",
+																			"minimum": 0
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
 																},
 																"p99": {
-																	"type": "number",
-																	"minimum": 0
+																	"anyOf": [
+																		{
+																			"type": "number",
+																			"minimum": 0
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
 																}
 															},
 															"required": [
@@ -6877,16 +6920,37 @@
 																	"minimum": 0
 																},
 																"p50": {
-																	"type": "number",
-																	"minimum": 0
+																	"anyOf": [
+																		{
+																			"type": "number",
+																			"minimum": 0
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
 																},
 																"p95": {
-																	"type": "number",
-																	"minimum": 0
+																	"anyOf": [
+																		{
+																			"type": "number",
+																			"minimum": 0
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
 																},
 																"p99": {
-																	"type": "number",
-																	"minimum": 0
+																	"anyOf": [
+																		{
+																			"type": "number",
+																			"minimum": 0
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
 																}
 															},
 															"required": [
@@ -7075,16 +7139,37 @@
 																"minimum": 0
 															},
 															"p50": {
-																"type": "number",
-																"minimum": 0
+																"anyOf": [
+																	{
+																		"type": "number",
+																		"minimum": 0
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
 															},
 															"p95": {
-																"type": "number",
-																"minimum": 0
+																"anyOf": [
+																	{
+																		"type": "number",
+																		"minimum": 0
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
 															},
 															"p99": {
-																"type": "number",
-																"minimum": 0
+																"anyOf": [
+																	{
+																		"type": "number",
+																		"minimum": 0
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
 															}
 														},
 														"required": [
@@ -7270,16 +7355,37 @@
 																		"minimum": 0
 																	},
 																	"p50": {
-																		"type": "number",
-																		"minimum": 0
+																		"anyOf": [
+																			{
+																				"type": "number",
+																				"minimum": 0
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
 																	},
 																	"p95": {
-																		"type": "number",
-																		"minimum": 0
+																		"anyOf": [
+																			{
+																				"type": "number",
+																				"minimum": 0
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
 																	},
 																	"p99": {
-																		"type": "number",
-																		"minimum": 0
+																		"anyOf": [
+																			{
+																				"type": "number",
+																				"minimum": 0
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
 																	}
 																},
 																"required": [
