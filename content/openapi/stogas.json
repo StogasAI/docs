@@ -169,6 +169,9 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Metadata"
+					},
+					{
+						"$ref": "#/components/parameters/SessionId"
 					}
 				],
 				"requestBody": {
@@ -258,6 +261,9 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Metadata"
+					},
+					{
+						"$ref": "#/components/parameters/SessionId"
 					}
 				],
 				"requestBody": {
@@ -544,6 +550,16 @@
 					]
 				},
 				"description": "Set to `v1` to add the `stogas` object, with usage, cost and a signed [receipt](/docs/receipts), to the response."
+			},
+			"SessionId": {
+				"name": "X-Session-Id",
+				"in": "header",
+				"schema": {
+					"type": "string",
+					"maxLength": 256,
+					"pattern": "^[^\\u0000-\\u001f]*$"
+				},
+				"description": "Groups the request with others in the same [session](/docs/request-records#sessions). Send it at most once. The body's `session_id` takes precedence."
 			}
 		},
 		"responses": {
@@ -1084,6 +1100,12 @@
 							"maxLength": 512,
 							"pattern": "^[^\\u0000-\\u001f]*$"
 						}
+					},
+					"session_id": {
+						"type": "string",
+						"maxLength": 256,
+						"pattern": "^[^\\u0000-\\u001f]*$",
+						"description": "Groups the request with others in the same [session](/docs/request-records#sessions), which analytics can filter by. Up to 256 bytes in UTF-8, without control characters. Takes precedence over the `X-Session-Id` header. The gateway does not send it to the provider."
 					},
 					"modalities": {
 						"type": "array",
@@ -1876,6 +1898,12 @@
 							"maxLength": 512,
 							"pattern": "^[^\\u0000-\\u001f]*$"
 						}
+					},
+					"session_id": {
+						"type": "string",
+						"maxLength": 256,
+						"pattern": "^[^\\u0000-\\u001f]*$",
+						"description": "Groups the request with others in the same [session](/docs/request-records#sessions), which analytics can filter by. Up to 256 bytes in UTF-8, without control characters. Takes precedence over the `X-Session-Id` header. The gateway does not send it to the provider."
 					},
 					"parallel_tool_calls": {
 						"type": "boolean",

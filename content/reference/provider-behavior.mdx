@@ -30,7 +30,8 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
 - `store` accepts only `false`. The gateway never asks a provider to store a response.
 - `user` and `safety_identifier` are accepted for SDK compatibility, and removed before the gateway
   calls the provider.
-- `metadata` goes to the [request record](/docs/request-records#metadata), not to the provider.
+- [`metadata`](/docs/request-records#metadata) and [`session_id`](/docs/request-records#sessions)
+  go to the request record, not to the provider.
 - `max_tokens` is another name for `max_completion_tokens` on Chat Completions.
 - Streamed Chat Completions always include usage.
 - Sampling values, such as `temperature`, go to the provider unchanged. The provider decides which

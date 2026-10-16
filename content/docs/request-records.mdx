@@ -20,6 +20,7 @@ credential. Quantities and money are decimal strings. A missing value is unknown
 | `stogas_organization_id`, `stogas_api_key_id`, `stogas_grant_id`, `stogas_user_id` | The organization, key, grant and member behind the request.                                     |
 | `request_type`                                                                     | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`. |
 | `request_settings`                                                                 | [Settings](#request-settings) the gateway sent to the provider. `{}` when it sent none.         |
+| `session_id`                                                                       | The request's [session](#sessions). Empty when it had none.                                     |
 | `metadata`                                                                         | The request's [metadata](#metadata). `{}` when it had none.                                     |
 | `transport`                                                                        | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.      |
 | `cancelled`, `client_stop_ms`                                                      | Whether the client cancelled, and when on the request clock.                                    |
@@ -91,13 +92,26 @@ integer above 9007199254740991 or below -9007199254740991.
 ## Metadata
 
 Send a `metadata` object with a Chat Completions or Responses request to label it, for example by
-team, feature or session. The record keeps it, so you can [filter analytics](/docs/analytics#filters)
-by it and find it in downloads and exports. The gateway never sends it to the provider.
+team or feature. The record keeps it, so you can [filter analytics](/docs/analytics#filters) by it
+and find it in downloads and exports. The gateway never sends it to the provider.
 
 Metadata has up to 16 pairs. Keys have 1 to 64 bytes and values up to 512 bytes, counted as UTF-8,
 and neither can contain control characters such as line breaks. The gateway rejects other metadata
 with `invalid_request`. [PII redaction](/docs/pii-redaction) does not scan metadata, so keep
 personal data out of it. Rejection records have no metadata.
+
+## Sessions
+
+Send a session ID to group the requests of one conversation or task, then
+[filter analytics](/docs/analytics#filters) with `session:`. Chat Completions and Responses take it
+as a `session_id` field or an `X-Session-Id` header; the field wins when a request has both.
+OpenCode sends `X-Session-Id` on its own. Codex sends a `Session-Id` header, which the record uses
+when the request has no other session ID.
+
+A session ID has up to 256 bytes, counted as UTF-8, and no control characters such as line breaks.
+The gateway rejects an invalid `session_id`, and an `X-Session-Id` that is invalid or sent twice,
+with `invalid_request`. It ignores an invalid `Session-Id`. The gateway never sends the session ID
+to the provider, and PII redaction does not scan it. Rejection records have no session ID.
 
 ## Provider results
 

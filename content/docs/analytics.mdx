@@ -74,6 +74,7 @@ An API key's **Requests** link opens the same history filtered to that key.
 | `type:`             | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.                                                                                                   |
 | `transport:`        | `https`, `attested_tls` or `e2ee`. See [connection modes](/docs/connection-modes).                                                                                                                |
 | `metadata.<key>:`   | A value of a [metadata](/docs/request-records#metadata) key, such as `metadata.team:search`. Keys and values are case-sensitive. Keys with spaces or `:`, `!`, `<`, `>` or `=` can't be filtered. |
+| `session:`          | A [session](/docs/request-records#sessions) ID, such as `session:chat-42`. Session IDs are case-sensitive.                                                                                        |
 | `outcome:`          | `success`, `failed`, `cancelled`, `rejected` or `unknown`.                                                                                                                                        |
 | `status:`           | `success`, a [provider result](/docs/request-records#provider-results), a gateway error code such as `insufficient_balance`, or an HTTP status such as `402`.                                     |
 | `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                                                                   |
@@ -83,7 +84,8 @@ An API key's **Requests** link opens the same history filtered to that key.
 values check every provider attempt, including earlier failed ones.
 
 `none` selects requests without a value in `grant:`, `model:`, `final_provider:`, `final_byok:`,
-`error:` and `metadata.<key>:`. For example, `error:none` selects requests without a gateway error.
+`error:`, `metadata.<key>:` and `session:`. For example, `error:none` selects requests without a
+gateway error.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
 
