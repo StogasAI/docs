@@ -96,7 +96,8 @@ Key manifests, approval manifests and boot records share one format:
 
 - A `{document, signature}` JSON envelope with snake_case fields and the Rekor `inclusion` proof.
 - The approval manifest contains the hardware policy and each approved gateway release and catalog
-  as `{document, provenance}`, where `provenance` is GitHub's build proof.
+  as `{document, provenance}`, where `provenance` is GitHub's build proof. The hardware policy's
+  `version` increases by one with each change to its rules.
 - Each document names its schema. Release artifacts list their SHA-256 and size in bytes.
 - The signature covers the RFC 8785 canonical JSON of `document` with the purpose label
   `stogas signed document v1`. The final newline of a file is not signed.

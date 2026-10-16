@@ -43,7 +43,7 @@ the proof only as hashes.
 
 The hardware policy lists the approved chip models and the minimum firmware and microcode versions
 for each. Each release also fixes its own VM settings, such as debugging off. A gateway must meet
-both.
+both. Each change to the policy gets the next version number.
 
 During a firmware update, the policy can allow more than one configuration for the same chip. A
 gateway must meet every requirement of one of them. When the update is done, we remove the old
@@ -79,12 +79,15 @@ record:
 - **Catalogs**, **Hardware policy**, **Key manifest** and **Approval manifest**.
 
 The approval manifest's signature covers each release, the hardware policy and the Sigstore keys,
-so their cards link to it. We approve a release only after our own build matches the one in
-GitHub's build proof. AMD signs its own certificates and revocation lists.
+so their cards show **Approved by Stogas** and link to it. We approve a release only after our own
+build matches GitHub's, but our signature cannot prove that this build happened; to check a release
+yourself, see [Reproducible builds](/docs/reproducible-builds). Sigstore signs its own keys, and AMD
+signs its own certificates and revocation lists. Each GitHub build proof, manifest and boot record
+has its own Rekor entry, which its **Rekor entry** link opens in
+[Rekor Search](https://search.sigstore.dev).
 
 Each card has one mark that shows that its evidence passed verification. Hover over or focus the
-mark to see how long the check took. Search each history tab by ID or version, or a hardware policy
-by the start of its digest.
+mark to see how long the check took. Search each history tab by ID or version.
 
 Past boots stay checkable after keys rotate or AMD lists expire: we keep the original evidence,
 and the verifier checks it as of the time Rekor logged the boot. New connections always need
