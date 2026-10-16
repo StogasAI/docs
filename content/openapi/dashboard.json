@@ -4816,23 +4816,19 @@
 														"minLength": 1,
 														"maxLength": 4096
 													},
-													"subscriptionIds": {
-														"minItems": 1,
-														"maxItems": 64,
-														"type": "array",
-														"items": {
-															"type": "string"
-														}
-													},
 													"tenantId": {
 														"type": "string"
+													},
+													"accountId": {
+														"type": "string",
+														"pattern": "^\\/subscriptions\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/resourcegroups\\/[-\\w.()\\p{L}\\p{N}]{0,89}[-\\w()\\p{L}\\p{N}]\\/providers\\/microsoft\\.cognitiveservices\\/accounts\\/[a-z0-9][a-z0-9-]{1,63}$"
 													}
 												},
 												"required": [
 													"clientId",
 													"clientSecret",
-													"subscriptionIds",
-													"tenantId"
+													"tenantId",
+													"accountId"
 												],
 												"additionalProperties": false
 											},
@@ -4949,6 +4945,144 @@
 				}
 			}
 		},
+		"/api/{orgId}/byok/azure/accounts": {
+			"post": {
+				"operationId": "findAzureAccounts",
+				"tags": [
+					"BYOK"
+				],
+				"summary": "List the Azure accounts that an application can read",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"clientId": {
+										"type": "string"
+									},
+									"clientSecret": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 4096
+									},
+									"tenantId": {
+										"type": "string"
+									},
+									"subscriptionIds": {
+										"minItems": 1,
+										"maxItems": 64,
+										"type": "array",
+										"items": {
+											"type": "string"
+										},
+										"uniqueItems": true
+									}
+								},
+								"required": [
+									"clientId",
+									"clientSecret",
+									"tenantId",
+									"subscriptionIds"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"items": {
+											"maxItems": 512,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"byokId": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "uuid"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"id": {
+														"type": "string",
+														"pattern": "^\\/subscriptions\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/resourcegroups\\/[-\\w.()\\p{L}\\p{N}]{0,89}[-\\w()\\p{L}\\p{N}]\\/providers\\/microsoft\\.cognitiveservices\\/accounts\\/[a-z0-9][a-z0-9-]{1,63}$"
+													},
+													"location": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													},
+													"problem": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"network",
+																	"subdomain",
+																	"endpoint"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"byokId",
+													"id",
+													"location",
+													"name",
+													"problem"
+												],
+												"additionalProperties": false
+											}
+										}
+									},
+									"required": [
+										"items"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/byok/{byokId}/azure-bindings": {
 			"get": {
 				"operationId": "listAzureBindings",
@@ -5011,19 +5145,15 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"accountId": {
+											"type": "string",
+											"pattern": "^\\/subscriptions\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/resourcegroups\\/[-\\w.()\\p{L}\\p{N}]{0,89}[-\\w()\\p{L}\\p{N}]\\/providers\\/microsoft\\.cognitiveservices\\/accounts\\/[a-z0-9][a-z0-9-]{1,63}$"
+										},
 										"items": {
 											"type": "array",
 											"items": {
 												"type": "object",
 												"properties": {
-													"accountLocation": {
-														"type": "string",
-														"minLength": 1
-													},
-													"accountResourceId": {
-														"type": "string",
-														"minLength": 1
-													},
 													"available": {
 														"type": "boolean"
 													},
@@ -5158,15 +5288,9 @@
 																]
 															}
 														]
-													},
-													"subscriptionId": {
-														"type": "string",
-														"format": "uuid"
 													}
 												},
 												"required": [
-													"accountLocation",
-													"accountResourceId",
 													"available",
 													"deploymentName",
 													"deploymentResourceId",
@@ -5184,8 +5308,7 @@
 													"selected",
 													"processingLocation",
 													"skuName",
-													"storageLocation",
-													"subscriptionId"
+													"storageLocation"
 												],
 												"additionalProperties": false
 											}
@@ -5201,49 +5324,15 @@
 												}
 											]
 										},
-										"unusableAccounts": {
-											"maxItems": 512,
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"id": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 2048
-													},
-													"location": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128
-													},
-													"reason": {
-														"type": "string",
-														"enum": [
-															"network",
-															"subdomain",
-															"endpoint",
-															"role"
-														]
-													}
-												},
-												"required": [
-													"id",
-													"location",
-													"reason"
-												],
-												"additionalProperties": false
-											}
-										},
 										"updatedAt": {
 											"type": "string",
 											"format": "date-time"
 										}
 									},
 									"required": [
+										"accountId",
 										"items",
 										"nextCursor",
-										"unusableAccounts",
 										"updatedAt"
 									],
 									"additionalProperties": false
@@ -5535,14 +5624,6 @@
 												"minLength": 1,
 												"maxLength": 4096
 											},
-											"subscriptionIds": {
-												"minItems": 1,
-												"maxItems": 64,
-												"type": "array",
-												"items": {
-													"type": "string"
-												}
-											},
 											"tenantId": {
 												"type": "string"
 											}
@@ -5550,7 +5631,6 @@
 										"required": [
 											"clientId",
 											"clientSecret",
-											"subscriptionIds",
 											"tenantId"
 										],
 										"additionalProperties": false

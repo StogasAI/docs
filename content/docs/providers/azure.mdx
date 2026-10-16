@@ -15,30 +15,33 @@ create. Azure bills you for inference, and we charge the [BYOK fee](/docs/byok#b
 
 ### Create an Entra application
 
-Create one application for the Azure subscriptions that the credential may use, and create a client
-secret for it.
+Create one Microsoft Entra application and a client secret for it. One application can serve all of
+your accounts.
 
 </Step>
 <Step>
 
 ### Grant roles
 
-Give the application's service principal **Reader** on each subscription, and **Foundry User** on
-the model accounts or projects that it may call. **Owner**, **Contributor** and **Reader** let it
-manage or read an account, but not run model requests. Role changes can take several minutes to
-apply.
+Give the application's service principal two roles on each model account, or on a resource group or
+subscription that contains the accounts:
+
+- **Reader** lets us find the account, its deployments and its Foundry projects.
+- **Foundry User** lets the gateway run model requests. **Owner**, **Contributor** and **Reader**
+  do not allow model requests.
+
+Role changes can take several minutes to apply.
 
 </Step>
 <Step>
 
-### Add the credential
+### Connect accounts
 
-Open **BYOK → Add → Azure** and enter the tenant ID, client ID, client secret and subscription IDs.
-We read Azure Resource Manager to find your model accounts, deployments and Foundry projects, and
-the application's permissions on each account. These reads are free, so they cannot prove quota.
-Azure checks quota when a request runs.
+Open **BYOK → Add → Azure**, enter the tenant ID, client ID, client secret and the IDs of the
+subscriptions that hold your accounts, and select **Find accounts**. Choose the accounts and select
+**Connect**. Each account becomes its own credential, named after the account.
 
-Each account needs:
+An account needs two settings before you can connect it, and the list shows which one is missing:
 
 - An endpoint that accepts Microsoft Entra sign-in. Accounts created in the Azure portal, Cloud
   Shell or Azure CLI have one on their
@@ -53,10 +56,9 @@ Each account needs:
   reaches your account over the public internet from addresses that can change, so Azure rejects
   its requests when you allow only selected networks or private endpoints, disable public access,
   or use a network security perimeter.
-- A role for the application that allows model requests, such as **Foundry User**.
 
-**Azure targets** lists the accounts that miss a requirement and what each one needs. An account
-that lacks only the role keeps its targets, because a new role can take several minutes to show.
+If the application has no role that allows model requests, the credential shows a failed check but
+keeps its targets, because a new role can take several minutes to show.
 
 </Step>
 <Step>
@@ -68,10 +70,14 @@ Open an API key and select the credential under **Credentials**.
 </Step>
 </Steps>
 
+We read Azure Resource Manager to find your deployments and projects. These reads are free, so they
+cannot prove quota; Azure checks quota when a request runs. We check each credential once a day, and
+an hour after a failed check. After you add, remove or change deployments or projects, select
+**Check credential** in the BYOK list, or **Refresh targets** in **Azure targets**, to update its
+targets at once. To change the application or its secret, edit the credential; it keeps its account.
+
 Customer encryption is not available for Azure credentials. Your deployment names, resource IDs,
-endpoints and locations never appear in the public catalog. We check the credential once a day and
-update its targets. After you add, remove or change deployments or projects, select **Check
-credential** in the BYOK list, or **Refresh targets** in **Azure targets**, to update them at once.
+endpoints and locations never appear in the public catalog.
 
 ## Choose Azure targets
 
