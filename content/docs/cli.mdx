@@ -87,7 +87,7 @@ stogas serve --security e2ee
 | ----------------------- | --------------------------------------------------------------------------------------------- |
 | `--security`            | `tls` (default) or `e2ee`. See [connection modes](/docs/connection-modes).                    |
 | `--max-connections`     | The most connections to open, as needed. Default `4`.                                         |
-| `--browser-origin`      | Allow one [browser origin](#browser-applications).                                            |
+| `--browser-origin`      | Let only this [web origin](#browser-applications) call the endpoint.                          |
 | `--upstream`            | Another HTTPS origin, without a path, credentials or query. Trusted evidence does not change. |
 | `--exit-on-stdin-close` | Stop when the parent process closes stdin. Use it when another program starts the CLI.        |
 
@@ -121,14 +121,16 @@ provider health, database-backed authorization, or the success rate of all custo
 
 ## Browser applications
 
+Give the web page the complete printed URL. Any page that has it can call the endpoint, and a page
+without it cannot read any response. The endpoint holds no API key, so the page sends its own. To
+let only your application's origin call it, start the CLI with that origin:
+
 ```console
 stogas serve --browser-origin https://app.example.com
 ```
 
-Use the complete printed URL. Only pages from that origin can call the endpoint, and without the
-option no web page can. Programs that are not browsers send no origin and need no option. The CLI
-answers CORS and local-network preflight requests itself and keeps its `--security` mode. The
-browser can ask the user for local-network permission.
+The CLI answers CORS and local-network preflight requests itself and keeps its `--security` mode.
+The browser can ask the user for local-network permission.
 
 ```js
 import OpenAI from 'openai';
