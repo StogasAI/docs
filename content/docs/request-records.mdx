@@ -146,6 +146,10 @@ appears after the minute ends. Each gateway groups its own requests, so a client
 reach several gateways can see more single records. Successful requests and provider errors are
 never grouped.
 
+On each gateway, only an organization's first 32 groups in a minute keep single records. Its later
+groups have only the counted record, and after 256 groups the gateway records none of the
+organization's new groups until the minute ends.
+
 For example, 99 matching credit rejections in one minute produce five single records and one record
 with a count of 94. Charts sum `request_count`; costs and usage are recorded once and must not be
 multiplied by it. A grouped record keeps the first request ID and the first and last times; the
