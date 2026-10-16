@@ -118,10 +118,10 @@ and holds five. Each request takes one from every bucket, so both must have room
 - A new bucket starts full. A bucket that starts full can allow more than `max` requests in one
   window.
 - `burst` defaults to the smaller of `max` and 120.
-- The refill rate must be between about one request a century and 60 requests a second.
+- The refill rate must be between about one request a century and 120 requests a second.
 - A request that a limit rejects takes nothing. A failed provider call does not give its request
   back.
-- Every organization also has a platform bucket of 60 requests a second, shared by all its keys,
+- Every organization also has a platform bucket of 120 requests a second, shared by all its keys,
   grants, Playground requests and BYOK requests. More keys do not add capacity.
 
 ## Tokens
