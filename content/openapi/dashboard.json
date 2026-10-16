@@ -2309,10 +2309,6 @@
 										"minimum": 1,
 										"maximum": 2147483647
 									},
-									"policyRemovalToken": {
-										"type": "string",
-										"pattern": "^[a-f0-9]{64}$"
-									},
 									"enabled": {
 										"type": "boolean"
 									},
@@ -4406,6 +4402,141 @@
 												],
 												"additionalProperties": false
 											}
+										},
+										"notes": {
+											"maxItems": 43,
+											"type": "array",
+											"items": {
+												"oneOf": [
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"type": "string",
+																"const": "kept"
+															},
+															"scope": {
+																"type": "string",
+																"enum": [
+																	"organization",
+																	"folder",
+																	"grant",
+																	"role",
+																	"member",
+																	"credential",
+																	"key"
+																]
+															},
+															"id": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 64
+															},
+															"sections": {
+																"minItems": 1,
+																"maxItems": 20,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"enum": [
+																		"access",
+																		"input",
+																		"limits",
+																		"timeouts",
+																		"timeouts.totalSeconds",
+																		"timeouts.outputIdleSeconds",
+																		"plugins",
+																		"plugins.stogasRedaction",
+																		"plugins.stogasTextExtraction",
+																		"plugins.stogasExport",
+																		"plugins.encrypted",
+																		"routing",
+																		"routing.filter",
+																		"routing.order",
+																		"routing.sort",
+																		"routing.allowedCatalogNodes",
+																		"routing.retries",
+																		"routing.fallbacks",
+																		"delegation",
+																		"encryption"
+																	]
+																}
+															}
+														},
+														"required": [
+															"kind",
+															"scope",
+															"sections"
+														],
+														"additionalProperties": false,
+														"description": "The policy keeps sections that the named policy does not let it set. They still apply and can be removed, but not changed."
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"type": "string",
+																"const": "order"
+															},
+															"scope": {
+																"type": "string",
+																"enum": [
+																	"organization",
+																	"folder",
+																	"grant",
+																	"role",
+																	"member",
+																	"credential",
+																	"key"
+																]
+															},
+															"id": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 64
+															}
+														},
+														"required": [
+															"kind",
+															"scope"
+														],
+														"additionalProperties": false,
+														"description": "The named policy's routing.order and routing.sort apply instead of this policy's."
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"type": "string",
+																"const": "children"
+															},
+															"scope": {
+																"type": "string",
+																"enum": [
+																	"folder",
+																	"grant",
+																	"role",
+																	"member",
+																	"credential",
+																	"key"
+																]
+															},
+															"count": {
+																"type": "integer",
+																"exclusiveMinimum": 0,
+																"maximum": 9007199254740991
+															}
+														},
+														"required": [
+															"kind",
+															"scope",
+															"count"
+														],
+														"additionalProperties": false,
+														"description": "How many policies of this scope keep sections that this policy does not let them set. They still apply."
+													}
+												]
+											}
 										}
 									},
 									"required": [
@@ -4413,7 +4544,8 @@
 										"revision",
 										"enabled",
 										"expiresAt",
-										"policies"
+										"policies",
+										"notes"
 									],
 									"additionalProperties": false
 								}
@@ -4431,7 +4563,7 @@
 					"Policies"
 				],
 				"summary": "Change a policy",
-				"description": "Replacing the policy needs its current revision. When new delegation rules no longer allow saved policies below this one, the request fails with 409 POLICY_REMOVAL_REQUIRED. Send it again with policyRemovalToken set to policyRemoval.token from that error to remove them.",
+				"description": "Replacing the policy needs its current revision. A policy can add or change only the sections that all of its parent policies let it set, and it can always remove a section. When new delegation rules stop permitting sections that policies below this one have saved, those policies keep the sections, which still apply. The notes field of this policy counts them.",
 				"security": [
 					{
 						"accessToken": [
@@ -4491,10 +4623,6 @@
 										"type": "integer",
 										"minimum": 1,
 										"maximum": 2147483647
-									},
-									"policyRemovalToken": {
-										"type": "string",
-										"pattern": "^[a-f0-9]{64}$"
 									},
 									"enabled": {
 										"type": "boolean"
@@ -12971,6 +13099,141 @@
 							"additionalProperties": false
 						}
 					},
+					"policyNotes": {
+						"maxItems": 43,
+						"type": "array",
+						"items": {
+							"oneOf": [
+								{
+									"type": "object",
+									"properties": {
+										"kind": {
+											"type": "string",
+											"const": "kept"
+										},
+										"scope": {
+											"type": "string",
+											"enum": [
+												"organization",
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64
+										},
+										"sections": {
+											"minItems": 1,
+											"maxItems": 20,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"timeouts",
+													"timeouts.totalSeconds",
+													"timeouts.outputIdleSeconds",
+													"plugins",
+													"plugins.stogasRedaction",
+													"plugins.stogasTextExtraction",
+													"plugins.stogasExport",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.order",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.retries",
+													"routing.fallbacks",
+													"delegation",
+													"encryption"
+												]
+											}
+										}
+									},
+									"required": [
+										"kind",
+										"scope",
+										"sections"
+									],
+									"additionalProperties": false,
+									"description": "The policy keeps sections that the named policy does not let it set. They still apply and can be removed, but not changed."
+								},
+								{
+									"type": "object",
+									"properties": {
+										"kind": {
+											"type": "string",
+											"const": "order"
+										},
+										"scope": {
+											"type": "string",
+											"enum": [
+												"organization",
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64
+										}
+									},
+									"required": [
+										"kind",
+										"scope"
+									],
+									"additionalProperties": false,
+									"description": "The named policy's routing.order and routing.sort apply instead of this policy's."
+								},
+								{
+									"type": "object",
+									"properties": {
+										"kind": {
+											"type": "string",
+											"const": "children"
+										},
+										"scope": {
+											"type": "string",
+											"enum": [
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"count": {
+											"type": "integer",
+											"exclusiveMinimum": 0,
+											"maximum": 9007199254740991
+										}
+									},
+									"required": [
+										"kind",
+										"scope",
+										"count"
+									],
+									"additionalProperties": false,
+									"description": "How many policies of this scope keep sections that this policy does not let them set. They still apply."
+								}
+							]
+						}
+					},
 					"createdAt": {
 						"type": "string",
 						"format": "date-time"
@@ -13785,6 +14048,7 @@
 					"configDigest",
 					"configRevision",
 					"policies",
+					"policyNotes",
 					"createdAt",
 					"enabled",
 					"effectiveEnabled",
@@ -14680,7 +14944,7 @@
 														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 													},
 													"uniqueItems": true,
-													"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+													"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
 												},
 												"sort": {
 													"maxItems": 3,
@@ -14708,7 +14972,7 @@
 														],
 														"additionalProperties": false
 													},
-													"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+													"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
 												}
 											},
 											"additionalProperties": false,
@@ -15573,7 +15837,7 @@
 									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 								},
 								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
 							},
 							"sort": {
 								"maxItems": 3,
@@ -15601,7 +15865,42 @@
 									],
 									"additionalProperties": false
 								},
-								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
+							},
+							"orderFrom": {
+								"type": "object",
+								"properties": {
+									"scope": {
+										"type": "string",
+										"enum": [
+											"organization",
+											"folder",
+											"grant",
+											"role",
+											"member",
+											"credential",
+											"key"
+										]
+									},
+									"id": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 64
+									},
+									"mode": {
+										"type": "string",
+										"enum": [
+											"required",
+											"default"
+										]
+									}
+								},
+								"required": [
+									"scope",
+									"mode"
+								],
+								"additionalProperties": false,
+								"description": "The policy whose routing.order and routing.sort apply."
 							}
 						},
 						"additionalProperties": false
@@ -15638,53 +15937,6 @@
 							],
 							"additionalProperties": false
 						}
-					},
-					"policyRemoval": {
-						"description": "When code is POLICY_REMOVAL_REQUIRED: how many saved policies the change removes, and the token that confirms it.",
-						"type": "object",
-						"properties": {
-							"token": {
-								"type": "string",
-								"pattern": "^[a-f0-9]{64}$"
-							},
-							"counts": {
-								"minItems": 1,
-								"maxItems": 7,
-								"type": "array",
-								"items": {
-									"type": "object",
-									"properties": {
-										"scope": {
-											"type": "string",
-											"enum": [
-												"organization",
-												"folder",
-												"grant",
-												"role",
-												"member",
-												"credential",
-												"key"
-											]
-										},
-										"count": {
-											"type": "integer",
-											"exclusiveMinimum": 0,
-											"maximum": 9007199254740991
-										}
-									},
-									"required": [
-										"scope",
-										"count"
-									],
-									"additionalProperties": false
-								}
-							}
-						},
-						"required": [
-							"token",
-							"counts"
-						],
-						"additionalProperties": false
 					}
 				},
 				"required": [
@@ -17427,7 +17679,7 @@
 									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 								},
 								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
 							},
 							"sort": {
 								"maxItems": 3,
@@ -17455,7 +17707,7 @@
 									],
 									"additionalProperties": false
 								},
-								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
 							}
 						},
 						"additionalProperties": false,
@@ -18054,7 +18306,7 @@
 												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 											},
 											"uniqueItems": true,
-											"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+											"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
 										},
 										"sort": {
 											"maxItems": 3,
@@ -18082,7 +18334,7 @@
 												],
 												"additionalProperties": false
 											},
-											"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+											"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
 										}
 									},
 									"additionalProperties": false,

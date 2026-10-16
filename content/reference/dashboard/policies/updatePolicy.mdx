@@ -1,9 +1,10 @@
 ---
 title: Change a policy
-description: Replacing the policy needs its current revision. When new
-  delegation rules no longer allow saved policies below this one, the request
-  fails with 409 POLICY_REMOVAL_REQUIRED. Send it again with policyRemovalToken
-  set to policyRemoval.token from that error to remove them.
+description: Replacing the policy needs its current revision. A policy can add
+  or change only the sections that all of its parent policies let it set, and it
+  can always remove a section. When new delegation rules stop permitting
+  sections that policies below this one have saved, those policies keep the
+  sections, which still apply. The notes field of this policy counts them.
 full: true
 _openapi:
   preload:
@@ -14,11 +15,12 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: Replacing the policy needs its current revision. When new delegation
-          rules no longer allow saved policies below this one, the request fails
-          with 409 POLICY_REMOVAL_REQUIRED. Send it again with
-          policyRemovalToken set to policyRemoval.token from that error to
-          remove them.
+      - content: Replacing the policy needs its current revision. A policy can add or
+          change only the sections that all of its parent policies let it set,
+          and it can always remove a section. When new delegation rules stop
+          permitting sections that policies below this one have saved, those
+          policies keep the sections, which still apply. The notes field of this
+          policy counts them.
 ---
 
 export default function Layout(props) {

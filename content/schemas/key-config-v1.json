@@ -1498,7 +1498,7 @@
 						"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 					},
 					"uniqueItems": true,
-					"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+					"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
 				},
 				"sort": {
 					"maxItems": 3,
@@ -1526,7 +1526,7 @@
 						],
 						"additionalProperties": false
 					},
-					"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+					"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
 				}
 			},
 			"additionalProperties": false,
@@ -2125,7 +2125,7 @@
 									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 								},
 								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.order."
+								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
 							},
 							"sort": {
 								"maxItems": 3,
@@ -2153,7 +2153,7 @@
 									],
 									"additionalProperties": false
 								},
-								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
+								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
 							}
 						},
 						"additionalProperties": false,

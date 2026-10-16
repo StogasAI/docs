@@ -177,19 +177,29 @@ the other deployment is its fallback.
 
 ### Orders from several policies
 
-`order` and `sort` together are one setting.
+`order` and `sort` together form one order. Organization, folder, grant, key and request policies
+can each set one order:
 
-- All policies that set an `order` or `sort` must set the same `order` and the same `sort`. A
-  policy below cannot add criteria.
-- To set an order that other policies can replace, put it in a
-  [default rule](/docs/policies/scopes#required-settings-and-defaults).
-- One order applies to every candidate. So credential policies cannot set `order` or `sort`, and a
-  rule that sets either can test only `request` fields in `when`.
+- At the top level, the order is required.
+- In one rule with `"mode": "default"` and no `when`, it is a
+  [default](/docs/policies/scopes#required-settings-and-defaults).
 
-To stop other policies from setting an order, remove `routing.order` and `routing.sort` from the
-organization's [delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for every
-resource type and for `request`, and remove the organization's own default order. Requests then use
-the default order.
+One order applies to the whole request: the broadest required order, or without one, the closest
+default.
+
+| Orders that policies set               | Order that applies |
+| -------------------------------------- | ------------------ |
+| Organization required, key required    | Organization       |
+| Organization default, key required     | Key                |
+| Organization default, grant default    | Grant              |
+| Organization default, request required | Request            |
+
+- A request policy that sets a different order than a saved required order fails.
+- On a key, **Combined policy** shows the policy whose order applies in `routing.orderFrom`.
+- To make every request use one order, set it at the top level of the organization policy.
+- To stop other policies from setting an order, remove `routing.order` and `routing.sort` from the
+  organization's [delegation](/docs/policies/scopes#permission-to-edit-saved-policies) for every
+  resource type and for `request`.
 
 ## Blended price
 

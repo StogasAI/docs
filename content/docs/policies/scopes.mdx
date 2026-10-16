@@ -31,8 +31,10 @@ key. Each is a scope. A request must follow every policy that applies to it, and
 | Role, member, credential, key | Yes      | No                          | -                                                     |
 | Request                       | No       | No                          | -                                                     |
 
-- Every scope accepts `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`, but
-  credential policies cannot [set an order](/docs/policies/routing#orders-from-several-policies).
+- Every scope accepts `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`. Only
+  organization, folder, grant and key policies can
+  [set an order](/docs/policies/routing#orders-from-several-policies), and credential policies
+  cannot set [fallbacks](/docs/policies/routing#retries-and-fallbacks).
 - Every saved scope can [permit request policies](/docs/policies/request-policies#grant-permission).
 - A saved policy can be up to 256 KiB, and a request policy up to 16 KiB. See
   [Document rules](/docs/policies/editing#document-rules).
@@ -72,14 +74,14 @@ default sort. All plugin settings are one kind, because encrypted plugin setting
 plugins they set. So a required plugin setting, such as text extraction, also replaces default
 redaction and default export destinations.
 
-When several policies set the same kind of setting, they combine. No policy wins because of its
-scope, role or order:
+When several policies set the same kind of setting, they combine. Only the order depends on the
+scope that sets it:
 
 | Setting                                                               | Result                                                                 |
 | --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | [Routing filters](/docs/policies/routing)                             | Every filter must match.                                               |
 | [Allowed catalog nodes](/docs/policies/routing#allowed-catalog-nodes) | Only nodes in every list. An empty list allows none.                   |
-| [Order](/docs/policies/routing#orders-from-several-policies)          | Every policy that sets an order must set the same one.                 |
+| [Order](/docs/policies/routing#orders-from-several-policies)          | The broadest required order. Without one, the closest default.         |
 | [Deny periods](/docs/policies/access#deny-periods)                    | Every period applies.                                                  |
 | [Redaction](/docs/pii-redaction)                                      | Every preset, literal and pattern applies to the original text.        |
 | [ASCII-only input](/docs/pii-redaction#ascii-only-input)              | Required if any policy requires it.                                    |
@@ -121,8 +123,9 @@ when the request goes to OpenAI.
   gateway skips that choice and tries the others. Check optional facts with `has(...)`. An error
   in a condition, such as division by zero, fails the request.
 - Rules can contain `access`, `input`, `timeouts`, `limits`, `plugins` and `routing`, but not
-  other rules, `delegation` or `encryption`. A rule that
-  [sets an order](/docs/policies/routing#orders-from-several-policies) or
+  other rules, `delegation` or `encryption`. A rule can
+  [set an order](/docs/policies/routing#orders-from-several-policies) only with
+  `"mode": "default"` and no `when`. A rule that sets
   [fallbacks](/docs/policies/routing#retries-and-fallbacks) can test only `request` fields.
 - Rules have no order. A name only identifies a rule and its [limits](/docs/policies/limits#conditional-limits).
   Names use 1–48 lowercase letters, digits, `_` or `-`, start with a letter, and cannot be
@@ -144,12 +147,13 @@ access by itself:
 }
 ```
 
-With this policy, key managers can save only limits and routing filters, and grant policies cannot
-be changed. Use `true` for every section, `false` for none, or a list of section paths. Without
-`delegation`, managers can save every section.
+With this policy, key managers can set only limits and routing filters, and grant managers can set
+nothing. Use `true` for every section, `false` for none, or a list of section paths. Without
+`delegation`, managers can set every section.
 
-A section must be allowed by every parent that sets `delegation`, even for organization
-administrators. Delegation never lets a scope use a field that it does not support.
+A policy can add or change a section only when every parent that sets `delegation` allows it, even
+for organization administrators. Removing a section is always allowed. Delegation never lets a
+scope use a field that it does not support.
 [Encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) need permission for
 all of `plugins`, because they can hold any plugin setting.
 
@@ -177,11 +181,16 @@ Give specific resources other permissions:
 - To allow a new resource under `"default": false`, create it, add its exception, then save its
   policy.
 
-### Settings that become prohibited
+### Sections saved before a delegation change
 
-If a delegation change prohibits settings that resources below already have, the editor lists those
-resources. When you confirm, we clear their policies as it saves the change. Their names,
-enabled state, expiration and usage stay.
+A delegation change applies at once. Policies below that already set a section that the change
+prohibits keep the section, and it still applies. Their managers can remove the section but cannot
+change it.
+
+- The parent policy shows how many policies of each type keep such sections.
+- Each of those policies names the parent and the sections.
+- To stop a kept section from applying, remove it from that policy. Organization administrators can
+  edit every policy in the organization.
 
 ## Request order
 
