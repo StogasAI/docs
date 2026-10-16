@@ -97,6 +97,7 @@ and fails with `schedule_denied` when none remain.
 for example `2026-12-01T00:00:00Z` or `2026-12-01T09:00:00+09:00`. Local times without an offset
 and year zero are invalid. Saved timestamps are normalized to UTC with millisecond precision.
 
-`timeZone` accepts a recognized IANA name such as `UTC`, `America/New_York`, or `Europe/Berlin`.
-Names are 1–64 characters using letters, digits, `_`, `+`, `-`, or `/`. The timestamp's offset
-identifies an instant; the time zone determines the local schedule and its daylight-saving rules.
+`timeZone` accepts `UTC` or an IANA name with its exact capitalization, such as `America/New_York`
+or `Europe/Berlin`, up to 64 characters. Abbreviations such as `CET` and offsets such as `+05` are
+invalid. The timestamp's offset identifies an instant; the time zone determines the local schedule
+and its daylight-saving rules.
