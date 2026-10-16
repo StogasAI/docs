@@ -130,9 +130,8 @@ credential order chooses between credentials for it.
 For example, put a customer-encrypted Chutes credential before Stogas managed to use it whenever
 the request sends its key.
 
-The gateway tries the next credential only when `routing.maxAttempts` is above one and the first
-credential cannot be prepared. After the gateway sends the request, it never switches credentials,
-even after a provider error.
+When a call fails, a [fallback](/docs/policies/routing#retries-and-fallbacks) uses the deployment's
+next credential before the next deployment.
 
 Adding a credential to a key needs **Manage** on the key and **Use** on the credential. Reordering or
 removing needs only **Manage** on the key. If a key's policies and credentials grow too large,
@@ -168,8 +167,9 @@ requests that already started.
   status and a short preview, never the secret or ciphertext.
 - For customer-encrypted credentials, we store ciphertext and a public key identifier. Your
   key travels with each request to the gateway and is never written to databases or analytics.
-- Provider secrets are used only in confidential gateway memory, and only for requests from keys
-  that the credential is assigned to.
+- The confidential gateway decrypts a secret only for requests from keys that the credential is
+  assigned to. Our control service also decrypts stored secrets to run the
+  [checks](#wait-for-the-check). Only the gateway can decrypt customer-encrypted secrets.
 - Request records keep the credential ID, never the secret.
 
 ## Billing

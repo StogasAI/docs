@@ -93,12 +93,13 @@ each match.
 
 The deployment ID shows the Azure deployment type:
 
-| ID suffix  | Azure deployment type | Where inference runs                   |
-| ---------- | --------------------- | -------------------------------------- |
-| None       | Global Standard       | Any Azure region                       |
-| `-us`      | US Data Zone Standard | United States                          |
-| `-eu`      | EU Data Zone Standard | Europe, under Azure's EU Data Boundary |
-| `-instant` | Instant access        | A Foundry project in West US 3         |
+| ID suffix  | Azure deployment type           | Where inference runs                   |
+| ---------- | ------------------------------- | -------------------------------------- |
+| None       | Global Standard                 | Any Azure region                       |
+| `-us`      | US Data Zone Standard           | United States                          |
+| `-eu`      | EU Data Zone Standard           | Europe, under Azure's EU Data Boundary |
+| `-apac`    | Asia Pacific Data Zone Standard | Asia Pacific                           |
+| `-instant` | Instant access                  | A Foundry project in West US 3         |
 
 Instant access uses models that Microsoft runs for a Foundry project, without a deployment of your
 own. The gateway finds them through a West US 3 project that the credential can reach. If one of
@@ -154,7 +155,7 @@ Claude on Azure works as on [Anthropic](/docs/providers/anthropic), with these d
 
 - GPT models accept `function` tools, and `custom` tools on Responses. They have no hosted tools.
 - GPT models read PDFs on Responses. Chat Completions accepts no documents.
-- DeepSeek and Kimi models can return several tool calls in one turn, even when
+- DeepSeek models can return several tool calls in one turn, even when
   `parallel_tool_calls` is `false`.
 - Claude reads PDFs and plain text, as on [Anthropic](/docs/providers/anthropic#files).
 
@@ -167,7 +168,7 @@ abuse monitoring can keep flagged samples for human review, so the catalog does 
 zero data retention. Microsoft does not train on your data. Your agreement with Microsoft governs
 your account.
 
-Instant access, Flex and preview models such as Kimi K2.6 are Azure previews. Microsoft's preview
+Instant access, Flex and models that Azure labels as previews are Azure previews. Microsoft's preview
 terms do not limit where it stores your data or how long it keeps it, so the catalog lists their
 storage location as `world` and their retention as unknown. A filter such as
 `deployment.dataHandling.retentionDays == 0` skips them.

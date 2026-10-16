@@ -5,8 +5,8 @@ icon: Boxes
 ---
 
 Each model has one or more deployments. A deployment is one provider's offering of the model, with
-its own price, limits, features and data handling. The request's `model` field names a model or a
-deployment, and the gateway sends the request to one eligible deployment.
+its own price, limits, features and data handling. The request's `model` field names a model, a
+group of models or a deployment, and the gateway sends the request to one eligible deployment.
 
 ## Find a model
 
@@ -16,13 +16,13 @@ Browse the [model catalog](https://stogas.ai/catalog), or list models from the A
 curl https://api.stogas.ai/v1/models
 ```
 
-[`/v1/models`](/docs/reference/catalog/listModels) lists every ID that the `model` field accepts.
-[`/v1/catalog`](/docs/reference/catalog/getCatalog) returns the complete catalog, with authors,
-models, deployments, routes and prices. Both endpoints are public.
+[`/v1/models`](/docs/reference/catalog/listModels) lists every model, group and deployment ID that
+selects one model. [`/v1/catalog`](/docs/reference/catalog/getCatalog) returns the complete catalog,
+with authors, groups, models, deployments, routes, prices and scheduled changes. Both endpoints are
+public.
 
-The web catalog groups models by author; search a group with `group:`. Groups are only for browsing:
-models do not inherit prices, features or data handling from them. Select **Include retired** to see
-retired models. Retired deployments keep their pages but cannot receive requests.
+Select **Include retired** in the web catalog to see retired models. Retired deployments keep their
+pages but cannot receive requests.
 
 Some deployments work only for accounts that the provider has approved: GPT-5.6 Cyber on
 [OpenAI](/docs/providers/openai#models-that-need-approval), Claude Mythos on
@@ -35,14 +35,47 @@ Some deployments work only for accounts that the provider has approved: GPT-5.6 
 
 The `model` field accepts these forms:
 
-| Form               | Example              | Sends the request to                     |
-| ------------------ | -------------------- | ---------------------------------------- |
-| Model ID           | `gpt-5.6-sol`        | Any eligible deployment of the model     |
-| Provider and model | `azure/gpt-5.6-sol`  | That provider's deployments of the model |
-| Deployment ID      | `openai-gpt-5.6-sol` | Exactly that deployment                  |
+| Form               | Example              | Sends the request to                                |
+| ------------------ | -------------------- | --------------------------------------------------- |
+| Model ID           | `gpt-5.6-sol`        | Any eligible deployment of the model                |
+| Group ID           | `gpt-6`              | Any eligible deployment of the group's newest model |
+| Provider and model | `azure/gpt-5.6-sol`  | That provider's deployments of the model            |
+| Deployment ID      | `openai-gpt-5.6-sol` | Exactly that deployment                             |
 
-Some deployments also have short names, such as `kimi-k3-tee`. A deployment ID stays fixed: the
-gateway never moves the request to another tier, region or provider.
+A deployment ID stays fixed: the gateway never moves the request to another tier, region or
+provider.
+
+### Groups
+
+Models belong to groups, such as `claude-opus` for every Claude Opus model and `claude` for every
+Claude model. In the web catalog, search a group with `group:`. Models do not inherit prices,
+features or data handling from their groups.
+
+A group ID selects the group's newest model by release date, so requests move to a new model on the
+day it joins the catalog. To stay on one model, send its model ID. A provider prefix works on groups
+too: `openai/gpt-6` selects the newest GPT-6 model that OpenAI serves.
+
+- When the newest models share a release date, the request returns `model_ambiguous` with their
+  IDs. For example, GPT-5.6 Luna, Sol and Terra came out on the same day, so `gpt-5.6` needs a model
+  ID or a policy order.
+- A routing policy's `sort` or `selection` chooses among all of the group's models instead. With the
+  policy below, `gpt-5.6` selects the cheapest GPT-5.6 model.
+- Groups leave out deployments that need approval. Send their model or deployment ID instead.
+
+```json title="Cheapest model of the requested group"
+{
+	"routing": {
+		"sort": [{ "by": "blended_price(3, 1)", "direction": "asc" }]
+	}
+}
+```
+
+To limit a key to one group, filter on `model.groupIds` in its
+[routing policy](/docs/policies/routing):
+
+```cel
+'claude-opus' in model.groupIds
+```
 
 ### How the gateway chooses a deployment
 
@@ -63,9 +96,10 @@ to `azure-gpt-6-sol`, whose ID sorts first, and `azure-gpt-6-sol-us`, which cost
 after both.
 
 Chat Completions and Responses requests can leave out `model`. The gateway then considers the
-Standard tier of every model that your credentials and policies allow, or the tier in
-`service_tier`. Price never chooses a model: unless one model remains, or a policy `sort` or
-`selection` orders the deployments, the request returns `model_ambiguous` with the model IDs.
+Standard tier, or the tier in `service_tier`, of every model that your credentials and policies
+allow, except deployments that need approval. Price never chooses a model: unless one model remains,
+or a policy `sort` or `selection` orders the deployments, the request returns `model_ambiguous` with
+the model IDs.
 
 There is no automatic preference for the model author's own provider. To limit or order providers
 for one request, add `provider`:

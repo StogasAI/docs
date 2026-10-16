@@ -57,7 +57,7 @@
 					"Catalog"
 				],
 				"summary": "Catalog",
-				"description": "Returns the approved public catalog: models, deployments, routes and prices.",
+				"description": "Returns the approved public catalog: models, deployments, routes, prices and scheduled changes.",
 				"security": [],
 				"responses": {
 					"200": {
@@ -70,7 +70,7 @@
 								"examples": {
 									"catalog": {
 										"value": {
-											"schema": "stogas.gateway.catalog.v1",
+											"schema": "stogas.catalog.public.v4",
 											"sequence": 184,
 											"runtimeDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 											"publicDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
@@ -81,7 +81,30 @@
 												"deployments": {},
 												"providers": {},
 												"routes": {}
-											}
+											},
+											"schedule": [
+												{
+													"start": "2026-11-01T00:00:00Z",
+													"graph": {
+														"deployments": {
+															"openai-gpt-6.1-sol": {}
+														}
+													}
+												},
+												{
+													"start": "2026-12-01T00:00:00Z",
+													"graph": {}
+												}
+											],
+											"periods": [
+												{
+													"kind": "deployments",
+													"id": "openai-gpt-6.1-sol",
+													"name": "Launch price",
+													"start": "2026-11-01T00:00:00Z",
+													"end": "2026-12-01T00:00:00Z"
+												}
+											]
 										}
 									}
 								}
@@ -752,12 +775,14 @@
 					"sequence",
 					"runtimeDigest",
 					"publicDigest",
-					"graph"
+					"graph",
+					"schedule",
+					"periods"
 				],
 				"properties": {
 					"schema": {
 						"type": "string",
-						"const": "stogas.gateway.catalog.v1"
+						"const": "stogas.catalog.public.v4"
 					},
 					"sequence": {
 						"type": "integer",
@@ -773,8 +798,76 @@
 					},
 					"graph": {
 						"type": "object",
-						"description": "The catalog: authors, models, deployments, routes and providers.",
+						"description": "The catalog without its periods: authors, groups, models, deployments, routes and providers.",
 						"additionalProperties": true
+					},
+					"schedule": {
+						"type": "array",
+						"description": "Dated catalog states, oldest first. Each state lasts until the next one starts and lists in full every node that differs from `graph` during it. An empty `graph` returns to `graph`.",
+						"items": {
+							"type": "object",
+							"required": [
+								"start",
+								"graph"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"start": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"graph": {
+									"type": "object",
+									"additionalProperties": true
+								}
+							}
+						}
+					},
+					"periods": {
+						"type": "array",
+						"description": "The named periods that make the dated states.",
+						"items": {
+							"type": "object",
+							"required": [
+								"kind",
+								"id",
+								"name",
+								"start",
+								"end"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"kind": {
+									"type": "string",
+									"enum": [
+										"authors",
+										"groups",
+										"models",
+										"providers",
+										"routes",
+										"deployments"
+									]
+								},
+								"id": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"start": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"end": {
+									"type": [
+										"string",
+										"null"
+									],
+									"format": "date-time",
+									"description": "`null` when the period has no end."
+								}
+							}
+						}
 					}
 				}
 			},
@@ -3478,7 +3571,7 @@
 								"type": "integer",
 								"minimum": 1,
 								"maximum": 3600,
-								"description": "Maximum wait for useful provider output, starting at dispatch and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+								"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
 							}
 						},
 						"additionalProperties": false,
@@ -3814,11 +3907,17 @@
 								"additionalProperties": false,
 								"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
 							},
-							"maxAttempts": {
+							"retries": {
 								"type": "integer",
-								"minimum": 1,
+								"minimum": 0,
 								"maximum": 3,
-								"description": "Total attempts, including failed local credential preparations and retries after proven pre-execution rejection. Defaults to one. Timeouts and ambiguous provider failures never permit replay."
+								"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+							},
+							"fallbacks": {
+								"type": "integer",
+								"minimum": 0,
+								"maximum": 2,
+								"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
 							},
 							"filter": {
 								"type": "string",
@@ -3939,7 +4038,7 @@
 											"type": "integer",
 											"minimum": 1,
 											"maximum": 3600,
-											"description": "Maximum wait for useful provider output, starting at dispatch and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+											"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
 										}
 									},
 									"additionalProperties": false,
@@ -4275,11 +4374,17 @@
 											"additionalProperties": false,
 											"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
 										},
-										"maxAttempts": {
+										"retries": {
 											"type": "integer",
-											"minimum": 1,
+											"minimum": 0,
 											"maximum": 3,
-											"description": "Total attempts, including failed local credential preparations and retries after proven pre-execution rejection. Defaults to one. Timeouts and ambiguous provider failures never permit replay."
+											"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+										},
+										"fallbacks": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 2,
+											"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
 										},
 										"filter": {
 											"type": "string",

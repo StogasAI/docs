@@ -48,7 +48,9 @@ cost and plugin results.
 
 - The header shows the outcome. Each provider attempt keeps its own result, so a provider can
   succeed and the request can still fail later in the gateway.
-- Each attempt shows its provider credential, or **Managed** for a Stogas-managed credential.
+- Each provider call is one attempt, including [retries and fallbacks](/docs/policies/routing#retries-and-fallbacks).
+  An attempt shows its result, duration and provider credential, or **Managed** for a
+  Stogas-managed credential. With several attempts, each also shows when it started.
 - The gateway node links to its boot record in the Trust Center. Gateway versions and catalog
   releases link to their approvals.
 - Expand **Catalog** to see the deployment settings that applied when the request ran, even if the

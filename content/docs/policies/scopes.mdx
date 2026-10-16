@@ -74,16 +74,16 @@ also replaces default redaction and default export destinations.
 When several policies set the same kind of setting, they combine. No policy wins because of its
 scope, role or order:
 
-| Setting                                                               | Result                                                          |
-| --------------------------------------------------------------------- | --------------------------------------------------------------- |
-| [Routing filters](/docs/policies/routing)                             | Every filter must match.                                        |
-| [Allowed catalog nodes](/docs/policies/routing#allowed-catalog-nodes) | Only nodes in every list. An empty list allows none.            |
-| [Sort order](/docs/policies/routing#sorting)                          | The orders must agree, with at most three criteria.             |
-| [Deny periods](/docs/policies/access#deny-periods)                    | Every period applies.                                           |
-| [Redaction](/docs/pii-redaction)                                      | Every preset, literal and pattern applies to the original text. |
-| [ASCII-only input](/docs/pii-redaction#ascii-only-input)              | Required if any policy requires it.                             |
-| [Attempt limit](/docs/policies/routing#attempt-limit)                 | The smallest value. Without one, the gateway makes one attempt. |
-| [Limits](/docs/policies/limits)                                       | Every limit applies. Limits cannot be defaults.                 |
+| Setting                                                               | Result                                                                 |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| [Routing filters](/docs/policies/routing)                             | Every filter must match.                                               |
+| [Allowed catalog nodes](/docs/policies/routing#allowed-catalog-nodes) | Only nodes in every list. An empty list allows none.                   |
+| [Sort order](/docs/policies/routing#sorting)                          | The orders must agree, with at most three criteria.                    |
+| [Deny periods](/docs/policies/access#deny-periods)                    | Every period applies.                                                  |
+| [Redaction](/docs/pii-redaction)                                      | Every preset, literal and pattern applies to the original text.        |
+| [ASCII-only input](/docs/pii-redaction#ascii-only-input)              | Required if any policy requires it.                                    |
+| [Retries and fallbacks](/docs/policies/routing#retries-and-fallbacks) | The smallest value of each. Without one, no retries and two fallbacks. |
+| [Limits](/docs/policies/limits)                                       | Every limit applies. Limits cannot be defaults.                        |
 
 To replace defaults without adding a restriction, set a neutral value: `input.asciiOnly: false`,
 `access.deny: []`, `routing.filter: "true"`, `routing.sort: []`, `routing.allowedCatalogNodes: {}`
@@ -121,7 +121,7 @@ when the request goes to OpenAI.
   in a condition, such as division by zero, fails the request.
 - Rules can contain `access`, `input`, `timeouts`, `limits`, `plugins` and `routing`, but not
   other rules, `delegation` or `encryption`. A rule that [sets an order](/docs/policies/routing#sorting)
-  can test only `request` fields.
+  or [fallbacks](/docs/policies/routing#retries-and-fallbacks) can test only `request` fields.
 - Rules have no order. A name only identifies a rule and its [limits](/docs/policies/limits#conditional-limits).
   Names use 1–48 lowercase letters, digits, `_` or `-`, start with a letter, and cannot be
   `constructor` or `prototype`.

@@ -25,18 +25,20 @@ const catalog = jsonObject(
 		'value'
 	)
 );
-if (catalog?.schema !== 'stogas.gateway.catalog.v1') {
-	errors.push('/v1/catalog example must use stogas.gateway.catalog.v1.');
+if (catalog?.schema !== 'stogas.catalog.public.v4') {
+	errors.push('/v1/catalog example must use stogas.catalog.public.v4.');
 }
 if (
 	catalog &&
 	(typeof catalog.runtimeDigest !== 'string' ||
 		typeof catalog.publicDigest !== 'string' ||
 		!Number.isSafeInteger(catalog.sequence) ||
-		!jsonObject(catalog.graph)?.routes)
+		!jsonObject(catalog.graph)?.routes ||
+		!Array.isArray(catalog.schedule) ||
+		!Array.isArray(catalog.periods))
 ) {
 	errors.push(
-		'/v1/catalog example must expose sequence, runtime/public digests, and the five-node graph.'
+		'/v1/catalog example must expose sequence, runtime/public digests, the graph, schedule and periods.'
 	);
 }
 if (errors.length) throw new Error(`OpenAPI validation failed:\n- ${errors.join('\n- ')}`);

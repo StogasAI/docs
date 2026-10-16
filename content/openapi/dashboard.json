@@ -4930,8 +4930,7 @@
 														"enum": [
 															"anthropic",
 															"azure",
-															"fireworks",
-															"nvidia"
+															"fireworks"
 														]
 													},
 													"id": {
@@ -4994,7 +4993,7 @@
 																	"apac",
 																	"eu",
 																	"europe",
-																	"global",
+																	"world",
 																	"unknown"
 																]
 															},
@@ -5021,7 +5020,7 @@
 																			"apac",
 																			"eu",
 																			"europe",
-																			"global",
+																			"world",
 																			"unknown"
 																		]
 																	},
@@ -5074,6 +5073,40 @@
 												}
 											]
 										},
+										"unusableAccounts": {
+											"maxItems": 512,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 2048
+													},
+													"location": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128
+													},
+													"reason": {
+														"type": "string",
+														"enum": [
+															"network",
+															"subdomain",
+															"endpoint",
+															"role"
+														]
+													}
+												},
+												"required": [
+													"id",
+													"location",
+													"reason"
+												],
+												"additionalProperties": false
+											}
+										},
 										"updatedAt": {
 											"type": "string",
 											"format": "date-time"
@@ -5082,6 +5115,7 @@
 									"required": [
 										"items",
 										"nextCursor",
+										"unusableAccounts",
 										"updatedAt"
 									],
 									"additionalProperties": false
@@ -5525,7 +5559,7 @@
 				}
 			}
 		},
-		"/api/{orgId}/byok/{byokId}/refresh": {
+		"/api/{orgId}/byok/{byokId}/check": {
 			"post": {
 				"operationId": "checkByokCredential",
 				"tags": [
@@ -8169,6 +8203,109 @@
 													"request_type": {
 														"type": "string"
 													},
+													"request_settings": {
+														"default": {},
+														"type": "object",
+														"properties": {
+															"max_output_tokens": {
+																"type": "integer",
+																"minimum": -9007199254740991,
+																"maximum": 9007199254740991
+															},
+															"reasoning_enabled": {
+																"type": "boolean"
+															},
+															"reasoning_effort": {
+																"type": "string",
+																"pattern": "^[\\x20-\\x7e]{1,64}$"
+															},
+															"reasoning_max_tokens": {
+																"type": "integer",
+																"minimum": -9007199254740991,
+																"maximum": 9007199254740991
+															},
+															"reasoning_summary": {
+																"type": "string",
+																"pattern": "^[\\x20-\\x7e]{1,64}$"
+															},
+															"reasoning_display": {
+																"type": "string",
+																"pattern": "^[\\x20-\\x7e]{1,64}$"
+															},
+															"task_budget_tokens": {
+																"type": "integer",
+																"minimum": -9007199254740991,
+																"maximum": 9007199254740991
+															},
+															"temperature": {
+																"type": "number"
+															},
+															"top_p": {
+																"type": "number"
+															},
+															"top_k": {
+																"type": "integer",
+																"minimum": -9007199254740991,
+																"maximum": 9007199254740991
+															},
+															"frequency_penalty": {
+																"type": "number"
+															},
+															"presence_penalty": {
+																"type": "number"
+															},
+															"repetition_penalty": {
+																"type": "number"
+															},
+															"seed": {
+																"type": "integer",
+																"minimum": -9007199254740991,
+																"maximum": 9007199254740991
+															},
+															"logprobs": {
+																"type": "boolean"
+															},
+															"top_logprobs": {
+																"type": "integer",
+																"minimum": -9007199254740991,
+																"maximum": 9007199254740991
+															},
+															"verbosity": {
+																"type": "string",
+																"pattern": "^[\\x20-\\x7e]{1,64}$"
+															},
+															"response_format": {
+																"type": "string",
+																"pattern": "^[\\x20-\\x7e]{1,64}$"
+															},
+															"include": {
+																"minItems": 1,
+																"maxItems": 16,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"pattern": "^[\\x20-\\x7e]{1,64}$"
+																}
+															},
+															"tool_choice": {
+																"type": "string",
+																"pattern": "^[\\x20-\\x7e]{1,64}$"
+															},
+															"parallel_tool_calls": {
+																"type": "boolean"
+															},
+															"max_tool_calls": {
+																"type": "integer",
+																"minimum": -9007199254740991,
+																"maximum": 9007199254740991
+															},
+															"truncation": {
+																"type": "string",
+																"pattern": "^[\\x20-\\x7e]{1,64}$"
+															}
+														},
+														"additionalProperties": false
+													},
 													"cancelled": {
 														"type": "boolean"
 													},
@@ -8247,7 +8384,7 @@
 														"items": {
 															"type": "object",
 															"properties": {
-																"selected_catalog_chain_hash": {
+																"resolved_catalog_chain_hash": {
 																	"type": "string",
 																	"pattern": "^sha256:[a-f0-9]{64}$"
 																},
@@ -8272,6 +8409,11 @@
 																			"type": "null"
 																		}
 																	]
+																},
+																"start_ms": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 4294967295
 																},
 																"latency_ms": {
 																	"type": "integer",
@@ -8305,6 +8447,7 @@
 																"provider",
 																"status",
 																"status_code",
+																"start_ms",
 																"latency_ms",
 																"output_observed",
 																"provider_request_id",
@@ -8536,6 +8679,7 @@
 													"stogas_user_id",
 													"stogas_organization_id",
 													"request_type",
+													"request_settings",
 													"cancelled",
 													"client_stop_ms",
 													"catalog_version",
@@ -13708,6 +13852,62 @@
 						"minimum": 0,
 						"maximum": 9007199254740991
 					},
+					"checkedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"checkError": {
+						"anyOf": [
+							{
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 500
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"azureTargets": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"selected": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 9007199254740991
+									},
+									"unavailable": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 9007199254740991
+									},
+									"unselected": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 9007199254740991
+									}
+								},
+								"required": [
+									"selected",
+									"unavailable",
+									"unselected"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"encryptionKeyId": {
 						"anyOf": [
 							{
@@ -13771,6 +13971,9 @@
 					"canManage",
 					"canChangeAccess",
 					"assignedKeyCount",
+					"checkedAt",
+					"checkError",
+					"azureTargets",
 					"encryptionKeyId",
 					"createdAt",
 					"enabled",
@@ -13839,7 +14042,7 @@
 								"type": "integer",
 								"minimum": 1,
 								"maximum": 3600,
-								"description": "Maximum wait for useful provider output, starting at dispatch and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+								"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
 							}
 						},
 						"additionalProperties": false,
@@ -13886,7 +14089,7 @@
 													"type": "integer",
 													"minimum": 1,
 													"maximum": 3600,
-													"description": "Maximum wait for useful provider output, starting at dispatch and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+													"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
 												}
 											},
 											"additionalProperties": false,
@@ -14426,11 +14629,17 @@
 													"additionalProperties": false,
 													"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
 												},
-												"maxAttempts": {
+												"retries": {
 													"type": "integer",
-													"minimum": 1,
+													"minimum": 0,
 													"maximum": 3,
-													"description": "Total attempts, including failed local credential preparations and retries after proven pre-execution rejection. Defaults to one. Timeouts and ambiguous provider failures never permit replay."
+													"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+												},
+												"fallbacks": {
+													"type": "integer",
+													"minimum": 0,
+													"maximum": 2,
+													"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
 												},
 												"filter": {
 													"type": "string",
@@ -14463,7 +14672,8 @@
 															"direction"
 														],
 														"additionalProperties": false
-													}
+													},
+													"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 												},
 												"selection": {
 													"type": "object",
@@ -14493,7 +14703,7 @@
 														"mode"
 													],
 													"additionalProperties": false,
-													"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+													"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 													"allOf": [
 														{
 															"if": {
@@ -14627,7 +14837,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -14648,7 +14858,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts",
+												"routing.retries",
+												"routing.fallbacks",
 												"delegation",
 												"encryption"
 											]
@@ -14663,7 +14874,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -14684,7 +14895,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts",
+												"routing.retries",
+												"routing.fallbacks",
 												"delegation",
 												"encryption"
 											]
@@ -14699,7 +14911,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -14720,7 +14932,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts",
+												"routing.retries",
+												"routing.fallbacks",
 												"delegation",
 												"encryption"
 											]
@@ -14735,7 +14948,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -14756,7 +14969,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts",
+												"routing.retries",
+												"routing.fallbacks",
 												"delegation",
 												"encryption"
 											]
@@ -14771,7 +14985,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -14792,7 +15006,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts",
+												"routing.retries",
+												"routing.fallbacks",
 												"delegation",
 												"encryption"
 											]
@@ -14807,7 +15022,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -14828,7 +15043,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts",
+												"routing.retries",
+												"routing.fallbacks",
 												"delegation",
 												"encryption"
 											]
@@ -14843,7 +15059,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -14863,7 +15079,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts"
+												"routing.retries",
+												"routing.fallbacks"
 											]
 										},
 										"uniqueItems": true
@@ -15351,11 +15568,17 @@
 								},
 								"additionalProperties": false
 							},
-							"maxAttempts": {
+							"retries": {
 								"type": "integer",
-								"minimum": 1,
+								"minimum": 0,
 								"maximum": 3,
-								"description": "Total attempts, including failed local credential preparations and retries after proven pre-execution rejection. Defaults to one. Timeouts and ambiguous provider failures never permit replay."
+								"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+							},
+							"fallbacks": {
+								"type": "integer",
+								"minimum": 0,
+								"maximum": 2,
+								"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
 							},
 							"filter": {
 								"type": "string",
@@ -15387,7 +15610,8 @@
 										"direction"
 									],
 									"additionalProperties": false
-								}
+								},
+								"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 							},
 							"selection": {
 								"type": "object",
@@ -15417,7 +15641,7 @@
 									"mode"
 								],
 								"additionalProperties": false,
-								"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+								"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 								"allOf": [
 									{
 										"if": {
@@ -15800,7 +16024,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -15821,7 +16045,8 @@
 														"routing.sort",
 														"routing.selection",
 														"routing.allowedCatalogNodes",
-														"routing.maxAttempts",
+														"routing.retries",
+														"routing.fallbacks",
 														"delegation",
 														"encryption"
 													]
@@ -15839,7 +16064,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -15860,7 +16085,8 @@
 																"routing.sort",
 																"routing.selection",
 																"routing.allowedCatalogNodes",
-																"routing.maxAttempts",
+																"routing.retries",
+																"routing.fallbacks",
 																"delegation",
 																"encryption"
 															]
@@ -15890,7 +16116,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -15911,7 +16137,8 @@
 																	"routing.sort",
 																	"routing.selection",
 																	"routing.allowedCatalogNodes",
-																	"routing.maxAttempts",
+																	"routing.retries",
+																	"routing.fallbacks",
 																	"delegation",
 																	"encryption"
 																]
@@ -15938,7 +16165,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -15959,7 +16186,8 @@
 														"routing.sort",
 														"routing.selection",
 														"routing.allowedCatalogNodes",
-														"routing.maxAttempts",
+														"routing.retries",
+														"routing.fallbacks",
 														"delegation",
 														"encryption"
 													]
@@ -15977,7 +16205,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -15998,7 +16226,8 @@
 																"routing.sort",
 																"routing.selection",
 																"routing.allowedCatalogNodes",
-																"routing.maxAttempts",
+																"routing.retries",
+																"routing.fallbacks",
 																"delegation",
 																"encryption"
 															]
@@ -16028,7 +16257,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -16049,7 +16278,8 @@
 																	"routing.sort",
 																	"routing.selection",
 																	"routing.allowedCatalogNodes",
-																	"routing.maxAttempts",
+																	"routing.retries",
+																	"routing.fallbacks",
 																	"delegation",
 																	"encryption"
 																]
@@ -16076,7 +16306,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -16097,7 +16327,8 @@
 														"routing.sort",
 														"routing.selection",
 														"routing.allowedCatalogNodes",
-														"routing.maxAttempts",
+														"routing.retries",
+														"routing.fallbacks",
 														"delegation",
 														"encryption"
 													]
@@ -16115,7 +16346,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -16136,7 +16367,8 @@
 																"routing.sort",
 																"routing.selection",
 																"routing.allowedCatalogNodes",
-																"routing.maxAttempts",
+																"routing.retries",
+																"routing.fallbacks",
 																"delegation",
 																"encryption"
 															]
@@ -16166,7 +16398,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -16187,7 +16419,8 @@
 																	"routing.sort",
 																	"routing.selection",
 																	"routing.allowedCatalogNodes",
-																	"routing.maxAttempts",
+																	"routing.retries",
+																	"routing.fallbacks",
 																	"delegation",
 																	"encryption"
 																]
@@ -16214,7 +16447,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -16235,7 +16468,8 @@
 														"routing.sort",
 														"routing.selection",
 														"routing.allowedCatalogNodes",
-														"routing.maxAttempts",
+														"routing.retries",
+														"routing.fallbacks",
 														"delegation",
 														"encryption"
 													]
@@ -16253,7 +16487,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -16274,7 +16508,8 @@
 																"routing.sort",
 																"routing.selection",
 																"routing.allowedCatalogNodes",
-																"routing.maxAttempts",
+																"routing.retries",
+																"routing.fallbacks",
 																"delegation",
 																"encryption"
 															]
@@ -16304,7 +16539,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -16325,7 +16560,8 @@
 																	"routing.sort",
 																	"routing.selection",
 																	"routing.allowedCatalogNodes",
-																	"routing.maxAttempts",
+																	"routing.retries",
+																	"routing.fallbacks",
 																	"delegation",
 																	"encryption"
 																]
@@ -16352,7 +16588,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -16373,7 +16609,8 @@
 														"routing.sort",
 														"routing.selection",
 														"routing.allowedCatalogNodes",
-														"routing.maxAttempts",
+														"routing.retries",
+														"routing.fallbacks",
 														"delegation",
 														"encryption"
 													]
@@ -16391,7 +16628,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -16412,7 +16649,8 @@
 																"routing.sort",
 																"routing.selection",
 																"routing.allowedCatalogNodes",
-																"routing.maxAttempts",
+																"routing.retries",
+																"routing.fallbacks",
 																"delegation",
 																"encryption"
 															]
@@ -16442,7 +16680,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -16463,7 +16701,8 @@
 																	"routing.sort",
 																	"routing.selection",
 																	"routing.allowedCatalogNodes",
-																	"routing.maxAttempts",
+																	"routing.retries",
+																	"routing.fallbacks",
 																	"delegation",
 																	"encryption"
 																]
@@ -16490,7 +16729,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -16511,7 +16750,8 @@
 														"routing.sort",
 														"routing.selection",
 														"routing.allowedCatalogNodes",
-														"routing.maxAttempts",
+														"routing.retries",
+														"routing.fallbacks",
 														"delegation",
 														"encryption"
 													]
@@ -16529,7 +16769,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -16550,7 +16790,8 @@
 																"routing.sort",
 																"routing.selection",
 																"routing.allowedCatalogNodes",
-																"routing.maxAttempts",
+																"routing.retries",
+																"routing.fallbacks",
 																"delegation",
 																"encryption"
 															]
@@ -16580,7 +16821,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -16601,7 +16842,8 @@
 																	"routing.sort",
 																	"routing.selection",
 																	"routing.allowedCatalogNodes",
-																	"routing.maxAttempts",
+																	"routing.retries",
+																	"routing.fallbacks",
 																	"delegation",
 																	"encryption"
 																]
@@ -16626,7 +16868,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -16646,7 +16888,8 @@
 												"routing.sort",
 												"routing.selection",
 												"routing.allowedCatalogNodes",
-												"routing.maxAttempts"
+												"routing.retries",
+												"routing.fallbacks"
 											]
 										},
 										"uniqueItems": true
@@ -16671,7 +16914,7 @@
 								"type": "integer",
 								"minimum": 1,
 								"maximum": 3600,
-								"description": "Maximum wait for useful provider output, starting at dispatch and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+								"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
 							}
 						},
 						"additionalProperties": false,
@@ -17212,11 +17455,17 @@
 								"additionalProperties": false,
 								"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
 							},
-							"maxAttempts": {
+							"retries": {
 								"type": "integer",
-								"minimum": 1,
+								"minimum": 0,
 								"maximum": 3,
-								"description": "Total attempts, including failed local credential preparations and retries after proven pre-execution rejection. Defaults to one. Timeouts and ambiguous provider failures never permit replay."
+								"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+							},
+							"fallbacks": {
+								"type": "integer",
+								"minimum": 0,
+								"maximum": 2,
+								"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
 							},
 							"filter": {
 								"type": "string",
@@ -17249,7 +17498,8 @@
 										"direction"
 									],
 									"additionalProperties": false
-								}
+								},
+								"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 							},
 							"selection": {
 								"type": "object",
@@ -17279,7 +17529,7 @@
 									"mode"
 								],
 								"additionalProperties": false,
-								"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+								"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 								"allOf": [
 									{
 										"if": {
@@ -17336,7 +17586,7 @@
 											"type": "integer",
 											"minimum": 1,
 											"maximum": 3600,
-											"description": "Maximum wait for useful provider output, starting at dispatch and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+											"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
 										}
 									},
 									"additionalProperties": false,
@@ -17877,11 +18127,17 @@
 											"additionalProperties": false,
 											"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
 										},
-										"maxAttempts": {
+										"retries": {
 											"type": "integer",
-											"minimum": 1,
+											"minimum": 0,
 											"maximum": 3,
-											"description": "Total attempts, including failed local credential preparations and retries after proven pre-execution rejection. Defaults to one. Timeouts and ambiguous provider failures never permit replay."
+											"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+										},
+										"fallbacks": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 2,
+											"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
 										},
 										"filter": {
 											"type": "string",
@@ -17914,7 +18170,8 @@
 													"direction"
 												],
 												"additionalProperties": false
-											}
+											},
+											"description": "Orders eligible deployments. Each expression must read an author, model, deployment, route or provider field. Credential policies, and rules whose condition reads those fields, cannot set routing.sort."
 										},
 										"selection": {
 											"type": "object",
@@ -17944,7 +18201,7 @@
 												"mode"
 											],
 											"additionalProperties": false,
-											"description": "An alternative to routing.sort. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
+											"description": "An alternative to routing.sort with the same scope and rule restrictions. All required selection settings must agree. Inherited restrictions and an explicit request model still apply.",
 											"allOf": [
 												{
 													"if": {

@@ -161,13 +161,14 @@ A `503` with `"code": null` comes from the provider, and the request may have re
 
 ## Retries
 
-The gateway does not retry a request after a provider error, timeout or unclear failure. A retry from
-your client is a new request, billed on its own. If the connection drops after the request was
-sent, the model may already have run. Check the request in [Analytics](/docs/analytics) before you
-send it again.
+The gateway retries and tries other deployments as your
+[routing policy](/docs/policies/routing#retries-and-fallbacks) allows. If every call fails, the
+response has the error of the last provider call, or the gateway's own error when no call reached
+a provider.
 
-Before dispatch, an [attempt limit](/docs/policies/routing#attempt-limit) can let the gateway try
-another credential, and Chutes can retry when it proves that the first call did not run.
+A retry from your client is a new request, billed on its own. If the connection drops after the
+request was sent, the model may already have run. Check the request in [Analytics](/docs/analytics)
+before you send it again.
 
 When a provider answers `429`, `503` or `529` with `Retry-After`, the gateway passes on its wait
 time in seconds. Responses with `upstream_authentication_failed`, `upstream_quota_exceeded` or

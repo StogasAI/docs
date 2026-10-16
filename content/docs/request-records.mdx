@@ -31,9 +31,12 @@ credential. Quantities and money are decimal strings. A missing value is unknown
 | `gateway_error`                                                                    | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).           |
 | `gateway_version`                                                                  | The gateway release that handled the request.                                                   |
 
-Each provider attempt has `provider`, `status` (a [provider result](#provider-results)),
-`status_code`, `latency_ms`, `output_observed`, `provider_request_id`, `finish_reason` and `byok`,
-the provider credential ID or `null` for a Stogas-managed credential.
+Each provider attempt is one call, including each [retry and fallback](/docs/policies/routing#retries-and-fallbacks),
+in call order. It has `provider`, `status` (a [provider result](#provider-results)), `status_code`,
+`start_ms` (when the call started on the [request clock](#timing)), `latency_ms`,
+`output_observed`, `provider_request_id`, `finish_reason` and `byok`, the provider credential ID
+or `null` for a Stogas-managed credential. A candidate that the gateway refused before its call has
+no attempt.
 
 Provider results and gateway errors are separate. If the provider succeeds but the gateway cannot finish
 pricing, encoding or a requested receipt, the attempt keeps `success` and `gateway_error` records
@@ -116,15 +119,16 @@ The request clock starts when the gateway receives the decoded request body and 
 writes the record. It excludes connection setup, upload, final transmission and settlement, so it is
 shorter than the latency your client sees.
 
-| Field               | Meaning                                                                                         |
-| ------------------- | ----------------------------------------------------------------------------------------------- |
-| `total_ms`          | The full request on the gateway.                                                                |
-| `provider_start_ms` | When the provider call started. `null` if not recorded.                                         |
-| `provider_ms`       | The provider call, including upstream connection setup and, for streams, response backpressure. |
-| `first_output_ms`   | The first valid provider output, including non-token output such as citations.                  |
-| `ttft_ms`           | Time to the first generated token in a stream. `null` for buffered requests.                    |
+| Field               | Meaning                                                                        |
+| ------------------- | ------------------------------------------------------------------------------ |
+| `total_ms`          | The full request on the gateway.                                               |
+| `provider_start_ms` | When the first provider call started. `null` if not recorded.                  |
+| `provider_ms`       | Provider calls, from the start of the first to the end of the last.            |
+| `first_output_ms`   | The first valid provider output, including non-token output such as citations. |
+| `ttft_ms`           | Time to the first generated token in a stream. `null` for buffered requests.   |
 
-The time outside `provider_ms` is gateway preparation and response processing.
+`provider_ms` includes upstream connection setup, waits between calls and, for streams, response
+backpressure. The time outside it is gateway preparation and response processing.
 
 ## Plugin metrics
 

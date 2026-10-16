@@ -123,8 +123,11 @@ retries and typed HTTP exceptions in OpenAI clients do not apply to errors insid
 monitoring that sees only HTTP status records these as 200. Show a stream failure even when some
 output is already on screen.
 
-Your client decides whether to retry. A broken connection can leave it unclear whether the model
-ran, and a retry can run and bill the request again. See [Errors](/docs/reference/errors).
+The gateway calls a provider again only as your
+[routing policy](/docs/policies/routing#retries-and-fallbacks) allows, and never after output
+started. Your client decides whether to send the request again. A broken connection can leave it
+unclear whether the model ran, and a new request can run and bill it again. See
+[Errors](/docs/reference/errors).
 
 ## Cancel a request
 

@@ -35,6 +35,11 @@ enables it for your organization: ask your Anthropic account manager or join
 which also matches Claude in Azure's US Data Zone. Requests that send Anthropic's `speed` or
 `inference_geo` field return `400`.
 
+A workspace can allow only US inference. Anthropic then refuses requests from its keys to the
+deployments without `-us` of Claude 4.6 and later models. To keep requests from reaching them, add
+`deployment.dataHandling.processingLocation == 'US'` as a routing filter to the credential's
+policy.
+
 Anthropic's Priority Tier needs a separate contract with Anthropic and is not available.
 
 ## Prompt caching

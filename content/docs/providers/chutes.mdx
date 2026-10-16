@@ -98,9 +98,9 @@ rate.
 ## Retries
 
 Chutes can reject a request before the model starts, for example when an instance is at capacity.
-Within your [attempt limit](/docs/policies/routing#attempt-limit), the gateway retries only these
-errors, on another verified instance with a new ticket. The default limit is one attempt, so set
-`routing.maxAttempts` to 2 or 3 to allow retries. Other errors are never retried.
+The gateway then calls another verified instance at once, with a new ticket. That call is one of
+the candidate's [retries](/docs/policies/routing#retries-and-fallbacks), so it needs
+`routing.retries` of 1 or more. Other failures follow the same rules as other providers.
 
 ## References
 
