@@ -137,14 +137,18 @@ location is unknown.
 
 ## Tiers and Pro
 
-| Mode                             | Select it with                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| Flex                             | `service_tier` or a `-flex` deployment ID                                      |
-| Fast, which Azure calls Priority | `service_tier` or a `-fast` deployment ID                                      |
-| Pro                              | A `-pro` deployment ID. Pro works only with Responses and has no extra charge. |
+| Mode | Models          | How Azure runs it                                                            |
+| ---- | --------------- | ---------------------------------------------------------------------------- |
+| Flex | Some GPT models | A request mode of your GPT deployment                                        |
+| Fast | Some GPT models | Priority processing, a request mode of your GPT deployment                   |
+| Fast | Claude Opus 5.5 | A separate model, `claude-opus-5-5-fast`, that you deploy                    |
+| Pro  | Some GPT models | A request mode of your GPT deployment, on Responses only, at no extra charge |
 
-Flex, Priority and Pro are request modes on the same Azure deployment, so one Azure target serves all
-of them. Only some GPT models offer them; the catalog lists the deployments that exist. See
+Select Flex or Fast with `service_tier` or a `-flex` or `-fast` deployment ID, and Pro with a `-pro`
+deployment ID. A GPT deployment serves all of its request modes, so it needs no other target. For
+Claude Opus 5.5 Fast, deploy `claude-opus-5-5-fast` in your account and choose it in **Azure
+targets**. Azure runs every request to that deployment at Fast, and it does not share prompt caches
+with standard Claude Opus 5.5. The catalog lists the tiers that each model has. See
 [Service tiers](/docs/service-tiers).
 
 ## Endpoints
@@ -173,7 +177,7 @@ Claude deployments use `cache_control`, as on [Anthropic](/docs/providers/anthro
 
 Claude on Azure works as on [Anthropic](/docs/providers/anthropic), with these differences:
 
-- There are no Fast deployments.
+- Only Claude Opus 5.5 has Fast, as a separate model. See [Tiers and Pro](#tiers-and-pro).
 - `task_budget` is rejected, because the gateway does not send it to Azure.
 - System messages after the first turn are rejected.
 - Claude Fable and Claude Mythos accept effort up to `xhigh`, which Microsoft says gives the same

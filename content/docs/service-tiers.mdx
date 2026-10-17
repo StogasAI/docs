@@ -46,29 +46,31 @@ Or send the deployment ID of the tier, such as `openai-gpt-5.5-2026-04-23-flex`.
   `service_tier_unavailable`.
 
 `service_tier` works the same on every provider. For example, `fast` selects Claude's Fast mode on
-Anthropic, which Anthropic must first enable for your organization. Do not send a provider's own control, such as Anthropic's `speed`; it returns `400`.
+[Anthropic](/docs/providers/anthropic#us-and-fast-deployments) and
+[Azure](/docs/providers/azure#tiers-and-pro). Do not send a provider's own control, such as
+Anthropic's `speed`; it returns `400`.
 
-| Provider  | Flex            | Fast                    | Ultrafast                      |
-| --------- | --------------- | ----------------------- | ------------------------------ |
-| OpenAI    | Some models     | Some models             | Some models, on Responses only |
-| Azure     | Some GPT models | Some GPT models         | No                             |
-| Anthropic | No              | Some Claude Opus models | No                             |
-| Chutes    | No              | No                      | No                             |
+| Provider  | Flex            | Fast                                | Ultrafast                      |
+| --------- | --------------- | ----------------------------------- | ------------------------------ |
+| OpenAI    | Some models     | Some models                         | Some models, on Responses only |
+| Azure     | Some GPT models | Some GPT models and Claude Opus 5.5 | No                             |
+| Anthropic | No              | Some Claude Opus models             | No                             |
+| Chutes    | No              | No                                  | No                             |
 
 ## When the provider cannot run the tier
 
 - **Flex**: the request can take longer than at Standard. When the provider has no Flex capacity, the
   request fails with a `429` error.
-- **Fast**: OpenAI and Azure can run a Fast request at Standard, for example when your Fast traffic
-  grows too quickly. You then pay the Standard price. Claude returns an error instead.
+- **Fast**: OpenAI, and GPT on Azure, can run a Fast request at Standard, for example when your Fast
+  traffic grows too quickly. You then pay the Standard price. Claude returns an error instead.
 - **Ultrafast**: the request fails with a `429` error when you reach your Ultrafast rate limit.
 
 ## Check which tier ran
 
 The response's `service_tier` is the tier that the provider reports:
 
-- OpenAI and Azure report `default`, `flex`, `fast`, `priority` or `ultrafast`. `priority` is the
-  older name for Fast. A Fast request that ran at Standard reports `default`.
+- OpenAI and GPT on Azure report `default`, `flex`, `fast`, `priority` or `ultrafast`. `priority`
+  is the older name for Fast. A Fast request that ran at Standard reports `default`.
 - Claude reports Fast mode as `"speed": "fast"`. Its `service_tier` is `default`.
 
 In the [request record](/docs/request-records#catalog-history), `catalog_chain_hash` identifies the

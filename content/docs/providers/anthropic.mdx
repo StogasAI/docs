@@ -27,10 +27,11 @@ and its ID adds a suffix to the standard deployment ID:
 | Both   |                                     | `anthropic-claude-opus-5-fast-us` |
 
 Select Fast with `service_tier: "fast"`, as on OpenAI, or with its deployment ID. See
-[Service tiers](/docs/service-tiers). Fast is a research preview that works only after Anthropic
-enables it for your organization: ask your Anthropic account manager or join
-[Anthropic's waitlist](https://claude.com/fast-mode). The catalog marks Fast deployments with
-`approvalRequired`. Select US with its deployment ID, or require it in a
+[Service tiers](/docs/service-tiers). Claude Opus 5.5 Fast works for every organization except those
+in Anthropic's Evaluation usage tier. Fast for Claude Opus 5 and Claude Opus 4.8 is a research
+preview that works only after Anthropic enables it for your organization: ask your Anthropic account
+manager or join [Anthropic's waitlist](https://claude.com/fast-mode). The catalog marks those
+deployments with `approvalRequired`. Select US with its deployment ID, or require it in a
 [routing filter](/docs/policies/routing), for example `deployment.dataHandling.processingLocation == 'US'`,
 which also matches Claude in Azure's US Data Zone. Requests that send Anthropic's `speed` or
 `inference_geo` field return `400`.
