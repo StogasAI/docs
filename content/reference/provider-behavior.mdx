@@ -29,11 +29,14 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
 - `null`, and the empty defaults that SDKs send, count as omitted.
 - `store` accepts only `false`. The gateway never asks a provider to store a response.
 - `safety_identifier` and `user` tell the provider which of your users sent a request, so the
-  provider can act on that user instead of your whole account. With your own credential, OpenAI and
-  Azure OpenAI receive both fields, Anthropic models receive `safety_identifier`, or `user` when it
-  is the only one, as `metadata.user_id`, and Chutes receives neither. Send an opaque value, such as
-  a hash of your user ID: redaction doesn't change these fields. With a Stogas-managed credential,
-  the gateway removes them.
+  provider can act on that user instead of your whole account. Send an opaque value, such as a hash
+  of your user ID: redaction doesn't change these fields. With your own credential:
+  - OpenAI and Azure OpenAI receive both fields, except a `user` longer than 64 characters.
+  - Anthropic models receive `safety_identifier`, or `user` when it is the only one, as
+    `metadata.user_id`.
+  - Chutes receives neither.
+
+  With a Stogas-managed credential, the gateway removes both.
 - [`metadata`](/docs/request-records#metadata) and [`session_id`](/docs/request-records#sessions)
   go to the request record, not to the provider.
 - `max_tokens` is another name for `max_completion_tokens` on Chat Completions.
