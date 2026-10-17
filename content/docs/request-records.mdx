@@ -5,118 +5,189 @@ icon: ScrollText
 ---
 
 The gateway writes one record for each request. [Analytics](/docs/analytics), record downloads and
-[Export](/docs/export) use the same record. It has no prompt, response, raw error message or
-credential. Quantities and money are decimal strings. A missing value is unknown, not zero.
+[Export](/docs/export) show the same record. It has no prompt, response, raw error message or
+credential.
+
+## Example
+
+This streamed Chat Completions request to `gpt-5.5` has a session and metadata. OpenAI rate limited
+the first call, so the gateway called Azure:
+
+```json title="Record of a served request"
+{
+	"schema_version": 1,
+	"request_id": "01a14a2c-7ee1-7ad7-bbf6-4d3c4c79bfad",
+	"created_at": "2026-10-17T14:03:12.481Z",
+	"last_request_at": "2026-10-17T14:03:12.481Z",
+	"request_count": 1,
+	"gateway_error": null,
+	"stogas_api_key_id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
+	"stogas_grant_id": null,
+	"stogas_user_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
+	"stogas_organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
+	"request_type": "chat_completion_stream",
+	"request_settings": {
+		"max_output_tokens": 1024,
+		"reasoning_effort": "low",
+		"response_format": "json_schema"
+	},
+	"session_id": "ticket-4821",
+	"metadata": { "team": "support", "feature": "ticket-summary" },
+	"transport": "https",
+	"cancelled": false,
+	"client_stop_ms": null,
+	"catalog_version": 214,
+	"policy_versions": [
+		{ "scope": "organization", "id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf", "revision": 3 },
+		{ "scope": "key", "id": "019e275c-0e88-7b1d-bcdb-39ba5923457e", "revision": 1 }
+	],
+	"provider_attempts": [
+		{
+			"catalog_chain_hash": "sha256:796c527273df7774555c3cd8d39d2c37f5cd0176920243e4b1f9d55d463e990d",
+			"provider": "openai",
+			"status": "rate_limited",
+			"status_code": 429,
+			"start_ms": 14,
+			"latency_ms": 96,
+			"output_observed": false,
+			"provider_request_id": "",
+			"finish_reason": "",
+			"byok": null
+		},
+		{
+			"catalog_chain_hash": "sha256:ac684e0750de3c08c89d57fa8cae8d5a3d0afd73a624ff3e1d66e0bd758b3dea",
+			"provider": "azure",
+			"status": "success",
+			"status_code": 200,
+			"start_ms": 118,
+			"latency_ms": 1840,
+			"output_observed": true,
+			"provider_request_id": "chatcmpl-tyyIcevsCWs7aUIgZsZtT3hSjXf7W",
+			"finish_reason": "stop",
+			"byok": null
+		}
+	],
+	"node_id": "amber-falcon-69f9fdca1fa162f4d0ec706c70b3729d77cff726031f28d8c0b8a3586d50aeae",
+	"performance": {
+		"total_ms": 1975,
+		"provider_ms": 1944,
+		"provider_start_ms": 14,
+		"first_output_ms": 702,
+		"ttft_ms": 702
+	},
+	"usage": {
+		"upstream_cost_usd": "0.022952",
+		"billed_cost_usd": "0.022952",
+		"cache_read_savings_usd": "0.004608",
+		"cache_write_overhead_usd": "0",
+		"meters": {
+			"input_tokens": {
+				"quantity": "1800",
+				"rateKey": "per_mill_tokens",
+				"rateUsd": "5",
+				"usd": "0.009"
+			},
+			"cached_input_tokens": {
+				"quantity": "1024",
+				"rateKey": "per_mill_tokens",
+				"rateUsd": "0.5",
+				"usd": "0.000512"
+			},
+			"output_tokens": {
+				"quantity": "320",
+				"rateKey": "per_mill_tokens",
+				"rateUsd": "30",
+				"usd": "0.0096"
+			},
+			"reasoning_tokens": {
+				"quantity": "128",
+				"rateKey": "per_mill_tokens",
+				"rateUsd": "30",
+				"usd": "0.00384"
+			},
+			"total_input_tokens": { "quantity": "2824" },
+			"total_output_tokens": { "quantity": "448" },
+			"total_tokens": { "quantity": "3272" },
+			"estimated_input_tokens": { "quantity": "3390" },
+			"input_text_bytes": { "quantity": "11014" },
+			"output_text_bytes": { "quantity": "1291" },
+			"input_file_count": { "quantity": "0" },
+			"input_file_url_count": { "quantity": "0" },
+			"input_inline_file_bytes": { "quantity": "0" },
+			"hosted_tool_calls": { "quantity": "0" },
+			"client_tool_calls": { "quantity": "0" }
+		},
+		"standard_text_tokens": { "input": "2753.5", "output": "322.75" }
+	},
+	"plugins": {
+		"stogas_structured_pii_redaction": { "duration_us": 310, "items_redacted": 2 }
+	},
+	"gateway_version": "v1.5.93"
+}
+```
+
+- Quantities and amounts of money are decimal strings.
+- A missing value means that the gateway could not measure it. Here, `standard_text_tokens` has no
+  `reasoning`, because OpenAI models do not show their reasoning text.
 
 ## Fields
 
-| Field                                                                              | Meaning                                                                                         |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `schema_version`                                                                   | Record format version, currently `1`. Check it before you read other fields.                    |
-| `request_id`                                                                       | The request ID. A [grouped record](#grouped-rejections) keeps the first ID.                     |
-| `created_at`                                                                       | Billing authorization time, or the first rejection in a group.                                  |
-| `last_request_at`                                                                  | The last rejection in a group. Equal to `created_at` for other requests.                        |
-| `request_count`                                                                    | Requests this record stands for. `1` for every admitted request.                                |
-| `stogas_organization_id`, `stogas_api_key_id`, `stogas_grant_id`, `stogas_user_id` | The organization, key, grant and member behind the request.                                     |
-| `request_type`                                                                     | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`. |
-| `request_settings`                                                                 | [Settings](#request-settings) the gateway sent to the provider. `{}` when it sent none.         |
-| `session_id`                                                                       | The request's [session](#sessions). Empty when it had none.                                     |
-| `metadata`                                                                         | The request's [metadata](#metadata). `{}` when it had none.                                     |
-| `transport`                                                                        | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.      |
-| `cancelled`, `client_stop_ms`                                                      | Whether the client cancelled, and when on the request clock.                                    |
-| `catalog_version`                                                                  | The approved catalog used for the request.                                                      |
-| `policy_versions`                                                                  | Revisions of the routing, access and limit policies that applied.                               |
-| `provider_attempts`                                                                | Each provider call and its result. Empty when the request was rejected before dispatch.         |
-| `node_id`                                                                          | The gateway VM that handled the request.                                                        |
-| `performance`                                                                      | [Timing](#timing).                                                                              |
-| `usage`                                                                            | [Meters, STT and cost](/docs/usage).                                                            |
-| `plugins`                                                                          | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                     |
-| `gateway_error`                                                                    | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).           |
-| `gateway_version`                                                                  | The gateway release that handled the request.                                                   |
+| Field                                                                              | Meaning                                                                                             |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `schema_version`                                                                   | Record format version, currently `1`. Check it before you read other fields.                        |
+| `request_id`                                                                       | The request ID. A [grouped record](#grouped-rejections) keeps the first ID.                         |
+| `created_at`                                                                       | Billing authorization time, or the first rejection in a group.                                      |
+| `last_request_at`                                                                  | The last rejection in a group. Equal to `created_at` for other requests.                            |
+| `request_count`                                                                    | Requests that the record stands for. `1` for every request that the gateway accepted.               |
+| `stogas_organization_id`, `stogas_api_key_id`, `stogas_grant_id`, `stogas_user_id` | The organization, key, grant and member behind the request.                                         |
+| `request_type`                                                                     | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.     |
+| `request_settings`                                                                 | [Settings](#request-settings) that the gateway sent to the provider. `{}` when it sent none.        |
+| `session_id`                                                                       | The request's [session](#sessions). Empty when it had none.                                         |
+| `metadata`                                                                         | The request's [metadata](#metadata). `{}` when it had none.                                         |
+| `transport`                                                                        | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.          |
+| `cancelled`, `client_stop_ms`                                                      | Whether the client cancelled, and when, on the [request clock](#timing).                            |
+| `catalog_version`                                                                  | The approved catalog that routed the request. `null` in [rejection records](#grouped-rejections).   |
+| `policy_versions`                                                                  | The scope, ID and revision of each [policy](/docs/policies/scopes) that applied.                    |
+| `provider_attempts`                                                                | Each [provider call](#provider-attempts) and its result. Empty when the gateway called no provider. |
+| `node_id`                                                                          | The gateway VM that handled the request.                                                            |
+| `performance`                                                                      | [Timing](#timing).                                                                                  |
+| `usage`                                                                            | [Meters, standard text tokens and cost](/docs/usage).                                               |
+| `plugins`                                                                          | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                         |
+| `gateway_error`                                                                    | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).               |
+| `gateway_version`                                                                  | The gateway release that handled the request.                                                       |
 
-Each provider attempt is one call, including each [retry and fallback](/docs/policies/routing#retries-and-fallbacks),
-in call order. It has `provider`, `status` (a [provider result](#provider-results)), `status_code`,
-`start_ms` (when the call started on the [request clock](#timing)), `latency_ms`,
-`output_observed`, `provider_request_id`, `finish_reason` and `byok`, the provider credential ID
-or `null` for a Stogas-managed credential. A candidate that the gateway refused before its call has
-no attempt.
+## Provider attempts
 
-Provider results and gateway errors are separate. If the provider succeeds but the gateway cannot finish
-pricing, encoding or a requested receipt, the attempt keeps `success` and `gateway_error` records
-the gateway failure. An ordinary provider error stays in `provider_attempts` and does not set
-`gateway_error`. If the gateway stops before it sends the request, for example because the provider's
-confidential evidence did not verify, the record has no provider attempt or usage, and
-`gateway_error` records the error that you received.
+`provider_attempts` has one entry for each provider call, including each
+[retry and fallback](/docs/policies/routing#retries-and-fallbacks), in call order. A candidate that
+the gateway refused before it called the provider has no entry.
 
-## Request settings
+| Field                                               | Meaning                                                                                            |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `provider`                                          | The provider, such as `openai`.                                                                    |
+| `status`                                            | The [result](#provider-results).                                                                   |
+| `status_code`                                       | The provider's HTTP status. `null` when there was none, such as after a lost connection.           |
+| `start_ms`                                          | When the call started, on the [request clock](#timing).                                            |
+| `latency_ms`                                        | How long the call took.                                                                            |
+| `output_observed`                                   | Whether output from this call reached the request. Only the last call can have `true`.             |
+| `provider_request_id`                               | The provider's response ID, such as `chatcmpl-…`, `resp_…` or `msg_…`. Empty when the call failed. |
+| `finish_reason`                                     | Why the model stopped, such as `stop` or `length`. Empty when the provider did not say.            |
+| `byok`                                              | The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential.               |
+| `catalog_chain_hash`, `resolved_catalog_chain_hash` | The catalog settings that the call used. See [Catalog history](#catalog-history).                  |
 
-`request_settings` records the settings that control what the model generates, as the gateway
-sent them to the provider. It includes values the gateway adds, such as the output limit that
-Anthropic requires. Chat Completions and Responses use the same names, and a format or tool choice
-keeps only its type. For example, this Responses request:
+`provider_attempts` and `gateway_error` record different failures:
 
-```json
-{
-	"model": "gpt-5.5",
-	"input": "...",
-	"max_output_tokens": 2048,
-	"reasoning": { "effort": "low", "summary": "auto" },
-	"text": { "format": { "type": "json_schema", "name": "invoice", "schema": {} } }
-}
-```
+| What happened                                                                                     | `provider_attempts`        | `gateway_error`             |
+| ------------------------------------------------------------------------------------------------- | -------------------------- | --------------------------- |
+| Every provider call failed                                                                        | Each failed call           | `null`                      |
+| The provider succeeded, but the gateway could not finish pricing, encoding or a requested receipt | Ends with a `success` call | The gateway error           |
+| The gateway stopped before any call, such as when provider evidence did not verify                | Empty, and usage is zero   | The error that you received |
+| The gateway rejected the request before billing authorization                                     | Empty, and usage is zero   | The error that you received |
 
-has this record:
+### Provider results
 
-```json
-{
-	"max_output_tokens": 2048,
-	"reasoning_effort": "low",
-	"reasoning_summary": "auto",
-	"response_format": "json_schema"
-}
-```
-
-The names are `max_output_tokens`, `reasoning_enabled`, `reasoning_effort`, `reasoning_max_tokens`,
-`reasoning_summary`, `reasoning_display`, `task_budget_tokens`, `temperature`, `top_p`, `top_k`,
-`frequency_penalty`, `presence_penalty`, `repetition_penalty`, `seed`, `logprobs`, `top_logprobs`,
-`verbosity`, `response_format`, `include`, `tool_choice`, `parallel_tool_calls`, `max_tool_calls`
-and `truncation`.
-
-Prompts, instructions, stop sequences, tools, schemas and identifiers such as `user` are never
-recorded.
-Other fields record streaming (`request_type`), service tier, speed and region (the
-[catalog chain](#catalog-history)) and caching (`usage`). The record leaves out a text value that
-is longer than 64 characters or not printable ASCII, a list with more than 16 entries, and an
-integer above 9007199254740991 or below -9007199254740991.
-
-## Metadata
-
-Send a `metadata` object with a Chat Completions or Responses request to label it, for example by
-team or feature. The record keeps it, so you can [filter analytics](/docs/analytics#filters) by it
-and find it in downloads and exports. The gateway never sends it to the provider.
-
-Metadata has up to 16 pairs. Keys have 1 to 64 bytes and values up to 512 bytes, counted as UTF-8,
-and neither can contain control characters such as line breaks. The gateway rejects other metadata
-with `invalid_request`. [PII redaction](/docs/pii-redaction) does not scan metadata, so keep
-personal data out of it. Rejection records have no metadata.
-
-## Sessions
-
-Send a session ID to group the requests of one conversation or task, then
-[filter analytics](/docs/analytics#filters) with `session:`. Chat Completions and Responses take it
-as a `session_id` field or an `X-Session-Id` header; the field wins when a request has both.
-OpenCode sends `X-Session-Id` on its own. Codex sends a `Session-Id` header, which the record uses
-when the request has no other session ID.
-
-A session ID has up to 256 bytes, counted as UTF-8, and no control characters such as line breaks.
-The gateway rejects an invalid `session_id`, and an `X-Session-Id` that is invalid or sent twice,
-with `invalid_request`. It ignores an invalid `Session-Id`. The gateway never sends the session ID
-to the provider, and PII redaction does not scan it. Rejection records have no session ID.
-
-## Provider results
-
-Each provider attempt has one of these results. The gateway sets it from the provider's structured error
-type, code and HTTP status, never from message text. An unrecognized failure is `provider_error`.
+The gateway sets each call's `status` from the provider's structured error type, code and HTTP
+status, never from message text. An unrecognized failure is `provider_error`.
 
 | Result                                                                             | Meaning                                                                   |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -129,6 +200,107 @@ type, code and HTTP status, never from message text. An unrecognized failure is 
 | `provider_unavailable`, `provider_overloaded`, `model_unavailable`                 | The provider or model was unavailable.                                    |
 | `invalid_response`                                                                 | The response could not be used.                                           |
 | `cancelled`, `unknown`, `provider_error`                                           | The call was cancelled, its outcome is unknown, or it failed another way. |
+
+## Request settings
+
+`request_settings` records the settings that control what the model generates, as the gateway sent
+them to the provider. It includes values that the gateway adds, such as the output limit that
+Anthropic requires. Chat Completions and Responses use the same names, and a format or tool choice
+keeps only its type:
+
+```json title="Responses request"
+{
+	"model": "gpt-5.5",
+	"input": "...",
+	"max_output_tokens": 2048,
+	"reasoning": { "effort": "low", "summary": "auto" },
+	"text": { "format": { "type": "json_schema", "name": "invoice", "schema": {} } }
+}
+```
+
+```json title="request_settings in its record"
+{
+	"max_output_tokens": 2048,
+	"reasoning_effort": "low",
+	"reasoning_summary": "auto",
+	"response_format": "json_schema"
+}
+```
+
+| Group            | Names                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------- |
+| Length           | `max_output_tokens`, `task_budget_tokens`, `verbosity`                                                    |
+| Reasoning        | `reasoning_enabled`, `reasoning_effort`, `reasoning_max_tokens`, `reasoning_summary`, `reasoning_display` |
+| Sampling         | `temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `repetition_penalty`, `seed`    |
+| Response content | `response_format`, `include`, `logprobs`, `top_logprobs`                                                  |
+| Tools            | `tool_choice`, `parallel_tool_calls`, `max_tool_calls`                                                    |
+| Context          | `truncation`                                                                                              |
+
+Other fields record the remaining settings:
+
+| Setting                        | Field                                             |
+| ------------------------------ | ------------------------------------------------- |
+| Streaming                      | `request_type`                                    |
+| Service tier, speed and region | Each attempt's [catalog chain](#catalog-history)  |
+| Caching                        | The cache meters in [`usage`](/docs/usage#meters) |
+
+The record never keeps prompts, instructions, stop sequences, tools, schemas or identifiers such as
+`user`. It also leaves out a text value that is longer than 64 characters or not printable ASCII, a
+list with more than 16 entries, and an integer above 9007199254740991 or below -9007199254740991.
+
+## Metadata
+
+Send a `metadata` object with a Chat Completions or Responses request to label it, for example by
+team or feature:
+
+```json title="Chat Completions request"
+{
+	"model": "gpt-5.5",
+	"messages": [{ "role": "user", "content": "Summarize this ticket: ..." }],
+	"metadata": { "team": "support", "feature": "ticket-summary" }
+}
+```
+
+The record keeps the metadata, so you can find these requests with the analytics filter
+[`metadata.team:support`](/docs/analytics#filters), and in downloads and exports.
+
+| Part       | Limit                                      |
+| ---------- | ------------------------------------------ |
+| Pairs      | Up to 16                                   |
+| Each key   | A string of 1 to 64 bytes of UTF-8         |
+| Each value | A string of up to 512 bytes of UTF-8       |
+| Characters | No control characters, such as line breaks |
+
+- The gateway rejects other metadata with `invalid_request`.
+- The gateway never sends metadata to the provider. [PII redaction](/docs/pii-redaction) does not
+  scan it, so keep personal data out of it.
+- Rejection records have no metadata.
+
+## Sessions
+
+Send a session ID to group the requests of one conversation or task, then find them with the
+analytics filter [`session:`](/docs/analytics#filters):
+
+```json title="Chat Completions request"
+{
+	"model": "gpt-5.5",
+	"messages": [{ "role": "user", "content": "..." }],
+	"session_id": "ticket-4821"
+}
+```
+
+The gateway reads the first of these sources that has a value:
+
+| Source                             | If the value is invalid                                              |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| `session_id` field in the body     | The gateway rejects the request with `invalid_request`.              |
+| `X-Session-Id` header              | The gateway rejects the request, also when the header is sent twice. |
+| `Session-Id` header, sent by Codex | The gateway ignores the header.                                      |
+
+- A session ID has up to 256 bytes of UTF-8 and no control characters, such as line breaks.
+- OpenCode sends `X-Session-Id` without any setup.
+- The gateway never sends the session ID to the provider, and PII redaction does not scan it.
+- Rejection records have no session ID.
 
 ## Catalog history
 
@@ -147,48 +319,111 @@ The request clock starts when the gateway receives the decoded request body and 
 writes the record. It excludes connection setup, upload, final transmission and settlement, so it is
 shorter than the latency your client sees.
 
-| Field               | Meaning                                                                        |
-| ------------------- | ------------------------------------------------------------------------------ |
-| `total_ms`          | The full request on the gateway.                                               |
-| `provider_start_ms` | When the first provider call started. `null` if not recorded.                  |
-| `provider_ms`       | Provider calls, from the start of the first to the end of the last.            |
-| `first_output_ms`   | The first valid provider output, including non-token output such as citations. |
-| `ttft_ms`           | Time to the first generated token in a stream. `null` for buffered requests.   |
+| Field               | Meaning                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------- |
+| `total_ms`          | The full request on the gateway.                                                          |
+| `provider_start_ms` | When the first provider call started. `null` if not recorded.                             |
+| `provider_ms`       | Provider calls, from the start of the first to the end of the last.                       |
+| `first_output_ms`   | The first valid provider output, including output other than tokens, such as citations.   |
+| `ttft_ms`           | Time to the first generated token in a stream. `null` for requests that are not streamed. |
+
+The [example](#example) record has this timeline:
+
+```text title="Request clock of the example"
+   0 ms  The gateway receives the request.
+  14 ms  The OpenAI call starts.               provider_start_ms
+ 110 ms  OpenAI answers 429.
+ 118 ms  The Azure call starts.
+ 702 ms  The first token arrives.              first_output_ms, ttft_ms
+1958 ms  The Azure call ends.                  provider_ms = 1958 - 14
+1975 ms  The gateway writes the record.        total_ms
+```
 
 `provider_ms` includes upstream connection setup, waits between calls and, for streams, response
 backpressure. The time outside it is gateway preparation and response processing.
 
 ## Plugin metrics
 
-`plugins.stogas_structured_pii_redaction` records the number of replacements and the scan time in
-microseconds. Zero replacements means the scan found nothing; a missing entry means no scan was
-recorded. See [PII redaction](/docs/pii-redaction).
+| Entry                             | Fields                          | Meaning                                                                                         |
+| --------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `stogas_structured_pii_redaction` | `items_redacted`, `duration_us` | Replacements, and the scan time in microseconds. `0` replacements means the scan found nothing. |
+| `stogas_export`                   | `capture_us`                    | Time spent copying content for [Export](/docs/export), in microseconds.                         |
 
-`plugins.stogas_export.capture_us` records the time spent copying content for the
-[Export](/docs/export). Plugin times overlap the request timeline; do not add them to
-`total_ms`.
+- An entry is missing when the plugin recorded nothing, for example when no scan ran.
+- Plugin times overlap the request timeline. Do not add them to `total_ms`.
 
 ## Grouped rejections
 
-Requests rejected before billing authorization, such as for credit, policy or validation errors,
-appear once the gateway can tell which API key sent them. In each UTC minute, the first five
-rejections with the same key, endpoint, `transport`, error code and HTTP status keep their own
-records and appear within seconds. Further repeats in that minute share one record with a
-`request_count`, which appears after the minute ends. Each gateway groups its own requests, so a
-client whose requests reach several gateways can see more single records. Successful requests and
-provider errors are never grouped.
+Requests that the gateway rejects before billing authorization, such as for credit, policy or
+validation errors, appear once the gateway can tell which API key sent them. Repeated rejections
+share records. In each UTC minute, rejections with the same key, `request_type`, `transport`,
+`policy_versions`, error code and HTTP status are recorded like this:
 
-On each gateway, only an organization's first 32 groups in a minute keep single records. Its later
-groups have only the counted record, and after 256 groups the gateway records none of the
-organization's new groups until the minute ends.
+| Rejections      | Record                                                                        |
+| --------------- | ----------------------------------------------------------------------------- |
+| First five      | One record each, which appears within seconds                                 |
+| Sixth and later | One shared record with a `request_count`, which appears after the minute ends |
 
-For example, 99 matching credit rejections in one minute produce five single records and one record
-with a count of 94. Charts sum `request_count`; costs and usage are recorded once and must not be
-multiplied by it. A grouped record keeps the first request ID and the first and last times; the
-other request IDs it counts have no record of their own. It has no model or catalog IDs, so it
-counts toward key and organization totals but not model totals.
+For example, 99 matching credit rejections in one minute produce five single records and this one:
+
+```json title="Record of 94 grouped rejections"
+{
+	"schema_version": 1,
+	"request_id": "01a14a2e-473b-7d85-a76b-9f3e43449388",
+	"created_at": "2026-10-17T14:05:09.307Z",
+	"last_request_at": "2026-10-17T14:05:58.112Z",
+	"request_count": 94,
+	"gateway_error": { "code": "insufficient_balance", "status": 402 },
+	"stogas_api_key_id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
+	"stogas_grant_id": null,
+	"stogas_user_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
+	"stogas_organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
+	"request_type": "chat_completion_stream",
+	"request_settings": {},
+	"session_id": "",
+	"metadata": {},
+	"transport": "https",
+	"cancelled": false,
+	"client_stop_ms": null,
+	"catalog_version": null,
+	"policy_versions": [
+		{ "scope": "organization", "id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf", "revision": 3 },
+		{ "scope": "key", "id": "019e275c-0e88-7b1d-bcdb-39ba5923457e", "revision": 1 }
+	],
+	"provider_attempts": [],
+	"node_id": "amber-falcon-69f9fdca1fa162f4d0ec706c70b3729d77cff726031f28d8c0b8a3586d50aeae",
+	"performance": {
+		"total_ms": 0,
+		"provider_ms": 0,
+		"provider_start_ms": null,
+		"first_output_ms": null,
+		"ttft_ms": null
+	},
+	"usage": {
+		"upstream_cost_usd": "0",
+		"billed_cost_usd": "0",
+		"cache_read_savings_usd": "0",
+		"cache_write_overhead_usd": "0",
+		"meters": {},
+		"standard_text_tokens": {}
+	},
+	"gateway_version": "v1.5.93"
+}
+```
+
+- Charts sum `request_count`. Costs and usage are recorded once, so do not multiply them by it.
+- A grouped record keeps the first request ID and the first and last times. The other request IDs
+  that it counts have no record of their own.
+- A grouped record has no model or catalog IDs, so it counts toward key and organization totals but
+  not model totals.
+- Successful requests and provider errors are never grouped.
+
+Each gateway groups its own requests, so a client whose requests reach several gateways can see more
+single records. On each gateway, only an organization's first 32 groups in a minute keep single
+records, and its later groups have only the shared record. After 32 groups of one key, or 256 groups
+of one organization, the gateway records none of their new groups until the minute ends.
 
 Records are delivered asynchronously. A gateway crash, a burst larger than the gateway can group, or
 a storage failure can lose rejection records, so grouped history is not a complete audit of every
-request. Requests that fail
-before the gateway can identify the key, such as with an invalid key, do not appear.
+request. Requests that fail before the gateway can identify the key, such as with an invalid key,
+do not appear.
