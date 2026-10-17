@@ -27,15 +27,13 @@ Add `stogasRedaction` to the policy of an API key or another [scope](/docs/polic
 }
 ```
 
-With this policy, this prompt:
+With this policy, a prompt reaches the provider with placeholders:
 
-```text
+```text title="Your prompt"
 Email ana.silva+orders@contoso.com about EMP-123456 and project aurora.
 ```
 
-reaches the provider as:
-
-```text
+```text title="What the provider receives"
 Email <EMAIL_ADDRESS> about <CUSTOM_PII> and <CUSTOM_PII>.
 ```
 

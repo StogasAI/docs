@@ -80,7 +80,7 @@ identifies the deployment that your request resolved to.
 A [routing policy](/docs/policies/routing) can remove tiers with `deployment.upstream.serviceTier`,
 which is `standard`, `flex`, `fast` or `ultrafast`. For example, to block Ultrafast:
 
-```json
+```json title="Policy"
 { "routing": { "filter": "deployment.upstream.serviceTier != 'ultrafast'" } }
 ```
 
