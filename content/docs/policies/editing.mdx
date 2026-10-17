@@ -78,6 +78,51 @@ Inside routing expressions, they also show request facts, operators and catalog 
 **Show encrypted blob** to expand one. **Copy JSON** copies the whole saved policy, including
 ciphertext.
 
+## Simulate routing
+
+**Routing simulation**, below the policy editor, shows where requests would go with your draft. It
+calls no model and costs nothing.
+
+<Steps>
+<Step>
+
+### Choose a request
+
+Choose a key that uses the policy. On a key's own policy, the simulation uses that key. Then choose
+the model, the interface and the service tier that a request would send.
+
+| Model choice   | The simulated request names                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| A model        | Its ID. Any deployment of the model can serve it.                                                                  |
+| A group        | The group ID, which selects the group's newest models                                                              |
+| A deployment   | The deployment ID, which fixes the provider, region and service tier                                               |
+| **Any model**  | No model. Every model is a candidate, so the request needs an `order`, a `sort` or a filter that leaves one model. |
+| **Use “text”** | The text that you typed, such as an alias                                                                          |
+
+</Step>
+<Step>
+
+### Read the result
+
+| Part                    | Shows                                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| Tried in order          | Each deployment and credential that the request tries, and the policy that sets the order |
+| Over the fallback limit | Candidates after the last [fallback](/docs/policies/routing#retries-and-fallbacks)        |
+| Removed                 | Why routing removed each candidate, with the policy, rule and expression                  |
+| Error                   | The error that the request gets, such as `model_unavailable` or `schedule_denied`         |
+
+</Step>
+</Steps>
+
+- The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
+  key uses that credential. Enabled state, expiration and other changes apply after you save.
+- The simulated request has only a model and a service tier. `request.bodyBytes` is 0, and it has
+  no [request policy](/docs/policies/request-policies) or `provider` preference.
+- It uses the current catalog and time, so `access.deny` periods and rules that read
+  `request.time` apply as they would now.
+- It does not check [limits](/docs/policies/limits), your balance or provider errors. Retries and
+  fallbacks after a failed call happen only on real requests.
+
 ## Check a policy before saving
 
 [`POST /v1/policies/validate`](/docs/reference/policies/validatePolicy) checks the policies that
