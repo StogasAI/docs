@@ -1,0 +1,268 @@
+---
+title: Examples
+description: Copy policies for budgets, request rates, provider choice, schedules and redaction.
+icon: ListChecks
+---
+
+Save each policy where it should apply. An organization policy covers every key in the
+organization, and a key policy covers one key. See [Edit a policy](/docs/policies/editing) for where
+to save, and [Scopes and inheritance](/docs/policies/scopes) for how policies combine.
+
+## Budgets and rates
+
+### Cap monthly spending for the organization
+
+All keys share $1,000 a month. Each month starts on the 1st at 00:00 UTC, the time in `anchor`.
+
+```json title="Organization policy"
+{
+	"limits": {
+		"spend": {
+			"recurring": {
+				"monthly": {
+					"maxUsd": "1000",
+					"window": { "count": 1, "unit": "month" },
+					"anchor": "2026-10-01T00:00:00Z",
+					"timeZone": "UTC"
+				}
+			}
+		}
+	}
+}
+```
+
+### Give one key a daily budget and a total cap
+
+The key can spend $20 a day and $500 in total. The organization's limits still apply.
+
+```json title="Key policy"
+{
+	"limits": {
+		"spend": {
+			"lifetimeUsd": "500",
+			"recurring": {
+				"daily": {
+					"maxUsd": "20",
+					"window": { "count": 1, "unit": "day" },
+					"anchor": "2026-10-01T00:00:00Z",
+					"timeZone": "UTC"
+				}
+			}
+		}
+	}
+}
+```
+
+### Limit the request rate
+
+One request a second on average, with bursts of up to 10, and at most 5 requests at the same time.
+
+```json title="Key policy"
+{
+	"limits": {
+		"requests": {
+			"per-minute": {
+				"max": 60,
+				"window": { "count": 1, "unit": "minute" },
+				"burst": 10
+			}
+		},
+		"concurrentRequests": 5
+	}
+}
+```
+
+See [Limits](/docs/policies/limits) for token limits and how limits reset.
+
+## Providers and data handling
+
+### Use only providers that keep no data
+
+Every request skips deployments whose provider does not commit to zero data retention.
+
+```json title="Organization policy"
+{
+	"routing": {
+		"filter": "deployment.dataHandling.zeroDataRetention == true"
+	}
+}
+```
+
+### Keep inference in Europe
+
+Location values are exact, so list each value that you accept. Add country codes, such as `'DE'`,
+to also accept deployments that run in one country. See
+[location values](/docs/policies/routing-fields#location-values).
+
+```json title="Organization policy"
+{
+	"routing": {
+		"filter": "deployment.dataHandling.processingLocation in ['eu', 'europe']"
+	}
+}
+```
+
+### Use only some providers
+
+```json title="Organization policy"
+{
+	"routing": {
+		"allowedCatalogNodes": { "providers": ["openai", "anthropic"] }
+	}
+}
+```
+
+## Order and fallbacks
+
+### Try OpenAI first, then Azure
+
+A request for `gpt-5.6-sol` goes to OpenAI first. If OpenAI fails, for example with a `5xx`
+response, the gateway tries your Azure deployment. The key needs an OpenAI and an Azure credential.
+
+```json title="Key policy"
+{
+	"routing": {
+		"order": ["openai-gpt-5.6-sol", "azure-gpt-5.6-sol"]
+	}
+}
+```
+
+### Use the cheapest deployment
+
+Deployments are ordered by price, with input and output prices weighed 3 to 1. A request that names
+a model uses its cheapest deployment first. A request without a model uses the cheapest model.
+
+```json title="Key policy"
+{
+	"routing": {
+		"sort": [{ "by": "blended_price(3, 1)" }]
+	}
+}
+```
+
+### Never send a request twice
+
+After a lost connection or a `5xx` response, the provider may have run the request. With these
+values, the gateway does not call a provider again for the same request.
+
+```json title="Key policy"
+{
+	"routing": {
+		"retries": 0,
+		"fallbacks": 0
+	}
+}
+```
+
+See [Routing](/docs/policies/routing) for filters, sorts, weighted random order and fallbacks.
+
+## Schedules
+
+### Allow requests only during working hours
+
+Requests work from 08:00 to 18:00 Berlin time, Monday to Friday.
+
+```json title="Organization policy"
+{
+	"access": {
+		"deny": [
+			{
+				"days": ["mon", "tue", "wed", "thu", "fri"],
+				"start": "00:00",
+				"end": "08:00",
+				"timeZone": "Europe/Berlin"
+			},
+			{
+				"days": ["mon", "tue", "wed", "thu", "fri"],
+				"start": "18:00",
+				"end": "24:00",
+				"timeZone": "Europe/Berlin"
+			},
+			{
+				"days": ["sat", "sun"],
+				"start": "00:00",
+				"end": "24:00",
+				"timeZone": "Europe/Berlin"
+			}
+		]
+	}
+}
+```
+
+## Content
+
+### Redact email addresses and phone numbers
+
+The provider receives placeholders such as `<EMAIL_ADDRESS>` instead of the values.
+
+```json title="Organization policy"
+{
+	"plugins": {
+		"stogasRedaction": { "email_address": true, "phone_number": true }
+	}
+}
+```
+
+See [PII redaction](/docs/pii-redaction) for every preset, your own terms and patterns.
+
+## Rules and permissions
+
+### Set a separate budget for one model family
+
+Requests to Claude Opus models can spend $200 in total. Other requests do not count against it.
+
+```json title="Organization policy"
+{
+	"rules": {
+		"opus_budget": {
+			"when": "'claude-opus' in model.groupIds",
+			"limits": { "spend": { "lifetimeUsd": "200" } }
+		}
+	}
+}
+```
+
+### Set a default that keys can replace
+
+Keys try the cheapest deployment first. A folder, grant, key or request policy that sets its own
+`order` or `sort` replaces this default.
+
+```json title="Organization policy"
+{
+	"rules": {
+		"cheapest_first": {
+			"mode": "default",
+			"routing": { "sort": [{ "by": "blended_price(3, 1)" }] }
+		}
+	}
+}
+```
+
+See [Rules](/docs/policies/rules) for conditions and defaults.
+
+### Let key managers change only limits
+
+Key managers, and organization administrators, can save limits on keys, but no other section.
+
+```json title="Organization policy"
+{
+	"delegation": {
+		"keys": ["limits"]
+	}
+}
+```
+
+### Let requests add redaction
+
+Requests can send their own redaction settings in a [request policy](/docs/policies/request-policies).
+
+```json title="Organization policy"
+{
+	"delegation": {
+		"request": ["plugins.stogasRedaction"]
+	}
+}
+```
+
+See [Delegation](/docs/policies/delegation) for exceptions by ID and what happens to sections that
+were saved before a change.

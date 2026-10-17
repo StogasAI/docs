@@ -4,11 +4,9 @@ description: Cap spending, request rate, tokens and concurrent requests.
 icon: Gauge
 ---
 
-A request must pass every limit at every [scope](/docs/policies/scopes#shared-limits) that applies to
-it. A key with $400 left under its own cap can spend only $2 if the organization cap has $2 left.
-
-Limits count [held](/docs/usage#how-a-request-is-charged) funds and tokens as well as settled usage.
-A request is declined when its hold does not fit, even if its final charge would.
+A request must pass every limit of every [scope](/docs/policies/scopes) that applies to it.
+Limits count [held](/docs/usage#how-a-request-is-charged) funds and tokens as well as settled usage,
+so a request is declined when its hold does not fit, even if its final charge would.
 
 ## Limit types
 
@@ -53,6 +51,18 @@ A request is declined when its hold does not fit, even if its final charge would
 - Limits always apply, so a rule with limits cannot use `mode: "default"`.
   [Request policies](/docs/policies/request-policies) cannot set limits.
 
+## Shared limits
+
+A limit counts every request of its resource. An organization limit counts all the organization's
+keys, a grant limit counts the grant's member keys, and a key limit counts only that key.
+
+For example, an organization allows $1,000 a month, a grant $200 a month and a key $10 a day. A
+request must fit all three. If other keys have used all but $2 of the organization's $1,000, the key
+can spend only $2 more that month, even though its own limit allows $10 a day.
+
+- The same limit name at two scopes is two separate limits.
+- Anyone who can read a key can see the usage of every limit that applies to it.
+
 ## Spending
 
 Spend limits count the full provider cost at catalog rates, including [BYOK](/docs/byok) requests,
@@ -82,10 +92,9 @@ limit keeps holds, and the possible overrun, small.
 }
 ```
 
-<PolicyFields section="recurringSpend" />
-
 - Periods start at the anchor and repeat on the calendar. They are not rolling windows.
-- We set the anchor when you first save the limit without one, and keeps it on later saves.
+- If you save a limit without an anchor, we set it to the time of that save and keep it on later
+  saves.
 - Month and year periods keep the anchor's local day and time. A period anchored on January 31
   resets on the last day of February, then on March 31.
 - Periods in a local time zone follow daylight saving time. Use `UTC` to avoid this.
@@ -113,8 +122,6 @@ requests:
 The first bucket refills at two requests a second and holds 20. The second refills at five a second
 and holds five. Each request takes one from every bucket, so both must have room.
 
-<PolicyFields section="requestLimit" />
-
 - A new bucket starts full. A bucket that starts full can allow more than `max` requests in one
   window.
 - `burst` defaults to the smaller of `max` and 120.
@@ -138,8 +145,6 @@ and holds five. Each request takes one from every bucket, so both must have room
 	}
 }
 ```
-
-<PolicyFields section="tokenLimit" />
 
 - The hold is the [estimated input](/docs/usage#input-estimates) plus the output limit: yours, or the
   model's maximum. A lower output limit lets a small request fit.
@@ -192,7 +197,7 @@ Request and token `window` objects take a `count` from 1 to 999,999 and a `unit`
 
 ## Conditional limits
 
-Put limits in a [rule](/docs/policies/scopes#conditional-rules) to count only the requests that
+Put limits in a [rule](/docs/policies/rules#conditional-rules) to count only the requests that
 match it:
 
 ```json title="policy.json"
@@ -242,3 +247,11 @@ The code names the scope, such as `grant_token_limit`, but not the named limit. 
 `Retry-After` when it is present. A retry cannot fit a hold that is larger than the limit, so lower
 the output limit or raise the limit. A blocked request is never sent to another provider. See
 [Errors](/docs/reference/errors) for every code.
+
+## Field reference
+
+<PolicyFields section="recurringSpend" />
+
+<PolicyFields section="requestLimit" />
+
+<PolicyFields section="tokenLimit" />

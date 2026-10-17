@@ -66,10 +66,8 @@ test('policy topics retain complete field exports and working links to their own
 	request
 }) => {
 	const definitions: Record<string, unknown[]> = {
-		'/docs/policies/scopes': [
-			schema.properties.delegation,
-			schema.properties.rules.additionalProperties
-		],
+		'/docs/policies/rules': [schema.properties.rules.additionalProperties],
+		'/docs/policies/delegation': [schema.properties.delegation],
 		'/docs/policies/routing': [schema.properties.routing],
 		'/docs/policies/limits': [
 			schema.properties.limits.properties.spend.properties.recurring.additionalProperties,
@@ -168,10 +166,12 @@ test('routing field inventories survive Markdown export and query examples are h
 			.locator('code')
 			.filter({ hasText: /^chat-completions$/ })
 	).toBeVisible();
-	await page.goto('/docs/policies/routing');
-	const example = page.locator('pre').filter({ hasText: "provider.id in ['openai', 'chutes']" });
+	await page.goto('/docs/policies/expressions');
+	const example = page
+		.locator('pre')
+		.filter({ hasText: 'deployment.dataHandling.retentionDays <= 30' });
 	await expect(example.locator('[style*="--shiki-"]').first()).toBeVisible();
-	await expect(example).toContainText('deployment.capabilities.streaming == true');
+	await expect(example).toContainText('!has(deployment.dataHandling.retentionDays)');
 });
 
 test('plugin pages are discoverable through the sidebar and search', async ({ page }) => {

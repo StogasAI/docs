@@ -1,0 +1,114 @@
+---
+title: Expressions
+description: Write the CEL expressions that routing filters, sorts and rule conditions use.
+icon: Braces
+---
+
+Routing filters, sorts and rule conditions are [CEL](https://cel.dev/) expressions. Write each as a
+JSON string, with single quotes inside it:
+
+```json title="Organization policy"
+{
+	"routing": {
+		"filter": "provider.id in ['openai', 'chutes']"
+	}
+}
+```
+
+| Field               | The expression returns         | Example                                    |
+| ------------------- | ------------------------------ | ------------------------------------------ |
+| `routing.filter`    | `true` to keep a deployment    | `deployment.contextWindowTokens >= 128000` |
+| `routing.sort[].by` | A value to sort deployments by | `blended_price(3, 1)`                      |
+| `rules.<name>.when` | `true` to apply the rule       | `request.route == 'responses'`             |
+
+## Syntax
+
+| Expression                                                            | Meaning                               |
+| --------------------------------------------------------------------- | ------------------------------------- |
+| `provider.id == 'openai'`                                             | Compare a string                      |
+| `deployment.contextWindowTokens >= 128000`                            | Compare an integer                    |
+| `deployment.pricing.output_tokens.per_mill_tokens <= decimal('2.50')` | Compare an exact price                |
+| `'image' in deployment.inputModalities`                               | Check whether a list contains a value |
+| `author.headquarteredCountry in ['US', 'FR']`                         | Match one of several values           |
+| `model.name.contains('mini')`                                         | Check whether a string contains text  |
+| `has(deployment.deprecationDate)`                                     | Check whether a field is present      |
+| `deployment.inputModalities.exists(m, m == 'text')`                   | Check whether any list item matches   |
+| `request.time.getHours('UTC') < 18`                                   | Read the request time in a time zone  |
+
+- Combine conditions with `&&`, `||`, `!` and parentheses.
+- Write prices as `decimal('...')`. You can compare and sort prices, but not calculate with them.
+  To weigh input and output prices, use [`blended_price`](#blended-price).
+- Names and strings are case sensitive.
+- Write a time zone as a quoted IANA name, such as `'America/New_York'`, or a UTC offset, such as
+  `'-05:00'`.
+- Unknown fields, wrong types and unknown time zones are rejected when you save.
+- The [field reference](/docs/policies/routing-fields) lists every field.
+
+## Missing values
+
+A filter keeps a deployment only when it returns `true`. A comparison with a missing field is
+unknown, and `!` does not make it true. To also accept deployments that do not state a value, check
+the field with `has(...)`:
+
+```cel title="Retention of 30 days or less, or not stated"
+!has(deployment.dataHandling.retentionDays) || deployment.dataHandling.retentionDays <= 30
+```
+
+Without the `has(...)` check, only deployments that state 30 days or fewer pass.
+
+| Expression     | When the value is missing                                   |
+| -------------- | ----------------------------------------------------------- |
+| Filter         | The deployment is removed                                   |
+| Sort           | The deployment sorts last                                   |
+| Rule condition | The deployment is skipped, and the gateway tries the others |
+
+## Blended price
+
+`blended_price(inputWeight, outputWeight)` weighs a deployment's input and output prices into one
+price per million tokens. With a 3:1 ratio, GPT-6 Sol's input price of $2 and output price of $10
+blend to `(3 × 2 + 10) / 4 = $4`:
+
+```cel title="Blended price under $5"
+blended_price(3, 1) < decimal('5')
+```
+
+Some models charge more for every token of a request whose prompt is long. GPT-6 Sol charges $4
+for input and $15 for output when the prompt is over 272,000 tokens. Add a prompt size in tokens to
+blend the prices that a prompt of that size pays:
+
+```cel title="Blended price under $5 for a 300,000-token prompt"
+blended_price(3, 1, 300000) < decimal('5')
+```
+
+At 300,000 tokens, GPT-6 Sol blends to `(3 × 4 + 15) / 4 = $6.75`, so this filter removes it.
+
+- Weights and the prompt size are constant integers. At least one weight must be positive, and a
+  zero weight ignores that price.
+- If a price with a positive weight is missing, the result is unknown.
+- It compares prices only. It does not estimate the cost of a request.
+
+## Request facts
+
+Expressions can read four fields of the request. See [Request](/docs/policies/routing-fields#request)
+in the field reference.
+
+| Field               | Value                                               |
+| ------------------- | --------------------------------------------------- |
+| `request.model`     | The `model` field as sent                           |
+| `request.route`     | `chat-completions` or `responses`                   |
+| `request.time`      | When the request started                            |
+| `request.bodyBytes` | The size of the JSON body as sent, before redaction |
+
+Expressions cannot read token estimates or costs, because the gateway calculates those only after
+it selects a deployment.
+
+## Bounds
+
+| Bound                                                            | Limit              |
+| ---------------------------------------------------------------- | ------------------ |
+| One expression                                                   | 16 KiB             |
+| Work for one expression                                          | 10,000 cost units  |
+| Expression nodes in one policy, and in all policies of a request | 4,096 and 8,192    |
+| Work for all expressions of one request                          | 100,000 cost units |
+
+A request over a bound fails before the gateway holds any funds.

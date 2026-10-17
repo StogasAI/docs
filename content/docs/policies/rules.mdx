@@ -1,0 +1,133 @@
+---
+title: Rules
+description: Apply settings only to matching requests, or set defaults that other policies can replace.
+icon: Split
+---
+
+Settings at the top level of a policy apply to every request. Put settings in a named rule under
+`rules` to change that:
+
+| Rule        | Field               | Settings apply                                              |
+| ----------- | ------------------- | ----------------------------------------------------------- |
+| Conditional | `when`              | Only to requests and deployments that match a condition     |
+| Default     | `"mode": "default"` | Only when no other policy requires the same kind of setting |
+
+```json title="Organization policy"
+{
+	"rules": {
+		"redact_openai": {
+			"when": "provider.id == 'openai'",
+			"plugins": { "stogasRedaction": { "email_address": true } }
+		},
+		"cheapest_first": {
+			"mode": "default",
+			"routing": { "sort": [{ "by": "blended_price(3, 1)" }] }
+		}
+	}
+}
+```
+
+The first rule redacts email addresses only in requests to OpenAI. The second tries the cheapest
+deployment first, unless another policy sets an order.
+
+## Conditional rules
+
+`when` is an [expression](/docs/policies/expressions) that returns `true` or `false`. A rule
+without `when` always applies.
+
+```json title="Large requests go only to providers that keep no data"
+{
+	"rules": {
+		"large_requests": {
+			"when": "request.bodyBytes > 1000000",
+			"routing": { "filter": "deployment.dataHandling.zeroDataRetention == true" }
+		}
+	}
+}
+```
+
+What the condition reads decides where the rule applies:
+
+| Condition reads                                                 | Example                       | Rule applies to          |
+| --------------------------------------------------------------- | ----------------------------- | ------------------------ |
+| Only `request` fields                                           | `request.bodyBytes > 1000000` | The whole request        |
+| An `author`, `model`, `deployment`, `route` or `provider` field | `provider.id == 'openai'`     | Each matching deployment |
+
+When a condition reads deployment fields, the rule's settings apply only while a matching deployment
+serves the request. A deny period in such a rule removes only the matching deployments, and the
+gateway tries the others.
+
+- Conditions read the same [request facts](/docs/policies/expressions#request-facts) as routing
+  filters, before redaction. They cannot read usage, balances, token estimates or provider
+  responses.
+- If a missing value leaves a condition undecided for a deployment or credential, the gateway skips
+  that choice and tries the others. Check optional fields with `has(...)`.
+- An error in a condition, such as division by zero, fails the request.
+- Limits in a rule count only the requests that the rule matches. See
+  [Conditional limits](/docs/policies/limits#conditional-limits).
+
+## Defaults
+
+A setting is required unless it is in a rule with `"mode": "default"`. A default applies only when
+no policy requires a setting of the same kind:
+
+```json title="Organization policy"
+{
+	"rules": {
+		"prefer_long_context": {
+			"mode": "default",
+			"routing": {
+				"sort": [{ "by": "deployment.contextWindowTokens", "direction": "desc" }]
+			}
+		}
+	}
+}
+```
+
+A key policy with its own `routing.sort` or `routing.order` replaces this default. These are the
+kinds of setting:
+
+| Kind               | Includes                                               |
+| ------------------ | ------------------------------------------------------ |
+| Access             | All of `access`                                        |
+| Input              | All of `input`                                         |
+| Each timeout       | `totalSeconds` or `outputIdleSeconds`                  |
+| Each routing field | One field, except that `order` and `sort` are one kind |
+| Plugins            | All of `plugins`                                       |
+
+- Plugin settings are one kind because encrypted plugin settings do not show which plugins they
+  set. A required text extraction setting therefore also replaces default redaction and default
+  export destinations.
+- When several policies set defaults of the same kind, they
+  [combine](/docs/policies/scopes#how-settings-combine) like required settings. For order and sort,
+  the closest default applies.
+- [Limits](/docs/policies/limits) cannot be defaults.
+
+### Replace a default without adding a restriction
+
+Set a neutral value. It replaces the defaults of its kind and never removes a required setting of
+another policy:
+
+| Kind                  | Neutral value                     |
+| --------------------- | --------------------------------- |
+| ASCII-only input      | `"input": { "asciiOnly": false }` |
+| Deny periods          | `"access": { "deny": [] }`        |
+| Routing filter        | `"filter": "true"`                |
+| Order and sort        | `"sort": []`                      |
+| Allowed catalog nodes | `"allowedCatalogNodes": {}`       |
+| Redaction             | `"stogasRedaction": {}`           |
+
+## What rules can contain
+
+- Rules can contain `access`, `input`, `timeouts`, `limits`, `plugins` and `routing`. They cannot
+  contain other rules, `delegation` or `encryption`.
+- A rule can set `routing.order` or `routing.sort` only with `"mode": "default"` and no `when`. See
+  [Orders from several policies](/docs/policies/routing#orders-from-several-policies).
+- A rule that sets `routing.fallbacks` or `timeouts.totalSeconds` can read only `request` fields,
+  because one fallback count and one total wait apply to the whole request.
+- Rules have no order. A name identifies a rule and its limits. Names use 1–48 lowercase letters,
+  digits, `_` or `-`, start with a letter, and cannot be `constructor` or `prototype`.
+
+## Field reference
+
+<PolicyFields section="rule" />

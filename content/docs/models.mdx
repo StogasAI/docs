@@ -53,7 +53,7 @@ means `AND`; you can also use `OR`, `NOT` and parentheses.
   `<`, `<=`, `>` and `>=` compare. Text ignores case.
 - A list, such as `deployment.inputModalities`, matches when one of its entries matches.
 - `!=` also matches deployments that do not state the field; other comparisons do not. Routing
-  policies treat these values differently; see [Missing values](/docs/policies/routing#missing-values).
+  policies treat these values differently; see [Missing values](/docs/policies/expressions#missing-values).
 
 ## Choose a model
 
@@ -113,7 +113,7 @@ For a model ID, the gateway:
 3. Sends the request to the first deployment.
 
 The price order weighs input three times output, like
-[`blended_price(3, 1)`](/docs/policies/routing#blended-price). Deployments without both prices come
+[`blended_price(3, 1)`](/docs/policies/expressions#blended-price). Deployments without both prices come
 last. It chooses only among deployments of the model and service tier that you name, so it can
 choose a provider or a region, but never another model or tier. For example, OpenAI and Azure both
 charge $2 for input and $10 for output on `gpt-6-sol`. With credentials for both, the request goes

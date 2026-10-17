@@ -154,7 +154,9 @@ html.light {
 	border-inline-start: 1px solid var(--color-fd-border);
 }
 
-.prose :is(p, li, td) {
+/* Long inline code in text breaks at any character. Table cells keep whole words, and a wide table
+   scrolls in its own box. */
+.prose :is(p, li) {
 	overflow-wrap: anywhere;
 }
 

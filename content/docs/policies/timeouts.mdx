@@ -32,10 +32,25 @@ applies.
 
 ## How policies combine
 
-The earlier deadline wins. For each field, the gateway uses the smallest required value across the
-applicable policies, so a child cannot lengthen a parent's limit. Conditional defaults can be
-replaced field by field, and permitted [request policies](/docs/policies/request-policies) can set
-either field. See [Scopes and inheritance](/docs/policies/scopes).
+For each field, the smallest required value of the policies that apply wins, so a child cannot
+lengthen a parent's limit. [Defaults](/docs/policies/rules#defaults) can be replaced field by
+field, and permitted [request policies](/docs/policies/request-policies) can set either field.
+
+- One `totalSeconds` applies to the whole request. Credential policies, and rules whose condition
+  reads more than `request` fields, cannot set it.
+- `outputIdleSeconds` can differ by deployment. Each provider call, including a fallback, uses the
+  value for its own deployment and credential:
+
+```json title="Longer output wait for Claude Opus"
+{
+	"rules": {
+		"slow_models": {
+			"when": "'claude-opus' in model.groupIds",
+			"timeouts": { "outputIdleSeconds": 900 }
+		}
+	}
+}
+```
 
 ## When a timeout expires
 

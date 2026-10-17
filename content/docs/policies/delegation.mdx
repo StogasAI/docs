@@ -1,0 +1,87 @@
+---
+title: Delegation
+description: Choose which policy sections managers can save on the resources below a scope.
+icon: UserCog
+---
+
+`delegation` limits what managers can save in the policies of resources below a scope. It gives no
+access by itself:
+
+```json title="Organization policy"
+{
+	"delegation": {
+		"keys": ["limits", "routing.filter"],
+		"grants": false
+	}
+}
+```
+
+With this policy, key managers can save only limits and routing filters, and grant managers can
+save no policy settings.
+
+| Value                                          | Managers can save                                         |
+| ---------------------------------------------- | --------------------------------------------------------- |
+| Not set, or `true`                             | Every section                                             |
+| `false`                                        | No section                                                |
+| A list, such as `["limits", "routing.filter"]` | The listed sections. `routing` allows every routing field |
+
+## Which resources a policy covers
+
+| Policy                        | Can set `delegation` for                                       |
+| ----------------------------- | -------------------------------------------------------------- |
+| Organization                  | `folders`, `grants`, `roles`, `members`, `credentials`, `keys` |
+| Folder                        | Its `grants` and `keys`                                        |
+| Grant                         | Its member `keys`                                              |
+| Role, member, credential, key | None                                                           |
+
+Every saved policy can also set `delegation.request`, which allows
+[request policies](/docs/policies/request-policies#grant-permission).
+
+## How permissions combine
+
+- A policy can add or change a section only when every parent that sets `delegation` allows it.
+  This also applies to organization administrators.
+- Removing a section is always allowed.
+- Changing a rule's name, condition or mode changes each setting in the rule, so each needs
+  permission.
+- [Encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) need permission
+  for all of `plugins`, because they can hold any plugin setting.
+- Delegation never lets a scope use a field that the scope does not support. See
+  [Scope differences](/docs/policies/scopes#scope-differences).
+
+## Exceptions by ID
+
+Give specific resources other permissions:
+
+```json title="Organization policy"
+{
+	"delegation": {
+		"keys": {
+			"default": false,
+			"exceptions": {
+				"0195ef30-7b1a-7000-8000-000000000001": ["routing.filter"]
+			}
+		}
+	}
+}
+```
+
+- Each ID must be a resource inside the parent's scope.
+- Each parent decides for itself. An exception cannot override another parent's denial.
+- To allow a new resource under `"default": false`, create it, add its exception, then save its
+  policy.
+
+## Sections saved before a change
+
+A delegation change applies at once. A policy below that already sets a section that the change
+prohibits keeps the section, and the section still applies. Its managers can remove the section but
+cannot change it.
+
+- The parent policy shows how many policies of each type keep such sections.
+- Each of those policies names the parent and the sections.
+- To stop a kept section from applying, remove it from that policy. Organization administrators can
+  edit every policy in the organization.
+
+## Field reference
+
+<PolicyFields section="delegation" />

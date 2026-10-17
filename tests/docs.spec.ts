@@ -144,14 +144,12 @@ for (const viewport of [
 			await page.keyboard.press('Control+k');
 			const search = page.getByRole('combobox', { name: 'Search documentation' });
 			await search.fill('conditional rules');
-			await expect(page.getByRole('dialog').getByRole('option').first()).toContainText(
-				'Scopes and inheritance'
-			);
+			await expect(page.getByRole('dialog').getByRole('option').first()).toContainText('Rules');
 			await page.keyboard.press('ArrowDown');
 			await page.keyboard.press('Enter');
 			const outline = page.getByRole('button', { name: /On this page/ });
 			async function expectVisibleSection() {
-				await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
+				await expect(page).toHaveURL(/\/policies\/rules#conditional-rules$/);
 				await expectReadingRegion(page, 'conditional-rules');
 			}
 			await expectVisibleSection();
@@ -195,7 +193,7 @@ test.describe('native browser zoom 200% at 400 × 378', () => {
 	});
 
 	test('replacing a dismissed sidebar search reveals the current hash again', async ({ page }) => {
-		await page.goto('/docs/policies/scopes#conditional-rules');
+		await page.goto('/docs/policies/rules#conditional-rules');
 		await expectReadingRegion(page, 'conditional-rules');
 		await page.getByRole('button', { name: 'Open Sidebar', exact: true }).click();
 		const close = page
@@ -209,8 +207,8 @@ test.describe('native browser zoom 200% at 400 × 378', () => {
 		await expect(page.getByRole('combobox', { name: 'Search documentation' })).toHaveCount(0);
 		await expect(close).toBeFocused();
 		await close.click();
-		await searchForSection(page, 'conditional rules', 'Scopes and inheritance');
-		await expect(page).toHaveURL(/\/policies\/scopes#conditional-rules$/);
+		await searchForSection(page, 'conditional rules', 'Rules');
+		await expect(page).toHaveURL(/\/policies\/rules#conditional-rules$/);
 		await expectReadingRegion(page, 'conditional-rules');
 	});
 });
@@ -219,7 +217,7 @@ test('nested schemas open in their card with keyboard focus and their own filter
 	page
 }) => {
 	await page.setViewportSize({ width: 333, height: 504 });
-	await page.goto('/docs/policies/scopes');
+	await page.goto('/docs/policies/rules');
 	const schema = page.locator('[id="policy-fields.rule"]');
 	const filter = schema.getByRole('textbox', { name: 'Filter Properties' });
 	const current = schema.locator('[aria-current="page"]');

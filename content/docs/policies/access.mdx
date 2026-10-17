@@ -23,7 +23,7 @@ grant's.
 
 This policy blocks new requests before 08:00 on weekdays in New York:
 
-```json
+```json title="policy.json"
 {
 	"access": {
 		"deny": [
@@ -87,7 +87,7 @@ local hour that is skipped never occurs. Use `UTC` for a schedule that does not 
 Every required deny period from every policy applies. An empty `deny` array replaces default
 periods only. A permitted [request policy](/docs/policies/request-policies) can add periods.
 
-A deny period in a [conditional rule](/docs/policies/scopes#conditional-rules) or a credential's
+A deny period in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's
 policy blocks only the deployments and credentials it applies to. The gateway tries the others,
 and fails with `schedule_denied` when none remain.
 

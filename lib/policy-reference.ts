@@ -70,11 +70,11 @@ const documentFields = {
 	},
 	delegation: {
 		description: 'Allow or deny saved-policy edits and request policies.',
-		href: '/docs/policies/scopes#permission-to-edit-saved-policies'
+		href: '/docs/policies/delegation'
 	},
 	rules: {
 		description: 'Apply conditional requirements or replaceable defaults using flat named rules.',
-		href: '/docs/policies/scopes#conditional-rules'
+		href: '/docs/policies/rules'
 	}
 } satisfies Record<keyof typeof policy.properties, { description: string; href?: string }>;
 

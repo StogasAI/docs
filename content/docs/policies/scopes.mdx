@@ -1,6 +1,6 @@
 ---
 title: Scopes and inheritance
-description: Which policies apply to a request, how they combine, and who can change them.
+description: Which policies apply to a request, and how they combine.
 icon: Layers
 ---
 
@@ -23,56 +23,26 @@ key. Each is a scope. A request must follow every policy that applies to it, and
 
 ## Scope differences
 
-| Scope                         | `limits` | Registers `encryption.keys` | Can restrict the saved policies of                    |
-| ----------------------------- | -------- | --------------------------- | ----------------------------------------------------- |
-| Organization                  | Yes      | Yes                         | Folders, grants, roles, members, credentials and keys |
-| Folder                        | Yes      | No                          | Its grants and keys                                   |
-| Grant                         | Yes      | No                          | Its member keys                                       |
-| Role, member, credential, key | Yes      | No                          | -                                                     |
-| Request                       | No       | No                          | -                                                     |
+| Scope                         | `limits` | Registers `encryption.keys` | Sets `delegation` for resources below |
+| ----------------------------- | -------- | --------------------------- | ------------------------------------- |
+| Organization                  | Yes      | Yes                         | Yes                                   |
+| Folder, grant                 | Yes      | No                          | Yes                                   |
+| Role, member, credential, key | Yes      | No                          | No                                    |
+| Request                       | No       | No                          | No                                    |
 
 - Every scope accepts `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`. Only
   organization, folder, grant and key policies can
-  [set an order](/docs/policies/routing#orders-from-several-policies), and credential policies
-  cannot set [fallbacks](/docs/policies/routing#retries-and-fallbacks).
+  [set an order](/docs/policies/routing#orders-from-several-policies).
+- Credential policies cannot set [fallbacks](/docs/policies/routing#retries-and-fallbacks) or
+  `timeouts.totalSeconds`, because one fallback count and one total wait apply to the whole
+  request.
 - Every saved scope can [permit request policies](/docs/policies/request-policies#grant-permission).
+  See [Delegation](/docs/policies/delegation) for which resources each policy covers.
 - A saved policy can be up to 256 KiB, and a request policy up to 16 KiB. See
   [Document rules](/docs/policies/editing#document-rules).
 - Managed providers have no credential, so they have no credential policy.
 
-## Shared limits
-
-A limit counts every request that uses its resource. An organization limit counts all the
-organization's keys, a grant limit counts the grant's member keys, and a key limit counts only that
-key.
-
-For example, an organization allows $1,000 a month, a grant $200 a month and a key $10 a day. A
-request must fit all three, and other keys can use up the shared amounts first. The same limit
-name at two scopes is two separate limits. Anyone who can read a key can see the usage of every
-limit that applies to it. See [Limits](/docs/policies/limits).
-
-## Required settings and defaults
-
-Settings are required unless they are in a rule with `"mode": "default"`. A default applies only
-when no required setting of the same kind applies:
-
-```json title="Organization policy"
-{
-	"rules": {
-		"prefer_long_context": {
-			"mode": "default",
-			"routing": { "sort": [{ "by": "deployment.contextWindowTokens", "direction": "desc" }] }
-		}
-	}
-}
-```
-
-A key policy with its own `routing.sort` or `routing.order` replaces this default. Each of these is
-one kind of setting: `access`, `input`, each timeout, each routing field, and `plugins`, except that
-`routing.order` and `routing.sort` are one kind. Replacing a default filter does not replace a
-default sort. All plugin settings are one kind, because encrypted plugin settings do not show which
-plugins they set. So a required plugin setting, such as text extraction, also replaces default
-redaction and default export destinations.
+## How settings combine
 
 When several policies set the same kind of setting, they combine. Only the order depends on the
 scope that sets it:
@@ -86,111 +56,11 @@ scope that sets it:
 | [Redaction](/docs/pii-redaction)                                      | Every preset, literal and pattern applies to the original text.        |
 | [ASCII-only input](/docs/pii-redaction#ascii-only-input)              | Required if any policy requires it.                                    |
 | [Retries and fallbacks](/docs/policies/routing#retries-and-fallbacks) | The smallest value of each. Without one, no retries and two fallbacks. |
+| [Timeouts](/docs/policies/timeouts)                                   | The smallest value of each. Without one, 3,600 and 300 seconds.        |
 | [Limits](/docs/policies/limits)                                       | Every limit applies. Limits cannot be defaults.                        |
 
-To replace defaults without adding a restriction, set a neutral value: `input.asciiOnly: false`,
-`access.deny: []`, `routing.filter: "true"`, `routing.sort: []`, `routing.allowedCatalogNodes: {}`
-or `plugins.stogasRedaction: {}`. A neutral value never removes a required setting from another
-policy.
-
-## Conditional rules
-
-Rules apply settings only to the requests that match their condition:
-
-```json title="policy.json"
-{
-	"rules": {
-		"working_hours": {
-			"when": "request.time.getHours('UTC') >= 9 && request.time.getHours('UTC') < 17",
-			"limits": { "spend": { "lifetimeUsd": "100" } }
-		},
-		"redact_openai": {
-			"when": "provider.id == 'openai'",
-			"plugins": { "stogasRedaction": { "email_address": true } }
-		}
-	}
-}
-```
-
-The first rule caps spending during working hours at $100. The second redacts email addresses only
-when the request goes to OpenAI.
-
-- `when` is a [CEL expression](/docs/policies/routing#query-syntax) that returns `true` or `false`.
-  A rule without `when` always applies.
-- Conditions read the same [request facts](/docs/policies/routing#request-facts-and-context) as
-  routing filters, before redaction. They cannot read usage, balances, token estimates or provider
-  responses. If a missing fact leaves a condition undecided for a deployment or credential, the
-  gateway skips that choice and tries the others. Check optional facts with `has(...)`. An error
-  in a condition, such as division by zero, fails the request.
-- Rules can contain `access`, `input`, `timeouts`, `limits`, `plugins` and `routing`, but not
-  other rules, `delegation` or `encryption`. A rule can
-  [set an order](/docs/policies/routing#orders-from-several-policies) only with
-  `"mode": "default"` and no `when`. A rule that sets
-  [fallbacks](/docs/policies/routing#retries-and-fallbacks) can test only `request` fields.
-- Rules have no order. A name only identifies a rule and its [limits](/docs/policies/limits#conditional-limits).
-  Names use 1–48 lowercase letters, digits, `_` or `-`, start with a letter, and cannot be
-  `constructor` or `prototype`.
-
-<PolicyFields section="rule" />
-
-## Permission to edit saved policies
-
-`delegation` limits which sections managers can save on the resources below a scope. It gives no
-access by itself:
-
-```json title="Organization policy"
-{
-	"delegation": {
-		"keys": ["limits", "routing.filter"],
-		"grants": false
-	}
-}
-```
-
-With this policy, key managers can set only limits and routing filters, and grant managers can set
-nothing. Use `true` for every section, `false` for none, or a list of section paths. Without
-`delegation`, managers can set every section.
-
-A policy can add or change a section only when every parent that sets `delegation` allows it, even
-for organization administrators. Removing a section is always allowed. Delegation never lets a
-scope use a field that it does not support.
-[Encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) need permission for
-all of `plugins`, because they can hold any plugin setting.
-
-<PolicyFields section="delegation" />
-
-### ID exceptions
-
-Give specific resources other permissions:
-
-```json
-{
-	"delegation": {
-		"keys": {
-			"default": false,
-			"exceptions": {
-				"0195ef30-7b1a-7000-8000-000000000001": ["routing.filter"]
-			}
-		}
-	}
-}
-```
-
-- Each ID must be a resource inside the parent's scope.
-- Each parent decides for itself. An exception cannot override another parent's denial.
-- To allow a new resource under `"default": false`, create it, add its exception, then save its
-  policy.
-
-### Sections saved before a delegation change
-
-A delegation change applies at once. Policies below that already set a section that the change
-prohibits keep the section, and it still applies. Their managers can remove the section but cannot
-change it.
-
-- The parent policy shows how many policies of each type keep such sections.
-- Each of those policies names the parent and the sections.
-- To stop a kept section from applying, remove it from that policy. Organization administrators can
-  edit every policy in the organization.
+[Rules](/docs/policies/rules) apply settings only to matching requests, or as defaults that apply
+only when no policy requires the same kind of setting.
 
 ## Request order
 

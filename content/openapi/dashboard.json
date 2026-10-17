@@ -13581,7 +13581,7 @@
 									},
 									"additionalProperties": false,
 									"minProperties": 1,
-									"description": "At most 5 counter slots per saved policy, shared across spending windows, request buckets, and token windows. Top-level lifetime spending, lifetime tokens, and concurrency do not use a slot; together within one conditional rule, they use one shared slot. Request-time policies cannot define limits."
+									"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
 								}
 							},
 							"required": [
@@ -14409,17 +14409,17 @@
 								"type": "integer",
 								"minimum": 1,
 								"maximum": 3600,
-								"description": "Total caller wait from admission after the request body arrives, including preparation. Defaults to 3600 seconds. Never resets or cancels dispatched provider work."
+								"description": "Longest total wait, from when the gateway admits the request body. Defaults to 3600. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 							},
 							"outputIdleSeconds": {
 								"type": "integer",
 								"minimum": 1,
 								"maximum": 3600,
-								"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+								"description": "Longest wait for useful provider output, from each provider call and after each output. Defaults to 300. Each call uses the value for its own deployment and credential."
 							}
 						},
 						"additionalProperties": false,
-						"description": "Required values combine by minimum for each timeout. Expiry ends delivery without replay. Dispatched provider work continues and its final usage remains billable."
+						"description": "For each timeout, the smallest required value applies. A timeout ends your wait; provider work that has started continues and is billed."
 					},
 					"rules": {
 						"type": "array",
@@ -14456,17 +14456,17 @@
 													"type": "integer",
 													"minimum": 1,
 													"maximum": 3600,
-													"description": "Total caller wait from admission after the request body arrives, including preparation. Defaults to 3600 seconds. Never resets or cancels dispatched provider work."
+													"description": "Longest total wait, from when the gateway admits the request body. Defaults to 3600. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 												},
 												"outputIdleSeconds": {
 													"type": "integer",
 													"minimum": 1,
 													"maximum": 3600,
-													"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+													"description": "Longest wait for useful provider output, from each provider call and after each output. Defaults to 300. Each call uses the value for its own deployment and credential."
 												}
 											},
 											"additionalProperties": false,
-											"description": "Required values combine by minimum for each timeout. Expiry ends delivery without replay. Dispatched provider work continues and its final usage remains billable."
+											"description": "For each timeout, the smallest required value applies. A timeout ends your wait; provider work that has started continues and is billed."
 										},
 										"access": {
 											"type": "object",
@@ -14740,7 +14740,7 @@
 											},
 											"additionalProperties": false,
 											"minProperties": 1,
-											"description": "At most 5 counter slots per saved policy, shared across spending windows, request buckets, and token windows. Top-level lifetime spending, lifetime tokens, and concurrency do not use a slot; together within one conditional rule, they use one shared slot. Request-time policies cannot define limits."
+											"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
 										},
 										"plugins": {
 											"anyOf": [
@@ -15006,13 +15006,13 @@
 													"type": "integer",
 													"minimum": 0,
 													"maximum": 3,
-													"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+													"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins."
 												},
 												"fallbacks": {
 													"type": "integer",
 													"minimum": 0,
 													"maximum": 2,
-													"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
+													"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 												},
 												"filter": {
 													"type": "string",
@@ -15030,7 +15030,7 @@
 														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 													},
 													"uniqueItems": true,
-													"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
+													"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
 												},
 												"sort": {
 													"maxItems": 3,
@@ -15058,7 +15058,7 @@
 														],
 														"additionalProperties": false
 													},
-													"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
+													"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
 												}
 											},
 											"additionalProperties": false,
@@ -15827,7 +15827,7 @@
 									},
 									"additionalProperties": false,
 									"minProperties": 1,
-									"description": "At most 5 counter slots per saved policy, shared across spending windows, request buckets, and token windows. Top-level lifetime spending, lifetime tokens, and concurrency do not use a slot; together within one conditional rule, they use one shared slot. Request-time policies cannot define limits."
+									"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
 								}
 							},
 							"required": [
@@ -15900,13 +15900,13 @@
 								"type": "integer",
 								"minimum": 0,
 								"maximum": 3,
-								"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+								"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins."
 							},
 							"fallbacks": {
 								"type": "integer",
 								"minimum": 0,
 								"maximum": 2,
-								"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
+								"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 							},
 							"filter": {
 								"type": "string",
@@ -15923,7 +15923,7 @@
 									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 								},
 								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
+								"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
 							},
 							"sort": {
 								"maxItems": 3,
@@ -15951,7 +15951,7 @@
 									],
 									"additionalProperties": false
 								},
-								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
+								"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
 							},
 							"orderFrom": {
 								"type": "object",
@@ -17181,7 +17181,7 @@
 						},
 						"additionalProperties": false,
 						"minProperties": 1,
-						"description": "Allow whole policies or named sections. Saved policy edits are allowed by default; request policies require an explicit permission. Organization policies control all owned resources; folder policies control their grants and keys; grant policies control their keys. Permissions intersect."
+						"description": "Which sections managers can save on the resources below, and which sections request policies can set. Saved edits are allowed by default; request policies need permission. Organization policies cover every resource, folder policies their grants and keys, and grant policies their keys. Permissions intersect."
 					},
 					"timeouts": {
 						"type": "object",
@@ -17190,17 +17190,17 @@
 								"type": "integer",
 								"minimum": 1,
 								"maximum": 3600,
-								"description": "Total caller wait from admission after the request body arrives, including preparation. Defaults to 3600 seconds. Never resets or cancels dispatched provider work."
+								"description": "Longest total wait, from when the gateway admits the request body. Defaults to 3600. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 							},
 							"outputIdleSeconds": {
 								"type": "integer",
 								"minimum": 1,
 								"maximum": 3600,
-								"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+								"description": "Longest wait for useful provider output, from each provider call and after each output. Defaults to 300. Each call uses the value for its own deployment and credential."
 							}
 						},
 						"additionalProperties": false,
-						"description": "Required values combine by minimum for each timeout. Expiry ends delivery without replay. Dispatched provider work continues and its final usage remains billable."
+						"description": "For each timeout, the smallest required value applies. A timeout ends your wait; provider work that has started continues and is billed."
 					},
 					"access": {
 						"type": "object",
@@ -17475,7 +17475,7 @@
 						},
 						"additionalProperties": false,
 						"minProperties": 1,
-						"description": "At most 5 counter slots per saved policy, shared across spending windows, request buckets, and token windows. Top-level lifetime spending, lifetime tokens, and concurrency do not use a slot; together within one conditional rule, they use one shared slot. Request-time policies cannot define limits."
+						"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
 					},
 					"plugins": {
 						"anyOf": [
@@ -17741,13 +17741,13 @@
 								"type": "integer",
 								"minimum": 0,
 								"maximum": 3,
-								"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+								"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins."
 							},
 							"fallbacks": {
 								"type": "integer",
 								"minimum": 0,
 								"maximum": 2,
-								"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
+								"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 							},
 							"filter": {
 								"type": "string",
@@ -17765,7 +17765,7 @@
 									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 								},
 								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
+								"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
 							},
 							"sort": {
 								"maxItems": 3,
@@ -17793,7 +17793,7 @@
 									],
 									"additionalProperties": false
 								},
-								"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
+								"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
 							}
 						},
 						"additionalProperties": false,
@@ -17817,17 +17817,17 @@
 											"type": "integer",
 											"minimum": 1,
 											"maximum": 3600,
-											"description": "Total caller wait from admission after the request body arrives, including preparation. Defaults to 3600 seconds. Never resets or cancels dispatched provider work."
+											"description": "Longest total wait, from when the gateway admits the request body. Defaults to 3600. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 										},
 										"outputIdleSeconds": {
 											"type": "integer",
 											"minimum": 1,
 											"maximum": 3600,
-											"description": "Maximum wait for useful provider output, starting at each provider call, including retries and fallbacks, and restarting on each useful output. Keepalives and empty lifecycle events do not reset it. Buffered requests wait for the complete response. Defaults to 300 seconds."
+											"description": "Longest wait for useful provider output, from each provider call and after each output. Defaults to 300. Each call uses the value for its own deployment and credential."
 										}
 									},
 									"additionalProperties": false,
-									"description": "Required values combine by minimum for each timeout. Expiry ends delivery without replay. Dispatched provider work continues and its final usage remains billable."
+									"description": "For each timeout, the smallest required value applies. A timeout ends your wait; provider work that has started continues and is billed."
 								},
 								"access": {
 									"type": "object",
@@ -18102,7 +18102,7 @@
 									},
 									"additionalProperties": false,
 									"minProperties": 1,
-									"description": "At most 5 counter slots per saved policy, shared across spending windows, request buckets, and token windows. Top-level lifetime spending, lifetime tokens, and concurrency do not use a slot; together within one conditional rule, they use one shared slot. Request-time policies cannot define limits."
+									"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
 								},
 								"plugins": {
 									"anyOf": [
@@ -18368,13 +18368,13 @@
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 3,
-											"description": "Extra calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless an x-should-retry header from the provider says otherwise. Defaults to 0. A retry waits about half a second, doubled for each retry up to 8 seconds, or longer when the provider asks. When the provider asks for more than 8 seconds, or the wait would pass the timeout, the next fallback runs instead. The lowest applicable value applies."
+											"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins."
 										},
 										"fallbacks": {
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 2,
-											"description": "Other deployment and credential pairs to call, in routing order, after a pair fails or uses its retries. Defaults to 2. A failure that another call cannot fix, such as an invalid request, ends the request. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set routing.fallbacks. The lowest applicable value applies."
+											"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
 										},
 										"filter": {
 											"type": "string",
@@ -18392,7 +18392,7 @@
 												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 											},
 											"uniqueItems": true,
-											"description": "Deployment IDs to try first, in this order. Listed deployments that the request cannot use are skipped, and the rest follow routing.sort and the default order. routing.order and routing.sort form one ordering. Organization, folder, grant, key and request policies can set it once: at the top level it is required, and in one rule with mode default and no when it is a default. The broadest required ordering applies; without one, the closest default applies. A request policy cannot replace a saved required ordering."
+											"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
 										},
 										"sort": {
 											"maxItems": 3,
@@ -18420,7 +18420,7 @@
 												],
 												"additionalProperties": false
 											},
-											"description": "Orders eligible deployments after routing.order. Each criterion orders the ties of the one before it. Each expression must read an author, model, deployment, route or provider field, except random() and random(weight): as the last criterion, without a direction, they shuffle deployments, and a positive integer weight makes a deployment come first in proportion to its weight. See routing.order for which policy sets the ordering that applies."
+											"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
 										}
 									},
 									"additionalProperties": false,

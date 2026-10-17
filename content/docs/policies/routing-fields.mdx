@@ -10,7 +10,7 @@ deployment, route and provider, and the request. For example,
 128,000 tokens.
 
 Unknown fields are rejected. A field can still be missing on a candidate; see
-[Missing values](/docs/policies/routing#missing-values). The [catalog](https://stogas.ai/catalog)
+[Missing values](/docs/policies/expressions#missing-values). The [catalog](https://stogas.ai/catalog)
 shows current IDs and values, and its search accepts these fields.
 
 ## Types
@@ -26,7 +26,7 @@ shows current IDs and values, and its search accepts these fields.
 
 Use `has(field)` to check presence. On a group such as `deployment.pricing`, `has` is true when
 any field in the group is present. IDs and strings are case-sensitive. Catalog dates remain
-strings; request time is a timestamp. See [Query syntax](/docs/policies/routing#query-syntax).
+strings; request time is a timestamp. See [Expressions](/docs/policies/expressions).
 
 ## Author
 
@@ -115,14 +115,14 @@ HTTP request path. `request.route` below identifies the inference interface inst
 
 `request.route` is `chat-completions` or `responses`. `request.bodyBytes` is the size of the JSON
 body as sent, before redaction. Token estimates and costs are not available; see
-[Request facts](/docs/policies/routing#request-facts-and-context).
+[Request facts](/docs/policies/expressions#request-facts).
 
 ## Pricing
 
 Each field is the price of one meter in USD per million tokens, as an exact decimal. Some models
 charge more for every token of a request whose prompt is over a size, such as 272,000 tokens. These
 fields hold the prices for shorter prompts. To compare prices for a long prompt, use
-[`blended_price`](/docs/policies/routing#blended-price) with a prompt size.
+[`blended_price`](/docs/policies/expressions#blended-price) with a prompt size.
 
 <RoutingFields group="pricing" />
 
