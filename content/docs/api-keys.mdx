@@ -37,9 +37,10 @@ and deletes their own keys. Administrators can see and manage every key in the o
 
 **Allow key policy edits by default** on the grant decides whether members can edit their keys'
 policies. It sets the default in `delegation.keys` and keeps any
-[exceptions by ID](/docs/policies/delegation#exceptions-by-id). Turning it off for existing keys removes
-their key policies after you confirm; the grant's restrictions still apply. Request policies have
-their [own permission](/docs/policies/request-policies#grant-permission).
+[exceptions by ID](/docs/policies/delegation#exceptions-by-id). When it is off, key policies can no
+longer add or change sections. Sections that keys already set keep applying until someone removes
+them, as [Delegation](/docs/policies/delegation#sections-saved-before-a-change) explains.
+Request policies have their [own permission](/docs/policies/request-policies#grant-permission).
 
 ## Key status
 
