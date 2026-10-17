@@ -79,13 +79,13 @@ provider.id in ['openai', 'chutes'] && deployment.capabilities.streaming == true
 ### Missing values
 
 A filter keeps a candidate only when it returns `true`. A comparison with a missing field is
-unknown, and `!` does not make it true. To accept deployments that do not state a value:
+unknown, and `!` does not make it true. To also accept deployments that do not state a value:
 
 ```cel
-!has(deployment.dataHandling.trainingUse) || deployment.dataHandling.trainingUse == false
+!has(deployment.dataHandling.retentionDays) || deployment.dataHandling.retentionDays <= 30
 ```
 
-Without the `has(...)` check, only deployments that state `false` pass.
+Without the `has(...)` check, only deployments that state 30 days or fewer pass.
 
 ## Ordering
 

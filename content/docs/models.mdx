@@ -31,6 +31,30 @@ Some deployments work only for accounts that the provider has approved: GPT-5.6 
 [Anthropic](/docs/providers/anthropic#us-and-fast-deployments). The catalog marks them with
 `approvalRequired`, and the routing filter `!deployment.approvalRequired` excludes all of them.
 
+### Search the catalog
+
+Type words to search names, IDs and aliases, or filter with `field:value`. A space between filters
+means `AND`; you can also use `OR`, `NOT` and parentheses.
+
+| Filter                                                              | Matches                                                        |
+| ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `author:`, `group:`, `model:`, `deployment:`, `route:`, `provider:` | A name, ID or alias, such as `provider:azure`                  |
+| `interface:`                                                        | An API interface, such as `interface:responses`                |
+| Any [routing field](/docs/policies/routing-fields)                  | The field's value, such as `deployment.upstream.hosting:azure` |
+
+| Search                                              | Finds                                        |
+| --------------------------------------------------- | -------------------------------------------- |
+| `deployment.dataHandling.zeroDataRetention:true`    | Deployments with zero data retention         |
+| `deployment.contextWindowTokens>=1000000`           | Context windows of at least 1,000,000 tokens |
+| `deployment.pricing.input_tokens.per_mill_tokens<1` | Input under $1 per million tokens            |
+| `model.groupIds=claude NOT provider:anthropic`      | Claude models from other providers           |
+
+- `:` finds text that contains the value, and numbers or `true`/`false` that equal it. `=`, `!=`,
+  `<`, `<=`, `>` and `>=` compare. Text ignores case.
+- A list, such as `deployment.inputModalities`, matches when one of its entries matches.
+- `!=` also matches deployments that do not state the field; other comparisons do not. Routing
+  policies treat these values differently; see [Missing values](/docs/policies/routing#missing-values).
+
 ## Choose a model
 
 The `model` field accepts these forms:
