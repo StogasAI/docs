@@ -47,12 +47,10 @@ Open **BYOK → Add → Azure**, enter the tenant ID, client ID, client secret a
 subscriptions that hold your accounts, and select **Find accounts**. Choose the accounts and select
 **Connect**. Each account becomes its own credential, named after the account.
 
-The list marks an account that needs one of these changes before you can connect it:
-
-| The list shows                                  | Fix                                                                                                                                                                                                                            |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Needs a custom subdomain                        | Select **Generate Custom Domain Name** on the account's **Overview** page. Only an endpoint on a subdomain accepts Entra sign-in. Apps that use the regional endpoint keep working, but you cannot change the subdomain later. |
-| Needs access from All networks under Networking | Select **All networks** under **Networking → Firewalls and virtual networks**. The gateway reaches your account over the public internet from addresses that can change.                                                       |
+The list marks an account that needs a change before you can connect it. For **Needs a custom
+subdomain**, select **Generate Custom Domain Name** on the account's **Overview** page, because only
+an endpoint on a subdomain accepts Entra sign-in. Apps that use the regional endpoint keep working,
+but you cannot change the subdomain later.
 
 Accounts created in the Azure portal, Cloud Shell or Azure CLI already have a subdomain, and an
 Azure OpenAI account without one has its own `openai.azure.com` endpoint. A Foundry account created
@@ -62,9 +60,6 @@ from a template can lack one. To add it with the Azure CLI:
 az cognitiveservices account update --name <account> --resource-group <group> \
   --custom-domain <subdomain>
 ```
-
-Selected networks, private endpoints, disabled public access and network security perimeters all
-block the gateway.
 
 </Step>
 <Step>
@@ -144,8 +139,8 @@ location is unknown.
 | Fast | Claude Opus 5.5 | A separate model, `claude-opus-5-5-fast`, that you deploy                    |
 | Pro  | Some GPT models | A request mode of your GPT deployment, on Responses only, at no extra charge |
 
-Select Flex or Fast with `service_tier` or a `-flex` or `-fast` deployment ID, and Pro with a `-pro`
-deployment ID. A GPT deployment serves all of its request modes, so it needs no other target. For
+Select Flex or Fast with `service_tier` or a `-flex` or `-fast` deployment ID, and Pro with
+[`reasoning.mode`](/docs/reasoning#select-pro-mode) or a `-pro` deployment ID. A GPT deployment serves all of its request modes, so it needs no other target. For
 Claude Opus 5.5 Fast, deploy `claude-opus-5-5-fast` in your account and choose it in **Azure
 targets**. Azure runs every request to that deployment at Fast, and it does not share prompt caches
 with standard Claude Opus 5.5. The catalog lists the tiers that each model has. See

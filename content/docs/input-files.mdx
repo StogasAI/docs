@@ -99,12 +99,13 @@ Give each document exactly one source:
 | `file_id`   | A file that you uploaded to the provider                     | [BYOK](/docs/byok) credentials only                   |
 
 If the data URL has no MIME type or uses `application/octet-stream`, `filename` must end in an
-extension that the deployment accepts.
+extension that the route accepts.
 
 ## Supported formats
 
-Each catalog deployment lists the document MIME types and extensions it accepts on each endpoint as
-`nativeFileInputs`, and its input types as `inputModalities`.
+Each catalog route lists the document MIME types and extensions that it accepts as
+`documentFormats`. Each deployment lists its input types on each of its `routes` as
+`inputModalities`.
 
 | Provider                                            | Images | Documents                                                                          |
 | --------------------------------------------------- | ------ | ---------------------------------------------------------------------------------- |

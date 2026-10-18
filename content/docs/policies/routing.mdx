@@ -6,8 +6,8 @@ icon: Route
 
 A **candidate** is one deployment with one of your provider credentials. For each request, the gateway:
 
-1. Starts with the candidates that can serve the request's `model`, interface, service tier and
-   output limit.
+1. Starts with the candidates that can serve the request's `model`, interface, service tier,
+   reasoning mode and output limit.
 2. Removes the candidates that `allowedCatalogNodes` or `filter` exclude.
 3. Puts the rest in [order](#ordering) and sends the request to the first.
 

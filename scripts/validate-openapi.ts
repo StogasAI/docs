@@ -25,8 +25,17 @@ const catalog = jsonObject(
 		'value'
 	)
 );
-if (catalog?.schema !== 'stogas.catalog.public.v4') {
-	errors.push('/v1/catalog example must use stogas.catalog.public.v4.');
+const catalogSchema = getJsonValue(
+	spec,
+	'components',
+	'schemas',
+	'CatalogResponse',
+	'properties',
+	'schema',
+	'const'
+);
+if (catalog?.schema !== catalogSchema) {
+	errors.push(`/v1/catalog example must use ${String(catalogSchema)}.`);
 }
 if (
 	catalog &&

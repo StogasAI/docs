@@ -21,8 +21,8 @@ selects one model. [`/v1/catalog`](/docs/reference/catalog/getCatalog) returns t
 with authors, groups, models, deployments, routes, prices and scheduled changes. Both endpoints are
 public.
 
-Select **Include retired** in the web catalog to see retired models. Retired deployments keep their
-pages but cannot receive requests.
+Select **Include retired** in the web catalog to see retired models. A model retires with its last
+deployment. Retired deployments keep their pages but cannot receive requests.
 
 Some deployments work only for accounts that the provider has approved: GPT-5.6 Cyber on
 [OpenAI](/docs/providers/openai#models-that-need-approval), Claude Mythos on
@@ -154,5 +154,6 @@ To select one:
 
 - Send its deployment ID.
 - Set `service_tier` to choose a [service tier](/docs/service-tiers) of a model ID.
+- Set `reasoning.mode` to choose [Pro mode](/docs/reasoning#select-pro-mode) of a model ID.
 - Filter on `deployment.upstream` or `deployment.dataHandling.processingLocation` in a
   [routing policy](/docs/policies/routing).

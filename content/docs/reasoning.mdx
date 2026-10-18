@@ -30,6 +30,31 @@ selected deployment:
 If you omit the effort, the gateway sends no reasoning control and the provider uses its default. This
 is different from `none`, which turns optional reasoning off.
 
+## Select Pro mode
+
+Some GPT models on [OpenAI](/docs/providers/openai#tiers-and-pro) and
+[Azure](/docs/providers/azure#tiers-and-pro) also run in Pro mode, which does more model work per
+request and uses more tokens. On Responses, set `reasoning.mode`:
+
+```json
+{
+	"model": "gpt-5.6-sol",
+	"input": "Review this migration plan.",
+	"reasoning": { "mode": "pro", "effort": "high" }
+}
+```
+
+- `pro` selects the model's Pro deployment, which has its own catalog entry and price. `standard`
+  selects the standard deployment.
+- Without `reasoning.mode`, a model ID selects standard mode, and a deployment ID such as
+  `openai-gpt-5.6-sol-pro` keeps its own mode.
+- A model without a deployment in the mode returns `reasoning_mode_unavailable`, also when you name
+  a deployment in the other mode. Other values return `unsupported_reasoning_mode`.
+- Chat Completions rejects `reasoning.mode`.
+
+Mode and effort are independent. The mode combines with a [service tier](/docs/service-tiers), such
+as Pro at Flex.
+
 Chat Completions also accepts `"reasoning": { "enabled": true }`. `true` selects the level nearest
 to `medium`, and `false` means `none`. An `enabled` value that conflicts with the effort is rejected.
 
@@ -56,7 +81,8 @@ Each deployment in the [catalog](/docs/models#find-a-model) has three reasoning 
 | `reasoningEfforts`   | The levels you can select. Empty when reasoning is only on or off, or not available.     |
 | `reasoningMaxTokens` | `{ "minimum", "maximum" }` when the deployment accepts a token budget, otherwise `null`. |
 
-Levels can differ between Chat Completions and Responses on the same deployment.
+Levels can differ between Chat Completions and Responses, so each deployment lists
+`reasoningEfforts` under each of its `routes`.
 
 ## Set a token budget
 

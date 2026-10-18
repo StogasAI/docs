@@ -39,8 +39,9 @@ which also matches Claude in Azure's US Data Zone. Requests that send Anthropic'
 A workspace can allow only US inference. Anthropic then refuses requests from the workspace's keys
 to deployments of Claude 4.6 and later without `-us`. For a key from such a workspace, open the
 credential's **Policy** in [BYOK](/docs/byok) and turn on **Workspace allows only US inference**.
-The credential then serves only the `-us` deployments and models older than Claude 4.6, which have
-no US option. The switch adds this rule to the credential's policy:
+The credential then serves Claude 4.6 and later only on their `-us` deployments. Older models take
+no location setting, so the credential still serves them. The switch adds this rule to the
+credential's policy:
 
 ```json
 {

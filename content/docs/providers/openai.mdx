@@ -28,11 +28,12 @@ its ID adds a suffix to the standard deployment ID:
 | Flex      | Lower price, slower responses                       | `service_tier: "flex"` or a `-flex` ID            |
 | Fast      | Higher price, faster responses                      | `service_tier: "fast"` or a `-fast` ID            |
 | Ultrafast | Highest price, fastest responses, on Responses only | `service_tier: "ultrafast"` or an `-ultrafast` ID |
-| Pro       | More compute per request, on Responses only         | A `-pro` deployment ID: `openai-gpt-5.6-sol-pro`  |
+| Pro       | More compute per request, on Responses only         | `"reasoning": { "mode": "pro" }` or a `-pro` ID   |
 
 You can combine Pro with Flex or Fast, for example `openai-gpt-5.6-sol-pro-fast`. The
 [catalog](/docs/models#find-a-model) lists the deployments that exist for each model.
-[Service tiers](/docs/service-tiers) explains how to select a tier and check which tier ran.
+[Service tiers](/docs/service-tiers) explains how to select a tier and check which tier ran, and
+[Reasoning](/docs/reasoning#select-pro-mode) explains Pro mode.
 
 The gateway does not offer OpenAI's WebSocket mode, which OpenAI recommends with Ultrafast for agents
 that make many tool calls in quick succession. OpenAI's Scale tier is not available.
