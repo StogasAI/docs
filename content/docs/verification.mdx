@@ -78,13 +78,15 @@ record:
 - **Gateway releases**, with their GitHub build proofs.
 - **Catalogs**, **Hardware policy**, **Key manifest** and **Approval manifest**.
 
-The approval manifest's signature covers each release, the hardware policy and the Sigstore keys,
-so their cards show **Approved by Stogas** and link to it. We approve a release only after our own
-build matches GitHub's, but our signature cannot prove that this build happened; to check a release
-yourself, see [Reproducible builds](/docs/reproducible-builds). Sigstore signs its own keys, and AMD
-signs its own certificates and revocation lists. Each GitHub build proof, manifest and boot record
-has its own Rekor entry, which its **Rekor entry** link opens in
-[Rekor Search](https://search.sigstore.dev).
+Each card links every Rekor entry that logs it, and each link opens in
+[Rekor Search](https://search.sigstore.dev). The approval manifest's signature covers each release,
+the hardware policy and the Sigstore keys, so their cards show **Approved by Stogas** with the
+approval manifest's entry. A release with a GitHub build proof also shows **Built by GitHub
+Actions** with that proof's entry. We approve a release only after our own build matches GitHub's,
+but our signature cannot prove that this build happened; to check a release yourself, see
+[Reproducible builds](/docs/reproducible-builds). Sigstore signs its own keys. AMD signs its own
+certificates and revocation lists, so they need no Rekor entry; [Revocation](#revocation) explains
+how their expiry limits an older list.
 
 Each card has one mark that shows that its evidence passed verification. Hover over or focus the
 mark to see how long the check took. Search each history tab by ID or version.
