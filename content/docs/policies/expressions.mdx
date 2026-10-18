@@ -19,7 +19,7 @@ JSON string, with single quotes inside it:
 | ------------------- | ------------------------------ | ------------------------------------------ |
 | `routing.filter`    | `true` to keep a deployment    | `deployment.contextWindowTokens >= 128000` |
 | `routing.sort[].by` | A value to sort deployments by | `blended_price(3, 1)`                      |
-| `rules.<name>.when` | `true` to apply the rule       | `request.route == 'responses'`             |
+| `rules.<name>.when` | `true` to apply the rule       | `request.interface == 'responses'`         |
 
 ## Syntax
 
@@ -41,7 +41,8 @@ JSON string, with single quotes inside it:
 - Names and strings are case sensitive.
 - Write a time zone as a quoted IANA name, such as `'America/New_York'`, or a UTC offset, such as
   `'-05:00'`.
-- Unknown fields, wrong types and unknown time zones are rejected when you save.
+- Unknown fields, wrong types, unknown time zones and strings that a field can never hold, such as
+  `'EU'` for a location, are rejected when you save.
 - The [field reference](/docs/policies/routing-fields) lists every field.
 
 ## Missing values
@@ -89,18 +90,10 @@ At 300,000 tokens, GPT-6 Sol blends to `(3 × 4 + 15) / 4 = $6.75`, so this filt
 
 ## Request facts
 
-Expressions can read four fields of the request. See [Request](/docs/policies/routing-fields#request)
-in the field reference.
-
-| Field               | Value                                               |
-| ------------------- | --------------------------------------------------- |
-| `request.model`     | The `model` field as sent                           |
-| `request.route`     | `chat-completions` or `responses`                   |
-| `request.time`      | When the request started                            |
-| `request.bodyBytes` | The size of the JSON body as sent, before redaction |
-
-Expressions cannot read token estimates or costs, because the gateway calculates those only after
-it selects a deployment.
+Expressions can read four fields of the request: `request.model`, `request.interface`,
+`request.time` and `request.bodyBytes`; see [Request](/docs/policies/routing-fields#request). They
+cannot read token estimates or costs, because the gateway calculates those only after it selects a
+deployment.
 
 ## Bounds
 

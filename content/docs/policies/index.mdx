@@ -24,6 +24,42 @@ This policy allows only providers that do not train on prompts, and caps spendin
 On an organization, all its keys share the $10. On a key, the $10 is for that key only. A key
 policy cannot raise a cap that an organization or grant policy sets.
 
+## How policies work
+
+Every policy follows these rules. The topic pages give the details.
+
+- **Policies only narrow.** A policy limits and configures what a key does. It cannot give a key
+  credentials or permissions that the key does not already have.
+- **Every policy applies, in any order.** Filters, lists, deny periods, redaction and limits from
+  all policies apply together, so the strictest value wins. No scope outranks another, except for
+  the [order of deployments](/docs/policies/routing#orders-from-several-policies), because only one
+  order can apply to a request. See [How settings combine](/docs/policies/scopes#how-settings-combine).
+- **Defaults give way.** A [default rule](/docs/policies/rules#defaults) applies only when no
+  policy requires the same kind of setting.
+- **The plan is fixed before the first call.** Which deployments can serve a request, and in which
+  order, depends only on what is known when the request arrives: the catalog, the key and the
+  request's model, interface, time and size. Earlier calls, token estimates and provider responses
+  never change it, so a [routing simulation](/docs/policies/editing#simulate-routing) shows what
+  will run.
+- **Settings for one deployment can depend on it; settings for the whole request cannot.** A rule
+  for Chutes can raise retries for Chutes. Fallbacks, the order and the total timeout cover the
+  whole request, so a rule that reads deployment fields cannot set them. See
+  [Conditional rules](/docs/policies/rules#conditional-rules).
+- **A missing value skips one deployment.** When a deployment does not state a field that a filter
+  or condition reads, the gateway skips that deployment and tries the others. See
+  [Missing values](/docs/policies/expressions#missing-values).
+- **Mistakes fail when you save.** Unknown fields, wrong types and impossible values fail at save.
+  If a later change makes saved policies conflict, requests fail with `400` until a policy changes.
+  See [Check a policy before saving](/docs/policies/editing#check-a-policy-before-saving).
+- **Managers choose what others may change.** [Delegation](/docs/policies/delegation) decides which
+  sections the policies below a scope can add or change. It never changes what applies to a
+  request.
+- **Requests can only narrow further.** A [request policy](/docs/policies/request-policies) can
+  add the settings that saved policies permit. It cannot set limits or delegation.
+- **You can see the result.** A key's [**Combined policy**](/docs/policies/editing#check-the-result)
+  shows what applies and names the policy behind each limit, rule and order. A routing simulation
+  names the policy that removed each deployment.
+
 <Cards>
 	<Card title="Examples" href="/docs/policies/examples">
 		Policies to copy for budgets, rates, providers, schedules and redaction.

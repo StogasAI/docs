@@ -49,7 +49,7 @@ export function FieldTable({ fields, label }: { fields: ReferenceField[]; label:
 						</td>
 						<td
 							role="cell"
-							className="prose-no-margin align-top wrap-anywhere max-sm:basis-full max-sm:border-0! max-sm:p-0! sm:min-w-48"
+							className="prose-no-margin align-top wrap-anywhere max-sm:basis-full max-sm:border-0! max-sm:p-0! max-sm:empty:hidden sm:min-w-48"
 						>
 							{description}
 						</td>

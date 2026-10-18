@@ -164,7 +164,7 @@ test('routing field inventories survive Markdown export and query examples are h
 		page
 			.getByRole('table', { name: 'request routing fields' })
 			.locator('code')
-			.filter({ hasText: /^chat-completions$/ })
+			.filter({ hasText: /^chat_completions$/ })
 	).toBeVisible();
 	await page.goto('/docs/policies/expressions');
 	const example = page

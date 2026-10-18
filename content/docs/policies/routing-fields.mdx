@@ -1,17 +1,16 @@
 ---
 title: Routing field reference
-description: Every field available to routing filters and sort expressions, with types and pricing units.
+description: Every field that routing filters, sorts and rule conditions can read, with its type and values.
 icon: ListTree
 ---
 
-Filters, sorts and rule conditions read these fields for each candidate: its author, model,
-deployment, route and provider, and the request. For example,
-`deployment.contextWindowTokens >= 128000` keeps deployments with a context window of at least
-128,000 tokens.
+Filters, sorts and rule conditions read these fields for each [candidate](/docs/policies/routing):
+its author, model, deployment, route and provider, and the request. Deployment fields hold the
+deployment's values on the candidate's route. For example, `deployment.contextWindowTokens >= 128000`
+keeps deployments with a context window of at least 128,000 tokens.
 
-Unknown fields are rejected. A field can still be missing on a candidate; see
-[Missing values](/docs/policies/expressions#missing-values). The [catalog](https://stogas.ai/catalog)
-shows current IDs and values, and its search accepts these fields.
+The [catalog](https://stogas.ai/catalog) shows current IDs and values, and its search accepts these
+fields.
 
 ## Types
 
@@ -24,9 +23,13 @@ shows current IDs and values, and its search accepts these fields.
 | `string_list` | `deployment.inputModalities` | Membership and CEL list macros.                          |
 | `timestamp`   | `request.time`               | CEL time comparisons and time-zone methods.              |
 
-Use `has(field)` to check presence. On a group such as `deployment.pricing`, `has` is true when
-any field in the group is present. IDs and strings are case-sensitive. Catalog dates remain
-strings; request time is a timestamp. See [Expressions](/docs/policies/expressions).
+- IDs and strings are case sensitive.
+- Dates are `YYYY-MM-DD` strings, so `<` and `>` compare them in date order.
+- A field can be missing on a candidate; see [Missing values](/docs/policies/expressions#missing-values).
+  `has(field)` checks presence. On a group such as `deployment.pricing`, `has` is true when any field
+  in the group is present.
+- Unknown fields, wrong types and strings that a field can never hold, such as `'EU'` for a
+  location, fail when you save.
 
 ## Author
 
@@ -34,8 +37,8 @@ strings; request time is a timestamp. See [Expressions](/docs/policies/expressio
 
 ## Model
 
-Model fields describe the shared model. Use deployment fields when a limit or property differs
-between providers or hosting variants.
+Model fields hold the same values on every deployment of the model. Deployment fields can be
+narrower, such as a smaller output limit on one provider.
 
 <RoutingFields group="model" />
 
@@ -45,21 +48,20 @@ between providers or hosting variants.
 
 ### Capabilities
 
-All fields in this table are Booleans. A `true` value means the resolved catalog deployment
-supports that capability.
+Each field is `true` when the deployment supports the feature on the candidate's route. The
+gateway skips candidates that lack a feature that the request uses, and returns `400` when none
+remain.
 
 <RoutingFields group="capabilities" />
 
 ### Data handling
 
-These fields describe what the provider can do with request and response content for the
-selected deployment and route. Each value is the worst case across every configuration and
-optional feature that the offering allows. For example, a persistent cache that the offering
-allows counts even when your request does not use it. A more private configuration gets a
-stronger value only when the gateway enforces it on every request.
-
-A missing disclosure is not a `false` value or a guarantee. Require the property explicitly when
-your application depends on it.
+These fields describe what the provider can do with request and response content. Each value is
+the worst case across every configuration and optional feature that the offering allows: a
+persistent cache that the offering allows counts even when your request does not use it. A more
+private configuration gets a stronger value only when the gateway enforces it on every request. A
+location that the provider does not disclose is `unknown`, and an undisclosed retention period is
+missing.
 
 <RoutingFields group="data-handling" />
 
@@ -95,17 +97,16 @@ is `eu` or `DE`. List every value you accept, for example
 exclusions: `deployment.dataHandling.processingLocation != 'US'` also accepts `world` and
 `unknown`.
 
-### Upstream deployment details
+### Upstream details
 
-These fields describe the selected provider deployment. Their availability depends on what the
-catalog records for that provider. They do not expose provider credentials.
+Most of these fields belong to one provider, which the description names. They are missing on
+deployments of other providers.
 
 <RoutingFields group="upstream" />
 
 ## Route and provider
 
-A catalog route is a connection between a provider and supported interfaces. Its ID is not the
-HTTP request path. `request.route` below identifies the inference interface instead.
+A route connects a provider to the interfaces that it serves. A route ID is not an HTTP path.
 
 <RoutingFields group="route-provider" />
 
@@ -113,8 +114,7 @@ HTTP request path. `request.route` below identifies the inference interface inst
 
 <RoutingFields group="request" />
 
-`request.route` is `chat-completions` or `responses`. `request.bodyBytes` is the size of the JSON
-body as sent, before redaction. Token estimates and costs are not available; see
+Token estimates and costs are not available; see
 [Request facts](/docs/policies/expressions#request-facts).
 
 ## Pricing

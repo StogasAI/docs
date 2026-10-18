@@ -10,7 +10,7 @@ export function RoutingFields({ group }: { group: RoutingFieldGroup }) {
 			label={`${group} routing fields`}
 			fields={routingFields(group).map(({ description, ...field }) => ({
 				...field,
-				description: <MarkdownServer>{description}</MarkdownServer>
+				description: description ? <MarkdownServer>{description}</MarkdownServer> : null
 			}))}
 		/>
 	);

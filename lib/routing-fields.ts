@@ -21,19 +21,24 @@ function groupOf(field: string): RoutingFieldGroup {
 	return field.split('.')[0] as RoutingFieldGroup;
 }
 
+// Fields follow the order of the descriptions. An empty description means the name says enough.
+for (const name of Object.keys(registry))
+	if (!Object.hasOwn(descriptions, name))
+		throw new Error(`Missing routing field description: ${name}`);
+
 export function routingFields(group: RoutingFieldGroup) {
-	return Object.entries(registry)
+	return Object.entries(descriptions)
 		.filter(([name]) => groupOf(name) === group)
-		.map(([name, type]) => {
-			const description = descriptions[name as keyof typeof descriptions];
-			if (!description) throw new Error(`Missing routing field description: ${name}`);
+		.map(([name, description]) => {
+			const type = registry[name as keyof typeof registry];
+			if (!type) throw new Error(`Unknown routing field: ${name}`);
 			return { name, type, description };
 		});
 }
 
 export function routingFieldsMarkdown(group: RoutingFieldGroup) {
 	return (
-		'\n| Field | Type | Meaning |\n| --- | --- | --- |\n' +
+		'\n| Field | Type | Description |\n| --- | --- | --- |\n' +
 		routingFields(group)
 			.map(
 				({ name, type, description }) =>

@@ -88,16 +88,16 @@ calls no model and costs nothing.
 
 ### Choose a request
 
-Choose a key that uses the policy. On a key's own policy, the simulation uses that key. Then choose
-the model, the interface and the service tier that a request would send.
+On a key's own policy, the simulation uses that key. Elsewhere it starts with the most recently
+used key that the policy applies to, and you can choose another. Then fill in the request as a
+client would send it. The fields suggest catalog values.
 
-| Model choice   | The simulated request names                                                                                        |
-| -------------- | ------------------------------------------------------------------------------------------------------------------ |
-| A model        | Its ID. Any deployment of the model can serve it.                                                                  |
-| A group        | The group ID, which selects the group's newest models                                                              |
-| A deployment   | The deployment ID, which fixes the provider, region and service tier                                               |
-| **Any model**  | No model. Every model is a candidate, so the request needs an `order`, a `sort` or a filter that leaves one model. |
-| **Use “text”** | The text that you typed, such as an alias                                                                          |
+| Field          | Value                                                                                                                                       |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model          | Any [`model` value](/docs/models#choose-a-model). Empty sends no model, which needs an `order`, a `sort` or a filter that leaves one model. |
+| Interface      | Chat Completions or Responses                                                                                                               |
+| Service tier   | Any [`service_tier` value](/docs/service-tiers). Empty uses the tier of the named model.                                                    |
+| Reasoning mode | On Responses, the [`reasoning.mode`](/docs/reasoning#select-pro-mode) to send                                                               |
 
 </Step>
 <Step>
@@ -116,8 +116,8 @@ the model, the interface and the service tier that a request would send.
 
 - The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
   key uses that credential. Enabled state, expiration and other changes apply after you save.
-- The simulated request has only a model and a service tier. `request.bodyBytes` is 0, and it has
-  no [request policy](/docs/policies/request-policies) or `provider` preference.
+- The simulated request has only these fields. `request.bodyBytes` is 0, and it has no
+  [request policy](/docs/policies/request-policies) or `provider` preference.
 - It uses the current catalog and time, so `access.deny` periods and rules that read
   `request.time` apply as they would now.
 - It does not check [limits](/docs/policies/limits), your balance or provider errors. Retries and
