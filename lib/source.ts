@@ -9,6 +9,7 @@ import { BookOpen, TerminalSquare } from 'lucide-react';
 import React from 'react';
 import { stringify } from 'yaml';
 import { languageIconPaths, type LanguageIcon } from './language-icons';
+import { providerLogos, type ProviderLogo } from './provider-logos';
 import { openapiDocuments, scopeOpenApiDocument, type OpenAPIDocumentId } from './openapi';
 import {
 	docsContentRoute,
@@ -19,27 +20,45 @@ import {
 	referenceRoute
 } from './shared';
 
-// SDK guides name a language logo as `logo:<name>`; Lucide resolves every other icon name.
-function languageIconsPlugin(): LoaderPlugin {
+// SDK and provider guides name a language or provider logo as `logo:<name>`; Lucide resolves every
+// other icon name.
+function logoIconsPlugin(): LoaderPlugin {
+	function svg(name: string) {
+		if (Object.hasOwn(languageIconPaths, name))
+			return React.createElement(
+				'svg',
+				{ viewBox: '0 0 24 24', fill: 'currentColor', 'aria-hidden': true },
+				React.createElement('path', { d: languageIconPaths[name as LanguageIcon] })
+			);
+		if (Object.hasOwn(providerLogos, name)) {
+			const logo = providerLogos[name as ProviderLogo];
+			return React.createElement(
+				'svg',
+				{ viewBox: logo.viewBox, fill: 'currentColor', fillRule: 'evenodd', 'aria-hidden': true },
+				...logo.paths.map((path, index) =>
+					React.createElement('path', {
+						key: index,
+						d: path.d,
+						fillOpacity: 'opacity' in path ? path.opacity : undefined
+					})
+				)
+			);
+		}
+		throw new Error(`Unknown logo: ${name}`);
+	}
 	function resolve<Node extends { icon?: React.ReactNode }>(node: Node): Node {
-		if (typeof node.icon !== 'string' || !node.icon.startsWith('logo:')) return node;
-		const name = node.icon.slice('logo:'.length);
-		if (!Object.hasOwn(languageIconPaths, name)) throw new Error(`Unknown language icon: ${name}`);
-		node.icon = React.createElement(
-			'svg',
-			{ viewBox: '0 0 24 24', fill: 'currentColor', 'aria-hidden': true },
-			React.createElement('path', { d: languageIconPaths[name as LanguageIcon] })
-		);
+		if (typeof node.icon === 'string' && node.icon.startsWith('logo:'))
+			node.icon = svg(node.icon.slice('logo:'.length));
 		return node;
 	}
-	return { name: 'stogas:language-icons', transformPageTree: { file: resolve, folder: resolve } };
+	return { name: 'stogas:logo-icons', transformPageTree: { file: resolve, folder: resolve } };
 }
 
 export const source = loader({
 	baseUrl: docsRoute,
 	i18n,
 	source: docs.toFumadocsSource(),
-	plugins: [languageIconsPlugin(), lucideIconsPlugin()]
+	plugins: [logoIconsPlugin(), lucideIconsPlugin()]
 });
 
 export const apiSource = loader({

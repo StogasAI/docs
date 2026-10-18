@@ -13356,241 +13356,6 @@
 						"minLength": 1,
 						"maxLength": 512
 					},
-					"limitDefinitions": {
-						"maxItems": 36,
-						"type": "array",
-						"items": {
-							"type": "object",
-							"properties": {
-								"scope": {
-									"type": "string",
-									"enum": [
-										"organization",
-										"folder",
-										"grant",
-										"role",
-										"member",
-										"credential",
-										"key"
-									]
-								},
-								"id": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 64
-								},
-								"config": {
-									"type": "object",
-									"properties": {
-										"lifetimeTokens": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 1000000000000
-										},
-										"concurrentRequests": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 10000
-										},
-										"requests": {
-											"minProperties": 1,
-											"maxProperties": 5,
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-											},
-											"additionalProperties": {
-												"type": "object",
-												"properties": {
-													"burst": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 120
-													},
-													"max": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 1000000000000
-													},
-													"window": {
-														"type": "object",
-														"properties": {
-															"count": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 999999
-															},
-															"unit": {
-																"type": "string",
-																"enum": [
-																	"second",
-																	"minute",
-																	"hour",
-																	"day",
-																	"week"
-																]
-															}
-														},
-														"required": [
-															"count",
-															"unit"
-														],
-														"additionalProperties": false
-													}
-												},
-												"required": [
-													"max",
-													"window"
-												],
-												"additionalProperties": false
-											}
-										},
-										"tokens": {
-											"minProperties": 1,
-											"maxProperties": 5,
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-											},
-											"additionalProperties": {
-												"type": "object",
-												"properties": {
-													"max": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 1000000000000
-													},
-													"unit": {
-														"type": "string",
-														"enum": [
-															"tokens",
-															"stt"
-														],
-														"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
-													},
-													"window": {
-														"type": "object",
-														"properties": {
-															"count": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 999999
-															},
-															"unit": {
-																"type": "string",
-																"enum": [
-																	"second",
-																	"minute",
-																	"hour",
-																	"day",
-																	"week"
-																]
-															}
-														},
-														"required": [
-															"count",
-															"unit"
-														],
-														"additionalProperties": false
-													}
-												},
-												"required": [
-													"max",
-													"window"
-												],
-												"additionalProperties": false
-											}
-										},
-										"spend": {
-											"type": "object",
-											"properties": {
-												"lifetimeUsd": {
-													"type": "string",
-													"maxLength": 49,
-													"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-													"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-												},
-												"recurring": {
-													"minProperties": 1,
-													"maxProperties": 5,
-													"type": "object",
-													"propertyNames": {
-														"type": "string",
-														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-													},
-													"additionalProperties": {
-														"type": "object",
-														"properties": {
-															"anchor": {
-																"type": "string",
-																"format": "date-time"
-															},
-															"maxUsd": {
-																"type": "string",
-																"maxLength": 49,
-																"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-																"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-															},
-															"timeZone": {
-																"type": "string",
-																"maxLength": 64,
-																"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-																"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-															},
-															"window": {
-																"type": "object",
-																"properties": {
-																	"count": {
-																		"type": "integer",
-																		"minimum": 1,
-																		"maximum": 1000
-																	},
-																	"unit": {
-																		"type": "string",
-																		"enum": [
-																			"minute",
-																			"hour",
-																			"day",
-																			"week",
-																			"month",
-																			"year"
-																		]
-																	}
-																},
-																"required": [
-																	"count",
-																	"unit"
-																],
-																"additionalProperties": false
-															}
-														},
-														"required": [
-															"maxUsd",
-															"timeZone",
-															"window"
-														],
-														"additionalProperties": false
-													}
-												}
-											},
-											"additionalProperties": false,
-											"minProperties": 1
-										}
-									},
-									"additionalProperties": false,
-									"minProperties": 1,
-									"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
-								}
-							},
-							"required": [
-								"scope",
-								"config"
-							],
-							"additionalProperties": false
-						}
-					},
 					"expiresAt": {
 						"anyOf": [
 							{
@@ -14426,22 +14191,31 @@
 						"items": {
 							"type": "object",
 							"properties": {
-								"scope": {
-									"type": "string",
-									"enum": [
-										"organization",
-										"folder",
-										"grant",
-										"role",
-										"member",
-										"credential",
-										"key"
-									]
-								},
-								"id": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 64
+								"policy": {
+									"type": "object",
+									"properties": {
+										"scope": {
+											"type": "string",
+											"enum": [
+												"organization",
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64
+										}
+									},
+									"required": [
+										"scope"
+									],
+									"additionalProperties": false
 								},
 								"name": {
 									"type": "string"
@@ -15083,7 +14857,7 @@
 								}
 							},
 							"required": [
-								"scope",
+								"policy",
 								"name",
 								"config"
 							],
@@ -15096,22 +14870,31 @@
 						"items": {
 							"type": "object",
 							"properties": {
-								"scope": {
-									"type": "string",
-									"enum": [
-										"organization",
-										"folder",
-										"grant",
-										"role",
-										"member",
-										"credential",
-										"key"
-									]
-								},
-								"id": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 64
+								"policy": {
+									"type": "object",
+									"properties": {
+										"scope": {
+											"type": "string",
+											"enum": [
+												"organization",
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64
+										}
+									},
+									"required": [
+										"scope"
+									],
+									"additionalProperties": false
 								},
 								"encrypted": {
 									"type": "object",
@@ -15150,7 +14933,7 @@
 								}
 							},
 							"required": [
-								"scope",
+								"policy",
 								"encrypted"
 							],
 							"additionalProperties": false
@@ -15608,22 +15391,31 @@
 						"items": {
 							"type": "object",
 							"properties": {
-								"scope": {
-									"type": "string",
-									"enum": [
-										"organization",
-										"folder",
-										"grant",
-										"role",
-										"member",
-										"credential",
-										"key"
-									]
-								},
-								"id": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 64
+								"policy": {
+									"type": "object",
+									"properties": {
+										"scope": {
+											"type": "string",
+											"enum": [
+												"organization",
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64
+										}
+									},
+									"required": [
+										"scope"
+									],
+									"additionalProperties": false
 								},
 								"config": {
 									"type": "object",
@@ -15831,7 +15623,7 @@
 								}
 							},
 							"required": [
-								"scope",
+								"policy",
 								"config"
 							],
 							"additionalProperties": false
