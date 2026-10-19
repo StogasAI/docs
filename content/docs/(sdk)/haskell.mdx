@@ -30,11 +30,11 @@ executable stogas-example
   build-depends: base >=4.18 && <5, aeson >=2.2 && <2.3, bytestring >=0.11 && <0.13,
                 http-client >=0.7.19 && <0.8, http-types >=0.12 && <0.13,
                 text >=2 && <3, vector >=0.13 && <0.14
-  extra-libraries: stogas_verifier_ffi
+  extra-libraries: stogas_ffi
 ```
 
 Create `cabal.project` containing `packages: .`. Set the directory containing
-`libstogas_verifier_ffi.so`:
+`libstogas_ffi.so`:
 
 ```sh
 export STOGAS_LIBRARY_DIR=/absolute/path/to/native-library
@@ -61,11 +61,11 @@ import Foreign
 import Foreign.C.Types
 import Foreign.C.String
 
-foreign import ccall safe "stogas_verifier_abi_version" abi :: IO Word32
+foreign import ccall safe "stogas_abi_version" abi :: IO Word32
 foreign import ccall safe "stogas_transport_start" start :: CString -> CSize -> Ptr (Ptr ()) -> IO CString
 foreign import ccall safe "stogas_transport_close" close :: Ptr () -> IO ()
 foreign import ccall safe "stogas_transport_free" freeTransport :: Ptr () -> IO ()
-foreign import ccall safe "stogas_verifier_string_free" freeString :: CString -> IO ()
+foreign import ccall safe "stogas_string_free" freeString :: CString -> IO ()
 
 withTransport :: Value -> (String -> IO a) -> IO a
 withTransport configuration action = bracket acquire release (action . snd)

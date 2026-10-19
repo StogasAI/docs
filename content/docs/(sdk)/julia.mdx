@@ -12,7 +12,7 @@ provided by the same native Stogas transport. This example uses Julia 1.13 on Li
 
 Download the native verifier archive for your processor from
 [Releases](https://github.com/StogasAI/stogas/releases). Set
-`STOGAS_VERIFIER_LIBRARY` to the full path of its shared library, and set
+`STOGAS_LIBRARY` to the full path of its shared library, and set
 `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
 
 Save this as `Project.toml` in an empty directory:
@@ -54,7 +54,7 @@ end
 
 function Transport(path; configuration=Dict())
     library = Libdl.dlopen(path)
-    version = ccall(Libdl.dlsym(library, :stogas_verifier_abi_version), UInt32, ())
+    version = ccall(Libdl.dlsym(library, :stogas_abi_version), UInt32, ())
     version == 1 || error("Unsupported verifier ABI")
     json = JSON.json(configuration)
     output = Ref{Ptr{Cvoid}}(C_NULL)
@@ -69,7 +69,7 @@ function Transport(path; configuration=Dict())
         ccall(Libdl.dlsym(library, :stogas_transport_free), Cvoid, (Ptr{Cvoid},), output[])
         rethrow()
     finally
-        ccall(Libdl.dlsym(library, :stogas_verifier_string_free), Cvoid, (Ptr{UInt8},), raw)
+        ccall(Libdl.dlsym(library, :stogas_string_free), Cvoid, (Ptr{UInt8},), raw)
     end
 end
 
@@ -186,7 +186,7 @@ function main()
         !isempty(key) && !isempty(model) && !occursin(r"[\r\n]", key) || error("Set key and model")
         base = get(ENV, "STOGAS_BASE_URL", nothing)
         if isnothing(base)
-            transport = StogasNative.Transport(ENV["STOGAS_VERIFIER_LIBRARY"])
+            transport = StogasNative.Transport(ENV["STOGAS_LIBRARY"])
             base = transport.base_url
         end
         if "--no-stream" in ARGS

@@ -10,7 +10,7 @@ transport can serve many requests and reuses protected gateway connections.
 
 ## Install
 
-Download the native library and `stogas_verifier.h` from our
+Download the native library and `stogas.h` from our
 [releases](https://github.com/StogasAI/stogas/releases). This build uses macOS
 with Xcode command-line tools and Homebrew:
 
@@ -24,7 +24,7 @@ Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
 
 ## Own the transport
 
-Save these two files beside `stogas_verifier.h`. Keep `baseURL` private; it
+Save these two files beside `stogas.h`. Keep `baseURL` private; it
 contains an access token. Close the owner after its requests finish. `dealloc`
 also frees it, while explicit `close` gives predictable cleanup.
 
@@ -32,7 +32,7 @@ also frees it, while explicit `close` gives predictable cleanup.
 
 ```objc
 #import <Foundation/Foundation.h>
-#include "stogas_verifier.h"
+#include "stogas.h"
 
 @interface StogasTransportOwner : NSObject {
     StogasTransport *_handle;
@@ -56,10 +56,10 @@ also frees it, while explicit `close` gives predictable cleanup.
     self = [super init];
     if (!self) return nil;
     NSData *bytes = [NSJSONSerialization dataWithJSONObject:configuration options:0 error:NULL];
-    if (bytes && stogas_verifier_abi_version() == 1) {
+    if (bytes && stogas_abi_version() == 1) {
         char *raw = stogas_transport_start(bytes.bytes, bytes.length, &_handle);
         NSData *result = raw ? [NSData dataWithBytes:raw length:strlen(raw)] : nil;
-        stogas_verifier_string_free(raw);
+        stogas_string_free(raw);
         id envelope = result ? [NSJSONSerialization JSONObjectWithData:result options:0 error:NULL] : nil;
         if ([envelope isKindOfClass:[NSDictionary class]] &&
             [[envelope objectForKey:@"ok"] isEqual:@(YES)]) {
@@ -283,7 +283,7 @@ Build with ARC enabled:
 
 ```sh
 clang -fobjc-arc -Wall -Wextra -framework Foundation -I. \
-  Transport.m main.m -L"$STOGAS_LIBRARY_DIR" -Wl,-rpath,"$STOGAS_LIBRARY_DIR" -lstogas_verifier_ffi \
+  Transport.m main.m -L"$STOGAS_LIBRARY_DIR" -Wl,-rpath,"$STOGAS_LIBRARY_DIR" -lstogas_ffi \
   $(pkg-config --cflags --libs libcurl json-c) -o stogas-example
 ```
 

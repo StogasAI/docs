@@ -12,7 +12,7 @@ exposes a local URL for the client. This example uses Dart 3.13 and runs on Linu
 
 Download the native verifier archive for your processor from
 [Releases](https://github.com/StogasAI/stogas/releases). Set
-`STOGAS_VERIFIER_LIBRARY` to the full path of its shared library. Set
+`STOGAS_LIBRARY` to the full path of its shared library. Set
 `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
 
 Save this as `pubspec.yaml` in an empty directory, then run `dart pub get`:
@@ -63,7 +63,7 @@ final class StogasTransport {
     Map<String, Object?> configuration = const {},
   ]) : _library = DynamicLibrary.open(libraryPath) {
     final version = _library.lookupFunction<Uint32 Function(), int Function()>(
-      'stogas_verifier_abi_version',
+      'stogas_abi_version',
     );
     if (version() != 1) throw StateError('Unsupported verifier ABI');
     final start = _library
@@ -79,7 +79,7 @@ final class StogasTransport {
         .lookupFunction<
           Void Function(Pointer<Utf8>),
           void Function(Pointer<Utf8>)
-        >('stogas_verifier_string_free');
+        >('stogas_string_free');
     final configurationJson = jsonEncode(configuration);
     final input = configurationJson.toNativeUtf8();
     final output = calloc<Pointer<_Handle>>();
@@ -170,7 +170,7 @@ Future<void> main(List<String> args) async {
     var baseUrl = Platform.environment['STOGAS_BASE_URL'];
     if (baseUrl == null) {
       transport = StogasTransport(
-        Platform.environment['STOGAS_VERIFIER_LIBRARY']!,
+        Platform.environment['STOGAS_LIBRARY']!,
       );
       baseUrl = transport.baseUrl;
     }

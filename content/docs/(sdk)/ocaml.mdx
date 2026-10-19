@@ -12,7 +12,7 @@ application; it reuses protected gateway connections.
 
 Download the native verifier library from our
 [releases](https://github.com/StogasAI/stogas/releases). Set `STOGAS_API_KEY`,
-`STOGAS_MODEL` and the absolute `STOGAS_VERIFIER_LIB` path in your environment.
+`STOGAS_MODEL` and the absolute `STOGAS_LIBRARY` path in your environment.
 
 ```sh
 opam install dune ctypes.0.24.0 ctypes-foreign.0.24.0 ocurl.0.9.2 yojson uri
@@ -50,12 +50,12 @@ open Ctypes
 let with_transport library configuration action =
   let native = Dl.dlopen ~filename:library ~flags:[Dl.RTLD_NOW; Dl.RTLD_LOCAL] in
   let bind name signature = Foreign.foreign ~from:native name signature in
-  let abi = bind "stogas_verifier_abi_version" (void @-> returning uint32_t) in
+  let abi = bind "stogas_abi_version" (void @-> returning uint32_t) in
   let start = bind "stogas_transport_start"
     (string @-> size_t @-> ptr (ptr void) @-> returning (ptr char)) in
   let close = bind "stogas_transport_close" (ptr void @-> returning void) in
   let free = bind "stogas_transport_free" (ptr void @-> returning void) in
-  let free_string = bind "stogas_verifier_string_free" (ptr char @-> returning void) in
+  let free_string = bind "stogas_string_free" (ptr char @-> returning void) in
   if Unsigned.UInt32.to_int (abi ()) <> 1 then failwith "Unsupported verifier ABI";
   let bytes = Yojson.Safe.to_string configuration in
   let output = allocate (ptr void) null in
@@ -190,7 +190,7 @@ let () =
     Fun.protect ~finally:Curl.global_cleanup (fun () ->
       match Sys.getenv_opt "STOGAS_BASE_URL" with
       | Some url -> request url
-      | None -> Transport.with_transport (Sys.getenv "STOGAS_VERIFIER_LIB") (`Assoc []) request)
+      | None -> Transport.with_transport (Sys.getenv "STOGAS_LIBRARY") (`Assoc []) request)
   with _ ->
     prerr_endline "Request failed or incomplete. Do not replay automatically.";
     exit 1

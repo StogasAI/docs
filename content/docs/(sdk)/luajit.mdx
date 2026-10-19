@@ -20,7 +20,7 @@ sudo luarocks --lua-version=5.1 install Lua-cURL 0.3.13-1 LUA_INCDIR=/usr/includ
 
 Download the Linux native verifier archive for your processor from
 [Releases](https://github.com/StogasAI/stogas/releases). Set
-`STOGAS_VERIFIER_LIBRARY` to the full path of its `.so` file. Set `STOGAS_API_KEY`
+`STOGAS_LIBRARY` to the full path of its `.so` file. Set `STOGAS_API_KEY`
 and `STOGAS_MODEL` in your environment.
 
 ## Start the transport
@@ -35,21 +35,21 @@ local json = require "cjson.safe"
 
 ffi.cdef [[
 typedef struct StogasTransport StogasTransport;
-uint32_t stogas_verifier_abi_version(void);
+uint32_t stogas_abi_version(void);
 char *stogas_transport_start(const char *, size_t, StogasTransport **);
 void stogas_transport_close(const StogasTransport *);
 void stogas_transport_free(StogasTransport *);
-void stogas_verifier_string_free(char *);
+void stogas_string_free(char *);
 ]]
 
 return function(library, configuration)
     local native = ffi.load(library)
-    assert(native.stogas_verifier_abi_version() == 1, "Unsupported native ABI")
+    assert(native.stogas_abi_version() == 1, "Unsupported native ABI")
     local config = configuration and assert(json.encode(configuration)) or "{}"
     local output = ffi.new("StogasTransport *[1]")
     local raw = native.stogas_transport_start(config, #config, output)
     local result = raw ~= nil and json.decode(ffi.string(raw)) or nil
-    native.stogas_verifier_string_free(raw)
+    native.stogas_string_free(raw)
     if not result or result.ok ~= true or output[0] == nil or
        type(result.value) ~= "table" or type(result.value.base_url) ~= "string" then
         native.stogas_transport_free(output[0])
@@ -91,7 +91,7 @@ local ok = pcall(function()
     assert(key and key ~= "" and not key:find("[\r\n]") and model and model ~= "", "Set key and model")
     local base = os.getenv("STOGAS_BASE_URL")
     if not base then
-        transport = start_transport(assert(os.getenv("STOGAS_VERIFIER_LIBRARY")))
+        transport = start_transport(assert(os.getenv("STOGAS_LIBRARY")))
         base = transport.base_url
     end
     assert(base:match("^http://127%.0%.0%.1:%d+/"), "Expected the private loopback URL")

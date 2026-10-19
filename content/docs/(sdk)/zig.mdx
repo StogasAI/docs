@@ -10,7 +10,7 @@ and requires no OpenAI-specific dependency.
 
 ## Install
 
-Download the native library and `stogas_verifier.h` from our
+Download the native library and `stogas.h` from our
 [releases](https://github.com/StogasAI/stogas/releases). Install your system's
 libcurl development package. Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your
 environment, then select the library directory:
@@ -22,14 +22,14 @@ export LD_LIBRARY_PATH="$STOGAS_LIBRARY_DIR${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
 ## Own the transport
 
-Save this as `transport.zig`, beside `stogas_verifier.h`. Keep the local URL
+Save this as `transport.zig`, beside `stogas.h`. Keep the local URL
 private because it contains an access token. `defer transport.deinit()` releases
 the native handle and URL on both success and error.
 
 ```zig
 const std = @import("std");
 pub const c = @cImport({
-    @cInclude("stogas_verifier.h");
+    @cInclude("stogas.h");
     @cInclude("curl/curl.h");
     @cInclude("stdio.h");
     @cInclude("signal.h");
@@ -41,10 +41,10 @@ pub const Transport = struct {
     base_url: []u8,
 
     pub fn init(allocator: std.mem.Allocator, configuration: []const u8) !Transport {
-        if (c.stogas_verifier_abi_version() != 1) return error.UnsupportedABI;
+        if (c.stogas_abi_version() != 1) return error.UnsupportedABI;
         var handle: ?*c.StogasTransport = null;
         const raw = c.stogas_transport_start(configuration.ptr, configuration.len, &handle);
-        defer c.stogas_verifier_string_free(raw);
+        defer c.stogas_string_free(raw);
         errdefer c.stogas_transport_free(handle);
         if (raw == null or handle == null) return error.TransportUnavailable;
         const result = try std.json.parseFromSlice(std.json.Value, allocator, std.mem.span(raw), .{});
@@ -259,7 +259,7 @@ Build and run:
 
 ```sh
 zig build-exe main.zig -I. -L"$STOGAS_LIBRARY_DIR" \
-  -lstogas_verifier_ffi -lcurl -lc -femit-bin=stogas-example
+  -lstogas_ffi -lcurl -lc -femit-bin=stogas-example
 ./stogas-example
 ```
 

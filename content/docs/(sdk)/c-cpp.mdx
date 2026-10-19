@@ -4,7 +4,7 @@ description: Send requests through the verified gateway from C and C++.
 icon: logo:c
 ---
 
-Release archives contain `stogas_verifier.h` and a native library for Linux, macOS, and Windows.
+Release archives contain `stogas.h` and a native library for Linux, macOS, and Windows.
 
 ## Build and run
 
@@ -13,7 +13,7 @@ platform. Save the example below as `main.c`. On Linux, from the archive directo
 
 ```sh
 cc -std=c11 -Wall -Wextra -Werror main.c -Iinclude -L. \
-  -lstogas_verifier_ffi $(pkg-config --cflags --libs libcurl json-c) \
+  -lstogas_ffi $(pkg-config --cflags --libs libcurl json-c) \
   -Wl,-rpath,'$ORIGIN' -o request
 ./request
 ./request --stream
@@ -33,7 +33,7 @@ requires a completed stream. Set `STOGAS_BASE_URL` only when using a separately 
 proxy; that URL bypasses startup of the embedded transport.
 
 ```c
-#include "stogas_verifier.h"
+#include "stogas.h"
 #include <curl/curl.h>
 #include <json-c/json.h>
 #include <signal.h>
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
         const char *configuration = "{}";
         char *raw = stogas_transport_start((const uint8_t *)configuration, strlen(configuration), &transport);
         if (raw) started = json_tokener_parse(raw);
-        stogas_verifier_string_free(raw);
+        stogas_string_free(raw);
         if (!transport || !started || !json_object_object_get_ex(started, "ok", &ok) ||
             !json_object_get_boolean(ok) || !json_object_object_get_ex(started, "value", &value) ||
             !json_object_object_get_ex(value, "base_url", &base) ||
@@ -240,7 +240,7 @@ must not be reported as successful delivery. Any retry policy must account for p
 ## Ownership
 
 Every C result is an owned JSON envelope. Check `ok`, read `value` on success or `error` and
-`code` on failure, then call `stogas_verifier_string_free`. Free each transport exactly once,
+`code` on failure, then call `stogas_string_free`. Free each transport exactly once,
 after concurrent calls finish. Explicit free waits for bounded graceful cleanup.
 The header includes C++ linkage guards and opaque types suitable for RAII wrappers.
 
