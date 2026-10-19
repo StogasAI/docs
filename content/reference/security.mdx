@@ -92,15 +92,18 @@ response hash. See [Receipts](/docs/receipts).
 
 ## Signed documents
 
-Key manifests, approval manifests and boot records share one format:
+Key manifests, evidence documents and boot records share one format:
 
-- A `{document, signature}` JSON envelope with snake_case fields and the Rekor `inclusion` proof.
-- The approval manifest contains the hardware policy and each approved gateway release and catalog
-  as `{document, provenance}`, where `provenance` is GitHub's build proof. The hardware policy's
-  `version` increases by one with each change to its rules.
+- A `{document, signature, inclusion}` JSON envelope with snake_case fields, where `inclusion` is
+  the Rekor proof.
+- The evidence document contains the key manifest, Sigstore's keys, the hardware policies, AMD's
+  certificates and revocation lists, and each approved gateway release and catalog as
+  `{document, provenance}`, where `provenance` is GitHub's build proof. Its `revision` increases by
+  one with each change.
 - Each document names its schema. Release artifacts list their SHA-256 and size in bytes.
 - The signature covers the RFC 8785 canonical JSON of `document` with the purpose label
   `stogas signed document v1`. The final newline of a file is not signed.
+- Rekor logs the SHA-256 of the RFC 8785 canonical JSON of `{document, signature}`.
 - Signatures are composite [ML-DSA-65 and Ed25519](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/).
   Both parts must verify.
 - A release's identity is the hash of its manifest, so a new signing key does not change the

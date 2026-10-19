@@ -116,7 +116,7 @@ transport, err := stogas.NewTransport(stogas.TransportOptions{Security: "e2ee", 
 | `MaxConnections` | The most connections to open, as needed. Default `4`.                          |
 | `BaseURL`        | Another HTTPS origin, with no path. The trusted evidence does not change.      |
 
-`transport.RefreshBundle()` loads new evidence now. See
+`transport.RefreshEvidence()` loads new evidence now. See
 [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
 
 ## Receipts
@@ -149,5 +149,5 @@ receipt, err := verifier.VerifyReceiptArchive(bootBytes, evidenceBytes, stogasOb
 ```
 
 `VerifyReceiptArchive` checks the boot against the evidence that was valid when it was logged. To
-check current evidence instead, call `verifier.Refresh(bundleBytes)`, then `VerifyLoggedBoot` or
+check current evidence instead, call `verifier.Refresh(evidenceBytes)`, then `VerifyLoggedBoot` or
 `VerifyReceipt` on the snapshot it returns. Close each snapshot when you finish with it.

@@ -129,7 +129,7 @@ for choice in response.choices {
 opened as needed. Use `SecurityMode::E2ee` for application encryption over ordinary HTTPS. The optional
 origin override cannot change the trusted signing keys or evidence endpoints.
 
-`refresh_bundle()` requests an explicit evidence refresh; there is no polling task. `close()` waits
+`refresh_evidence()` requests an explicit evidence refresh; there is no polling task. `close()` waits
 for bounded graceful cleanup. Dropping the transport signals cleanup without blocking.
 
 Send `Stogas-Metadata: v1` to request the final `stogas` metadata and automatic receipt verification.

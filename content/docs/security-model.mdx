@@ -47,7 +47,7 @@ routing and TLS endpoint, and a later receipt does not change that.
   log. If we lie, the proof against us is permanent.
 - **Anything you trust is publicly and permanently logged.** Signing keys, release approvals,
   gateway and SDK releases, catalogs, hardware policy and gateway boots are in the append-only
-  Rekor log. The SDK rejects approvals and boot records that are not in the log.
+  Rekor log. The SDK rejects evidence and boot records that are not in the log.
 - **All software we release is reproducible.** Gateway images and SDK packages
   [rebuild](/docs/reproducible-builds) from public source to the same bytes. A gateway release
   needs both GitHub's build proof and our own matching rebuild.
@@ -99,13 +99,15 @@ signing key.
 </Step>
 <Step>
 
-### Approvals
+### Evidence
 
-The online key signs an approval manifest that lists the approved gateway releases, catalogs and
-hardware policy. It names the key manifest it relies on, so all current evidence expires with that
-key manifest. It cannot authorize itself or another key. Gateways recheck the manifest about
-every two minutes and stop accepting new requests when their release is withdrawn, so your client
-does not need to poll for changes.
+The online key signs one evidence document that holds the key manifest, the approved gateway
+releases, catalogs and hardware policies, Sigstore's keys and AMD's certificates and revocation
+lists. Each change gets the next revision number, and we log every revision to Rekor, so every
+version that a client could have received is public. The evidence expires with the key manifest
+it contains. The online key cannot authorize itself or another key. Gateways recheck the evidence
+about every two minutes and stop accepting new requests when their release is withdrawn, so your
+client does not need to poll for changes.
 
 </Step>
 <Step>
@@ -141,14 +143,14 @@ yourself.
 
 ## Post-quantum protection
 
-| Part                                                                  | Algorithms                                                     | Post-quantum |
-| --------------------------------------------------------------------- | -------------------------------------------------------------- | ------------ |
-| Attested TLS                                                          | TLS 1.3 with X25519MLKEM768 and an ML-DSA-65 certificate       | Yes          |
-| E2EE                                                                  | X-Wing (X25519 and ML-KEM-768), then a ratchet with ML-KEM-768 | Yes          |
-| Our signatures on key manifests, approvals, boot records and receipts | Composite ML-DSA-65 and Ed25519; both must verify              | Yes          |
-| Gateway to OpenAI and Anthropic                                       | TLS 1.3 with X25519MLKEM768                                    | Yes          |
-| Gateway to Azure                                                      | TLS 1.3, which can fall back to X25519                         | No           |
-| AMD reports, GitHub build proofs and Rekor                            | Classical signatures                                           | No           |
+| Part                                                                 | Algorithms                                                     | Post-quantum |
+| -------------------------------------------------------------------- | -------------------------------------------------------------- | ------------ |
+| Attested TLS                                                         | TLS 1.3 with X25519MLKEM768 and an ML-DSA-65 certificate       | Yes          |
+| E2EE                                                                 | X-Wing (X25519 and ML-KEM-768), then a ratchet with ML-KEM-768 | Yes          |
+| Our signatures on key manifests, evidence, boot records and receipts | Composite ML-DSA-65 and Ed25519; both must verify              | Yes          |
+| Gateway to OpenAI and Anthropic                                      | TLS 1.3 with X25519MLKEM768                                    | Yes          |
+| Gateway to Azure                                                     | TLS 1.3, which can fall back to X25519                         | No           |
+| AMD reports, GitHub build proofs and Rekor                           | Classical signatures                                           | No           |
 
 The hybrid key exchanges protect recorded traffic from future quantum computers. The full chain of
 trust is not quantum safe, because AMD, GitHub and Rekor still use classical signatures.

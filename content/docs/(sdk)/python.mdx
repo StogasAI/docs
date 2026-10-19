@@ -105,7 +105,7 @@ transport = Transport(security="e2ee", max_connections=4)
 | `max_connections` | The most connections to open, as needed. Default `4`.                          |
 | `base_url`        | Another HTTPS origin, with no path. The trusted evidence does not change.      |
 
-`transport.refresh_bundle()` loads new evidence now. See
+`transport.refresh_evidence()` loads new evidence now. See
 [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
 
 ## Receipts
@@ -145,5 +145,5 @@ except VerificationError as error:
 
 `verify_receipt(stogas_bytes, request_sha256, response_sha256)` takes a `stogas` object that you
 saved on its own, with the hashes that you computed. To check current evidence instead, call
-`verifier.refresh(bundle_bytes)`, then `verify_logged_boot` on the snapshot it returns. Each method
+`verifier.refresh(evidence_bytes)`, then `verify_logged_boot` on the snapshot it returns. Each method
 returns JSON bytes.

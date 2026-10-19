@@ -149,13 +149,13 @@ API key in browser code that you ship.
 ## Verify an evidence file
 
 ```console
-stogas verify bundle.json --json
+stogas verify evidence.json --json
 ```
 
 Use `-` for standard input. The command makes no network requests. It checks the root-signed key
-manifest, signed approvals, release evidence, hardware policy and AMD collateral in the bundle. It
-reports the approved software, not a list of live gateways; only a fresh session proves which
-gateway you reach. See [Gateway verification](/docs/verification).
+manifest, the signed evidence document with its release evidence, hardware policies and AMD
+collateral, and both Rekor proofs. It reports the approved software, not a list of live gateways;
+only a fresh session proves which gateway you reach. See [Gateway verification](/docs/verification).
 
 ## Sign in
 

@@ -102,8 +102,8 @@ SDK.
 The transport loads evidence when it starts, and once more if a session needs newer evidence. It
 does not poll.
 
-- `await transport.refreshBundle()` loads new evidence now.
-- `transport.bundleSnapshot` shows the verified approvals, evidence URL, fetch time, verification
+- `await transport.refreshEvidence()` loads new evidence now.
+- `transport.evidenceSnapshot` shows the verified evidence, evidence URL, fetch time, verification
   time and status.
 - `transport.subscribe(listener)` reports changes and returns an unsubscribe function.
 
@@ -132,7 +132,7 @@ import { EvidenceVerifier } from 'stogas';
 
 const verifier = EvidenceVerifier.for_stogas('prod');
 try {
-	const snapshot = verifier.refresh(bundleBytes);
+	const snapshot = verifier.refresh(evidenceBytes);
 	try {
 		console.log(snapshot.summary());
 		const boot = snapshot.verify_logged_boot(bootBytes, inclusionBytes);
