@@ -237,16 +237,17 @@ page shows each limit that applies, with its scope and usage.
 
 ## Blocked requests
 
-| Status | Cause                                                    | Codes                                                                      |
-| ------ | -------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `402`  | A spending limit, or the organization's balance          | `<scope>_spend_limit`, `insufficient_balance`                              |
-| `429`  | A request rate, token or concurrency limit               | `<scope>_rate_limited`, `<scope>_token_limit`, `<scope>_concurrency_limit` |
-| `429`  | Repeated failures with one secret, for up to two seconds | `abuse_rate_limited`                                                       |
+| Status | Cause                                                            | Codes                                                                      |
+| ------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `402`  | A spending limit, or the organization's balance                  | `<scope>_spend_limit`, `insufficient_balance`                              |
+| `429`  | A request rate, token or concurrency limit                       | `<scope>_rate_limited`, `<scope>_token_limit`, `<scope>_concurrency_limit` |
+| `429`  | A request within 25 ms after a blocked request with the same key | `rate_limit_exceeded`                                                      |
 
-The code names the scope, such as `grant_token_limit`, but not the named limit. Wait for
-`Retry-After` when it is present. A retry cannot fit a hold that is larger than the limit, so lower
-the output limit or raise the limit. A blocked request is never sent to another provider. See
-[Errors](/docs/reference/errors) for every code.
+The code names the scope, such as `grant_token_limit`, but not the named limit. A `429` response
+has `Retry-After`; wait that long before you retry. A retry cannot fit a hold that is larger than
+the limit, so lower the output limit or raise the limit. Before it blocks a request, the gateway
+tries the request's other candidates as [fallbacks](/docs/policies/routing#retries-and-fallbacks).
+See [Errors](/docs/reference/errors) for every code.
 
 ## Field reference
 

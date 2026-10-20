@@ -112,8 +112,8 @@ short, and an export never makes a request fail.
 
 To find records that did not arrive, compare the `request_id` values that your receiver accepted
 with the [request records](/docs/request-records) of the requests that your export policies cover.
-Repeated rejections are [grouped](/docs/request-records#grouped-rejections), so only the first few
-in each group have an ID to compare.
-
-`plugins.stogas_export.capture_us` in the request record shows the time that the request spent
-copying content for export.
+The record of each request that ran has a `plugins.stogas_export` entry, even when the gateway
+dropped its export. Its `duration_us` is the time that export added to the request, mostly to
+describe attached files. Rejections have no plugin entries, and repeated ones are
+[grouped](/docs/request-records#grouped-rejections), so only the first few in each group have an ID
+to compare.

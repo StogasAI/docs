@@ -347,7 +347,7 @@ backpressure. The time outside it is gateway preparation and response processing
 | Entry                             | Fields                          | Meaning                                                                                         |
 | --------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `stogas_structured_pii_redaction` | `items_redacted`, `duration_us` | Replacements, and the scan time in microseconds. `0` replacements means the scan found nothing. |
-| `stogas_export`                   | `capture_us`                    | Time spent copying content for [Export](/docs/export), in microseconds.                         |
+| `stogas_export`                   | `duration_us`                   | Time that [Export](/docs/export) added to the request, in microseconds, mostly for attachments. |
 
 - An entry is missing when the plugin recorded nothing, for example when no scan ran.
 - Plugin times overlap the request timeline. Do not add them to `total_ms`.

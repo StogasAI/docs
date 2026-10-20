@@ -101,15 +101,14 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 
 Wait for the number of seconds in `Retry-After` when it is present.
 
-| Code                        | Meaning                                                                                      |
-| --------------------------- | -------------------------------------------------------------------------------------------- |
-| `<scope>_rate_limited`      | A [request rate limit](/docs/policies/limits) at that scope is reached.                      |
-| `<scope>_token_limit`       | A token quota at that scope is reached.                                                      |
-| `<scope>_concurrency_limit` | Too many requests are running at that scope.                                                 |
-| `abuse_rate_limited`        | Requests with this secret keep failing. Wait up to two seconds.                              |
-| `ip_rate_limit_exceeded`    | Too many requests from your IP address. See [API security](/docs/reference/security#limits). |
-| `upstream_rate_limit_error` | The provider's rate limit is reached.                                                        |
-| `rate_limit_exceeded`       | Another rate limit is reached.                                                               |
+| Code                        | Meaning                                                                                                                           |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `<scope>_rate_limited`      | A [request rate limit](/docs/policies/limits) at that scope is reached.                                                           |
+| `<scope>_token_limit`       | A token quota at that scope is reached.                                                                                           |
+| `<scope>_concurrency_limit` | Too many requests are running at that scope.                                                                                      |
+| `ip_rate_limit_exceeded`    | Too many requests from your IP address. See [API security](/docs/reference/security#limits).                                      |
+| `upstream_rate_limit_error` | The provider's rate limit is reached.                                                                                             |
+| `rate_limit_exceeded`       | Too many requests reached one gateway, or a request with the same key was just [blocked](/docs/policies/limits#blocked-requests). |
 
 ### 451 Unavailable for legal reasons
 
