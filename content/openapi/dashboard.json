@@ -9067,16 +9067,11 @@
 														{
 															"type": "object",
 															"properties": {
-																"cacheAgeSeconds": {
-																	"anyOf": [
-																		{
-																			"type": "integer",
-																			"minimum": 0,
-																			"maximum": 9007199254740991
-																		},
-																		{
-																			"type": "null"
-																		}
+																"coin": {
+																	"type": "string",
+																	"enum": [
+																		"BTC",
+																		"XMR"
 																	]
 																},
 																"conversionFeeBps": {
@@ -9116,13 +9111,6 @@
 																		{
 																			"type": "null"
 																		}
-																	]
-																},
-																"method": {
-																	"type": "string",
-																	"enum": [
-																		"BTC",
-																		"XMR"
 																	]
 																},
 																"platformFeeBps": {
@@ -9169,12 +9157,11 @@
 																}
 															},
 															"required": [
-																"cacheAgeSeconds",
+																"coin",
 																"conversionFeeBps",
 																"consolidationFee",
 																"feeSource",
 																"feeUpdatedAt",
-																"method",
 																"platformFeeBps",
 																"priceSource",
 																"priceUpdatedAt",
@@ -9193,16 +9180,11 @@
 														{
 															"type": "object",
 															"properties": {
-																"cacheAgeSeconds": {
-																	"anyOf": [
-																		{
-																			"type": "integer",
-																			"minimum": 0,
-																			"maximum": 9007199254740991
-																		},
-																		{
-																			"type": "null"
-																		}
+																"coin": {
+																	"type": "string",
+																	"enum": [
+																		"BTC",
+																		"XMR"
 																	]
 																},
 																"conversionFeeBps": {
@@ -9242,13 +9224,6 @@
 																		{
 																			"type": "null"
 																		}
-																	]
-																},
-																"method": {
-																	"type": "string",
-																	"enum": [
-																		"BTC",
-																		"XMR"
 																	]
 																},
 																"platformFeeBps": {
@@ -9295,12 +9270,11 @@
 																}
 															},
 															"required": [
-																"cacheAgeSeconds",
+																"coin",
 																"conversionFeeBps",
 																"consolidationFee",
 																"feeSource",
 																"feeUpdatedAt",
-																"method",
 																"platformFeeBps",
 																"priceSource",
 																"priceUpdatedAt",
@@ -9320,6 +9294,13 @@
 												"XMR"
 											],
 											"additionalProperties": false
+										},
+										"walletNetwork": {
+											"type": "string",
+											"enum": [
+												"mainnet",
+												"regtest"
+											]
 										},
 										"recentPaymentsNextCursor": {
 											"anyOf": [
@@ -9342,21 +9323,6 @@
 														"maxLength": 97,
 														"pattern": "^(?:0|[1-9]\\d{0,59})(?:\\.\\d{1,36})?$"
 													},
-													"attention": {
-														"default": null,
-														"anyOf": [
-															{
-																"type": "string",
-																"enum": [
-																	"provider_review",
-																	"payment_review"
-																]
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
 													"createdAt": {
 														"type": "string",
 														"format": "date-time"
@@ -9368,8 +9334,7 @@
 															"settled_pending_credit",
 															"credited",
 															"not_creditable",
-															"review_required",
-															"credit_failed"
+															"review_required"
 														]
 													},
 													"creditUsd": {
@@ -9401,8 +9366,14 @@
 													},
 													"provider": {
 														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
+														"enum": [
+															"ccpayment",
+															"manual",
+															"wallet"
+														]
+													},
+													"providerHold": {
+														"type": "boolean"
 													},
 													"receivedAt": {
 														"type": "string",
@@ -9430,7 +9401,6 @@
 												},
 												"required": [
 													"amount",
-													"attention",
 													"createdAt",
 													"creditStatus",
 													"creditUsd",
@@ -9438,6 +9408,7 @@
 													"id",
 													"method",
 													"provider",
+													"providerHold",
 													"receivedAt",
 													"settledAt",
 													"status"
@@ -9454,6 +9425,7 @@
 										"organization",
 										"balance",
 										"estimates",
+										"walletNetwork",
 										"recentPaymentsNextCursor",
 										"recentPayments",
 										"retrievedAt"
@@ -10074,21 +10046,6 @@
 														"maxLength": 97,
 														"pattern": "^(?:0|[1-9]\\d{0,59})(?:\\.\\d{1,36})?$"
 													},
-													"attention": {
-														"default": null,
-														"anyOf": [
-															{
-																"type": "string",
-																"enum": [
-																	"provider_review",
-																	"payment_review"
-																]
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
 													"createdAt": {
 														"type": "string",
 														"format": "date-time"
@@ -10100,8 +10057,7 @@
 															"settled_pending_credit",
 															"credited",
 															"not_creditable",
-															"review_required",
-															"credit_failed"
+															"review_required"
 														]
 													},
 													"creditUsd": {
@@ -10133,8 +10089,14 @@
 													},
 													"provider": {
 														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
+														"enum": [
+															"ccpayment",
+															"manual",
+															"wallet"
+														]
+													},
+													"providerHold": {
+														"type": "boolean"
 													},
 													"receivedAt": {
 														"type": "string",
@@ -10162,7 +10124,6 @@
 												},
 												"required": [
 													"amount",
-													"attention",
 													"createdAt",
 													"creditStatus",
 													"creditUsd",
@@ -10170,6 +10131,7 @@
 													"id",
 													"method",
 													"provider",
+													"providerHold",
 													"receivedAt",
 													"settledAt",
 													"status"
@@ -10251,14 +10213,14 @@
 				}
 			}
 		},
-		"/api/{orgId}/funding/btcpay/invoices/{method}": {
+		"/api/{orgId}/funding/wallet/{coin}/address": {
 			"post": {
-				"operationId": "createBtcpayInvoice",
+				"operationId": "getWalletAddress",
 				"tags": [
 					"Balance"
 				],
-				"summary": "Get a BTCPay invoice",
-				"description": "Returns the organization's open invoice for this currency, or creates one.",
+				"summary": "Get a deposit address",
+				"description": "Returns the organization's deposit address for this coin, creating it the first time. With a desired credit, it also estimates what to send at the current price.",
 				"security": [
 					{
 						"accessToken": [
@@ -10271,7 +10233,7 @@
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
-						"name": "method",
+						"name": "coin",
 						"in": "path",
 						"required": true,
 						"schema": {
@@ -10296,9 +10258,6 @@
 										"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 									}
 								},
-								"required": [
-									"desiredCreditUsd"
-								],
 								"additionalProperties": false
 							}
 						}
@@ -10314,7 +10273,14 @@
 									"properties": {
 										"address": {
 											"type": "string",
-											"minLength": 1
+											"pattern": "^[a-zA-Z0-9]{1,128}$"
+										},
+										"coin": {
+											"type": "string",
+											"enum": [
+												"BTC",
+												"XMR"
+											]
 										},
 										"estimate": {
 											"anyOf": [
@@ -10384,63 +10350,15 @@
 												}
 											]
 										},
-										"expiresAt": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "date-time"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"invoiceId": {
-											"type": "string",
-											"minLength": 1
-										},
-										"method": {
-											"type": "string",
-											"enum": [
-												"BTC",
-												"XMR"
-											]
-										},
-										"monitoringExpiresAt": {
-											"anyOf": [
-												{
-													"type": "string",
-													"format": "date-time"
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"paymentUri": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"stale": {
+										"testnet": {
 											"type": "boolean"
 										}
 									},
 									"required": [
 										"address",
+										"coin",
 										"estimate",
-										"expiresAt",
-										"invoiceId",
-										"method",
-										"monitoringExpiresAt",
-										"paymentUri",
-										"stale"
+										"testnet"
 									],
 									"additionalProperties": false
 								}

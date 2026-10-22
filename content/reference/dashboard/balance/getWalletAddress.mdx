@@ -1,0 +1,29 @@
+---
+title: Get a deposit address
+description: Returns the organization's deposit address for this coin, creating
+  it the first time. With a desired credit, it also estimates what to send at
+  the current price.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the organization's deposit address for this coin, creating it
+          the first time. With a desired credit, it also estimates what to send
+          at the current price.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/funding/wallet/{coin}/address', method: 'post' }]} />
+    </>
+  );
+}

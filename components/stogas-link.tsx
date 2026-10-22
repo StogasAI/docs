@@ -5,35 +5,31 @@ import type { AnchorHTMLAttributes, MouseEvent, PointerEvent } from 'react';
 import { useEffect, useState } from 'react';
 
 type Environment = 'development' | 'localhost' | 'staging' | 'production';
-type Segment = 'marketing' | 'app' | 'api' | 'pay';
-type Deployment = Record<Segment, string | undefined>;
+type Segment = 'marketing' | 'app' | 'api';
+type Deployment = Record<Segment, string>;
 const ENVIRONMENTS: readonly Environment[] = ['development', 'localhost', 'staging', 'production'];
-const SEGMENTS: readonly Segment[] = ['marketing', 'app', 'api', 'pay'];
+const SEGMENTS: readonly Segment[] = ['marketing', 'app', 'api'];
 
 const DEPLOYMENTS: Record<Environment, Deployment> = {
 	development: {
 		api: 'api-dev.stogas.ai',
 		app: 'app-dev.stogas.ai',
-		marketing: 'dev.stogas.ai',
-		pay: undefined
+		marketing: 'dev.stogas.ai'
 	},
 	localhost: {
 		api: 'api.stogas.localhost',
 		app: 'app.stogas.localhost',
-		marketing: 'stogas.localhost',
-		pay: undefined
+		marketing: 'stogas.localhost'
 	},
 	production: {
 		api: 'api.stogas.ai',
 		app: 'app.stogas.ai',
-		marketing: 'stogas.ai',
-		pay: 'pay.stogas.ai'
+		marketing: 'stogas.ai'
 	},
 	staging: {
 		api: 'api-staging.stogas.ai',
 		app: 'app-staging.stogas.ai',
-		marketing: 'staging.stogas.ai',
-		pay: undefined
+		marketing: 'staging.stogas.ai'
 	}
 };
 
@@ -42,8 +38,7 @@ const HOST_TO_SEGMENT = new Map<string, { environment: Environment; segment: Seg
 for (const environment of ENVIRONMENTS) {
 	const deployment = DEPLOYMENTS[environment];
 	for (const segment of SEGMENTS) {
-		const host = deployment[segment];
-		if (host) HOST_TO_SEGMENT.set(host, { environment, segment });
+		HOST_TO_SEGMENT.set(deployment[segment], { environment, segment });
 	}
 }
 HOST_TO_SEGMENT.set('www.stogas.ai', { environment: 'production', segment: 'marketing' });
@@ -88,11 +83,8 @@ function rewriteStogasUrl(href: string, environment: Environment): string {
 
 	const target = HOST_TO_SEGMENT.get(url.hostname.toLowerCase());
 	if (!target) return href;
-	const replacement = DEPLOYMENTS[environment][target.segment];
-	if (!replacement) return href;
-
 	url.protocol = 'https:';
-	url.hostname = replacement;
+	url.hostname = DEPLOYMENTS[environment][target.segment];
 	url.port = '';
 	if (target.segment === 'app' && url.pathname === '/') url.pathname = '/overview';
 	return url.toString();

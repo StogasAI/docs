@@ -22,16 +22,16 @@ Select the organization that receives the credit and save its [billing details](
 
 ### Choose a payment method
 
-On **Balance**, choose Bitcoin or Monero through [BTCPay](#pay-through-btcpay), or **Choose
-currency** for [CCPayment](#pay-through-ccpayment). Select the coin and network, then check the
-estimated fees and USD credit.
+On **Balance**, choose [Bitcoin or Monero](#pay-with-bitcoin-or-monero), or **Choose currency**
+for [CCPayment](#pay-through-ccpayment). Select the coin and network, then check the estimated
+fees and USD credit.
 
 </Step>
 <Step>
 
 ### Send the payment
 
-Open the current payment instructions and send from your wallet.
+Select **Deposit address** and send from your wallet.
 
 </Step>
 <Step>
@@ -71,17 +71,21 @@ receipts.
 - You can add a name and postal address. A business can also add a billing email, tax ID and
   purchase order reference. A tax ID does not make you tax exempt.
 
-## Pay through BTCPay
+## Pay with Bitcoin or Monero
 
-Scan the QR code, select **Open wallet**, or copy the address. Send only the selected currency, on
-its own blockchain, and check the address and amount in your wallet.
+We receive Bitcoin and Monero directly, without a payment processor. Each organization has one
+deposit address for each coin. You can save it and reuse it for later payments.
 
-- Payment instructions expire after 24 hours. Open them again before each payment instead of saving
-  the address. Opening them in the last hour gives new instructions.
-- A payment that was detected before the instructions expired still completes. A payment to old
-  instructions may need support to recover.
-- Credit is added after the payment confirms. If a payment is missing, contact
-  [billing@stogas.ai](mailto:billing@stogas.ai) with its currency and transaction reference.
+Scan the QR code, select **Open wallet**, or copy the address. Send only the selected coin, on its
+own blockchain, and check the address and amount in your wallet.
+
+- Any amount is credited at the price and network cost when we receive it, after the 2% fee and,
+  for Monero, a 0.4% conversion fee. A payment smaller than the network cost, or a Monero payment
+  below 0.0001 XMR, adds no credit.
+- Credit is added after 2 Bitcoin confirmations, about 20 minutes, or 30 Monero confirmations,
+  about an hour.
+- If a payment is missing, contact [billing@stogas.ai](mailto:billing@stogas.ai) with its coin and
+  transaction ID.
 
 ## Pay through CCPayment
 
@@ -95,10 +99,19 @@ coin amount and each fee. There is no payment deadline.
   and conversion costs shown, and the 2% fee. A late payment or a different amount is still
   credited.
 
-| Status                       | Meaning                                                                                                                        |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| **Held for provider review** | CCPayment is holding the transfer. Contact [billing@stogas.ai](mailto:billing@stogas.ai); another payment does not release it. |
-| **Credited · under review**  | The credit is on your balance, and we are checking the payment.                                                                |
+## Payment status
+
+**Recent payments** on the **Balance** page lists each payment with its status. Select a status
+with a warning icon to see what happened.
+
+| Status           | Meaning                                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Confirming**   | We see the payment and are waiting for network confirmations.                                                                                                |
+| **Crediting**    | The payment is confirmed, and we are adding the credit.                                                                                                      |
+| **Credited**     | The credit is on your balance.                                                                                                                               |
+| **Under review** | We or CCPayment are checking the payment. If CCPayment holds it, contact [billing@stogas.ai](mailto:billing@stogas.ai); another payment does not release it. |
+| **Failed**       | The payment did not complete on the network, so we added no credit.                                                                                          |
+| **Too small**    | The payment was smaller than the fees to receive it, so we added no credit.                                                                                  |
 
 ## Receipts
 
