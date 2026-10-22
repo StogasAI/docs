@@ -8337,6 +8337,7 @@
 																			"organization_token_limit",
 																			"parameter_limit_exceeded",
 																			"permission_denied",
+																			"platform_rate_limited",
 																			"provider_not_allowed",
 																			"provider_unavailable",
 																			"rate_limit_exceeded",
@@ -8729,6 +8730,12 @@
 																	}
 																]
 															},
+															"rate_limit_wait_ms": {
+																"default": 0,
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 4294967295
+															},
 															"first_output_ms": {
 																"anyOf": [
 																	{
@@ -8758,6 +8765,7 @@
 															"total_ms",
 															"provider_ms",
 															"provider_start_ms",
+															"rate_limit_wait_ms",
 															"first_output_ms",
 															"ttft_ms"
 														],

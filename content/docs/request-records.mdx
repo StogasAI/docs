@@ -72,6 +72,7 @@ the first call, so the gateway called Azure:
 		"total_ms": 1975,
 		"provider_ms": 1944,
 		"provider_start_ms": 14,
+		"rate_limit_wait_ms": 0,
 		"first_output_ms": 702,
 		"ttft_ms": 702
 	},
@@ -319,13 +320,14 @@ The request clock starts when the gateway receives the decoded request body and 
 writes the record. It excludes connection setup, upload, final transmission and settlement, so it is
 shorter than the latency your client sees.
 
-| Field               | Meaning                                                                                   |
-| ------------------- | ----------------------------------------------------------------------------------------- |
-| `total_ms`          | The full request on the gateway.                                                          |
-| `provider_start_ms` | When the first provider call started. `null` if not recorded.                             |
-| `provider_ms`       | Provider calls, from the start of the first to the end of the last.                       |
-| `first_output_ms`   | The first valid provider output, including output other than tokens, such as citations.   |
-| `ttft_ms`           | Time to the first generated token in a stream. `null` for requests that are not streamed. |
+| Field                | Meaning                                                                                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `total_ms`           | The full request on the gateway.                                                                                                                      |
+| `provider_start_ms`  | When the first provider call started. `null` if not recorded.                                                                                         |
+| `rate_limit_wait_ms` | How long the request waited before its first provider call because the organization was over its [platform rate](/docs/policies/limits#request-rate). |
+| `provider_ms`        | Provider calls, from the start of the first to the end of the last.                                                                                   |
+| `first_output_ms`    | The first valid provider output, including output other than tokens, such as citations.                                                               |
+| `ttft_ms`            | Time to the first generated token in a stream. `null` for requests that are not streamed.                                                             |
 
 The [example](#example) record has this timeline:
 
@@ -396,6 +398,7 @@ For example, 99 matching credit rejections in one minute produce five single rec
 		"total_ms": 0,
 		"provider_ms": 0,
 		"provider_start_ms": null,
+		"rate_limit_wait_ms": 0,
 		"first_output_ms": null,
 		"ttft_ms": null
 	},

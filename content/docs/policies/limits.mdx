@@ -129,7 +129,9 @@ and holds five. Each request takes one from every bucket, so both must have room
 - A request that a limit rejects takes nothing. A failed provider call does not give its request
   back.
 - Every organization also has a platform bucket of 120 requests a second, shared by all its keys,
-  grants, Playground requests and BYOK requests. More keys do not add capacity.
+  grants, Playground requests and BYOK requests. More keys do not add capacity. When the bucket is
+  empty, a request waits up to two seconds to start, and a request that would wait longer gets
+  `429 platform_rate_limited`.
 
 ## Tokens
 
@@ -191,6 +193,9 @@ Request and token `window` objects take a `count` from 1 to 999,999 and a `unit`
 10,000. Each request uses one slot until it finishes, whether or not it streams.
 
 - Lowering the cap does not stop requests that are running.
+- A request sent on the same connection after a response ends finds that request's slot free. On
+  another connection, the slot can stay taken for a moment, until the finished request's usage is
+  recorded.
 - If a gateway stops during a request, the slot frees when the request's maximum lifetime ends.
 - Combine it with a request rate and a spending limit: short requests can still run many times under
   a small cap.
@@ -241,13 +246,16 @@ page shows each limit that applies, with its scope and usage.
 | ------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | `402`  | A spending limit, or the organization's balance                  | `<scope>_spend_limit`, `insufficient_balance`                              |
 | `429`  | A request rate, token or concurrency limit                       | `<scope>_rate_limited`, `<scope>_token_limit`, `<scope>_concurrency_limit` |
+| `429`  | The platform bucket                                              | `platform_rate_limited`                                                    |
 | `429`  | A request within 25 ms after a blocked request with the same key | `rate_limit_exceeded`                                                      |
 
-The code names the scope, such as `grant_token_limit`, but not the named limit. A `429` response
-has `Retry-After`; wait that long before you retry. A retry cannot fit a hold that is larger than
-the limit, so lower the output limit or raise the limit. Before it blocks a request, the gateway
-tries the request's other candidates as [fallbacks](/docs/policies/routing#retries-and-fallbacks).
-See [Errors](/docs/reference/errors) for every code.
+The code names the scope, such as `grant_token_limit`, but not the named limit. A `429` response has
+`Retry-After` when waiting can help; wait that long before you retry. A retry cannot fit a hold that
+is larger than the limit, so lower the output limit or raise the limit. Such a response, and one
+with a wait longer than a minute, has `X-Should-Retry: false`. Before it blocks a request, the
+gateway tries the request's other candidates as
+[fallbacks](/docs/policies/routing#retries-and-fallbacks). See [Errors](/docs/reference/errors) for
+every code.
 
 ## Field reference
 

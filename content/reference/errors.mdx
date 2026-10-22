@@ -99,11 +99,15 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 
 ### 429 Too many requests
 
-Wait for the number of seconds in `Retry-After` when it is present.
+Wait for the number of seconds in `Retry-After` when it is present. Requests that a limit blocks
+at the same moment get waits up to a second apart, so their retries do not all arrive together. A
+gateway `429` has `X-Should-Retry: false` when waiting will not help, such as a request larger than
+its token limit, or when the wait is longer than a minute.
 
 | Code                        | Meaning                                                                                                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `<scope>_rate_limited`      | A [request rate limit](/docs/policies/limits) at that scope is reached.                                                           |
+| `platform_rate_limited`     | The organization's requests are above the [platform rate](/docs/policies/limits#request-rate).                                    |
 | `<scope>_token_limit`       | A token quota at that scope is reached.                                                                                           |
 | `<scope>_concurrency_limit` | Too many requests are running at that scope.                                                                                      |
 | `ip_rate_limit_exceeded`    | Too many requests from your IP address. See [API security](/docs/reference/security#limits).                                      |
@@ -174,4 +178,5 @@ before you send it again.
 When a provider answers `429`, `503` or `529` with `Retry-After`, the gateway passes on its wait
 time in seconds. Responses with `upstream_authentication_failed`, `upstream_quota_exceeded` or
 `upstream_access_denied` carry `X-Should-Retry: false`, because a retry fails until the provider
-credential or account changes. The OpenAI and Anthropic SDKs obey this header.
+credential or account changes. The OpenAI and Anthropic SDKs read both headers, and E2EE responses
+carry them too.
