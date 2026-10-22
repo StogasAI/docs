@@ -54,10 +54,11 @@ The dashboard never shows a stored secret again. Replacing it keeps the credenti
 assignments and analytics history.
 
 We repeat the free check for every stored credential once a day. If it fails, the BYOK list shows
-when and why, and we check again an hour later. Requests keep using the credential, because a
-provider can reject a check for a short time. To check at once, for example after you fix the
-account, select **Check credential** in the credential's menu. Customer-encrypted credentials are
-not checked, because we cannot decrypt them.
+when and why, and we check again an hour later. While the checks keep failing, the wait doubles
+until we check once a day. Requests keep using the credential, because a provider can reject a
+check for a short time. To check at once, for example after you fix the account, select **Check
+credential** in the credential's menu. Customer-encrypted credentials are not checked, because we
+cannot decrypt them.
 
 ## Customer encryption
 
