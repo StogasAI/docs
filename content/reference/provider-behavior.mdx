@@ -19,14 +19,25 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
 | Chat Completions | `functions`, `function_call`           | `tools` and `tool_choice`                                            |
 | Chat Completions | `audio`                                | Not available. Output is text only                                   |
 | Chat Completions | `prompt_cache_isolation_key`           | [`prompt_cache_key`](/docs/prompt-caching)                           |
+| Chat Completions | `instructions`                         | A `system` or `developer` message                                    |
+| Chat Completions | `max_output_tokens`                    | `max_completion_tokens`                                              |
+| Chat Completions | `text`                                 | `response_format` and `verbosity`                                    |
 | Responses        | `previous_response_id`, `conversation` | Send the whole conversation in `input`                               |
+| Responses        | `prompt`                               | Send the prompt text in `instructions` and `input`                   |
 | Responses        | `background`                           | A normal request, or a [stream](/docs/streaming)                     |
 | Responses        | `stop`                                 | `stop_sequences`, where the provider accepts it                      |
+| Responses        | `max_tokens`, `max_completion_tokens`  | `max_output_tokens`                                                  |
+| Responses        | `reasoning_effort`                     | `reasoning.effort`                                                   |
+| Responses        | `reasoning_max_tokens`                 | `reasoning.max_tokens`                                               |
+| Responses        | `response_format`, `verbosity`         | `text.format` and `text.verbosity`                                   |
+| Responses        | `web_search_options`                   | A `web_search` tool                                                  |
 
 ## Fields that the gateway changes
 
 - Unknown top-level fields and unknown headers are ignored, and never sent to the provider.
-- `null`, and the empty defaults that SDKs send, count as omitted.
+- `null`, and the defaults that SDKs send, such as `n: 1` or a plain-text `response_format`, count
+  as omitted. So do `parallel_tool_calls`, and `tool_choice` set to `auto` or `none`, in a request
+  without tools.
 - `store` accepts only `false`. The gateway never asks a provider to store a response.
 - `safety_identifier` and `user` tell the provider which of your users sent a request, so the
   provider can act on that user instead of your whole account. Send an opaque value, such as a hash
