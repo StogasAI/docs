@@ -1241,6 +1241,10 @@
 													"type": "string",
 													"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 												}
+											},
+											"content": {
+												"description": "Send request and response bodies. Defaults to true; false sends the request record and metadata only.",
+												"type": "boolean"
 											}
 										},
 										"required": [
@@ -1248,7 +1252,7 @@
 										],
 										"additionalProperties": false
 									},
-									"description": "Independent destinations from required policies are combined; exact duplicates are sent once. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+									"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if any of them sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
 								}
 							},
 							"required": [
@@ -1868,6 +1872,10 @@
 																"type": "string",
 																"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 															}
+														},
+														"content": {
+															"description": "Send request and response bodies. Defaults to true; false sends the request record and metadata only.",
+															"type": "boolean"
 														}
 													},
 													"required": [
@@ -1875,7 +1883,7 @@
 													],
 													"additionalProperties": false
 												},
-												"description": "Independent destinations from required policies are combined; exact duplicates are sent once. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+												"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if any of them sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
 											}
 										},
 										"required": [

@@ -10,8 +10,8 @@ record has the request, the response or stream events, and every field of the
 or to process them in another service.
 
 <Callout type="warn">
-	Export sends prompt and response content to your receiver. Turn it on only for content that you
-	want the receiver to keep.
+	Export sends prompt and response content to your receiver. To send a receiver only the request
+	record and metadata, set `"content": false` on its destination.
 </Callout>
 
 ## Add a webhook
@@ -25,7 +25,8 @@ Add a destination to a [policy](/docs/policies/editing):
 			"destinations": [
 				{
 					"url": "https://receiver.contoso.com/stogas", // The full URL. No path is added.
-					"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" } // Optional.
+					"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }, // Optional.
+					"content": true // Optional. false leaves out request and response bodies.
 				}
 			]
 		}
@@ -38,8 +39,8 @@ Add a destination to a [policy](/docs/policies/editing):
 - The URL must use HTTPS and reach a public address.
 - Headers go only to your webhook. To keep them private, [encrypt the plugin
   settings](/docs/customer-encryption#encrypt-plugin-settings).
-- Destinations from every policy that applies to a request add together, up to eight. Exact
-  duplicates are sent once.
+- Destinations from every policy that applies to a request add together, up to eight. Destinations
+  with the same URL and headers get one record, which has bodies if any of them sends bodies.
 - An empty `destinations` array replaces
   [default plugin settings](/docs/policies/rules#defaults), but it cannot
   remove a destination that another scope requires.
@@ -48,7 +49,7 @@ Add a destination to a [policy](/docs/policies/editing):
 
 ## Record format
 
-Each record is the request record with four more fields:
+Each record is the request record with these fields added:
 
 ```jsonc
 {
@@ -68,6 +69,8 @@ Each record is the request record with four more fields:
 | `response` | The response of a buffered request, or the error that ended it.                                                                           |
 | `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.                 |
 | `stogas`   | The same object that [`Stogas-Metadata: v1`](/docs/receipts) returns. Every record has it, whether or not the request sent the header.    |
+
+- A destination with `"content": false` gets records without `request`, `response` and `events`.
 
 - Records don't carry file contents. Each inline file in the request, such as a base64 image,
   audio clip or PDF, is replaced by an object with its declared `media_type`, and the `size` in bytes
