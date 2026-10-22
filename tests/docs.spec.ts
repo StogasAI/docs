@@ -745,8 +745,18 @@ test('sidebar shows a draggable native scrollbar only when its links overflow', 
 		const viewport = page.locator('#nd-sidebar [data-radix-scroll-area-viewport]');
 		const gutter = () =>
 			viewport.evaluate((element: HTMLElement) => element.offsetWidth - element.clientWidth);
+		// Links end where the search field ends, with or without the scrollbar.
+		const linkOverhang = async () => {
+			const search = await page
+				.locator('#nd-sidebar')
+				.getByRole('button', { name: /^Search/ })
+				.boundingBox();
+			const link = await viewport.getByRole('link').first().boundingBox();
+			return Math.abs(search!.x + search!.width - (link!.x + link!.width));
+		};
 		await page.goto('/docs/policies');
 		await expect.poll(gutter).toBeGreaterThan(0);
+		expect(await linkOverhang()).toBeLessThanOrEqual(1);
 		// Fumadocs scrolls the active link into view after hydration; reset the scroll after that.
 		await expect(viewport.locator('a[data-active="true"]')).toBeInViewport();
 		await viewport.evaluate((element) => element.scrollTo({ top: 0 }));
@@ -765,6 +775,7 @@ test('sidebar shows a draggable native scrollbar only when its links overflow', 
 		);
 		await page.setViewportSize({ width: 1440, height: 700 + hidden + 50 });
 		await expect.poll(gutter).toBe(0);
+		expect(await linkOverhang()).toBeLessThanOrEqual(1);
 	} finally {
 		await browser.close();
 	}

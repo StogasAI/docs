@@ -196,15 +196,35 @@ html.light {
 	scrollbar-color: var(--color-fd-muted-foreground) var(--color-fd-card);
 }
 
-/* The sidebar's Radix scrollbar appears only while scrolling; the native scrollbar replaces it.
+/* The dashboard sidebar's width. */
+@media (width >= 48rem) {
+	#nd-docs-layout:has([data-sidebar-placeholder]) {
+		--fd-sidebar-width: 16rem;
+	}
+}
+
+/* The sidebar's Radix scrollbar appears only while scrolling; a thin native scrollbar replaces it.
    `scrollbar-color` also disables Radix's hidden `::-webkit-scrollbar` in Chrome and Safari.
    Radix sets `overflow-y: scroll` inline, which would show an empty track when links fit. */
 :is(#nd-sidebar, #nd-sidebar-mobile) [data-radix-scroll-area-viewport] {
 	overflow-y: auto !important;
+	scrollbar-width: thin;
+	padding-inline-end: 0;
 }
 
 :is(#nd-sidebar, #nd-sidebar-mobile) [data-radix-scroll-area-viewport] ~ [data-orientation] {
 	display: none;
+}
+
+/* Links end 1rem from the edge, as the search field does, whether or not the scrollbar shows:
+   100cqi is the viewport's width, and 100% is that width less its left padding and scrollbar. */
+:is(#nd-sidebar, #nd-sidebar-mobile) :has(> [data-radix-scroll-area-viewport]) {
+	container-type: inline-size;
+}
+
+:is(#nd-sidebar, #nd-sidebar-mobile) [data-radix-scroll-area-viewport] > * {
+	min-width: 0 !important;
+	margin-inline-end: max(0px, 2rem + 100% - 100cqi);
 }
 .stogas-api-operation-layout {
 	display: flex;
