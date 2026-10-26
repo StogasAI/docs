@@ -1,8 +1,11 @@
 ---
 title: Availability
-description: Places where U.S. sanctions prevent us from serving you.
+description: Who can buy credit, places we cannot serve, and payments we must block.
 icon: Globe
 ---
+
+We sell credit only to customers in the 50 U.S. states and the District of Columbia. Your
+[billing details](/docs/billing#billing-details) need a country, state and ZIP code.
 
 U.S. sanctions prevent us from serving:
 
@@ -12,8 +15,16 @@ U.S. sanctions prevent us from serving:
 - The Crimea, Sevastopol, Donetsk and Luhansk regions of Ukraine
 
 The API refuses requests from these places with HTTP `451` and the error code
-`region_unavailable`. The dashboard also refuses them, and billing details cannot use these
-countries.
+`region_unavailable`. The dashboard also refuses them.
 
 The API finds a client's location from its IP address with
 [IP Geolocation by DB-IP](https://db-ip.com).
+
+When you use [your own provider key](/docs/byok), you must also follow your provider's list of
+supported places.
+
+We hold any payment sent from a cryptocurrency address on the U.S. Treasury's
+[sanctions list](https://sanctionssearch.ofac.treas.gov). The payment shows **Under review**, and
+funding and API spending pause for the organization. U.S. law requires us to block these funds,
+so we cannot credit or return them. If you think we made a mistake, contact
+[billing@stogas.ai](mailto:billing@stogas.ai).
