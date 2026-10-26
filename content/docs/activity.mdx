@@ -4,11 +4,29 @@ description: Review changes to your organization, access settings, and policies.
 icon: RotateCcwClock
 ---
 
-Open **Activity** in your organization to see who changed its settings and when.
-Search member, access token or resource names, filter by event or date, then open
-**View changes**. Changes made through the dashboard and API appear in the same history. A change
-made with an [access token](/docs/reference/dashboard#access-tokens) shows the token's name under its owner.
+Open **Activity** in your organization to see who changed its settings and when. Changes made
+through the dashboard and API appear in the same history. A change made with an
+[access token](/docs/reference/dashboard#access-tokens) shows the token's name under its owner.
 Names are saved with each event, so renaming or deleting a resource does not erase its context.
+
+Open an event to see each changed field with its values before and after, and the IDs of the
+member, access token and resources involved.
+
+## Filters
+
+Text in the query bar matches member, access token and resource names and IDs, and event names.
+Combine filters with spaces, `OR`, `NOT` and parentheses, and quote values that contain spaces.
+
+| Filter      | Matches                                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `action:`   | Events whose name contains the value, such as `action:key`. `action=key.deleted` matches one event.              |
+| `actor:`    | The member who made the change, by part of their name or by their ID. `actor=` matches the whole name.           |
+| `token:`    | The access token used, by part of its name or by its ID. `token=` matches the whole name.                        |
+| `resource:` | A changed resource, by part of its name or by its ID. `resource=` matches the whole name.                        |
+| `time`      | A UTC time compared with `>`, `>=`, `<` or `<=`, such as `time>=2026-10-01`. `time:2026-10-01` matches that day. |
+
+`!=` excludes a value, such as `action!=key.updated`. Names match in any case. For example,
+`action:key actor="Alex Smith" time>=2026-10-01` shows Alex Smith's API key changes since October 1.
 
 ## Access
 
@@ -20,9 +38,9 @@ should see those settings, even after they change.
 
 ## Recorded changes
 
-Activity covers organization and member names, membership, invitations, roles, grants,
-API keys, credentials, and saved policies. A policy edit shows the changed fields and
-their before-and-after values and policy version. Literal dictionaries and custom redaction
+Activity covers organization and member names, membership, invitations, roles, folders, grants,
+API keys, credentials, billing details, and saved policies. A policy edit shows the changed fields
+and their before-and-after values and policy version. Literal dictionaries and custom redaction
 expressions are excluded: their entries show rule counts and whether the rules changed.
 An inherited change is recorded at the scope where it
 was made; it does not create an event for every affected key.
@@ -33,8 +51,9 @@ export was requested, not whether the file was saved.
 
 ## Retention and export
 
-Events are retained for one year. **Export** downloads the filtered history as JSON.
-Narrow the date range if the export is too large.
+Events are kept for one year. **Export** counts the events that match your filters, then
+downloads them as CSV or NDJSON with every change. CSV keeps lists, names and changes as JSON text.
+An export holds at most 50,000 events and 64 MiB; narrow the filters if it is larger.
 
 Activity is operational history. Delivery can be delayed or interrupted, so it is not a
 guaranteed complete compliance record or a backup of every policy version.
