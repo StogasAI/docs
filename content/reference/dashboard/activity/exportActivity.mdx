@@ -1,8 +1,9 @@
 ---
 title: Export activity
-description: Returns every matching event with its changes. More than 50,000
-  matches fail with 503; narrow the time range. Each export is recorded as
-  activity.
+description: Returns every matching event with its changes as NDJSON, or as CSV
+  with lists and changes in JSON text. More than 50,000 events or 64 MiB fail;
+  narrow the filter. Each export is recorded as activity. filter takes the query
+  syntax of the Activity page.
 full: true
 _openapi:
   preload:
@@ -13,9 +14,10 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: Returns every matching event with its changes. More than 50,000 matches
-          fail with 503; narrow the time range. Each export is recorded as
-          activity.
+      - content: Returns every matching event with its changes as NDJSON, or as CSV with
+          lists and changes in JSON text. More than 50,000 events or 64 MiB
+          fail; narrow the filter. Each export is recorded as activity. filter
+          takes the query syntax of the Activity page.
 ---
 
 export default function Layout(props) {

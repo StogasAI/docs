@@ -1,0 +1,27 @@
+---
+title: Get an invoice
+description: Returns a PDF with the amounts and billing details from when the
+  invoice was issued.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns a PDF with the amounts and billing details from when the
+          invoice was issued.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/funding/invoices/{invoiceId}/pdf', method: 'get' }]} />
+    </>
+  );
+}

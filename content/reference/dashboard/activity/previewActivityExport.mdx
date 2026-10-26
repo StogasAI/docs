@@ -1,0 +1,28 @@
+---
+title: Preview an activity export
+description: Counts the events an export with the same filter would contain, up
+  to one more than rowLimit. filter takes the query syntax of the Activity page.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Counts the events an export with the same filter would contain, up to
+          one more than rowLimit. filter takes the query syntax of the Activity
+          page.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/activity/export/preview', method: 'get' }]} />
+    </>
+  );
+}

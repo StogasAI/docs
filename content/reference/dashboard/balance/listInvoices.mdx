@@ -1,0 +1,26 @@
+---
+title: List invoices
+description: Newest first. Only organizations with invoiced billing receive invoices.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Newest first. Only organizations with invoiced billing receive
+          invoices.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/funding/invoices', method: 'get' }]} />
+    </>
+  );
+}
