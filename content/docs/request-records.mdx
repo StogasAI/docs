@@ -21,10 +21,10 @@ the first call, so the gateway called Azure:
 	"last_request_at": "2026-10-17T14:03:12.481Z",
 	"request_count": 1,
 	"gateway_error": null,
-	"stogas_api_key_id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
-	"stogas_grant_id": null,
-	"stogas_user_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
-	"stogas_organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
+	"api_key_id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
+	"grant_id": null,
+	"member_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
+	"organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
 	"request_type": "chat_completion_stream",
 	"request_settings": {
 		"max_output_tokens": 1024,
@@ -133,29 +133,29 @@ the first call, so the gateway called Azure:
 
 ## Fields
 
-| Field                                                                              | Meaning                                                                                             |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `schema_version`                                                                   | Record format version, currently `1`. Check it before you read other fields.                        |
-| `request_id`                                                                       | The request ID. A [grouped record](#grouped-rejections) keeps the first ID.                         |
-| `created_at`                                                                       | Billing authorization time, or the first rejection in a group.                                      |
-| `last_request_at`                                                                  | The last rejection in a group. Equal to `created_at` for other requests.                            |
-| `request_count`                                                                    | Requests that the record stands for. `1` for every request that the gateway accepted.               |
-| `stogas_organization_id`, `stogas_api_key_id`, `stogas_grant_id`, `stogas_user_id` | The organization, key, grant and member behind the request.                                         |
-| `request_type`                                                                     | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.     |
-| `request_settings`                                                                 | [Settings](#request-settings) that the gateway sent to the provider. `{}` when it sent none.        |
-| `session_id`                                                                       | The request's [session](#sessions). Empty when it had none.                                         |
-| `metadata`                                                                         | The request's [metadata](#metadata). `{}` when it had none.                                         |
-| `transport`                                                                        | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.          |
-| `cancelled`, `client_stop_ms`                                                      | Whether the client cancelled, and when, on the [request clock](#timing).                            |
-| `catalog_version`                                                                  | The approved catalog that routed the request. `null` in [rejection records](#grouped-rejections).   |
-| `policy_versions`                                                                  | The scope, ID and revision of each [policy](/docs/policies/scopes) that applied.                    |
-| `provider_attempts`                                                                | Each [provider call](#provider-attempts) and its result. Empty when the gateway called no provider. |
-| `node_id`                                                                          | The gateway VM that handled the request.                                                            |
-| `performance`                                                                      | [Timing](#timing).                                                                                  |
-| `usage`                                                                            | [Meters, standard text tokens and cost](/docs/usage).                                               |
-| `plugins`                                                                          | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                         |
-| `gateway_error`                                                                    | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).               |
-| `gateway_version`                                                                  | The gateway release that handled the request.                                                       |
+| Field                                                    | Meaning                                                                                             |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `schema_version`                                         | Record format version, currently `1`. Check it before you read other fields.                        |
+| `request_id`                                             | The request ID. A [grouped record](#grouped-rejections) keeps the first ID.                         |
+| `created_at`                                             | Billing authorization time, or the first rejection in a group.                                      |
+| `last_request_at`                                        | The last rejection in a group. Equal to `created_at` for other requests.                            |
+| `request_count`                                          | Requests that the record stands for. `1` for every request that the gateway accepted.               |
+| `organization_id`, `api_key_id`, `grant_id`, `member_id` | The organization, key, grant and member behind the request.                                         |
+| `request_type`                                           | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.     |
+| `request_settings`                                       | [Settings](#request-settings) that the gateway sent to the provider. `{}` when it sent none.        |
+| `session_id`                                             | The request's [session](#sessions). Empty when it had none.                                         |
+| `metadata`                                               | The request's [metadata](#metadata). `{}` when it had none.                                         |
+| `transport`                                              | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.          |
+| `cancelled`, `client_stop_ms`                            | Whether the client cancelled, and when, on the [request clock](#timing).                            |
+| `catalog_version`                                        | The approved catalog that routed the request. `null` in [rejection records](#grouped-rejections).   |
+| `policy_versions`                                        | The scope, ID and revision of each [policy](/docs/policies/scopes) that applied.                    |
+| `provider_attempts`                                      | Each [provider call](#provider-attempts) and its result. Empty when the gateway called no provider. |
+| `node_id`                                                | The gateway VM that handled the request.                                                            |
+| `performance`                                            | [Timing](#timing).                                                                                  |
+| `usage`                                                  | [Meters, standard text tokens and cost](/docs/usage).                                               |
+| `plugins`                                                | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                         |
+| `gateway_error`                                          | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).               |
+| `gateway_version`                                        | The gateway release that handled the request.                                                       |
 
 ## Provider attempts
 
@@ -376,10 +376,10 @@ For example, 99 matching credit rejections in one minute produce five single rec
 	"last_request_at": "2026-10-17T14:05:58.112Z",
 	"request_count": 94,
 	"gateway_error": { "code": "insufficient_balance", "status": 402 },
-	"stogas_api_key_id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
-	"stogas_grant_id": null,
-	"stogas_user_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
-	"stogas_organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
+	"api_key_id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
+	"grant_id": null,
+	"member_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
+	"organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
 	"request_type": "chat_completion_stream",
 	"request_settings": {},
 	"session_id": "",
