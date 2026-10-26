@@ -16,7 +16,9 @@ Each [request record](/docs/request-records) lists the request's usage meters an
 
 Before the gateway calls the provider, it holds the most the request can cost: the
 [estimated input](#input-estimates) at the highest input rate, plus the output limit at the highest
-output rate. The hold must fit your balance and every [limit](/docs/policies/limits) that applies.
+output rate. The hold must fit your balance, including the credit limit of an
+[invoiced](/docs/billing#invoiced-billing) organization, and every [limit](/docs/policies/limits)
+that applies.
 
 </Step>
 <Step>
@@ -39,7 +41,8 @@ The gateway prices the reported usage at catalog rates, charges it, and releases
 - A lower `max_completion_tokens` or `max_output_tokens` lowers the hold, so a request fits more
   easily under a balance or limit.
 - Settlement charges actual usage even when it is more than the hold. Your balance can go below
-  zero, and then new requests fail until you add credit.
+  zero, or past an invoiced organization's credit limit, and then new requests fail until you add
+  credit.
 - When a provider changes a price for a set time, such as a promotion, the catalog lists the
   temporary price with its start and end. A request pays the price in effect when it starts.
 - If a request fails before it reaches the provider, the gateway releases the hold and charges nothing.

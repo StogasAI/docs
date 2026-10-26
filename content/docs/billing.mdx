@@ -1,11 +1,11 @@
 ---
 title: Billing
-description: Add prepaid credit, save billing details, and download receipts.
+description: Add credit, pay invoices, save billing details, and download receipts.
 icon: Wallet
 ---
 
-Usage is prepaid. Requests spend your organization's credit at the
-[catalog](https://stogas.ai/catalog) rates. A new organization needs at least $1 of confirmed
+Usage is prepaid unless your organization has an [invoiced billing](#invoiced-billing) agreement.
+Requests spend your organization's credit at the [catalog](https://stogas.ai/catalog) rates. A new organization needs at least $1 of confirmed
 credit, after fees, before it can send requests.
 
 ## Add credit
@@ -64,12 +64,10 @@ Each organization has its own billing details. Save them before you pay: each pa
 details saved when we received it, and later changes do not change earlier payments or
 receipts.
 
-- Choose **Individual** or **Business**, and a country. [Sanctioned countries](/docs/availability)
-  are not accepted.
-- In the United States, add a state and ZIP code. In Canada, add a province or territory and a
-  postal code.
-- You can add a name and postal address. A business can also add a billing email, tax ID and
-  purchase order reference. A tax ID does not make you tax exempt.
+- Choose **Individual** or **Business**, and add your country, state and ZIP code. We sell only
+  in the 50 U.S. states and the District of Columbia; see [Availability](/docs/availability).
+- You can add a name and street address. A business can also add a billing email and a purchase
+  order reference, which appear on its receipts and invoices.
 
 ## Pay with Bitcoin or Monero
 
@@ -99,26 +97,70 @@ coin amount and each fee. There is no payment deadline.
   and conversion costs shown, and the 2% fee. A late payment or a different amount is still
   credited.
 
+## Prepaid limits
+
+U.S. rules for prepaid balances limit how much credit a prepaid organization can take:
+
+- Its balance, plus what it spent in the last 24 hours, can't exceed $2,000.
+- Each member's payments can add up to $10,000 of credit in 24 hours, across all their
+  organizations. A payment counts toward the member who created its deposit address.
+
+When a payment is above the room left, the part that fits goes on the balance and the rest waits.
+Waiting credit moves in by itself as room opens: 24 hours after the organization spends, or as the
+member's earlier payments pass 24 hours. **Balance** shows how much credit waits and when more room
+opens, and the amount box tells you before you pay. Waiting credit belongs to the organization,
+like its balance. [Invoiced billing](#invoiced-billing) has no prepaid limits.
+
 ## Payment status
 
 **Recent payments** on the **Balance** page lists each payment with its status. Select a status
-with a warning icon to see what happened.
+with an icon to see more.
 
-| Status           | Meaning                                                                                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Confirming**   | We see the payment and are waiting for network confirmations.                                                                                                |
-| **Crediting**    | The payment is confirmed, and we are adding the credit.                                                                                                      |
-| **Credited**     | The credit is on your balance.                                                                                                                               |
-| **Under review** | We or CCPayment are checking the payment. If CCPayment holds it, contact [billing@stogas.ai](mailto:billing@stogas.ai); another payment does not release it. |
-| **Failed**       | The payment did not complete on the network, so we added no credit.                                                                                          |
-| **Too small**    | The payment was smaller than the fees to receive it, so we added no credit.                                                                                  |
+| Status               | Meaning                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Confirming**       | We see the payment and are waiting for network confirmations.                                                                                                |
+| **Crediting**        | The payment is confirmed, and we are adding the credit.                                                                                                      |
+| **Credited**         | The credit is on your balance.                                                                                                                               |
+| **Partly credited**  | Part of the credit is on your balance, and the rest waits for room under the [prepaid limits](#prepaid-limits).                                              |
+| **Waiting for room** | The payment is confirmed, and its credit waits for room under the [prepaid limits](#prepaid-limits).                                                         |
+| **Under review**     | We or CCPayment are checking the payment. If CCPayment holds it, contact [billing@stogas.ai](mailto:billing@stogas.ai); another payment does not release it. |
+| **Failed**           | The payment did not complete on the network, so we added no credit.                                                                                          |
+| **Too small**        | The payment was smaller than the fees to receive it, so we added no credit.                                                                                  |
 
 ## Receipts
 
-After a payment is credited, select **Receipt** in its row. The PDF lists the AI credit, our
-fee, network costs and any conversion fee, with your billing details, the dates, the exchange rate
-and the transaction reference. It shows cents; an attached record keeps the exact amounts. The
-receipt number and details stay the same when you download it again.
+Once a payment's credit, or its first part, is on your balance, select **Receipt** in its row.
+The PDF lists the AI credit, our fee, network costs and any conversion fee, with your billing
+details, the dates, the exchange rate and the transaction reference. It shows cents; an attached
+record keeps the exact amounts. The receipt number and details stay the same when you download it
+again.
+
+## Invoiced billing
+
+An organization with a signed agreement can pay for its usage by invoice. To set one up, save the
+organization's [billing details](#billing-details) and contact
+[billing@stogas.ai](mailto:billing@stogas.ai).
+
+- Requests can spend until the balance reaches minus the agreed credit limit. **Credit left** on
+  the **Balance** page shows how much more they can spend.
+- On the 1st of each month, we issue an invoice for the previous month's usage. Months follow UTC.
+  **Not yet invoiced** shows the usage that the next invoice will bill.
+- An invoice is due after the agreed payment terms, such as 30 days. Select **Pay** to add the
+  amount due as credit with any payment method. The usual [fees](#fees) for adding credit apply,
+  and payments apply to the oldest invoice first.
+- **Invoices** on the **Balance** page lists each invoice with its status and PDF. Members who can
+  view billing can download invoices; members who manage billing can pay them.
+- If an invoice stays overdue, we can end the agreement. The organization then returns to prepaid
+  billing, new requests fail while its balance is below zero, and its invoices stay due.
+- Until the organization pays what it owes and the agreement ends, you cannot delete it, and its
+  last member cannot leave it or delete their account.
+
+| Status          | Meaning                                                     |
+| --------------- | ----------------------------------------------------------- |
+| **Open**        | The invoice is not paid and not yet due.                    |
+| **Partly paid** | Payments cover part of the invoice, and it is not yet due.  |
+| **Overdue**     | The due date has passed, and part of the invoice is unpaid. |
+| **Paid**        | Payments cover the whole invoice.                           |
 
 ## Refunds
 
