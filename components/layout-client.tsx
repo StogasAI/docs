@@ -74,7 +74,7 @@ export default function LayoutClient({ children, tree, baseOptions }: LayoutClie
 								<span className="text-[13px]">{t(messages.landing)}</span>
 							</StogasLink>
 							<StogasLink
-								href="https://app.stogas.ai/overview"
+								href="https://app.stogas.ai/"
 								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
 							>
 								<LayoutDashboard aria-hidden="true" className="size-4 shrink-0" />

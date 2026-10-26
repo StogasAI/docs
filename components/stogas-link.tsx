@@ -86,7 +86,6 @@ function rewriteStogasUrl(href: string, environment: Environment): string {
 	url.protocol = 'https:';
 	url.hostname = DEPLOYMENTS[environment][target.segment];
 	url.port = '';
-	if (target.segment === 'app' && url.pathname === '/') url.pathname = '/overview';
 	return url.toString();
 }
 
