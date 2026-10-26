@@ -4,7 +4,7 @@ description: Use the OpenAI .NET client through verified transport.
 icon: logo:dotnet
 ---
 
-The Stogas package owns protected connections; OpenAI's .NET client provides typed
+The Stogas package makes the protected connections; OpenAI's .NET client provides typed
 requests and responses. Set `STOGAS_API_KEY` and `STOGAS_MODEL` before running this
 .NET 10 example. The transport package itself supports .NET 8 or later, including [F#](/docs/fsharp).
 
@@ -58,7 +58,7 @@ cancellation.Token.ThrowIfCancellationRequested();
 
 Reuse the HTTP client and `ChatClient` between requests. Use `CompleteChatAsync` for a buffered
 response. Ctrl-C cancels this example; in a service, pass your request's cancellation token.
-A cancelled or failed stream is incomplete. The example disables retries; your application owns that policy and must account for possibly repeated execution.
+A cancelled or failed stream is incomplete. The example disables retries; your application decides when to retry and must allow for a request that ran twice.
 Dispose HTTP clients before disposing the transport; the declarations above do this automatically.
 
 The [complete .NET example](https://github.com/StogasAI/stogas/tree/main/examples/dotnet-openai)

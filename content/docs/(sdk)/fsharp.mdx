@@ -69,7 +69,7 @@ let main _ =
 
 Reuse the HTTP client and `ChatClient` between requests. Use `CompleteChatAsync` for a buffered
 response. Ctrl-C cancels this example; in a service, pass your request's cancellation token.
-A cancelled or failed stream is incomplete. The example disables retries; your application owns that policy and must account for possibly repeated execution.
+A cancelled or failed stream is incomplete. The example disables retries; your application decides when to retry and must allow for a request that ran twice.
 The `use` bindings close the response enumerator and HTTP client before the transport.
 
 The [complete F# example](https://github.com/StogasAI/stogas/tree/main/examples/fsharp-openai)
