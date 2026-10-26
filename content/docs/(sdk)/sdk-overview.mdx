@@ -48,8 +48,8 @@ evidence sources.
 
 ## Retries
 
-The OpenAI client decides whether to retry. The SDK keeps the HTTP status, the body and headers
-such as `Retry-After`.
+The OpenAI client decides whether to retry. The SDK keeps the HTTP status, the body, and the
+`Retry-After` and `X-Should-Retry` headers.
 
 If a connection drops after a request was sent, the model may already have run, and a retry runs it
 again. The examples set retries to zero for this reason. The SDK sends a request once more only

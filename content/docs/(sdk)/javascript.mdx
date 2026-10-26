@@ -76,8 +76,9 @@ application:
 const client = new OpenAI({ ...transport.openAIOptions(apiKey), maxRetries: 0, timeout: 600_000 });
 ```
 
-The transport keeps HTTP status errors and `Retry-After`, and never retries a request itself. A request
-that was interrupted may already have run, so a retry can run it again. Use `AbortSignal` to cancel.
+The transport keeps HTTP status errors, `Retry-After` and `X-Should-Retry`, and never retries a
+request itself. A request that was interrupted may already have run, so a retry can run it again.
+Use `AbortSignal` to cancel.
 
 ## Options
 
