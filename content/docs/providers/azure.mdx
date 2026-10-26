@@ -76,7 +76,8 @@ Open an API key and select the credential under **Credentials**.
 We read your deployments and projects through Azure Resource Manager. These reads are free, so they
 cannot prove quota; Azure checks quota when a request runs.
 
-- We check each credential once a day, and an hour after a failed check.
+- We check each credential once a day. After a failed check we check again an hour later, and the
+  wait doubles while the checks keep failing, until we check once a day.
 - After you add, remove or change deployments or projects, select **Check credential** in the BYOK
   list, or **Refresh targets** in **Azure targets**, to update the targets at once.
 - If the application has no role that allows model requests, the check fails but the credential
