@@ -27,8 +27,8 @@ Select an interval in the chart to see its time range, then **Zoom in** to set t
 interval.
 
 Percentiles are approximate. They use only requests with a known value, and timing statistics use
-only successful requests that were not cancelled. First token also needs streamed output.
-Generation speed divides generated tokens by the full request duration.
+only successful requests that were not cancelled. Time to first token (TTFT) also needs streamed
+output. Generation speed divides generated tokens by the full request duration.
 
 ## Groups
 
@@ -54,7 +54,9 @@ cost and plugin results.
 - The gateway node links to its boot record in the Trust Center. Gateway versions and catalog
   releases link to their evidence there.
 - Expand **Catalog** to see the deployment settings that applied when the request ran, even if the
-  catalog has changed since.
+  catalog has changed since. Select a setting to see its recorded values and a link to its
+  current catalog page.
+- Select the session or a metadata value to see every request that shares it, over all time.
 - A row can stand for several identical rejections in the same minute. The row shows the count.
   See [grouped rejections](/docs/request-records#grouped-rejections).
 
