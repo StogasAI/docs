@@ -17,9 +17,10 @@ curl https://api.stogas.ai/v1/models
 ```
 
 [`/v1/models`](/docs/reference/catalog/listModels) lists every model, group and deployment ID that
-selects one model. [`/v1/catalog`](/docs/reference/catalog/getCatalog) returns the complete catalog,
-with authors, groups, models, deployments, routes, prices and scheduled changes. Both endpoints are
-public.
+selects one model. [`/v1/catalog`](/docs/reference/catalog/getCatalog) returns the catalog's root,
+with authors, groups, models, routes, scheduled changes and a summary of each deployment.
+[`/v1/catalog/parts/{sha256}`](/docs/reference/catalog/getCatalogPart) returns the parts that the
+root lists, which hold the deployments in full, with their prices. These endpoints are public.
 
 Select **Include retired** in the web catalog to see retired models. A model retires with its last
 deployment. Retired deployments keep their pages but cannot receive requests.

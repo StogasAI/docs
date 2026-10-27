@@ -57,11 +57,11 @@
 					"Catalog"
 				],
 				"summary": "Catalog",
-				"description": "Returns the approved public catalog: models, deployments, routes, prices and scheduled changes.",
+				"description": "Returns the root of the approved public catalog: authors, groups, models, providers, routes, a summary of each deployment, scheduled changes, and the parts that hold the deployments in full.",
 				"security": [],
 				"responses": {
 					"200": {
-						"description": "Active public catalog.",
+						"description": "Root of the active public catalog.",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -70,26 +70,38 @@
 								"examples": {
 									"catalog": {
 										"value": {
-											"schema": "stogas.catalog.public.v5",
+											"schema": "stogas.catalog.public.v6",
 											"sequence": 184,
 											"runtimeDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 											"publicDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
 											"graph": {
 												"authors": {},
+												"deployments": {
+													"openai-gpt-6.1-sol": {
+														"modelId": "gpt-6.1-sol",
+														"part": 0,
+														"retirementDate": null,
+														"routeIds": [
+															"openai-chat-completions",
+															"openai-responses"
+														]
+													}
+												},
 												"groups": {},
 												"models": {},
-												"deployments": {},
 												"providers": {},
 												"routes": {}
 											},
+											"parts": [
+												{
+													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+													"size": 236710
+												}
+											],
 											"schedule": [
 												{
 													"start": "2026-11-01T00:00:00Z",
-													"graph": {
-														"deployments": {
-															"openai-gpt-6.1-sol": {}
-														}
-													}
+													"graph": {}
 												},
 												{
 													"start": "2026-12-01T00:00:00Z",
@@ -113,6 +125,83 @@
 					},
 					"500": {
 						"$ref": "#/components/responses/CatalogUnavailable"
+					}
+				}
+			}
+		},
+		"/v1/catalog/parts/{sha256}": {
+			"get": {
+				"operationId": "getCatalogPart",
+				"tags": [
+					"Catalog"
+				],
+				"summary": "Catalog part",
+				"description": "Returns a part of the active catalog: its deployments in full, with their routes and prices, and their scheduled changes. `/v1/catalog` lists each part by SHA-256, and a part's bytes never change.",
+				"security": [],
+				"parameters": [
+					{
+						"name": "sha256",
+						"in": "path",
+						"required": true,
+						"description": "SHA-256 of the part in hex, as `/v1/catalog` lists it.",
+						"schema": {
+							"type": "string",
+							"pattern": "^[0-9a-f]{64}$"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "The part, whose bytes have the SHA-256 in the path.",
+						"headers": {
+							"Cache-Control": {
+								"description": "`public, max-age=31536000, immutable`",
+								"schema": {
+									"type": "string"
+								}
+							}
+						},
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/CatalogPartResponse"
+								},
+								"examples": {
+									"part": {
+										"value": {
+											"schema": "stogas.catalog.public.part.v6",
+											"deployments": {
+												"openai-gpt-6.1-sol": {}
+											},
+											"schedule": [
+												{
+													"start": "2026-11-01T00:00:00Z",
+													"deployments": {
+														"openai-gpt-6.1-sol": {}
+													}
+												}
+											]
+										}
+									}
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "The active catalog lists no part with this SHA-256, as when a newer catalog has replaced it. Read `/v1/catalog` again.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								},
+								"example": {
+									"error": {
+										"message": "Route not found: /v1/catalog/parts/89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+										"type": "invalid_request_error"
+									}
+								}
+							}
+						}
 					}
 				}
 			}
@@ -792,13 +881,14 @@
 					"runtimeDigest",
 					"publicDigest",
 					"graph",
+					"parts",
 					"schedule",
 					"periods"
 				],
 				"properties": {
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.public.v5"
+						"const": "stogas.catalog.public.v6"
 					},
 					"sequence": {
 						"type": "integer",
@@ -814,12 +904,44 @@
 					},
 					"graph": {
 						"type": "object",
-						"description": "The catalog without its periods: authors, groups, models, deployments, routes and providers.",
+						"description": "The catalog without its periods: authors, groups, models, providers and routes in full, and a summary of each deployment. The parts hold the deployments in full.",
+						"properties": {
+							"deployments": {
+								"type": "object",
+								"additionalProperties": {
+									"$ref": "#/components/schemas/CatalogDeploymentSummary"
+								}
+							}
+						},
 						"additionalProperties": true
+					},
+					"parts": {
+						"type": "array",
+						"description": "The parts that hold the deployments in full. Fetch each from `/v1/catalog/parts/{sha256}`, and check that its bytes have this SHA-256 and size.",
+						"items": {
+							"type": "object",
+							"required": [
+								"sha256",
+								"size"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"sha256": {
+									"type": "string",
+									"pattern": "^[0-9a-f]{64}$"
+								},
+								"size": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 1048576,
+									"description": "Size in bytes."
+								}
+							}
+						}
 					},
 					"schedule": {
 						"type": "array",
-						"description": "Dated catalog states, oldest first. Each state lasts until the next one starts and lists in full every node that differs from `graph` during it. An empty `graph` returns to `graph`.",
+						"description": "Dated catalog states, oldest first. Each state lasts until the next one starts. Its `graph` lists in full every author, group, model, provider and route that differs from `graph` during it, and the summary of each deployment whose summary differs. The parts list each deployment that differs, in full, under the same `start`.",
 						"items": {
 							"type": "object",
 							"required": [
@@ -881,6 +1003,84 @@
 									],
 									"format": "date-time",
 									"description": "`null` when the period has no end."
+								}
+							}
+						}
+					}
+				}
+			},
+			"CatalogDeploymentSummary": {
+				"type": "object",
+				"description": "What the catalog root says of a deployment. Its part holds the rest.",
+				"required": [
+					"modelId",
+					"part",
+					"retirementDate",
+					"routeIds"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"modelId": {
+						"type": "string"
+					},
+					"part": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Index in `parts` of the part that holds the deployment."
+					},
+					"retirementDate": {
+						"type": [
+							"string",
+							"null"
+						],
+						"format": "date",
+						"description": "`null` when the deployment has no retirement date."
+					},
+					"routeIds": {
+						"type": "array",
+						"description": "IDs of the deployment's routes, sorted.",
+						"items": {
+							"type": "string"
+						}
+					}
+				}
+			},
+			"CatalogPartResponse": {
+				"type": "object",
+				"required": [
+					"schema",
+					"deployments",
+					"schedule"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"schema": {
+						"type": "string",
+						"const": "stogas.catalog.public.part.v6"
+					},
+					"deployments": {
+						"type": "object",
+						"description": "The part's deployments in full, by ID: routes, prices, limits and data handling.",
+						"additionalProperties": true
+					},
+					"schedule": {
+						"type": "array",
+						"description": "The dated states in which deployments of this part differ from `deployments`, oldest first. Each lists in full the deployments that differ during it, and starts at a `start` of the root's `schedule`.",
+						"items": {
+							"type": "object",
+							"required": [
+								"start",
+								"deployments"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"start": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"deployments": {
+									"type": "object",
+									"additionalProperties": true
 								}
 							}
 						}
