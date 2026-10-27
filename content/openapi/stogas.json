@@ -57,11 +57,11 @@
 					"Catalog"
 				],
 				"summary": "Catalog",
-				"description": "Returns the root of the approved public catalog: authors, groups, models, providers, routes, a summary of each deployment, scheduled changes, and the parts that hold the deployments in full.",
+				"description": "Returns the approved public catalog: models, deployments, routes, prices and scheduled changes. Deployments and models that retired before the catalog's archive date are in the archive that `archive` names.",
 				"security": [],
 				"responses": {
 					"200": {
-						"description": "Root of the active public catalog.",
+						"description": "Active public catalog.",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -70,38 +70,30 @@
 								"examples": {
 									"catalog": {
 										"value": {
-											"schema": "stogas.catalog.public.v6",
+											"schema": "stogas.catalog.public.v7",
 											"sequence": 184,
 											"runtimeDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 											"publicDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+											"archive": {
+												"sha256": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+												"size": 48213
+											},
 											"graph": {
 												"authors": {},
-												"deployments": {
-													"openai-gpt-6.1-sol": {
-														"modelId": "gpt-6.1-sol",
-														"part": 0,
-														"retirementDate": null,
-														"routeIds": [
-															"openai-chat-completions",
-															"openai-responses"
-														]
-													}
-												},
 												"groups": {},
 												"models": {},
+												"deployments": {},
 												"providers": {},
 												"routes": {}
 											},
-											"parts": [
-												{
-													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
-													"size": 236710
-												}
-											],
 											"schedule": [
 												{
 													"start": "2026-11-01T00:00:00Z",
-													"graph": {}
+													"graph": {
+														"deployments": {
+															"openai-gpt-6.1-sol": {}
+														}
+													}
 												},
 												{
 													"start": "2026-12-01T00:00:00Z",
@@ -129,21 +121,21 @@
 				}
 			}
 		},
-		"/v1/catalog/parts/{sha256}": {
+		"/v1/catalog/archive/{sha256}": {
 			"get": {
-				"operationId": "getCatalogPart",
+				"operationId": "getCatalogArchive",
 				"tags": [
 					"Catalog"
 				],
-				"summary": "Catalog part",
-				"description": "Returns a part of the active catalog: its deployments in full, with their routes and prices, and their scheduled changes. `/v1/catalog` lists each part by SHA-256, and a part's bytes never change.",
+				"summary": "Catalog archive",
+				"description": "Returns the deployments and models that retired before the active catalog's archive date, each as it was on its last day of service. `/v1/catalog` names the archive by SHA-256, and the archive's bytes never change.",
 				"security": [],
 				"parameters": [
 					{
 						"name": "sha256",
 						"in": "path",
 						"required": true,
-						"description": "SHA-256 of the part in hex, as `/v1/catalog` lists it.",
+						"description": "SHA-256 of the archive in hex, as `/v1/catalog` names it.",
 						"schema": {
 							"type": "string",
 							"pattern": "^[0-9a-f]{64}$"
@@ -152,7 +144,7 @@
 				],
 				"responses": {
 					"200": {
-						"description": "The part, whose bytes have the SHA-256 in the path.",
+						"description": "The archive, whose bytes have the SHA-256 in the path.",
 						"headers": {
 							"Cache-Control": {
 								"description": "`public, max-age=31536000, immutable`",
@@ -164,23 +156,20 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/CatalogPartResponse"
+									"$ref": "#/components/schemas/CatalogArchiveResponse"
 								},
 								"examples": {
-									"part": {
+									"archive": {
 										"value": {
-											"schema": "stogas.catalog.public.part.v6",
-											"deployments": {
-												"openai-gpt-6.1-sol": {}
-											},
-											"schedule": [
-												{
-													"start": "2026-11-01T00:00:00Z",
-													"deployments": {
-														"openai-gpt-6.1-sol": {}
-													}
+											"schema": "stogas.catalog.archive.v1",
+											"graph": {
+												"deployments": {
+													"openai-gpt-4o": {}
+												},
+												"models": {
+													"gpt-4o": {}
 												}
-											]
+											}
 										}
 									}
 								}
@@ -188,7 +177,7 @@
 						}
 					},
 					"404": {
-						"description": "The active catalog lists no part with this SHA-256, as when a newer catalog has replaced it. Read `/v1/catalog` again.",
+						"description": "The active catalog names no archive with this SHA-256, as when a newer catalog has replaced it. Read `/v1/catalog` again.",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -196,7 +185,7 @@
 								},
 								"example": {
 									"error": {
-										"message": "Route not found: /v1/catalog/parts/89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+										"message": "Route not found: /v1/catalog/archive/89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
 										"type": "invalid_request_error"
 									}
 								}
@@ -880,15 +869,15 @@
 					"sequence",
 					"runtimeDigest",
 					"publicDigest",
+					"archive",
 					"graph",
-					"parts",
 					"schedule",
 					"periods"
 				],
 				"properties": {
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.public.v6"
+						"const": "stogas.catalog.public.v7"
 					},
 					"sequence": {
 						"type": "integer",
@@ -902,46 +891,36 @@
 						"type": "string",
 						"pattern": "^sha256:[0-9a-f]{64}$"
 					},
-					"graph": {
-						"type": "object",
-						"description": "The catalog without its periods: authors, groups, models, providers and routes in full, and a summary of each deployment. The parts hold the deployments in full.",
+					"archive": {
+						"type": [
+							"object",
+							"null"
+						],
+						"description": "The archive of retired deployments and models, which `/v1/catalog/archive/{sha256}` serves, or `null` while it holds none. Its bytes have this SHA-256 and size.",
+						"required": [
+							"sha256",
+							"size"
+						],
+						"additionalProperties": false,
 						"properties": {
-							"deployments": {
-								"type": "object",
-								"additionalProperties": {
-									"$ref": "#/components/schemas/CatalogDeploymentSummary"
-								}
-							}
-						},
-						"additionalProperties": true
-					},
-					"parts": {
-						"type": "array",
-						"description": "The parts that hold the deployments in full. Fetch each from `/v1/catalog/parts/{sha256}`, and check that its bytes have this SHA-256 and size.",
-						"items": {
-							"type": "object",
-							"required": [
-								"sha256",
-								"size"
-							],
-							"additionalProperties": false,
-							"properties": {
-								"sha256": {
-									"type": "string",
-									"pattern": "^[0-9a-f]{64}$"
-								},
-								"size": {
-									"type": "integer",
-									"minimum": 1,
-									"maximum": 1048576,
-									"description": "Size in bytes."
-								}
+							"sha256": {
+								"type": "string",
+								"pattern": "^[0-9a-f]{64}$"
+							},
+							"size": {
+								"type": "integer",
+								"minimum": 1
 							}
 						}
 					},
+					"graph": {
+						"type": "object",
+						"description": "The catalog without its periods: authors, groups, models, deployments, routes and providers. Deployments and models in the archive are not in it.",
+						"additionalProperties": true
+					},
 					"schedule": {
 						"type": "array",
-						"description": "Dated catalog states, oldest first. Each state lasts until the next one starts. Its `graph` lists in full every author, group, model, provider and route that differs from `graph` during it, and the summary of each deployment whose summary differs. The parts list each deployment that differs, in full, under the same `start`.",
+						"description": "Dated catalog states, oldest first. Each state lasts until the next one starts and lists in full every node that differs from `graph` during it. An empty `graph` returns to `graph`.",
 						"items": {
 							"type": "object",
 							"required": [
@@ -1009,79 +988,34 @@
 					}
 				}
 			},
-			"CatalogDeploymentSummary": {
-				"type": "object",
-				"description": "What the catalog root says of a deployment. Its part holds the rest.",
-				"required": [
-					"modelId",
-					"part",
-					"retirementDate",
-					"routeIds"
-				],
-				"additionalProperties": false,
-				"properties": {
-					"modelId": {
-						"type": "string"
-					},
-					"part": {
-						"type": "integer",
-						"minimum": 0,
-						"description": "Index in `parts` of the part that holds the deployment."
-					},
-					"retirementDate": {
-						"type": [
-							"string",
-							"null"
-						],
-						"format": "date",
-						"description": "`null` when the deployment has no retirement date."
-					},
-					"routeIds": {
-						"type": "array",
-						"description": "IDs of the deployment's routes, sorted.",
-						"items": {
-							"type": "string"
-						}
-					}
-				}
-			},
-			"CatalogPartResponse": {
+			"CatalogArchiveResponse": {
 				"type": "object",
 				"required": [
 					"schema",
-					"deployments",
-					"schedule"
+					"graph"
 				],
 				"additionalProperties": false,
 				"properties": {
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.public.part.v6"
+						"const": "stogas.catalog.archive.v1"
 					},
-					"deployments": {
+					"graph": {
 						"type": "object",
-						"description": "The part's deployments in full, by ID: routes, prices, limits and data handling.",
-						"additionalProperties": true
-					},
-					"schedule": {
-						"type": "array",
-						"description": "The dated states in which deployments of this part differ from `deployments`, oldest first. Each lists in full the deployments that differ during it, and starts at a `start` of the root's `schedule`.",
-						"items": {
-							"type": "object",
-							"required": [
-								"start",
-								"deployments"
-							],
-							"additionalProperties": false,
-							"properties": {
-								"start": {
-									"type": "string",
-									"format": "date-time"
-								},
-								"deployments": {
-									"type": "object",
-									"additionalProperties": true
-								}
+						"description": "Retired deployments and models, with the fields that `/v1/catalog` gives them. A retired model is here once all its deployments are.",
+						"required": [
+							"deployments",
+							"models"
+						],
+						"additionalProperties": false,
+						"properties": {
+							"deployments": {
+								"type": "object",
+								"additionalProperties": true
+							},
+							"models": {
+								"type": "object",
+								"additionalProperties": true
 							}
 						}
 					}

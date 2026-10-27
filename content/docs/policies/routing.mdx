@@ -32,6 +32,7 @@ sorts are [expressions](/docs/policies/expressions) over the fields in the
 | ------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `model_unavailable` | No candidate is left.                                                                                   | Check the model, the key's credentials and the key's **Combined policy**.             |
 | `model_ambiguous`   | The request names no model, or a [group](/docs/models#groups) whose newest models share a release date. | Name a model, filter to one, or add an `order` or `sort`. The error lists the models. |
+| `model_retired`     | The request names a model or deployment that retired. The error gives the date.                         | Choose another model.                                                                 |
 
 Filters and lists from every policy apply together, so an OpenAI-only policy and a Chutes-only
 policy leave no candidate. Sending the request again does not help, and a policy cannot widen the

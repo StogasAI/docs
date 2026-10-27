@@ -284,7 +284,7 @@ test('API samples are formatted and highlighted with JavaScript disabled', async
 			'openai-compatible/createResponse',
 			'catalog/listModels',
 			'catalog/getCatalog',
-			'catalog/getCatalogPart'
+			'catalog/getCatalogArchive'
 		]) {
 			await page.goto(`/docs/reference/${endpoint}`);
 			const examples = page.locator('.stogas-api-operation-examples');
