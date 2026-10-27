@@ -95,6 +95,18 @@ The CLI loads evidence when a session starts, and once more if a session needs n
 does not poll. A local application can force a refresh with a `POST` to the separately printed
 refresh URL. Published packages trust production gateways only.
 
+## Connect through Tor
+
+```console
+stogas --proxy socks5h://127.0.0.1:9050 serve
+```
+
+`--proxy` sends every connection of any command through a SOCKS5 proxy, such as Tor's: the
+dashboard, evidence, attested TLS and E2EE. `--onion` also reaches Stogas at its onion address
+through that proxy; Stogas has no production onion address yet. `STOGAS_PROXY` and `STOGAS_ONION`
+set the same options for every command. The local endpoint itself takes connections from your
+machine only, so your client needs no proxy. See [Connect through Tor](/docs/sdk-overview#connect-through-tor).
+
 ## Stop
 
 Press Ctrl+C or, on Unix, send SIGTERM. The CLI stops new work and allows up to five seconds for
@@ -114,7 +126,8 @@ readiness and memory admission checks. No API key or provider request is involve
 
 The command prints a `stogas.probe.v1` JSON report with `security`, `ready`, the verified `node_id`
 when available, `http_status`, and a fixed `error_code`. It exits zero only when `ready` is true.
-The timeout covers evidence, connection setup and the response. `--upstream` works as for `serve`.
+The timeout covers evidence, connection setup and the response. It is 8 seconds by default, or 32
+seconds through a proxy. `--upstream` works as for `serve`.
 
 This checks connection and admission availability from the caller's location. It does not measure
 provider health, database-backed authorization, or the success rate of all customer requests.

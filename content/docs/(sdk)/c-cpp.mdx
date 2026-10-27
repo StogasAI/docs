@@ -252,7 +252,7 @@ Send `Stogas-Metadata: v1` to request final metadata and automatic content-recei
 { "security": "e2ee", "max_connections": 4 }
 ```
 
-Pass this JSON to `stogas_transport_start`. It also accepts `base_url`. Set libcurl timeouts and cancellation callbacks in your application; the transport has no inference retry setting.
+Pass this JSON to `stogas_transport_start`. It also accepts `base_url`, and `proxy` and `onion` as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Set libcurl timeouts and cancellation callbacks in your application; the transport has no inference retry setting.
 
 Native attested TLS is the default; this example selects E2EE. See
 [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

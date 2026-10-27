@@ -99,11 +99,13 @@ async def main() -> None:
 transport = Transport(security="e2ee", max_connections=4)
 ```
 
-| Option            | Effect                                                                         |
-| ----------------- | ------------------------------------------------------------------------------ |
-| `security`        | `"tls"` (default) or `"e2ee"`. See [Connection modes](/docs/connection-modes). |
-| `max_connections` | The most connections to open, as needed. Default `4`.                          |
-| `base_url`        | Another HTTPS origin, with no path. The trusted evidence does not change.      |
+| Option            | Effect                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `security`        | `"tls"` (default) or `"e2ee"`. See [Connection modes](/docs/connection-modes).                          |
+| `max_connections` | The most connections to open, as needed. Default `4`.                                                   |
+| `base_url`        | Another HTTPS origin, with no path. The trusted evidence does not change.                               |
+| `proxy`           | A SOCKS5 proxy for every connection. See [Connect through Tor](/docs/sdk-overview#connect-through-tor). |
+| `onion`           | `True` to reach Stogas at its onion address through `proxy`.                                            |
 
 `transport.refresh_evidence()` loads new evidence now. See
 [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

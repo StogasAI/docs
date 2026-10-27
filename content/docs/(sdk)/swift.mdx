@@ -112,7 +112,7 @@ connecting through a separately running [verifier CLI](/docs/cli).
 try Transport(options: TransportOptions(security: "e2ee", maxConnections: 4))
 ```
 
-`baseURL` accepts an HTTPS origin. Configure request and resource timeouts on `URLSessionConfiguration` and cancel the owning task. Startup is blocking; keep it off the main actor.
+`baseURL` accepts an HTTPS origin. `proxy` and `onion` work as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Configure request and resource timeouts on `URLSessionConfiguration` and cancel the owning task. Startup is blocking; keep it off the main actor.
 
 Native attested TLS is the default; this example selects E2EE. See
 [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

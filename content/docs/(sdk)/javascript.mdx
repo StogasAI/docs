@@ -90,12 +90,12 @@ const transport = await StogasTransport.create({
 });
 ```
 
-| Option           | Effect                                                                                    |
-| ---------------- | ----------------------------------------------------------------------------------------- |
-| `maxConnections` | The most sessions to open, as needed. Default `4`.                                        |
-| `fetch`          | The `fetch` function to send requests with.                                               |
-| `onMetadata`     | Receives the `stogas` object of a [receipt](/docs/receipts) after the receipt is checked. |
-| `baseURL`        | Another HTTPS address ending in `/v1`. The trusted evidence does not change.              |
+| Option           | Effect                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- |
+| `maxConnections` | The most sessions to open, as needed. Default `4`.                                                             |
+| `fetch`          | The `fetch` function to send requests with. See [Connect through Tor](/docs/sdk-overview#connect-through-tor). |
+| `onMetadata`     | Receives the `stogas` object of a [receipt](/docs/receipts) after the receipt is checked.                      |
+| `baseURL`        | Another HTTPS address ending in `/v1`. The trusted evidence does not change.                                   |
 
 See [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every
 SDK.

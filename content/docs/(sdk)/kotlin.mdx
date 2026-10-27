@@ -117,7 +117,7 @@ We do not ship Kotlin/Native packages. Applications on a supported native target
 Transport(mapOf("security" to "e2ee", "max_connections" to 4))
 ```
 
-The map also accepts `base_url`. Configure `maxRetries` and `timeout` on the OpenAI builder. The example separately prevents transparent HTTP-stack replay.
+The map also accepts `base_url`, and `proxy` and `onion` as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Configure `maxRetries` and `timeout` on the OpenAI builder. The example separately prevents transparent HTTP-stack replay.
 
 Native attested TLS is the default; this example selects E2EE. See
 [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
