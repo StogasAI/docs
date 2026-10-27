@@ -63,12 +63,12 @@ Each record is the request record with these fields added:
 }
 ```
 
-| Field      | Content                                                                                                                                   |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if preparation did not finish. |
-| `response` | The response of a buffered request, or the error that ended it.                                                                           |
-| `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.                 |
-| `stogas`   | The same object that [`Stogas-Metadata: v1`](/docs/receipts) returns. Every record has it, whether or not the request sent the header.    |
+| Field      | Content                                                                                                                                 |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if the request was rejected. |
+| `response` | The response of a buffered request, or the error that ended it.                                                                         |
+| `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.               |
+| `stogas`   | The same object that [`Stogas-Metadata: v1`](/docs/receipts) returns. Every record has it, whether or not the request sent the header.  |
 
 - A destination with `"content": false` gets records without `request`, `response` and `events`.
 
@@ -86,6 +86,9 @@ Each record is the request record with these fields added:
   ```
 
 - Requests that fail before the gateway selects a deployment have no record.
+- A rejected request costs nothing, so its record has `"request": null` and the error in
+  `response`. Only rejections that keep their own [request record](#find-missing-records) are
+  exported.
 - If the client disconnects, the provider still finishes, and the record has the whole output and
   final usage.
 - The record never contains API keys, provider credentials or webhook headers. Your prompt text is
@@ -113,10 +116,12 @@ A retry can send a record that your receiver already accepted, so ignore duplica
 memory for requests, it drops the oldest records that wait for delivery. It never cuts a record
 short, and an export never makes a request fail.
 
+## Find missing records
+
 To find records that did not arrive, compare the `request_id` values that your receiver accepted
 with the [request records](/docs/request-records) of the requests that your export policies cover.
 The record of each request that ran has a `plugins.stogas_export` entry, even when the gateway
 dropped its export. Its `duration_us` is the time that export added to the request, mostly to
-describe attached files. Rejections have no plugin entries, and repeated ones are
-[grouped](/docs/request-records#grouped-rejections), so only the first few in each group have an ID
-to compare.
+describe attached files. Rejections have no plugin entries. Repeated ones are
+[grouped](/docs/request-records#grouped-rejections): only the first five in each group have records
+of their own, and only those are exported.
