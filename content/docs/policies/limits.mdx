@@ -128,10 +128,11 @@ and holds five. Each request takes one from every bucket, so both must have room
 - The refill rate must be between about one request a century and 120 requests a second.
 - A request that a limit rejects takes nothing. A failed provider call does not give its request
   back.
-- Every organization also has a platform bucket of 120 requests a second, shared by all its keys,
-  grants, Playground requests and BYOK requests. More keys do not add capacity. When the bucket is
-  empty, a request waits up to two seconds to start, and a request that would wait longer gets
-  `429 platform_rate_limited`.
+- Every organization also has a platform bucket, shared by all its keys, grants, Playground
+  requests and BYOK requests. It allows 120 requests a second, or the rate we agreed for your
+  organization; for a higher rate, contact [ops@stogas.ai](mailto:ops@stogas.ai). More keys do not
+  add capacity. When the bucket is empty, a request waits up to two seconds to start, and a request
+  that would wait longer gets `429 platform_rate_limited`.
 
 ## Tokens
 
