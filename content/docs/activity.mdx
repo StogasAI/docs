@@ -52,7 +52,8 @@ export was requested, not whether the file was saved.
 ## Retention and export
 
 Events are kept for one year. **Export** counts the events that match your filters, then
-downloads them as CSV or NDJSON with every change. CSV keeps lists, names and changes as JSON text.
+downloads them as CSV or NDJSON with every change. CSV keeps lists, names and changes as JSON text,
+and puts an apostrophe before text that a spreadsheet would run as a formula, such as `=SUM(A1)`.
 An export holds at most 50,000 events and 64 MiB; narrow the filters if it is larger.
 
 Activity is operational history. Delivery can be delayed or interrupted, so it is not a
