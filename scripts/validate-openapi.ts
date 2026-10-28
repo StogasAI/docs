@@ -16,47 +16,33 @@ for (const pathname of [
 ]) {
 	if (!jsonObject(spec.paths)?.[pathname]) errors.push(`OpenAPI is missing ${pathname}.`);
 }
-const catalog = jsonObject(
-	getJsonValue(
-		spec,
-		'paths',
-		'/v1/catalog',
-		'get',
-		'responses',
-		'200',
-		'content',
-		'application/json',
-		'examples',
-		'catalog',
-		'value'
-	)
-);
-const catalogSchema = getJsonValue(
-	spec,
-	'components',
-	'schemas',
-	'CatalogResponse',
-	'properties',
-	'schema',
-	'const'
-);
-if (catalog?.schema !== catalogSchema) {
-	errors.push(`/v1/catalog example must use ${String(catalogSchema)}.`);
-}
-if (
-	catalog &&
-	(typeof catalog.runtimeDigest !== 'string' ||
-		typeof catalog.publicDigest !== 'string' ||
-		!Number.isSafeInteger(catalog.sequence) ||
-		!jsonObject(catalog.graph)?.routes ||
-		!Array.isArray(catalog.parts) ||
-		(catalog.archive !== null && !jsonObject(catalog.archive)) ||
-		!Array.isArray(catalog.schedule) ||
-		!Array.isArray(catalog.periods))
-) {
-	errors.push(
-		'/v1/catalog example must expose sequence, runtime/public digests, the archive, the graph, parts, schedule and periods.'
+// Each catalog example has the schema version and exactly the members that its schema requires.
+for (const [pathname, example, name] of [
+	['/v1/catalog', 'catalog', 'CatalogResponse'],
+	['/v1/catalog/parts/{sha256}', 'part', 'CatalogPartResponse']
+]) {
+	const value = jsonObject(
+		getJsonValue(
+			spec,
+			'paths',
+			pathname,
+			'get',
+			'responses',
+			'200',
+			'content',
+			'application/json',
+			'examples',
+			example,
+			'value'
+		)
 	);
+	const schema = jsonObject(getJsonValue(spec, 'components', 'schemas', name));
+	const version = getJsonValue(schema ?? {}, 'properties', 'schema', 'const');
+	const required = Array.isArray(schema?.required) ? schema.required.toSorted() : [];
+	if (!value || value.schema !== version)
+		errors.push(`${pathname} example must use ${String(version)}.`);
+	else if (Object.keys(value).sort().join() !== required.join())
+		errors.push(`${pathname} example must have exactly the members that ${name} requires.`);
 }
 if (errors.length) throw new Error(`OpenAPI validation failed:\n- ${errors.join('\n- ')}`);
 console.log('OpenAPI validation passed.');

@@ -57,11 +57,11 @@
 					"Catalog"
 				],
 				"summary": "Catalog",
-				"description": "Returns the root of the approved public catalog: authors, groups, models, providers, routes, a summary of each deployment, scheduled changes, the parts that hold the deployments in full, and the archive that holds retired deployments and models.",
+				"description": "Returns the root of the active public catalog: authors, groups and providers in full, a summary of each model, route and deployment, the scheduled changes to them, and the parts that hold models, routes and deployments in full. The root keeps each retired record, and each record gives its retirement date.",
 				"security": [],
 				"responses": {
 					"200": {
-						"description": "Root of the active public catalog.",
+						"description": "Root of the active public catalog, with the sequence and digest of its release.",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -70,25 +70,52 @@
 								"examples": {
 									"catalog": {
 										"value": {
-											"schema": "stogas.catalog.public.v8",
 											"sequence": 184,
-											"runtimeDigest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-											"publicDigest": "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
-											"archive": {
-												"index": {
-													"sha256": "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
-													"size": 48213
+											"digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+											"parts": [
+												{
+													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+													"size": 236710,
+													"through": null
 												},
-												"parts": [
-													{
-														"sha256": "76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98",
-														"size": 182340
-													}
-												]
-											},
-											"graph": {
+												{
+													"sha256": "76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98",
+													"size": 182340,
+													"through": "2027-03-31"
+												}
+											],
+											"periods": [
+												{
+													"kind": "deployments",
+													"id": "openai-gpt-6.1-sol",
+													"name": "Launch price",
+													"start": "2026-11-01T00:00:00Z",
+													"end": "2026-12-01T00:00:00Z"
+												}
+											],
+											"schedule": [
+												{
+													"start": "2026-11-01T00:00:00Z",
+													"summaries": {}
+												},
+												{
+													"start": "2026-12-01T00:00:00Z",
+													"summaries": {}
+												}
+											],
+											"schema": "stogas.catalog.v9",
+											"summaries": {
 												"authors": {},
 												"deployments": {
+													"openai-gpt-4o": {
+														"modelId": "gpt-4o",
+														"part": 1,
+														"retirementDate": "2027-03-31",
+														"routeIds": [
+															"openai-chat-completions",
+															"openai-responses"
+														]
+													},
 													"openai-gpt-6.1-sol": {
 														"modelId": "gpt-6.1-sol",
 														"part": 0,
@@ -100,35 +127,35 @@
 													}
 												},
 												"groups": {},
-												"models": {},
+												"models": {
+													"gpt-4o": {
+														"aliases": [
+															"gpt-4o-2024-08-06"
+														],
+														"authorId": "openai",
+														"groupIds": [
+															"gpt"
+														],
+														"name": "GPT-4o",
+														"part": 1,
+														"releaseDate": "2024-05-13",
+														"retirementDate": "2027-03-31"
+													},
+													"gpt-6.1-sol": {
+														"aliases": [],
+														"authorId": "openai",
+														"groupIds": [
+															"gpt"
+														],
+														"name": "GPT-6.1 Sol",
+														"part": 0,
+														"releaseDate": "2026-10-01",
+														"retirementDate": null
+													}
+												},
 												"providers": {},
 												"routes": {}
-											},
-											"parts": [
-												{
-													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
-													"size": 236710
-												}
-											],
-											"schedule": [
-												{
-													"start": "2026-11-01T00:00:00Z",
-													"graph": {}
-												},
-												{
-													"start": "2026-12-01T00:00:00Z",
-													"graph": {}
-												}
-											],
-											"periods": [
-												{
-													"kind": "deployments",
-													"id": "openai-gpt-6.1-sol",
-													"name": "Launch price",
-													"start": "2026-11-01T00:00:00Z",
-													"end": "2026-12-01T00:00:00Z"
-												}
-											]
+											}
 										}
 									}
 								}
@@ -147,15 +174,15 @@
 				"tags": [
 					"Catalog"
 				],
-				"summary": "Catalog file",
-				"description": "Returns a file that the active catalog's root names: a part, which holds deployments in full with their routes, prices and scheduled changes, or the archive's index or one of its parts. `/v1/catalog` names each file by SHA-256, and a file's bytes never change.",
+				"summary": "Catalog part",
+				"description": "Returns a part that the active catalog's root names: models, routes and deployments in full, with their prices and scheduled changes. `/v1/catalog` names each part by SHA-256, and a part's bytes never change.",
 				"security": [],
 				"parameters": [
 					{
 						"name": "sha256",
 						"in": "path",
 						"required": true,
-						"description": "SHA-256 of the file in hex, as `/v1/catalog` names it.",
+						"description": "SHA-256 of the part in hex, as `/v1/catalog` names it.",
 						"schema": {
 							"type": "string",
 							"pattern": "^[0-9a-f]{64}$"
@@ -164,7 +191,7 @@
 				],
 				"responses": {
 					"200": {
-						"description": "The file, whose bytes have the SHA-256 in the path.",
+						"description": "The part, whose bytes have the SHA-256 in the path.",
 						"headers": {
 							"Cache-Control": {
 								"description": "`public, max-age=31536000, immutable`",
@@ -176,69 +203,30 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"oneOf": [
-										{
-											"$ref": "#/components/schemas/CatalogPartResponse"
-										},
-										{
-											"$ref": "#/components/schemas/CatalogArchiveIndexResponse"
-										},
-										{
-											"$ref": "#/components/schemas/CatalogArchivePartResponse"
-										}
-									]
+									"$ref": "#/components/schemas/CatalogPartResponse"
 								},
 								"examples": {
 									"part": {
 										"value": {
-											"schema": "stogas.catalog.public.part.v8",
-											"deployments": {
-												"openai-gpt-6.1-sol": {}
+											"graph": {
+												"deployments": {
+													"openai-gpt-6.1-sol": {}
+												},
+												"models": {
+													"gpt-6.1-sol": {}
+												}
 											},
 											"schedule": [
 												{
 													"start": "2026-11-01T00:00:00Z",
-													"deployments": {
-														"openai-gpt-6.1-sol": {}
+													"graph": {
+														"deployments": {
+															"openai-gpt-6.1-sol": {}
+														}
 													}
 												}
-											]
-										}
-									},
-									"archiveIndex": {
-										"value": {
-											"schema": "stogas.catalog.archive.index.v1",
-											"deployments": {
-												"openai-gpt-4o": {
-													"modelId": "gpt-4o",
-													"part": 0,
-													"retirementDate": "2026-03-31",
-													"routeIds": [
-														"openai-chat-completions",
-														"openai-responses"
-													]
-												}
-											},
-											"models": {
-												"gpt-4o": {
-													"aliases": [
-														"gpt-4o-2024-08-06"
-													],
-													"part": 0,
-													"retirementDate": "2026-03-31"
-												}
-											}
-										}
-									},
-									"archivePart": {
-										"value": {
-											"schema": "stogas.catalog.archive.part.v1",
-											"deployments": {
-												"openai-gpt-4o": {}
-											},
-											"models": {
-												"gpt-4o": {}
-											}
+											],
+											"schema": "stogas.catalog.part.v9"
 										}
 									}
 								}
@@ -246,7 +234,7 @@
 						}
 					},
 					"404": {
-						"description": "The active catalog names no file with this SHA-256, as when a newer catalog has replaced it. Read `/v1/catalog` again.",
+						"description": "The active catalog names no part with this SHA-256, as when a newer catalog has replaced it, or each record in the part had retired when the gateway loaded the catalog. Read `/v1/catalog` again.",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -934,112 +922,35 @@
 			"CatalogResponse": {
 				"type": "object",
 				"required": [
-					"schema",
 					"sequence",
-					"runtimeDigest",
-					"publicDigest",
-					"archive",
-					"graph",
+					"digest",
 					"parts",
+					"periods",
 					"schedule",
-					"periods"
+					"schema",
+					"summaries"
 				],
+				"additionalProperties": false,
 				"properties": {
-					"schema": {
-						"type": "string",
-						"const": "stogas.catalog.public.v8"
-					},
 					"sequence": {
 						"type": "integer",
-						"minimum": 0
+						"minimum": 1,
+						"description": "The release's sequence number, which grows with each release."
 					},
-					"runtimeDigest": {
+					"digest": {
 						"type": "string",
-						"pattern": "^sha256:[0-9a-f]{64}$"
-					},
-					"publicDigest": {
-						"type": "string",
-						"pattern": "^sha256:[0-9a-f]{64}$"
-					},
-					"archive": {
-						"type": [
-							"object",
-							"null"
-						],
-						"description": "The archive, which holds each deployment that retired on or before the catalog's archive date and each model whose deployments all did, or `null` while it holds none. Its index summarizes each archived record and places it in one of its parts. Fetch each file from `/v1/catalog/parts/{sha256}`, and check that its bytes have this SHA-256 and size.",
-						"required": [
-							"index",
-							"parts"
-						],
-						"additionalProperties": false,
-						"properties": {
-							"index": {
-								"type": "object",
-								"required": [
-									"sha256",
-									"size"
-								],
-								"additionalProperties": false,
-								"properties": {
-									"sha256": {
-										"type": "string",
-										"pattern": "^[0-9a-f]{64}$"
-									},
-									"size": {
-										"type": "integer",
-										"minimum": 1,
-										"maximum": 16777216,
-										"description": "Size in bytes."
-									}
-								}
-							},
-							"parts": {
-								"type": "array",
-								"minItems": 1,
-								"items": {
-									"type": "object",
-									"required": [
-										"sha256",
-										"size"
-									],
-									"additionalProperties": false,
-									"properties": {
-										"sha256": {
-											"type": "string",
-											"pattern": "^[0-9a-f]{64}$"
-										},
-										"size": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 1048576,
-											"description": "Size in bytes."
-										}
-									}
-								}
-							}
-						}
-					},
-					"graph": {
-						"type": "object",
-						"description": "The catalog without its periods: authors, groups, models, providers and routes in full, and a summary of each deployment. The parts hold the deployments in full. Archived deployments and models are not in it.",
-						"properties": {
-							"deployments": {
-								"type": "object",
-								"additionalProperties": {
-									"$ref": "#/components/schemas/CatalogDeploymentSummary"
-								}
-							}
-						},
-						"additionalProperties": true
+						"pattern": "^sha256:[0-9a-f]{64}$",
+						"description": "SHA-256 of the root that the release signs: this response without `sequence` and `digest`."
 					},
 					"parts": {
 						"type": "array",
-						"description": "The parts that hold the deployments in full. Fetch each from `/v1/catalog/parts/{sha256}`, and check that its bytes have this SHA-256 and size.",
+						"description": "The parts that hold models, routes and deployments in full. Parts hold the records without a retirement date first and then the others by date. Fetch each from `/v1/catalog/parts/{sha256}`, and check that its bytes have this SHA-256 and size.",
 						"items": {
 							"type": "object",
 							"required": [
 								"sha256",
-								"size"
+								"size",
+								"through"
 							],
 							"additionalProperties": false,
 							"properties": {
@@ -1052,28 +963,14 @@
 									"minimum": 1,
 									"maximum": 1048576,
 									"description": "Size in bytes."
-								}
-							}
-						}
-					},
-					"schedule": {
-						"type": "array",
-						"description": "Dated catalog states, oldest first. Each state lasts until the next one starts. Its `graph` lists in full every author, group, model, provider and route that differs from `graph` during it, and the summary of each deployment whose summary differs. The parts list each deployment that differs, in full, under the same `start`.",
-						"items": {
-							"type": "object",
-							"required": [
-								"start",
-								"graph"
-							],
-							"additionalProperties": false,
-							"properties": {
-								"start": {
-									"type": "string",
-									"format": "date-time"
 								},
-								"graph": {
-									"type": "object",
-									"additionalProperties": true
+								"through": {
+									"type": [
+										"string",
+										"null"
+									],
+									"format": "date",
+									"description": "The latest retirement date of a record in the part, or `null` when a record in it has none. Every record in the part has retired once this date has."
 								}
 							}
 						}
@@ -1123,12 +1020,210 @@
 								}
 							}
 						}
+					},
+					"schedule": {
+						"type": "array",
+						"description": "Dated catalog states, oldest first. Each state lasts until the next one starts. Its `summaries` lists in full every author, group and provider that differs from `summaries` during it, and the summary of each model, route and deployment whose summary differs. Each part lists its records that differ during the state in full, under the same `start`.",
+						"items": {
+							"type": "object",
+							"required": [
+								"start",
+								"summaries"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"start": {
+									"type": "string",
+									"format": "date-time"
+								},
+								"summaries": {
+									"type": "object",
+									"additionalProperties": true
+								}
+							}
+						}
+					},
+					"schema": {
+						"type": "string",
+						"const": "stogas.catalog.v9"
+					},
+					"summaries": {
+						"type": "object",
+						"description": "Every record of the catalog, current or retired, by kind and ID. Authors, groups and providers are whole; the part that a summary names holds its model, route or deployment in full.",
+						"required": [
+							"authors",
+							"deployments",
+							"groups",
+							"models",
+							"providers",
+							"routes"
+						],
+						"additionalProperties": false,
+						"properties": {
+							"authors": {
+								"type": "object",
+								"description": "Authors in full.",
+								"additionalProperties": {
+									"type": "object",
+									"required": [
+										"retirementDate"
+									],
+									"properties": {
+										"retirementDate": {
+											"$ref": "#/components/schemas/CatalogRetirementDate"
+										}
+									},
+									"additionalProperties": true
+								}
+							},
+							"deployments": {
+								"type": "object",
+								"additionalProperties": {
+									"$ref": "#/components/schemas/CatalogDeploymentSummary"
+								}
+							},
+							"groups": {
+								"type": "object",
+								"description": "Groups in full.",
+								"additionalProperties": {
+									"type": "object",
+									"required": [
+										"retirementDate"
+									],
+									"properties": {
+										"retirementDate": {
+											"$ref": "#/components/schemas/CatalogRetirementDate"
+										}
+									},
+									"additionalProperties": true
+								}
+							},
+							"models": {
+								"type": "object",
+								"additionalProperties": {
+									"$ref": "#/components/schemas/CatalogModelSummary"
+								}
+							},
+							"providers": {
+								"type": "object",
+								"description": "Providers in full.",
+								"additionalProperties": {
+									"type": "object",
+									"required": [
+										"retirementDate"
+									],
+									"properties": {
+										"retirementDate": {
+											"$ref": "#/components/schemas/CatalogRetirementDate"
+										}
+									},
+									"additionalProperties": true
+								}
+							},
+							"routes": {
+								"type": "object",
+								"additionalProperties": {
+									"$ref": "#/components/schemas/CatalogRouteSummary"
+								}
+							}
+						}
+					}
+				}
+			},
+			"CatalogRetirementDate": {
+				"type": [
+					"string",
+					"null"
+				],
+				"format": "date",
+				"description": "The date on which the provider retires the record, as the provider names it, or `null` while there is none. The provider can mean the start or the end of the date in any time zone, so the gateway serves the record until the date has ended everywhere, at 12:00 UTC on the next day. A deployment's date comes from its provider; a model or a route retires with the last of its deployments, a provider with its routes, an author with its models and a group with the models in it, once all of them have dates."
+			},
+			"CatalogModelSummary": {
+				"type": "object",
+				"description": "What the root says of a model. Its part holds the rest.",
+				"required": [
+					"aliases",
+					"authorId",
+					"groupIds",
+					"name",
+					"part",
+					"releaseDate",
+					"retirementDate"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"aliases": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"authorId": {
+						"type": "string"
+					},
+					"derivedFrom": {
+						"type": "array",
+						"description": "IDs of the models that it derives from.",
+						"items": {
+							"type": "string"
+						}
+					},
+					"groupIds": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"name": {
+						"type": "string"
+					},
+					"part": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Index in `parts` of the part that holds the record."
+					},
+					"releaseDate": {
+						"type": "string",
+						"format": "date"
+					},
+					"retirementDate": {
+						"$ref": "#/components/schemas/CatalogRetirementDate"
+					}
+				}
+			},
+			"CatalogRouteSummary": {
+				"type": "object",
+				"description": "What the root says of a route. Its part holds the rest.",
+				"required": [
+					"interfaces",
+					"part",
+					"providerId",
+					"retirementDate"
+				],
+				"additionalProperties": false,
+				"properties": {
+					"interfaces": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"part": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Index in `parts` of the part that holds the record."
+					},
+					"providerId": {
+						"type": "string"
+					},
+					"retirementDate": {
+						"$ref": "#/components/schemas/CatalogRetirementDate"
 					}
 				}
 			},
 			"CatalogDeploymentSummary": {
 				"type": "object",
-				"description": "What the catalog root, or the archive's index, says of a deployment. Its part holds the rest.",
+				"description": "What the root says of a deployment. Its part holds the rest.",
 				"required": [
 					"modelId",
 					"part",
@@ -1143,15 +1238,10 @@
 					"part": {
 						"type": "integer",
 						"minimum": 0,
-						"description": "Index in `parts` of the part that holds the deployment, or in `archive.parts` for an archived one."
+						"description": "Index in `parts` of the part that holds the record."
 					},
 					"retirementDate": {
-						"type": [
-							"string",
-							"null"
-						],
-						"format": "date",
-						"description": "The first day, in UTC, on which the provider may stop serving the deployment; it is retired from 00:00 UTC that day. `null` when the deployment has no retirement date."
+						"$ref": "#/components/schemas/CatalogRetirementDate"
 					},
 					"routeIds": {
 						"type": "array",
@@ -1164,30 +1254,41 @@
 			},
 			"CatalogPartResponse": {
 				"type": "object",
+				"description": "A part: models, routes and deployments in full, with their changes in each dated state.",
 				"required": [
-					"schema",
-					"deployments",
-					"schedule"
+					"graph",
+					"schedule",
+					"schema"
 				],
 				"additionalProperties": false,
 				"properties": {
-					"schema": {
-						"type": "string",
-						"const": "stogas.catalog.public.part.v8"
-					},
-					"deployments": {
+					"graph": {
 						"type": "object",
-						"description": "The part's deployments in full, by ID: routes, prices, limits and data handling.",
-						"additionalProperties": true
+						"description": "The part's records in full, by kind and ID: models, routes, and deployments with their routes, prices, limits and data handling.",
+						"additionalProperties": false,
+						"properties": {
+							"deployments": {
+								"type": "object",
+								"additionalProperties": true
+							},
+							"models": {
+								"type": "object",
+								"additionalProperties": true
+							},
+							"routes": {
+								"type": "object",
+								"additionalProperties": true
+							}
+						}
 					},
 					"schedule": {
 						"type": "array",
-						"description": "The dated states in which deployments of this part differ from `deployments`, oldest first. Each lists in full the deployments that differ during it, and starts at a `start` of the root's `schedule`.",
+						"description": "The dated states in which records of this part differ from `graph`, oldest first. Each lists in full the records that differ during it, and starts at a `start` of the root's `schedule`.",
 						"items": {
 							"type": "object",
 							"required": [
 								"start",
-								"deployments"
+								"graph"
 							],
 							"additionalProperties": false,
 							"properties": {
@@ -1195,88 +1296,16 @@
 									"type": "string",
 									"format": "date-time"
 								},
-								"deployments": {
+								"graph": {
 									"type": "object",
 									"additionalProperties": true
 								}
 							}
 						}
-					}
-				}
-			},
-			"CatalogArchiveIndexResponse": {
-				"type": "object",
-				"description": "The archive's index: a summary of each archived deployment and model, and the archive part that holds it.",
-				"required": [
-					"schema",
-					"deployments",
-					"models"
-				],
-				"additionalProperties": false,
-				"properties": {
+					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.archive.index.v1"
-					},
-					"deployments": {
-						"type": "object",
-						"additionalProperties": {
-							"$ref": "#/components/schemas/CatalogDeploymentSummary"
-						}
-					},
-					"models": {
-						"type": "object",
-						"additionalProperties": {
-							"type": "object",
-							"required": [
-								"aliases",
-								"part",
-								"retirementDate"
-							],
-							"additionalProperties": false,
-							"properties": {
-								"aliases": {
-									"type": "array",
-									"items": {
-										"type": "string"
-									}
-								},
-								"part": {
-									"type": "integer",
-									"minimum": 0,
-									"description": "Index in `archive.parts` of the part that holds the model."
-								},
-								"retirementDate": {
-									"type": "string",
-									"format": "date",
-									"description": "The day its last deployment retired."
-								}
-							}
-						}
-					}
-				}
-			},
-			"CatalogArchivePartResponse": {
-				"type": "object",
-				"description": "A part of the archive: archived deployments and models in full, each as it was on the day before it retired.",
-				"required": [
-					"schema",
-					"deployments",
-					"models"
-				],
-				"additionalProperties": false,
-				"properties": {
-					"schema": {
-						"type": "string",
-						"const": "stogas.catalog.archive.part.v1"
-					},
-					"deployments": {
-						"type": "object",
-						"additionalProperties": true
-					},
-					"models": {
-						"type": "object",
-						"additionalProperties": true
+						"const": "stogas.catalog.part.v9"
 					}
 				}
 			},
