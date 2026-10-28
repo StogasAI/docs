@@ -106,6 +106,33 @@ The gateway accepts only tool versions with a price in the catalog. An unknown v
 Prices, versions and rules for each provider are on the
 [OpenAI](/docs/providers/openai#tools) and [Anthropic](/docs/providers/anthropic#tools) pages.
 
+### Domain filters
+
+`web_search` and `web_fetch` take `filters.allowed_domains`, `filters.blocked_domains` or both:
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "What changed in the latest Go release?",
+	"tools": [
+		{
+			"type": "web_search",
+			"filters": {
+				"allowed_domains": ["go.dev", "github.com"],
+				"blocked_domains": ["gist.github.com"] // A subdomain of an allowed domain stays blocked.
+			}
+		}
+	]
+}
+```
+
+- Each entry is a bare domain, such as `go.dev`, and also covers its subdomains. A scheme, path or
+  wildcard returns `400`.
+- Anthropic returns `400` for both lists in one tool. `web_search_preview` takes no filters.
+- The gateway checks every source, citation and fetched page in the response against the filters,
+  and returns `502` instead of a response that breaks them.
+- A block list covers only the domains it names. Copies of a site on other domains can still appear.
+
 ### Holds for hosted tools
 
 Hosted tools can make many calls in one request, so the [hold](/docs/usage#how-a-request-is-charged)
