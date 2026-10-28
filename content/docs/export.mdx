@@ -87,8 +87,11 @@ Each record is the request record with these fields added:
 
 - Requests that fail before the gateway selects a deployment have no record.
 - A rejected request costs nothing, so its record has `"request": null` and the error in
-  `response`. Only rejections that keep their own [request record](#find-missing-records) are
-  exported.
+  `response`. Repeated rejections are exported as their
+  [request records](/docs/request-records#grouped-rejections) are kept: the first five in a group
+  each at once, and the rest in one record with their `request_count` when the minute ends. That
+  record has the `response` and `stogas` object of the first rejection that it counts, and goes to
+  that rejection's destinations.
 - If the client disconnects, the provider still finishes, and the record has the whole output and
   final usage.
 - The record never contains API keys, provider credentials or webhook headers. Your prompt text is
@@ -122,6 +125,5 @@ To find records that did not arrive, compare the `request_id` values that your r
 with the [request records](/docs/request-records) of the requests that your export policies cover.
 The record of each request that ran has a `plugins.stogas_export` entry, even when the gateway
 dropped its export. Its `duration_us` is the time that export added to the request, mostly to
-describe attached files. Rejections have no plugin entries. Repeated ones are
-[grouped](/docs/request-records#grouped-rejections): only the first five in each group have records
-of their own, and only those are exported.
+describe attached files. Rejections have no plugin entries, and each of their records is exported,
+including the [grouped](/docs/request-records#grouped-rejections) record of repeated ones.
