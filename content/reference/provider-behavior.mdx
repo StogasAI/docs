@@ -35,7 +35,11 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
 
 ## Fields that the gateway changes
 
-- Unknown top-level fields and unknown headers are ignored, and never sent to the provider.
+- An unknown top-level field returns `400` with the field in `param`, as on OpenAI. `null` counts as
+  omitted. Unknown headers are ignored, and no client header reaches the provider. `anthropic-beta`
+  returns `400`.
+- `client_metadata`, which Codex sends with each Responses request, is accepted and never sent to
+  the provider.
 - `null`, and the defaults that SDKs send, such as `n: 1` or a plain-text `response_format`, count
   as omitted. So do `parallel_tool_calls`, and `tool_choice` set to `auto` or `none`, in a request
   without tools.

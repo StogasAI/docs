@@ -40,9 +40,10 @@ that make many tool calls in quick succession. OpenAI's Scale tier is not availa
 
 ## Output limit
 
-OpenAI requires at least 16 output tokens. The gateway raises a `max_output_tokens` or
-`max_completion_tokens` from 1 to 15 to 16, and the hold covers the raised value. Zero is rejected.
-On Chat Completions, `max_tokens` is another name for `max_completion_tokens`.
+On Responses, OpenAI requires a `max_output_tokens` of at least 16, and the gateway returns
+`400 parameter_limit_exceeded` for a smaller value. On Chat Completions, `max_completion_tokens` can be
+as low as 1, and `max_tokens` is another name for it. The gateway sends the limit as you set it, and
+the hold covers that limit. Zero returns `400`. Azure OpenAI has the same limits.
 
 ## Reasoning models
 
@@ -126,9 +127,11 @@ GPT-5.6 Cyber (`gpt-5.6-cyber`) is for organizations that OpenAI has approved fo
 runs only on Responses, and only with an API key from a project that has Daybreak Red access.
 Without access, OpenAI returns `404`.
 
-The gateway does not send `access_programs`, so OpenAI chooses the program from your project's
-access: Daybreak Red on `gpt-5.6-cyber`, and Daybreak Blue on mainline models such as `gpt-6-sol`
-when your project has it. Daybreak does not turn on zero data retention.
+Without `access_programs`, OpenAI chooses the program from your project's access: Daybreak Red on
+`gpt-5.6-cyber`, and Daybreak Blue on mainline models such as `gpt-6-sol` when your project has it.
+To choose, send `access_programs.cyber` on Responses as `standard`, `daybreak_blue` or
+`daybreak_red`; the gateway sends it to OpenAI unchanged. Azure OpenAI and Claude return `400` for a
+chosen program. Daybreak does not turn on zero data retention.
 
 When OpenAI's cyber safeguards block a request or suspend access, the error has code `cyber_policy`
 and status `400`. In a stream, it can arrive as an error event after output has started.

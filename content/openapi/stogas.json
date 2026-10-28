@@ -1416,8 +1416,8 @@
 			},
 			"ChatCompletionRequest": {
 				"type": "object",
-				"description": "Request body. The gateway ignores unknown top-level fields and never forwards them. See [Compatibility notes](/docs/reference/provider-behavior).",
-				"additionalProperties": true,
+				"description": "Request body. An unknown top-level field returns `400` with the field in `param`; `null` counts as omitted. See [Compatibility notes](/docs/reference/provider-behavior).",
+				"additionalProperties": false,
 				"required": [
 					"messages"
 				],
@@ -2210,8 +2210,8 @@
 			},
 			"ResponsesRequest": {
 				"type": "object",
-				"description": "Request body. The gateway ignores unknown top-level fields and never forwards them. See [Compatibility notes](/docs/reference/provider-behavior).",
-				"additionalProperties": true,
+				"description": "Request body. An unknown top-level field returns `400` with the field in `param`; `null` counts as omitted. See [Compatibility notes](/docs/reference/provider-behavior).",
+				"additionalProperties": false,
 				"required": [
 					"input"
 				],
@@ -2466,6 +2466,41 @@
 							"null"
 						],
 						"description": "The older name for an end-user ID. Your own OpenAI and Azure OpenAI credentials receive it when it has at most 64 characters, and Anthropic models receive it as `metadata.user_id` when `safety_identifier` is absent. The gateway removes it for Chutes and with a Stogas-managed credential."
+					},
+					"access_programs": {
+						"type": [
+							"object",
+							"null"
+						],
+						"description": "OpenAI's cyber access program for this request. OpenAI deployments only: another provider returns `400` for a selected program. Without it, OpenAI picks the program from the model and your project's access. Daybreak programs need OpenAI's approval for the project of your own OpenAI credential.",
+						"properties": {
+							"cyber": {
+								"type": [
+									"string",
+									"null"
+								],
+								"enum": [
+									"standard",
+									"daybreak_blue",
+									"daybreak_red",
+									null
+								]
+							}
+						},
+						"additionalProperties": false
+					},
+					"client_metadata": {
+						"type": [
+							"object",
+							"null"
+						],
+						"description": "Client details that Codex sends with each request. The gateway accepts them and never sends them to the provider.",
+						"additionalProperties": {
+							"type": [
+								"string",
+								"null"
+							]
+						}
 					},
 					"prompt_cache_options": {
 						"type": "object",

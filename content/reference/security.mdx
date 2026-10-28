@@ -22,12 +22,14 @@ Do not put a key with wide permissions in public browser code. Give browsers a k
 
 ## Request handling
 
-- Unknown top-level JSON fields and unknown headers are ignored, so OpenAI SDKs keep working. They
-  are never forwarded to a provider.
-- A known field that the selected deployment cannot accept returns `400` before any charge. `null`
-  and the empty defaults that SDKs send count as omitted.
+- An unknown top-level JSON field returns `400` before any charge, as on OpenAI and Anthropic, so a
+  field that the gateway cannot honor is never dropped without notice.
+- A known field that the selected deployment cannot accept also returns `400` before any charge.
+  `null` and the empty defaults that SDKs send count as omitted.
+- Unknown headers are ignored, as HTTP asks, so SDK, proxy and tracing headers keep working.
 - Client headers are never forwarded to providers, and provider headers are never returned.
-- Headers that start with `x-stogas-` or `x-bf-` are rejected.
+- Headers that start with `x-stogas-` or `x-bf-` are rejected, and so is `anthropic-beta`, because
+  it asks for Claude features that the gateway enables from request fields instead.
 - The gateway never downloads attachments. Providers download file URLs themselves.
 
 ## Limits
