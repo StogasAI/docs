@@ -1,7 +1,8 @@
 ---
 title: Create an invite
-description: An invite lasts 7 days and has one use unless you set
-  expiresInSeconds or maxUses. Until it expires, each unused use holds a seat.
+description: An invite has one use unless you set maxUses. It lasts until its
+  uses run out or a member deletes it, or until expiresInSeconds passes if you
+  set it. Until then, each unused use holds a seat.
 full: true
 _openapi:
   preload:
@@ -12,8 +13,9 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: An invite lasts 7 days and has one use unless you set expiresInSeconds
-          or maxUses. Until it expires, each unused use holds a seat.
+      - content: An invite has one use unless you set maxUses. It lasts until its uses
+          run out or a member deletes it, or until expiresInSeconds passes if
+          you set it. Until then, each unused use holds a seat.
 ---
 
 export default function Layout(props) {

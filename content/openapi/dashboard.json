@@ -9431,6 +9431,18 @@
 																"type": "null"
 															}
 														]
+													},
+													"suspendedUsd": {
+														"anyOf": [
+															{
+																"type": "string",
+																"maxLength": 78,
+																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+															},
+															{
+																"type": "null"
+															}
+														]
 													}
 												},
 												"required": [
@@ -9446,7 +9458,8 @@
 													"receivedAt",
 													"settledAt",
 													"status",
-													"pendingUsd"
+													"pendingUsd",
+													"suspendedUsd"
 												],
 												"additionalProperties": false
 											}
@@ -10093,6 +10106,18 @@
 																"type": "null"
 															}
 														]
+													},
+													"suspendedUsd": {
+														"anyOf": [
+															{
+																"type": "string",
+																"maxLength": 78,
+																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+															},
+															{
+																"type": "null"
+															}
+														]
 													}
 												},
 												"required": [
@@ -10108,7 +10133,8 @@
 													"receivedAt",
 													"settledAt",
 													"status",
-													"pendingUsd"
+													"pendingUsd",
+													"suspendedUsd"
 												],
 												"additionalProperties": false
 											}
@@ -11027,6 +11053,7 @@
 														"enum": [
 															"payment",
 															"release",
+															"suspension",
 															"refund",
 															"adjustment"
 														]
@@ -11168,8 +11195,15 @@
 														]
 													},
 													"expiresAt": {
-														"type": "string",
-														"format": "date-time"
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"id": {
 														"type": "string",
@@ -11244,7 +11278,7 @@
 					"Invites"
 				],
 				"summary": "Create an invite",
-				"description": "An invite lasts 7 days and has one use unless you set expiresInSeconds or maxUses. Until it expires, each unused use holds a seat.",
+				"description": "An invite has one use unless you set maxUses. It lasts until its uses run out or a member deletes it, or until expiresInSeconds passes if you set it. Until then, each unused use holds a seat.",
 				"security": [
 					{
 						"accessToken": [
@@ -11317,8 +11351,15 @@
 											"minLength": 1
 										},
 										"expiresAt": {
-											"type": "string",
-											"format": "date-time"
+											"anyOf": [
+												{
+													"type": "string",
+													"format": "date-time"
+												},
+												{
+													"type": "null"
+												}
+											]
 										},
 										"id": {
 											"type": "string",
