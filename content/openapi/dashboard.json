@@ -11739,11 +11739,6 @@
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 9007199254740991
-										},
-										"heldSeats": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 9007199254740991
 										}
 									},
 									"required": [
@@ -11755,8 +11750,7 @@
 										"reservedInviteUses",
 										"retrievedAt",
 										"rolesManagerCount",
-										"seatLimit",
-										"heldSeats"
+										"seatLimit"
 									],
 									"additionalProperties": false
 								}
@@ -11776,7 +11770,7 @@
 					"Members"
 				],
 				"summary": "Remove members",
-				"description": "Deletes the keys they made from grants and the invites they created. A removed member who belongs to no other active organization fills a seat until they join one or delete their account.",
+				"description": "Deletes the keys they made from grants and the invites they created, and frees their seats.",
 				"security": [
 					{
 						"accessToken": [
