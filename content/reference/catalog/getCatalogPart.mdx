@@ -1,0 +1,31 @@
+---
+title: Catalog file
+description: "Returns a file that the active catalog's root names: a part, which
+  holds deployments in full with their routes, prices and scheduled changes, or
+  the archive's index or one of its parts. `/v1/catalog` names each file by
+  SHA-256, and a file's bytes never change."
+full: true
+_openapi:
+  preload:
+    - stogas
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: "Returns a file that the active catalog's root names: a part, which
+          holds deployments in full with their routes, prices and scheduled
+          changes, or the archive's index or one of its parts. `/v1/catalog`
+          names each file by SHA-256, and a file's bytes never change."
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="stogas" operations={[{ path: '/v1/catalog/parts/{sha256}', method: 'get' }]} />
+    </>
+  );
+}

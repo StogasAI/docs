@@ -11,7 +11,7 @@ for (const pathname of [
 	'/v1/chat/completions',
 	'/v1/responses',
 	'/v1/catalog',
-	'/v1/catalog/archive/{sha256}',
+	'/v1/catalog/parts/{sha256}',
 	'/v1/models'
 ]) {
 	if (!jsonObject(spec.paths)?.[pathname]) errors.push(`OpenAPI is missing ${pathname}.`);
@@ -49,12 +49,13 @@ if (
 		typeof catalog.publicDigest !== 'string' ||
 		!Number.isSafeInteger(catalog.sequence) ||
 		!jsonObject(catalog.graph)?.routes ||
+		!Array.isArray(catalog.parts) ||
 		(catalog.archive !== null && !jsonObject(catalog.archive)) ||
 		!Array.isArray(catalog.schedule) ||
 		!Array.isArray(catalog.periods))
 ) {
 	errors.push(
-		'/v1/catalog example must expose sequence, runtime/public digests, the archive, the graph, schedule and periods.'
+		'/v1/catalog example must expose sequence, runtime/public digests, the archive, the graph, parts, schedule and periods.'
 	);
 }
 if (errors.length) throw new Error(`OpenAPI validation failed:\n- ${errors.join('\n- ')}`);
