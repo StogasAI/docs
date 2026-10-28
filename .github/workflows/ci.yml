@@ -14,6 +14,9 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      # Stogas builds pass the real onion hosts. These stand-ins let the onion link test run.
+      NEXT_PUBLIC_STOGAS_ONION_HOSTS: '{"staging":{"marketing":"website.onion","app":"dashboard.onion"}}'
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         with:
