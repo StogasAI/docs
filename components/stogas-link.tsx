@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 type Environment = 'development' | 'localhost' | 'staging' | 'production';
 type Segment = 'marketing' | 'app' | 'api';
 type Deployment = Record<Segment, string>;
-type Page = { environment: Environment; onion: boolean };
+type Page = { environment: Environment; onion: boolean; segment?: Segment };
 const ENVIRONMENTS: readonly Environment[] = ['development', 'localhost', 'staging', 'production'];
 const SEGMENTS: readonly Segment[] = ['marketing', 'app', 'api'];
 
@@ -99,6 +99,8 @@ function rewriteStogasUrl(href: string, page: Page): string {
 
 	const target = HOST_TO_SEGMENT.get(url.hostname.toLowerCase());
 	if (!target) return href;
+	// A link to the page's own host stays relative, so it works on every address without JavaScript.
+	if (target.segment === page.segment) return `${url.pathname}${url.search}${url.hash}`;
 	// Onion pages use plain HTTP, because Tor encrypts the connection.
 	const onion = page.onion ? ONION_HOSTS[page.environment]?.[target.segment] : undefined;
 	url.protocol = onion ? 'http:' : 'https:';
@@ -107,10 +109,24 @@ function rewriteStogasUrl(href: string, page: Page): string {
 	return url.toString();
 }
 
+/** The website path that redirects to the dashboard of the website's own environment. */
+const WEBSITE_DASHBOARD_PATH = '/trust';
+
+/**
+ * Docs is served on the website's host, so HTML rendered before JavaScript links through it: to
+ * website pages relatively, and to the dashboard through the website's redirect, which the onion
+ * relay rewrites to the onion dashboard.
+ */
 function getInitialStogasHref(href: string | undefined): string | undefined {
-	return href
-		? rewriteStogasUrl(href, { environment: getFallbackEnvironment(), onion: false })
-		: href;
+	if (!href) return href;
+	const url = URL.canParse(href) ? new URL(href) : undefined;
+	if (url?.pathname === '/' && HOST_TO_SEGMENT.get(url.hostname.toLowerCase())?.segment === 'app')
+		return `${WEBSITE_DASHBOARD_PATH}${url.search}${url.hash}`;
+	return rewriteStogasUrl(href, {
+		environment: getFallbackEnvironment(),
+		onion: false,
+		segment: 'marketing'
+	});
 }
 
 function resolveStogasHref(href: string | undefined): string | undefined {
@@ -144,6 +160,8 @@ export function StogasLink({
 	return (
 		<Link
 			{...props}
+			// The written address decides, so a website link made relative still leaves Docs as before.
+			external={!!href && (/^\w+:/.test(href) || href.startsWith('//'))}
 			href={resolvedHref}
 			onClick={(event) => {
 				syncHref(event);
