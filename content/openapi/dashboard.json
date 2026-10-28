@@ -59,7 +59,7 @@
 					"Account"
 				],
 				"summary": "Get your account",
-				"description": "An account that never sent a payment or joined an active organization is deleted at expiresAt.",
+				"description": "An account that never sent a payment or joined an active organization is deleted at expiresAt. In payerLimit, usedUsd is what payments to your deposit addresses added in the last 24 hours, across organizations, and moreAvailableAt is when the earliest of them stops counting.",
 				"security": [
 					{
 						"accessToken": []
@@ -83,10 +83,43 @@
 													"type": "null"
 												}
 											]
+										},
+										"payerLimit": {
+											"type": "object",
+											"properties": {
+												"limitUsd": {
+													"type": "string",
+													"maxLength": 78,
+													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+												},
+												"usedUsd": {
+													"type": "string",
+													"maxLength": 78,
+													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+												},
+												"moreAvailableAt": {
+													"anyOf": [
+														{
+															"type": "string",
+															"format": "date-time"
+														},
+														{
+															"type": "null"
+														}
+													]
+												}
+											},
+											"required": [
+												"limitUsd",
+												"usedUsd",
+												"moreAvailableAt"
+											],
+											"additionalProperties": false
 										}
 									},
 									"required": [
-										"expiresAt"
+										"expiresAt",
+										"payerLimit"
 									],
 									"additionalProperties": false
 								}
@@ -8951,47 +8984,69 @@
 													"maxLength": 78,
 													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 												},
-												"organizationLimitUsd": {
-													"type": "string",
-													"maxLength": 78,
-													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-												},
-												"organizationAvailableUsd": {
-													"type": "string",
-													"maxLength": 78,
-													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-												},
-												"organizationMoreAvailableAt": {
-													"anyOf": [
-														{
+												"balance": {
+													"type": "object",
+													"properties": {
+														"limitUsd": {
 															"type": "string",
-															"format": "date-time"
+															"maxLength": 78,
+															"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 														},
-														{
-															"type": "null"
-														}
-													]
-												},
-												"userLimitUsd": {
-													"type": "string",
-													"maxLength": 78,
-													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-												},
-												"userAvailableUsd": {
-													"type": "string",
-													"maxLength": 78,
-													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-												},
-												"userMoreAvailableAt": {
-													"anyOf": [
-														{
+														"usedUsd": {
 															"type": "string",
-															"format": "date-time"
+															"maxLength": 78,
+															"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 														},
-														{
-															"type": "null"
+														"moreAvailableAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
 														}
-													]
+													},
+													"required": [
+														"limitUsd",
+														"usedUsd",
+														"moreAvailableAt"
+													],
+													"additionalProperties": false
+												},
+												"payer": {
+													"type": "object",
+													"properties": {
+														"limitUsd": {
+															"type": "string",
+															"maxLength": 78,
+															"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+														},
+														"usedUsd": {
+															"type": "string",
+															"maxLength": 78,
+															"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+														},
+														"moreAvailableAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														}
+													},
+													"required": [
+														"limitUsd",
+														"usedUsd",
+														"moreAvailableAt"
+													],
+													"additionalProperties": false
 												},
 												"pendingUsd": {
 													"type": "string",
@@ -9001,12 +9056,8 @@
 											},
 											"required": [
 												"debtUsd",
-												"organizationLimitUsd",
-												"organizationAvailableUsd",
-												"organizationMoreAvailableAt",
-												"userLimitUsd",
-												"userAvailableUsd",
-												"userMoreAvailableAt",
+												"balance",
+												"payer",
 												"pendingUsd"
 											],
 											"additionalProperties": false
@@ -9394,6 +9445,9 @@
 															"wallet"
 														]
 													},
+													"payerIsViewer": {
+														"type": "boolean"
+													},
 													"providerHold": {
 														"type": "boolean"
 													},
@@ -9454,6 +9508,7 @@
 													"id",
 													"method",
 													"provider",
+													"payerIsViewer",
 													"providerHold",
 													"receivedAt",
 													"settledAt",
@@ -10069,6 +10124,9 @@
 															"wallet"
 														]
 													},
+													"payerIsViewer": {
+														"type": "boolean"
+													},
 													"providerHold": {
 														"type": "boolean"
 													},
@@ -10129,6 +10187,7 @@
 													"id",
 													"method",
 													"provider",
+													"payerIsViewer",
 													"providerHold",
 													"receivedAt",
 													"settledAt",
