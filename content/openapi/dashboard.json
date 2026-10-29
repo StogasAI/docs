@@ -544,6 +544,22 @@
 															"requests.export.requested"
 														]
 													},
+													"refusal": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"permission",
+																	"policy",
+																	"read_only_token"
+																]
+															},
+															{
+																"type": "null"
+															}
+														],
+														"description": "Null when the change happened. Otherwise why Control refused the attempt, which changed nothing."
+													},
 													"targetIds": {
 														"maxItems": 10000,
 														"type": "array",
@@ -572,6 +588,7 @@
 													"actorTokenName",
 													"createdAt",
 													"action",
+													"refusal",
 													"targetIds",
 													"targetNames"
 												],
@@ -830,6 +847,22 @@
 												"requests.export.requested"
 											]
 										},
+										"refusal": {
+											"anyOf": [
+												{
+													"type": "string",
+													"enum": [
+														"permission",
+														"policy",
+														"read_only_token"
+													]
+												},
+												{
+													"type": "null"
+												}
+											],
+											"description": "Null when the change happened. Otherwise why Control refused the attempt, which changed nothing."
+										},
 										"targetIds": {
 											"maxItems": 10000,
 											"type": "array",
@@ -879,6 +912,7 @@
 										"actorTokenName",
 										"createdAt",
 										"action",
+										"refusal",
 										"targetIds",
 										"targetNames",
 										"changes"

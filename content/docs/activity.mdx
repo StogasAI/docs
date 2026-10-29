@@ -12,6 +12,19 @@ Names are saved with each event, so renaming or deleting a resource does not era
 Open an event to see each changed field with its values before and after, and the IDs of the
 member, access token and resources involved.
 
+## Refused attempts
+
+Activity also records a member's attempt that was refused and changed nothing, when:
+
+- the member's roles do not allow it,
+- a parent policy does not let the policy set a section, or
+- the access token can only read.
+
+The event names the change that was attempted, marks it **Refused** and gives the reason. It names
+the resources that the request named, even IDs that do not exist in the organization. Attempts that
+fail for other reasons, such as invalid input or a missing resource, are not recorded. Neither are
+attempts by people outside the organization, or with an access token that does not cover it.
+
 ## Filters
 
 Text in the query bar matches member, access token and resource names and IDs, and event names.
@@ -23,6 +36,7 @@ Combine filters with spaces, `OR`, `NOT` and parentheses, and quote values that 
 | `actor:`    | The member who made the change, by part of their name or by their ID. `actor=` matches the whole name.           |
 | `token:`    | The access token used, by part of its name or by its ID. `token=` matches the whole name.                        |
 | `resource:` | A changed resource, by part of its name or by its ID. `resource=` matches the whole name.                        |
+| `outcome:`  | `outcome:refused` matches refused attempts, and `outcome:succeeded` matches changes that happened.               |
 | `time`      | A UTC time compared with `>`, `>=`, `<` or `<=`, such as `time>=2026-10-01`. `time:2026-10-01` matches that day. |
 
 `!=` excludes a value, such as `action!=key.updated`. Names match in any case. For example,
@@ -55,6 +69,8 @@ Events are kept for one year. **Export** counts the events that match your filte
 downloads them as CSV or NDJSON with every change. CSV keeps lists, names and changes as JSON text,
 and puts an apostrophe before text that a spreadsheet would run as a formula, such as `=SUM(A1)`.
 An export holds at most 50,000 events and 64 MiB; narrow the filters if it is larger.
+For a change that happened, `refusal` is `null`, or empty in CSV. For a refused attempt it is
+`permission`, `policy` or `read_only_token`.
 
 Activity is operational history. Delivery can be delayed or interrupted, so it is not a
 guaranteed complete compliance record or a backup of every policy version.
