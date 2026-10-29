@@ -23,14 +23,16 @@ and scheduled changes. [`/v1/catalog/parts/{sha256}`](/docs/reference/catalog/ge
 returns the parts that the root names, which hold models, routes and deployments in full with their
 prices. These endpoints are public.
 
-Select **Include retired** in the web catalog to see retired models. A deployment's retirement date
-is the date that its provider names for its shutdown. The provider can mean the start or the end of
-that date in any time zone, so the gateway sends the deployment requests until the date has ended
-everywhere, at 12:00 UTC on the next day. A model retires with its last deployment. Retired
+Select **Include retired** in the web catalog to see retired models. A deployment, a route or a
+provider can have a retirement date: the date that the provider names for the shutdown of a model,
+of an API or of its whole service. The provider can mean the start or the end of that date in any
+time zone, so the gateway sends requests until the date has ended everywhere, at 12:00 UTC on the
+next day. A deployment stops receiving requests through a route once the route's date has ended,
+and retires once its routes have all retired. A model retires with its last deployment. Retired
 deployments keep their pages but cannot receive requests: a request that names one gets
-`model_retired` with its retirement date. A request that reaches a provider after it stops gets the
-provider's error. Policies keep the IDs of retired and unlisted models, which match nothing; the
-policy editor warns about them.
+`model_retired` with its retirement date. A request that reaches a provider after it stops tries
+the next deployment as a [fallback](/docs/policies/routing#retries-and-fallbacks). Policies keep
+the IDs of retired and unlisted models, which match nothing; the policy editor warns about them.
 
 Some deployments work only for accounts that the provider has approved: GPT-5.6 Cyber on
 [OpenAI](/docs/providers/openai#models-that-need-approval), Claude Mythos on

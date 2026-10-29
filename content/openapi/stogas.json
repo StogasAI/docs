@@ -1136,7 +1136,7 @@
 					"null"
 				],
 				"format": "date",
-				"description": "The date on which the provider retires the record, as the provider names it, or `null` while there is none. The provider can mean the start or the end of the date in any time zone, so the gateway serves the record until the date has ended everywhere, at 12:00 UTC on the next day. A deployment's date comes from its provider; a model or a route retires with the last of its deployments, a provider with its routes, an author with its models and a group with the models in it, once all of them have dates."
+				"description": "The date on which the record retires, or `null` while there is none. The provider can name one for a deployment, a route or itself, and can mean the start or the end of the date in any time zone, so the gateway serves the record until the date has ended everywhere, at 12:00 UTC on the next day. A provider's date ends each of its routes, and a deployment retires once its routes have all retired. Any record retires with the last of the records it exists for, once all of them have dates: a model or a route with its deployments, a provider with its routes, an author with its models and a group with the models in it."
 			},
 			"CatalogModelSummary": {
 				"type": "object",

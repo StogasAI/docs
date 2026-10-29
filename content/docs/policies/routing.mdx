@@ -186,7 +186,7 @@ The failure decides the next step:
 | Failure                                | Examples                                                                                                 | Next step                                  |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
 | Another call can succeed               | A lost connection, or a `408`, `409`, `429` or `5xx` response                                            | A retry. With no retries left, a fallback. |
-| The candidate cannot serve the request | A `401`, `402`, `403` or `404` response, or a provider account out of credit                             | A fallback.                                |
+| The candidate cannot serve the request | A `401`, `402`, `403`, `404` or `410` response, a retired model, or a provider account out of credit     | A fallback.                                |
 | The gateway refuses the candidate      | A [limit](/docs/policies/limits), your balance, or a credential that is disabled, expired or unavailable | A fallback, which can cost less.           |
 | The request cannot succeed             | Other `4xx` responses, such as an invalid request, a prompt that is too long, or a content filter        | The request ends with the error.           |
 
