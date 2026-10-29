@@ -72,14 +72,18 @@ copy of the evidence cannot undo it.
 The Trust Center on the dashboard **Overview** shows the current evidence and its transparency
 history, checked in your browser with the same verifier.
 
-The **Revision** card shows the signature and **Rekor proof** of the current evidence document.
+Each row on a card holds one part of `evidence/latest.json`, and together the rows hold the whole
+file, each part once. The **Revision** card's header shows the document's revision, schema and
+environment, and its rows hold the signature over the whole document and its **Rekor entry**.
 Rekor logs the hash of the whole signed document, so this one entry covers the exact contents of
 every catalog, gateway release, hardware policy and Sigstore key below it. The key manifest and
-each GitHub build proof have their own Rekor entries. We approve a release only after our own build
-matches GitHub's, but our signature cannot prove that this build happened; to check a release
-yourself, see [Reproducible builds](/docs/reproducible-builds). AMD signs its own certificates and
-revocation lists, so they need no Rekor entry; [Revocation](#revocation) explains how their expiry
-limits an older list. Each Rekor link opens in [Rekor Search](https://search.sigstore.dev).
+each GitHub build proof have their own Rekor entries. Staging releases are built without GitHub, so
+in their place a **Build placeholder** lists the release's files. We approve a release only after
+our own build matches GitHub's, but our signature cannot prove that this build happened; to check a
+release yourself, see [Reproducible builds](/docs/reproducible-builds). AMD signs its own
+certificates and revocation lists, so they need no Rekor entry; [Revocation](#revocation) explains
+how their expiry limits an older list. Each Rekor entry links its log index in
+[Rekor Search](https://search.sigstore.dev).
 
 The history has a tab for each kind of record:
 
@@ -87,7 +91,7 @@ The history has a tab for each kind of record:
   including the launch measurement. **Signed JSON** shows the original document.
 - **Catalogs**, **Gateway releases** and **Hardware policies**, each linked to the Rekor proof of
   the evidence revision that listed it.
-- **Key manifests** and **Evidence**, each with its own Rekor proof.
+- **Key manifests** and **Evidence**, each with its own Rekor entry.
 
 Each card has one mark that shows that its evidence passed verification. Hover over or focus the
 mark to see how long the check took. Search each history tab by name, version or SHA-256.
