@@ -4121,7 +4121,8 @@
 						"required": [
 							"deny"
 						],
-						"additionalProperties": false
+						"additionalProperties": false,
+						"description": "Weekly periods when the gateway refuses requests."
 					},
 					"input": {
 						"type": "object",
@@ -4134,7 +4135,8 @@
 						"required": [
 							"asciiOnly"
 						],
-						"additionalProperties": false
+						"additionalProperties": false,
+						"description": "Checks on request text before redaction."
 					},
 					"plugins": {
 						"anyOf": [
@@ -4338,7 +4340,8 @@
 								],
 								"additionalProperties": false
 							}
-						]
+						],
+						"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt their settings to keep them private."
 					},
 					"routing": {
 						"type": "object",
@@ -4460,7 +4463,8 @@
 							}
 						},
 						"additionalProperties": false,
-						"minProperties": 1
+						"minProperties": 1,
+						"description": "Which deployments and credentials requests may use and in which order, and how often a request retries or falls back."
 					},
 					"rules": {
 						"minProperties": 1,
@@ -4547,7 +4551,8 @@
 									"required": [
 										"deny"
 									],
-									"additionalProperties": false
+									"additionalProperties": false,
+									"description": "Weekly periods when the gateway refuses requests."
 								},
 								"input": {
 									"type": "object",
@@ -4560,7 +4565,8 @@
 									"required": [
 										"asciiOnly"
 									],
-									"additionalProperties": false
+									"additionalProperties": false,
+									"description": "Checks on request text before redaction."
 								},
 								"plugins": {
 									"anyOf": [
@@ -4764,7 +4770,8 @@
 											],
 											"additionalProperties": false
 										}
-									]
+									],
+									"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt their settings to keep them private."
 								},
 								"routing": {
 									"type": "object",
@@ -4886,7 +4893,8 @@
 										}
 									},
 									"additionalProperties": false,
-									"minProperties": 1
+									"minProperties": 1,
+									"description": "Which deployments and credentials requests may use and in which order, and how often a request retries or falls back."
 								},
 								"when": {
 									"type": "string",
