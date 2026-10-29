@@ -1507,7 +1507,7 @@
 													"maxKeysPerMember": {
 														"type": "integer",
 														"minimum": 1,
-														"maximum": 100
+														"maximum": 10000
 													},
 													"name": {
 														"type": "string",
@@ -1740,7 +1740,7 @@
 													"maxKeysPerMember": {
 														"type": "integer",
 														"minimum": 1,
-														"maximum": 100
+														"maximum": 10000
 													},
 													"name": {
 														"type": "string",
@@ -1913,7 +1913,7 @@
 										"default": 1,
 										"type": "integer",
 										"minimum": 1,
-										"maximum": 100
+										"maximum": 10000
 									},
 									"name": {
 										"type": "string",
@@ -2163,7 +2163,7 @@
 									"maxKeysPerMember": {
 										"type": "integer",
 										"minimum": 1,
-										"maximum": 100
+										"maximum": 10000
 									},
 									"name": {
 										"type": "string",
@@ -2263,6 +2263,133 @@
 									"required": [
 										"deletedIds",
 										"deletedKeyIds"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/grants/{grantId}/members": {
+			"get": {
+				"operationId": "listGrantMembers",
+				"tags": [
+					"Grants"
+				],
+				"summary": "List the members of a grant",
+				"description": "Lists the members who may create keys from the grant, with their keys from it.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "grantId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					},
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100
+						}
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"items": {
+											"maxItems": 100,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"displayName": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"keyCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"userId": {
+														"type": "string",
+														"format": "uuid"
+													}
+												},
+												"required": [
+													"displayName",
+													"keyCount",
+													"userId"
+												],
+												"additionalProperties": false
+											}
+										},
+										"nextCursor": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"filteredCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"total": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										}
+									},
+									"required": [
+										"items",
+										"nextCursor",
+										"filteredCount",
+										"total"
 									],
 									"additionalProperties": false
 								}
@@ -2998,7 +3125,7 @@
 														"type": "object",
 														"properties": {
 															"anthropic": {
-																"maxItems": 1001,
+																"maxItems": 10001,
 																"type": "array",
 																"items": {
 																	"type": "object",
@@ -3031,7 +3158,7 @@
 																}
 															},
 															"azure": {
-																"maxItems": 1001,
+																"maxItems": 10001,
 																"type": "array",
 																"items": {
 																	"type": "object",
@@ -3064,7 +3191,7 @@
 																}
 															},
 															"chutes": {
-																"maxItems": 1001,
+																"maxItems": 10001,
 																"type": "array",
 																"items": {
 																	"type": "object",
@@ -3097,7 +3224,7 @@
 																}
 															},
 															"openai": {
-																"maxItems": 1001,
+																"maxItems": 10001,
 																"type": "array",
 																"items": {
 																	"type": "object",
@@ -3999,7 +4126,7 @@
 								"type": "object",
 								"properties": {
 									"credentials": {
-										"maxItems": 1001,
+										"maxItems": 10001,
 										"type": "array",
 										"items": {
 											"type": "object",
@@ -4032,7 +4159,7 @@
 										}
 									},
 									"previous": {
-										"maxItems": 1001,
+										"maxItems": 10001,
 										"type": "array",
 										"items": {
 											"type": "object",
@@ -4564,6 +4691,44 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100
+						}
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
+						}
+					},
+					{
+						"name": "usable",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"const": "true"
+						}
 					}
 				],
 				"responses": {
@@ -4579,10 +4744,61 @@
 											"items": {
 												"$ref": "#/components/schemas/ByokCredential"
 											}
+										},
+										"nextCursor": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"filteredCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"manageableCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"total": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"organizationCount": {
+											"anyOf": [
+												{
+													"type": "integer",
+													"minimum": 0,
+													"maximum": 9007199254740991
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"organizationLimit": {
+											"anyOf": [
+												{
+													"type": "integer",
+													"exclusiveMinimum": 0,
+													"maximum": 9007199254740991
+												},
+												{
+													"type": "null"
+												}
+											]
 										}
 									},
 									"required": [
-										"items"
+										"items",
+										"nextCursor",
+										"filteredCount",
+										"manageableCount",
+										"total",
+										"organizationCount",
+										"organizationLimit"
 									],
 									"additionalProperties": false
 								}
@@ -4785,6 +5001,77 @@
 							"application/json": {
 								"schema": {
 									"$ref": "#/components/schemas/ByokCredential"
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/byok/selection": {
+			"get": {
+				"operationId": "selectByokCredentials",
+				"tags": [
+					"BYOK"
+				],
+				"summary": "Select BYOK credentials",
+				"description": "Returns the IDs of every credential that matches the filter, for a bulk change.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"ids": {
+											"maxItems": 1000,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											}
+										},
+										"enabledCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"dependentKeyCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										}
+									},
+									"required": [
+										"ids",
+										"enabledCount",
+										"dependentKeyCount"
+									],
+									"additionalProperties": false
 								}
 							}
 						}
@@ -11971,7 +12258,7 @@
 									"type": "object",
 									"properties": {
 										"items": {
-											"maxItems": 30,
+											"maxItems": 1000,
 											"type": "array",
 											"items": {
 												"type": "object",
@@ -12052,8 +12339,9 @@
 											}
 										},
 										"limit": {
-											"type": "number",
-											"const": 30
+											"type": "integer",
+											"exclusiveMinimum": 0,
+											"maximum": 9007199254740991
 										},
 										"retrievedAt": {
 											"type": "string",
@@ -12129,7 +12417,7 @@
 									},
 									"resourceScopes": {
 										"default": [],
-										"maxItems": 12500,
+										"maxItems": 21500,
 										"type": "array",
 										"items": {
 											"type": "object",
@@ -12557,7 +12845,7 @@
 										}
 									},
 									"resourceScopes": {
-										"maxItems": 12500,
+										"maxItems": 21500,
 										"type": "array",
 										"items": {
 											"type": "object",
@@ -12812,7 +13100,7 @@
 									},
 									"roleIds": {
 										"minItems": 1,
-										"maxItems": 30,
+										"maxItems": 1000,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -13922,7 +14210,7 @@
 						"type": "object",
 						"properties": {
 							"anthropic": {
-								"maxItems": 1001,
+								"maxItems": 10001,
 								"type": "array",
 								"items": {
 									"type": "object",
@@ -13955,7 +14243,7 @@
 								}
 							},
 							"azure": {
-								"maxItems": 1001,
+								"maxItems": 10001,
 								"type": "array",
 								"items": {
 									"type": "object",
@@ -13988,7 +14276,7 @@
 								}
 							},
 							"chutes": {
-								"maxItems": 1001,
+								"maxItems": 10001,
 								"type": "array",
 								"items": {
 									"type": "object",
@@ -14021,7 +14309,7 @@
 								}
 							},
 							"openai": {
-								"maxItems": 1001,
+								"maxItems": 10001,
 								"type": "array",
 								"items": {
 									"type": "object",
@@ -16138,45 +16426,7 @@
 					"maxKeysPerMember": {
 						"type": "integer",
 						"minimum": 1,
-						"maximum": 100
-					},
-					"members": {
-						"maxItems": 100,
-						"type": "array",
-						"items": {
-							"type": "object",
-							"properties": {
-								"displayName": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 100
-								},
-								"roleIds": {
-									"maxItems": 30,
-									"type": "array",
-									"items": {
-										"type": "string",
-										"format": "uuid"
-									}
-								},
-								"keyCount": {
-									"type": "integer",
-									"minimum": 0,
-									"maximum": 9007199254740991
-								},
-								"userId": {
-									"type": "string",
-									"format": "uuid"
-								}
-							},
-							"required": [
-								"displayName",
-								"roleIds",
-								"keyCount",
-								"userId"
-							],
-							"additionalProperties": false
-						}
+						"maximum": 10000
 					},
 					"name": {
 						"type": "string",
@@ -16213,7 +16463,6 @@
 					"expiresAt",
 					"id",
 					"maxKeysPerMember",
-					"members",
 					"name",
 					"organizationId",
 					"totalKeyCount",

@@ -1,0 +1,26 @@
+---
+title: List the members of a grant
+description: Lists the members who may create keys from the grant, with their keys from it.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Lists the members who may create keys from the grant, with their keys
+          from it.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/grants/{grantId}/members', method: 'get' }]} />
+    </>
+  );
+}
