@@ -95,14 +95,15 @@ for some failed calls. A free meter has a rate of `"0"`.
 
 ## Cost
 
-`usage` also has four amounts for the whole request:
+`usage` also has five amounts for the whole request:
 
-| Amount                     | Meaning                                                            |
-| -------------------------- | ------------------------------------------------------------------ |
-| `upstream_cost_usd`        | The sum of the priced meters: the provider cost at catalog rates.  |
-| `billed_cost_usd`          | What we charged. With [BYOK](/docs/byok), this is the 2% BYOK fee. |
-| `cache_read_savings_usd`   | What cache reads saved compared with ordinary input.               |
-| `cache_write_overhead_usd` | What cache writes cost above ordinary input.                       |
+| Amount                     | Meaning                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
+| `upstream_cost_usd`        | The sum of the priced meters: the provider cost at catalog rates.   |
+| `billed_cost_usd`          | What we charged. With [BYOK](/docs/byok), this is the 2% BYOK fee.  |
+| `tax_usd`                  | Sales tax on `billed_cost_usd`, or `"0"` where we don't collect it. |
+| `cache_read_savings_usd`   | What cache reads saved compared with ordinary input.                |
+| `cache_write_overhead_usd` | What cache writes cost above ordinary input.                        |
 
 For example, a cache write that costs $1.25 instead of $1 of input has $0.25 overhead.
 
