@@ -102,9 +102,12 @@ current evidence.
 
 ## Search Rekor yourself
 
-Every key manifest, evidence revision and boot record is in the public Rekor log. Each online
-signing key has a Rekor submission key, listed in the verified key manifest. Save that public key
-as `stogas-rekor-public.pem`, then use [rekor-cli](https://docs.sigstore.dev/logging/cli/):
+Every key manifest, evidence revision and boot record is in the public Rekor log. Our root's Rekor
+submission key logs key manifests, and the SDK has it built in with the root key. Each online
+signing key has its own submission key, listed in the verified key manifest, which logs evidence
+revisions and boot records. The SDK rejects an entry that any other key submitted, so a search with
+these keys covers every entry it accepts. Save a submission public key as
+`stogas-rekor-public.pem`, then use [rekor-cli](https://docs.sigstore.dev/logging/cli/):
 
 ```console
 rekor-cli search --rekor_server https://rekor.sigstore.dev \
@@ -117,4 +120,4 @@ Search with each key that was in use during the period you want to check.
 - Rekor's search index is best effort. An empty result does not prove that an entry does not exist.
 - A search result does not prove that we signed the document. Check the document's
   signature and its digest against the log entry.
-- The submission key only identifies who submitted an entry. It cannot approve anything.
+- A submission key cannot approve anything on its own. The SDK also requires our signature.

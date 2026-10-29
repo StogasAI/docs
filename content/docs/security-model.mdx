@@ -92,9 +92,9 @@ The SDK has our root key, Sigstore's root keys and AMD's root certificates built
 
 ### Root key
 
-Our root signs a key manifest that authorizes the online signing key. The key manifest expires 24
-hours after signing, and we renew it several times a day. Only the root can authorize or retire a
-signing key.
+Our root signs a key manifest that authorizes the online signing key and logs it to Rekor with the
+root's own submission key. The key manifest expires 24 hours after signing, and we renew it several
+times a day. Only the root can authorize or retire a signing key.
 
 </Step>
 <Step>

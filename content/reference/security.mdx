@@ -109,7 +109,9 @@ Key manifests, evidence documents and boot records share one format:
 - Each document names its schema. Release artifacts list their SHA-256 and size in bytes.
 - The signature covers the RFC 8785 canonical JSON of `document` with the purpose label
   `stogas signed document v1`. The final newline of a file is not signed.
-- Rekor logs the SHA-256 of the RFC 8785 canonical JSON of `{document, signature}`.
+- Rekor logs the SHA-512 of the RFC 8785 canonical JSON of `{document, signature}` in a
+  `hashedrekord` entry. The root's submission key logs key manifests, and the signing key's
+  submission key logs every other document. Entries from any other key are rejected.
 - Signatures are composite [ML-DSA-65 and Ed25519](https://datatracker.ietf.org/doc/draft-ietf-lamps-pq-composite-sigs/).
   Both parts must verify.
 - A release's identity is the hash of its manifest, so a new signing key does not change the
