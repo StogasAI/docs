@@ -18,6 +18,32 @@ icon: FilePenLine
 A parent policy can [limit which sections](/docs/policies/delegation)
 anyone can save. See the [permission reference](/docs/members#permission-reference).
 
+## Choose a view
+
+The editor shows the same draft in two views. A change in one view shows in the other. The
+dashboard opens the view that you used last on this device.
+
+| View   | Shows                                                                           |
+| ------ | ------------------------------------------------------------------------------- |
+| Visual | Each setting as a field, with its description and its problems beside it        |
+| JSON   | The policy text, with suggestions as you type. See [Editor keys](#editor-keys). |
+
+- **Add setting** lists the settings that you can add, with a search. A new setting starts at its
+  default, or at a value that limits nothing, such as the longest timeout. A new limit starts
+  empty, and the editor asks for its value.
+- Removing the last setting of a section also removes the section. A list stays when you remove
+  its last item, because an empty list has its own meaning: `"providers": []` allows no provider.
+  A list that needs an item, such as `order`, goes with its last item.
+- **Undo** and **Redo**, or `Ctrl` + `Z` and `Ctrl` + `Shift` + `Z`, go back and forward through
+  your changes in the visual view. `Enter` keeps the value of a field. It does not save.
+- The visual view changes only the text of the setting that you change. Every other value keeps
+  the text that you wrote, such as `1e12`.
+- Routing expressions, encrypted sections and unknown settings show **Edit in JSON**, which opens
+  the JSON view at that setting.
+- The visual view needs valid JSON. If the draft is not valid JSON, choose **Fix in JSON**.
+- A combined draft after [someone else's save](#save-a-policy) opens in the JSON view, which
+  highlights your changes.
+
 ## Save a policy
 
 <Steps>
@@ -63,8 +89,9 @@ to see each limit and its usage.
 
 ### Editor keys
 
-Suggestions show fields, preset names, allowed values, time zones and catalog IDs as you type.
-Inside routing expressions, they also show request facts, operators and catalog values.
+In the JSON view, suggestions show fields, preset names, allowed values, time zones and catalog
+IDs as you type. Inside routing expressions, they also show request facts, operators and catalog
+values.
 
 | Key                    | Action                         |
 | ---------------------- | ------------------------------ |
