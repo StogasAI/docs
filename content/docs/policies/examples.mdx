@@ -12,21 +12,12 @@ to save, and [Scopes and inheritance](/docs/policies/scopes) for how policies co
 
 ### Cap monthly spending for the organization
 
-All keys share $1,000 a month. Each month starts on the 1st at 00:00 UTC, the time in `anchor`.
+All keys share $1,000 a month. Each month starts on the 1st at 00:00 UTC.
 
 ```json title="Organization policy"
 {
 	"limits": {
-		"spend": {
-			"recurring": {
-				"monthly": {
-					"maxUsd": "1000",
-					"window": { "count": 1, "unit": "month" },
-					"anchor": "2026-10-01T00:00:00Z",
-					"timeZone": "UTC"
-				}
-			}
-		}
+		"monthly": { "usd": "1000", "per": { "count": 1, "unit": "month" } }
 	}
 }
 ```
@@ -38,15 +29,27 @@ The key can spend $20 a day and $500 in total. The organization's limits still a
 ```json title="Key policy"
 {
 	"limits": {
-		"spend": {
-			"lifetimeUsd": "500",
-			"recurring": {
-				"daily": {
-					"maxUsd": "20",
-					"window": { "count": 1, "unit": "day" },
-					"anchor": "2026-10-01T00:00:00Z",
-					"timeZone": "UTC"
-				}
+		"daily": { "usd": "20", "per": { "count": 1, "unit": "day" } },
+		"total": { "usd": "500" }
+	}
+}
+```
+
+### Reset a budget every quarter
+
+The key can spend $3,000 a quarter. Quarters start on January 1, April 1, July 1 and October 1 at
+midnight in New York.
+
+```json title="Key policy"
+{
+	"limits": {
+		"quarterly": {
+			"usd": "3000",
+			"per": {
+				"count": 3,
+				"unit": "month",
+				"anchor": "2027-01-01T05:00:00Z",
+				"timeZone": "America/New_York"
 			}
 		}
 	}
@@ -55,24 +58,18 @@ The key can spend $20 a day and $500 in total. The organization's limits still a
 
 ### Limit the request rate
 
-One request a second on average, with bursts of up to 10, and at most 5 requests at the same time.
+One request a second on average, in bursts of up to 10, and at most 5 requests at the same time.
 
 ```json title="Key policy"
 {
 	"limits": {
-		"requests": {
-			"per-minute": {
-				"max": 60,
-				"window": { "count": 1, "unit": "minute" },
-				"burst": 10
-			}
-		},
-		"concurrentRequests": 5
+		"rate": { "requests": 10, "per": { "count": 10, "unit": "second", "refill": "gradual" } },
+		"parallel": { "concurrentRequests": 5 }
 	}
 }
 ```
 
-See [Limits](/docs/policies/limits) for token limits and how limits reset.
+See [Limits](/docs/policies/limits) for token limits, refills and reset schedules.
 
 ## Providers and data handling
 
@@ -216,7 +213,7 @@ Requests to Claude Opus models can spend $200 in total. Other requests do not co
 	"rules": {
 		"opus_budget": {
 			"when": "'claude-opus' in model.groupIds",
-			"limits": { "spend": { "lifetimeUsd": "200" } }
+			"limits": { "spend": { "usd": "200" } }
 		}
 	}
 }

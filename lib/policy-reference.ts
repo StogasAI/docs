@@ -9,10 +9,8 @@ const sections = {
 	timeouts: policy.properties.timeouts,
 	exportDestination:
 		policy.properties.plugins.anyOf[0].properties.stogasExport!.properties.destinations.items,
-	recurringSpend:
-		policy.properties.limits.properties.spend.properties.recurring.additionalProperties,
-	requestLimit: policy.properties.limits.properties.requests.additionalProperties,
-	tokenLimit: policy.properties.limits.properties.tokens.additionalProperties,
+	limit: policy.properties.limits.additionalProperties,
+	limitPeriod: policy.properties.limits.additionalProperties.properties.per,
 	accessPeriod: policy.properties.access.properties.deny.items,
 	literalRule:
 		policy.properties.plugins.anyOf[0].properties.stogasRedaction!.properties.literals.items
@@ -27,9 +25,8 @@ export const policySectionNames: Record<PolicySection, string> = {
 	input: 'input',
 	timeouts: 'timeouts',
 	exportDestination: 'plugins.stogasExport.destinations[]',
-	recurringSpend: 'limits.spend.recurring.<name>',
-	requestLimit: 'limits.requests.<name>',
-	tokenLimit: 'limits.tokens.<name>',
+	limit: 'limits.<name>',
+	limitPeriod: 'limits.<name>.per',
 	accessPeriod: 'access.deny[]',
 	literalRule: 'plugins.stogasRedaction.literals[]'
 };
@@ -49,7 +46,7 @@ const documentFields = {
 		href: '/docs/policies/routing'
 	},
 	limits: {
-		description: 'Cap spending, tokens, request rates, and concurrent requests.',
+		description: 'Cap spending, tokens, requests and concurrent requests, in total or per period.',
 		href: '/docs/policies/limits'
 	},
 	timeouts: {

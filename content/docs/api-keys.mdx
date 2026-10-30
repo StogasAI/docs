@@ -42,16 +42,21 @@ longer add or change sections. Sections that keys already set keep applying unti
 them, as [Delegation](/docs/policies/delegation#sections-saved-before-a-change) explains.
 Request policies have their [own permission](/docs/policies/request-policies#grant-permission).
 
-## Key status
+## Key page
 
-Open a key to see its **Overview**: enabled state, lifetime and recurring spend, pending holds,
-remaining allowance, reset times, request capacity, dates and the last rejected request. Counters
-show the values at the displayed update time. Organization and grant allowances apply in addition
-to the key's own counters.
+Click the key's name to rename it. The key page has three tabs:
 
-The enabled switch saves at once. **Settings** holds the name, policy and secret actions;
-**Credentials** holds provider credentials. A disabled key can still be rotated, and rotation does
-not change whether it is enabled. The key's **Requests** link opens its history in
+- **Overview** shows the key's lifetime cost, its secret, whether it is enabled, when it expires
+  and every [limit](/docs/policies/limits) that applies to it, with its usage, the amount held for
+  running requests and when it resets. Organization and grant limits apply in addition to the
+  key's own. Usage shows the values at the displayed update time.
+- **Policy** holds the key's policy, the combined policy that its requests follow and a routing
+  simulation.
+- **Credentials** holds provider credentials.
+
+The enabled switch and the expiration save at once. Enter the expiration in your time zone or one
+you choose; we store it in UTC. A disabled key can still be rotated, and rotation does not change
+whether it is enabled. The key's **Requests** link opens its history in
 [Analytics](/docs/analytics).
 
 ## Leaked secrets
@@ -67,8 +72,8 @@ the notice; [Activity](/docs/activity) keeps the report.
 
 ## Policies
 
-A key policy can narrow the models a key uses, limit spending, request rates, tokens and
-concurrent requests, set access periods and add redaction rules. Every request must pass the key
+A key policy can narrow the models a key uses, limit spending, tokens, requests and concurrent
+requests, set access periods and add redaction rules. Every request must pass the key
 policy, the policies above it and the organization balance. Start with
 [Edit a policy](/docs/policies/editing), or see [Scopes and inheritance](/docs/policies/scopes) for
 how the levels combine. To keep redaction rules and export credentials private, use

@@ -1,55 +1,97 @@
 ---
 title: Limits
-description: Cap spending, request rate, tokens and concurrent requests.
+description: Cap spending, tokens, input text, requests and concurrent requests, in total or per period.
 icon: Gauge
 ---
 
-A request must pass every limit of every [scope](/docs/policies/scopes) that applies to it.
-Limits count [held](/docs/usage#how-a-request-is-charged) funds and tokens as well as settled usage,
-so a request is declined when its hold does not fit, even if its final charge would.
+A request must fit every limit of every [scope](/docs/policies/scopes) that applies to it. Limits
+count [held](/docs/usage#how-a-request-is-charged) funds and tokens as well as settled usage, so a
+request is declined when its hold does not fit, even if its final charge would.
 
-## Limit types
+## Write a limit
 
-| Setting inside `limits`                      | Caps                                   | Resets                 |
-| -------------------------------------------- | -------------------------------------- | ---------------------- |
-| [`spend.lifetimeUsd`](#spending)             | Total spending                         | Never                  |
-| [`spend.recurring`](#recurring-schedules)    | Spending per period                    | On a calendar schedule |
-| [`requests`](#request-rate)                  | Request rate and burst                 | Refills continuously   |
-| [`tokens`](#tokens)                          | Tokens or [STT](#count-stt) per period | Every fixed period     |
-| [`lifetimeTokens`](#lifetime-tokens)         | Total tokens                           | Never                  |
-| [`concurrentRequests`](#concurrent-requests) | Requests running at the same time      | As requests finish     |
+Each entry in `limits` has a name and counts one thing:
 
 ```jsonc title="policy.json"
 {
 	"limits": {
-		"spend": {
-			"lifetimeUsd": "1000",
-			"recurring": {
-				"monthly": {
-					"maxUsd": "100",
-					"window": { "count": 1, "unit": "month" },
-					"timeZone": "UTC"
-				}
-			}
+		// $500 a month, from midnight on the 1st in New York.
+		"monthly": {
+			"usd": "500",
+			"per": { "count": 1, "unit": "month", "timeZone": "America/New_York" }
 		},
-		// Two requests a second, with bursts of up to 20.
-		"requests": {
-			"steady": { "max": 120, "window": { "count": 1, "unit": "minute" }, "burst": 20 }
-		},
-		"tokens": {
-			"per-minute": { "max": 100000, "window": { "count": 1, "unit": "minute" } }
-		},
-		"concurrentRequests": 10
+		// 60 requests a minute, given back steadily.
+		"rpm": { "requests": 60, "per": { "count": 1, "unit": "minute", "refill": "gradual" } },
+		// 5 million tokens in total. It never resets.
+		"total": { "tokens": 5000000 },
+		// 4 requests at a time.
+		"parallel": { "concurrentRequests": 4 }
 	}
 }
 ```
 
+| Field                                        | Counts                                                                     |
+| -------------------------------------------- | -------------------------------------------------------------------------- |
+| [`usd`](#spending)                           | Full provider cost at catalog rates, including [BYOK](/docs/byok) requests |
+| [`tokens`](#tokens-and-input-text)           | Provider tokens, input and output                                          |
+| [`stt`](#tokens-and-input-text)              | [Standard text tokens](/docs/usage#standard-text-tokens) of input          |
+| [`requests`](#requests)                      | Requests, when the gateway admits them                                     |
+| [`concurrentRequests`](#concurrent-requests) | Requests running at the same time                                          |
+
+- Each limit sets exactly one of these fields.
 - Names such as `monthly` use 1–48 lowercase letters, digits, `_` or `-`, and start with a letter.
-- A policy can have **five named limits**: each recurring spend, request rate and token entry uses
-  one. Top-level `lifetimeUsd`, `lifetimeTokens` and `concurrentRequests` do not count.
-- Leave out limits that you do not use. An empty `limits` or `spend` object is invalid.
+- A policy can have up to **8 limits**, counting the limits in its rules.
 - Limits always apply, so a rule with limits cannot use `mode: "default"`.
   [Request policies](/docs/policies/request-policies) cannot set limits.
+
+## Lifetime or recurring
+
+Without `per`, a limit counts from when you add it and never resets. With `per`, it repeats every
+`count` (1 to 1,000) `unit`s: `second`, `minute`, `hour`, `day`, `week`, `month` or `year`.
+`refill` chooses how the allowance comes back:
+
+| `refill`          | Behavior                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `reset` (default) | The whole amount comes back when each period starts.                                                        |
+| `gradual`         | The amount comes back steadily, one period's amount over each period, so usage never bunches up at a reset. |
+
+A gradual limit never holds more than its amount: 60 requests a minute allows up to 60 at once, then
+one more each second. A new gradual limit starts full.
+
+`concurrentRequests` takes no `per`: a request holds its place only while it runs.
+
+### Reset schedules
+
+```json title="policy.json"
+{
+	"limits": {
+		"quarterly": {
+			"usd": "3000",
+			"per": {
+				"count": 3,
+				"unit": "month",
+				"anchor": "2027-01-01T05:00:00Z",
+				"timeZone": "America/New_York"
+			}
+		}
+	}
+}
+```
+
+- `anchor` is when a period starts; the others follow on the calendar. They are not rolling windows.
+- If you save a limit without an anchor, we set it to the start of the current unit in its time
+  zone, such as midnight on the 1st for a month or Monday for a week. Later saves keep it while the
+  limit's name, field and unit stay the same.
+- `timeZone` defaults to `UTC`. Days, weeks, months and years follow its calendar, including
+  daylight saving time. Seconds, minutes and hours are fixed lengths from the anchor.
+- Month and year periods keep the anchor's local day and time. A period anchored on January 31
+  resets on the last day of February, then on March 31.
+- A request counts in the period in which the gateway held its funds or tokens. Unused allowance
+  does not carry over.
+
+Gradual limits take no `anchor` or `timeZone`. A gradual month gives back its amount over
+2,629,746 seconds, the average Gregorian month, and a gradual year over 31,556,952 seconds. See
+[Timestamps and time zones](/docs/policies/access#timestamps-and-time-zones) for the formats.
 
 ## Shared limits
 
@@ -65,141 +107,53 @@ can spend only $2 more that month, even though its own limit allows $10 a day.
 
 ## Spending
 
-Spend limits count the full provider cost at catalog rates, including [BYOK](/docs/byok) requests,
-where your balance pays only the BYOK fee. Write amounts as USD decimal strings from `"0"` to
+`usd` limits count the full provider cost at catalog rates, including BYOK requests, where your
+balance pays only the BYOK fee. Write amounts as USD decimal strings from `"0"` to
 `"1000000000000"`, with up to 36 decimal places, in their shortest form: `"1.5"`, not `"1.50"`,
-`"01.5"` or `1.5`.
+`"01.5"` or `1.5`. `"0"` blocks every request that has a cost; a gradual limit needs more than `"0"`.
 
-The provider can report more usage than the hold, so a request can go past a cap. A lower output
+The provider can report more usage than the hold, so a request can go past a limit. A lower output
 limit keeps holds, and the possible overrun, small.
 
-### Recurring schedules
+## Tokens and input text
 
-```json title="policy.json"
-{
-	"limits": {
-		"spend": {
-			"recurring": {
-				"daily": {
-					"maxUsd": "20",
-					"window": { "count": 1, "unit": "day" },
-					"anchor": "2026-09-01T00:00:00Z",
-					"timeZone": "America/New_York"
-				}
-			}
-		}
-	}
-}
-```
-
-- Periods start at the anchor and repeat on the calendar. They are not rolling windows.
-- If you save a limit without an anchor, we set it to the time of that save and keep it on later
-  saves.
-- Month and year periods keep the anchor's local day and time. A period anchored on January 31
-  resets on the last day of February, then on March 31.
-- Periods in a local time zone follow daylight saving time. Use `UTC` to avoid this.
-- A request counts in the period in which the gateway held its funds. Unused allowance does not carry
-  over.
-
-See [Timestamps and time zones](/docs/policies/access#timestamps-and-time-zones) for the formats.
-
-## Request rate
-
-`requests` limits use token buckets. Each bucket refills at `max / window` and holds up to `burst`
-requests:
-
-```json title="policy.json"
-{
-	"limits": {
-		"requests": {
-			"steady": { "max": 120, "window": { "count": 1, "unit": "minute" }, "burst": 20 },
-			"short-burst": { "max": 5, "window": { "count": 1, "unit": "second" }, "burst": 5 }
-		}
-	}
-}
-```
-
-The first bucket refills at two requests a second and holds 20. The second refills at five a second
-and holds five. Each request takes one from every bucket, so both must have room.
-
-- A new bucket starts full. A bucket that starts full can allow more than `max` requests in one
-  window.
-- `burst` defaults to the smaller of `max` and 120.
-- The refill rate must be between about one request a century and 120 requests a second.
-- A request that a limit rejects takes nothing. A failed provider call does not give its request
-  back.
-- Every organization also has a platform bucket, shared by all its keys, grants, Playground
-  requests and BYOK requests. It allows 120 requests a second, or the rate we agreed for your
-  organization; for a higher rate, contact [ops@stogas.ai](mailto:ops@stogas.ai). More keys do not
-  add capacity. When the bucket is empty, a request waits up to two seconds to start, and a request
-  that would wait longer gets `429 platform_rate_limited`.
-
-## Tokens
-
-`tokens` limits count input and output tokens in fixed periods:
-
-```json title="policy.json"
-{
-	"limits": {
-		"tokens": {
-			"per-minute": { "max": 100000, "window": { "count": 1, "unit": "minute" } },
-			"per-hour": { "max": 1000000, "window": { "count": 1, "unit": "hour" } }
-		}
-	}
-}
-```
+`tokens` limits count provider tokens. Input includes cache reads and writes, and output includes
+reasoning. Each token counts once.
 
 - The hold is the [estimated input](/docs/usage#input-estimates) plus the output limit: yours, or the
   model's maximum. A lower output limit lets a small request fit.
-- Input includes cache reads and writes, and output includes reasoning. Each token counts once.
-- Settlement uses the provider's count. If the provider reports no usage, the whole hold counts.
-  A request that fails before it reaches the provider counts nothing.
-- Periods start at multiples of their duration from `1970-01-01T00:00:00Z`.
-- A request counts in the period in which the gateway held its tokens.
+- Settlement uses the provider's count. If the provider reports no usage, the whole hold counts. A
+  request that fails before it reaches the provider counts nothing.
 
-### Count STT
+`stt` limits count [standard text tokens](/docs/usage#standard-text-tokens) of input instead: the
+request text after redaction, 4 bytes to a token. STT counts the same text the same way on every
+model, so one limit means the same amount on every provider. Its hold is exact. It counts when the
+provider reports usage or cost, and is released when the request fails.
 
-Set `"unit": "stt"` to count [standard text tokens](/docs/usage#standard-text-tokens) of input
-instead of provider tokens. STT counts the same text the same way on every model, so one limit means
-the same amount on every provider:
+## Requests
 
-```json title="policy.json"
-{
-	"limits": {
-		"tokens": {
-			"daily-input": { "max": 1000000, "unit": "stt", "window": { "count": 1, "unit": "day" } }
-		}
-	}
-}
-```
+`requests` limits count each request once, when the gateway admits it.
 
-- STT limits count input only, after redaction.
-- The hold is exact. It counts when the provider reports usage or cost, and is released when the
-  request fails.
-- Changing `unit` starts a new limit from zero.
-
-### Lifetime tokens
-
-`lifetimeTokens` caps total tokens, from 0 to 1,000,000,000,000, and never resets. It counts tokens
-the same way as `tokens` limits.
-
-### Durations
-
-Request and token `window` objects take a `count` from 1 to 999,999 and a `unit` of `second`,
-`minute`, `hour`, `day` or `week`. A day is always 86,400 seconds.
+- A request that a limit blocks takes nothing. A failed provider call does not give its request
+  back.
+- Every organization also has a platform limit, shared by all its keys, grants, Playground requests
+  and BYOK requests. It allows 120 requests a second, given back steadily, or the rate we agreed for
+  your organization. More keys do not add capacity. When it is used up, a request waits up to two
+  seconds to start, and a request that would wait longer gets `429 platform_rate_limited`. Contact
+  [ops@stogas.ai](mailto:ops@stogas.ai) for a higher rate.
 
 ## Concurrent requests
 
 `concurrentRequests` caps how many requests run at the same time across all gateways, from 1 to
-10,000. Each request uses one slot until it finishes, whether or not it streams.
+10,000. Each request uses one place until it finishes, whether or not it streams.
 
 - Lowering the cap does not stop requests that are running.
-- A request sent on the same connection after a response ends finds that request's slot free. On
-  another connection, the slot can stay taken for a moment, until the finished request's usage is
+- A request sent on the same connection after a response ends finds that request's place free. On
+  another connection, the place can stay taken for a moment, until the finished request's usage is
   recorded.
-- If a gateway stops during a request, the slot frees when the request's maximum lifetime ends.
-- Combine it with a request rate and a spending limit: short requests can still run many times under
-  a small cap.
+- If a gateway stops during a request, the place frees when the request's maximum lifetime ends.
+- Combine it with a request and a spending limit: short requests can still run many times under a
+  small cap.
 
 ## Conditional limits
 
@@ -212,8 +166,8 @@ match it:
 		"openai_budget": {
 			"when": "provider.id == 'openai'",
 			"limits": {
-				"spend": { "lifetimeUsd": "100" },
-				"concurrentRequests": 2
+				"spend": { "usd": "100" },
+				"parallel": { "concurrentRequests": 2 }
 			}
 		}
 	}
@@ -221,22 +175,18 @@ match it:
 ```
 
 - Other requests do not use these limits.
-- In a rule, `lifetimeUsd`, `lifetimeTokens` and `concurrentRequests` together use one of the five
-  named limits.
-- Changing the rule's name or condition starts new limits from zero. Changing only the formatting of
+- Changing the rule's name or condition starts its limits from zero. Changing only the formatting of
   the condition does not.
 - Conditions cannot read balances, usage or provider results.
 
 ## Change a limit
 
-| Change                            | Usage                                                                                   |
-| --------------------------------- | --------------------------------------------------------------------------------------- |
-| Change an amount                  | Kept.                                                                                   |
-| Change a schedule                 | Kept for the current period.                                                            |
-| Change a request rate or burst    | The bucket keeps its level, up to the new `burst`. A larger `burst` does not refill it. |
-| Add a named limit                 | Starts from zero, plus the holds of requests that are running.                          |
-| Remove or rename a named limit    | Deleted. Adding it back starts from zero.                                               |
-| Remove or add back a lifetime cap | Kept, including usage from deleted keys.                                                |
+| Change                                                  | Usage                                                                                                              |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Change the amount, period, refill, anchor or time zone  | Kept.                                                                                                              |
+| Change what it counts, or switch lifetime and recurring | Starts from zero.                                                                                                  |
+| Rename or remove a limit                                | Deleted. Adding it back starts from zero.                                                                          |
+| Add a limit                                             | Starts from zero. A key, grant or organization concurrent-request limit also counts the requests that are running. |
 
 A limit below current usage blocks new requests until usage falls under it. The key's **Overview**
 page shows each limit that applies, with its scope and usage.
@@ -245,23 +195,22 @@ page shows each limit that applies, with its scope and usage.
 
 | Status | Cause                                                            | Codes                                                                      |
 | ------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `402`  | A spending limit, or the organization's balance                  | `<scope>_spend_limit`, `insufficient_balance`                              |
-| `429`  | A request rate, token or concurrency limit                       | `<scope>_rate_limited`, `<scope>_token_limit`, `<scope>_concurrency_limit` |
-| `429`  | The platform bucket                                              | `platform_rate_limited`                                                    |
+| `402`  | A `usd` limit, or the organization's balance                     | `<scope>_spend_limit`, `insufficient_balance`                              |
+| `429`  | A `requests`, `tokens`, `stt` or `concurrentRequests` limit      | `<scope>_rate_limited`, `<scope>_token_limit`, `<scope>_concurrency_limit` |
+| `429`  | The platform limit                                               | `platform_rate_limited`                                                    |
 | `429`  | A request within 25 ms after a blocked request with the same key | `rate_limit_exceeded`                                                      |
 
 The code names the scope, such as `grant_token_limit`, but not the named limit. A `429` response has
-`Retry-After` when waiting can help; wait that long before you retry. A retry cannot fit a hold that
-is larger than the limit, so lower the output limit or raise the limit. Such a response, and one
-with a wait longer than a minute, has `X-Should-Retry: false`. Before it blocks a request, the
-gateway tries the request's other candidates as
-[fallbacks](/docs/policies/routing#retries-and-fallbacks). See [Errors](/docs/reference/errors) for
-every code.
+`Retry-After` when waiting can help: until a reset, until a gradual limit has room, or until running
+requests finish. When several limits block a request, the code and `Retry-After` come from the one
+that frees up last. A retry cannot fit a hold that is larger than the limit, so lower the output limit
+or raise the limit. Such a response, and one with a wait longer than a minute, has
+`X-Should-Retry: false`. Before it blocks a request, the gateway tries the request's other
+candidates as [fallbacks](/docs/policies/routing#retries-and-fallbacks). See
+[Errors](/docs/reference/errors) for every code.
 
 ## Field reference
 
-<PolicyFields section="recurringSpend" />
+<PolicyFields section="limit" />
 
-<PolicyFields section="requestLimit" />
-
-<PolicyFields section="tokenLimit" />
+<PolicyFields section="limitPeriod" />

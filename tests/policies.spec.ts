@@ -31,12 +31,12 @@ for (const width of [390, 1440]) {
 		}
 		await fieldsTable.getByRole('link', { name: 'limits', exact: true }).click();
 		await expect(page).toHaveURL(/\/docs\/policies\/limits$/);
-		const fields = page.locator('[id="policy-fields.requestLimit"]');
-		await fields.getByRole('textbox').fill('window');
+		const fields = page.locator('[id="policy-fields.limit"]');
+		await fields.getByRole('textbox').fill('per');
 		await fields.getByRole('button', { name: 'object', exact: true }).click();
-		await expect(fields.locator('[aria-current="page"]')).toHaveText('window');
+		await expect(fields.locator('[aria-current="page"]')).toHaveText('per');
 		await expect(fields.getByText('count', { exact: true })).toBeVisible();
-		await expect(fields).toContainText('999999');
+		await expect(fields).toContainText('gradual');
 		await expect(fields).toContainText('week');
 		await page.goto('/docs/pii-redaction');
 		const literal = page.locator('[id="policy-fields.literalRule"]');
@@ -70,9 +70,8 @@ test('policy topics retain complete field exports and working links to their own
 		'/docs/policies/delegation': [schema.properties.delegation],
 		'/docs/policies/routing': [schema.properties.routing],
 		'/docs/policies/limits': [
-			schema.properties.limits.properties.spend.properties.recurring.additionalProperties,
-			schema.properties.limits.properties.requests.additionalProperties,
-			schema.properties.limits.properties.tokens.additionalProperties
+			schema.properties.limits.additionalProperties,
+			schema.properties.limits.additionalProperties.properties.per
 		],
 		'/docs/policies/access': [schema.properties.access.properties.deny.items],
 		'/docs/pii-redaction': [
