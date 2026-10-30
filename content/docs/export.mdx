@@ -4,7 +4,7 @@ description: Send each request and its response to your own webhook as JSON.
 icon: Webhook
 ---
 
-The `stogasExport` plugin posts one JSON record to your webhook when each request finishes. The
+The `export` plugin posts one JSON record to your webhook when each request finishes. The
 record has the request, the response or stream events, and every field of the
 [request record](/docs/request-records). Use it to keep your own history of prompts and responses,
 or to process them in another service.
@@ -21,7 +21,7 @@ Add a destination to a [policy](/docs/policies/editing):
 ```jsonc title="policy.json"
 {
 	"plugins": {
-		"stogasExport": {
+		"export": {
 			"destinations": [
 				{
 					"url": "https://receiver.contoso.com/stogas", // The full URL. No path is added.
@@ -45,7 +45,7 @@ Add a destination to a [policy](/docs/policies/editing):
   [default plugin settings](/docs/policies/rules#defaults), but it cannot
   remove a destination that another scope requires.
 - A [request policy](/docs/policies/request-policies) can add a destination when delegation permits
-  `plugins.stogasExport` or `plugins`.
+  `plugins.export` or `plugins`.
 
 ## Record format
 
@@ -123,7 +123,7 @@ short, and an export never makes a request fail.
 
 To find records that did not arrive, compare the `request_id` values that your receiver accepted
 with the [request records](/docs/request-records) of the requests that your export policies cover.
-The record of each request that ran has a `plugins.stogas_export` entry, even when the gateway
+The record of each request that ran has a `plugins.export` entry, even when the gateway
 dropped its export. Its `duration_us` is the time that export added to the request, mostly to
 describe attached files. Rejections have no plugin entries, and each of their records is exported,
 including the [grouped](/docs/request-records#grouped-rejections) record of repeated ones.

@@ -75,11 +75,11 @@ test('policy topics retain complete field exports and working links to their own
 		],
 		'/docs/policies/access': [schema.properties.access.properties.deny.items],
 		'/docs/pii-redaction': [
-			schema.properties.plugins.anyOf[0].properties.stogasRedaction!.properties.literals.items,
+			schema.properties.plugins.anyOf[0].properties.redaction!.properties.literals.items,
 			schema.properties.input
 		],
 		'/docs/export': [
-			schema.properties.plugins.anyOf[0].properties.stogasExport!.properties.destinations.items
+			schema.properties.plugins.anyOf[0].properties.export!.properties.destinations.items
 		]
 	};
 	const links = new Set<string>();
@@ -189,7 +189,7 @@ test('plugin pages are discoverable through the sidebar and search', async ({ pa
 	await expect(destination).toContainText('url');
 	await expect(destination).toContainText('headers');
 	await page.keyboard.press('Control+k');
-	await page.getByRole('combobox', { name: 'Search documentation' }).fill('stogasExport');
+	await page.getByRole('combobox', { name: 'Search documentation' }).fill('export');
 	await page
 		.getByRole('dialog')
 		.getByRole('option', { name: /Documentation\s*Export$/ })

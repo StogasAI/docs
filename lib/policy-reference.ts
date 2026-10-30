@@ -8,12 +8,12 @@ const sections = {
 	input: policy.properties.input,
 	timeouts: policy.properties.timeouts,
 	exportDestination:
-		policy.properties.plugins.anyOf[0].properties.stogasExport!.properties.destinations.items,
+		policy.properties.plugins.anyOf[0].properties.export!.properties.destinations.items,
 	limit: policy.properties.limits.additionalProperties,
 	limitPeriod: policy.properties.limits.additionalProperties.properties.per,
 	accessPeriod: policy.properties.access.properties.deny.items,
 	literalRule:
-		policy.properties.plugins.anyOf[0].properties.stogasRedaction!.properties.literals.items
+		policy.properties.plugins.anyOf[0].properties.redaction!.properties.literals.items
 };
 export type PolicySection = keyof typeof sections;
 
@@ -24,11 +24,11 @@ export const policySectionNames: Record<PolicySection, string> = {
 	delegation: 'delegation',
 	input: 'input',
 	timeouts: 'timeouts',
-	exportDestination: 'plugins.stogasExport.destinations[]',
+	exportDestination: 'plugins.export.destinations[]',
 	limit: 'limits.<name>',
 	limitPeriod: 'limits.<name>.per',
 	accessPeriod: 'access.deny[]',
-	literalRule: 'plugins.stogasRedaction.literals[]'
+	literalRule: 'plugins.redaction.literals[]'
 };
 
 // The order follows the document's controls, then its groups of restrictions.

@@ -16,7 +16,7 @@ scope that applies to the key:
 ```json title="Saved policy"
 {
 	"delegation": {
-		"request": ["routing.filter", "routing.sort", "plugins.stogasRedaction"]
+		"request": ["routing.filter", "routing.sort", "plugins.redaction"]
 	}
 }
 ```
@@ -38,7 +38,7 @@ Send `policy` in the body of a Chat Completions or Responses request:
 	"messages": [{ "role": "user", "content": "Reply to élise@contoso.com." }],
 	"policy": {
 		"routing": { "filter": "provider.id == 'openai'" },
-		"plugins": { "stogasRedaction": { "email_address": true } }
+		"plugins": { "redaction": { "email_address": true } }
 	}
 }
 ```

@@ -11,13 +11,13 @@ it on, and it does not change responses.
 
 ## Turn on redaction
 
-Add `stogasRedaction` to the policy of an API key or another [scope](/docs/policies/scopes), then
+Add `redaction` to the policy of an API key or another [scope](/docs/policies/scopes), then
 [save the policy](/docs/policies/editing):
 
 ```jsonc title="policy.json"
 {
 	"plugins": {
-		"stogasRedaction": {
+		"redaction": {
 			"email_address": true, // A preset. Presets that you leave out stay off.
 			"bank_identifiers": true,
 			"literals": [{ "values": ["Project Aurora"], "ignoreCase": true }], // Your own terms.
@@ -38,7 +38,7 @@ Email <EMAIL_ADDRESS> about <CUSTOM_PII> and <CUSTOM_PII>.
 ```
 
 Open the request in **Analytics** to see how many values were replaced. Every setting is optional.
-An empty `stogasRedaction` object adds no rules and replaces
+An empty `redaction` object adds no rules and replaces
 [default plugin settings](/docs/policies/rules#defaults).
 
 ## Presets
@@ -163,7 +163,7 @@ to every string in `values`:
 ```jsonc title="policy.json"
 {
 	"plugins": {
-		"stogasRedaction": {
+		"redaction": {
 			"literals": [
 				// Also matches "project aurora" and one typo, such as "Project Auorra".
 				{ "values": ["Project Aurora", "Project Borealis"], "ignoreCase": true, "fuzzy": true },
@@ -198,7 +198,7 @@ format:
 ```jsonc title="policy.json"
 {
 	"plugins": {
-		"stogasRedaction": {
+		"redaction": {
 			// Matches EMP-123456 and ACCT-FR-12345678.
 			"customPattern": "\\b(?:EMP-[0-9]{6}|ACCT-[A-Z]{2}-[0-9]{8})\\b"
 		}
@@ -294,7 +294,7 @@ The [request record](/docs/request-records) shows what redaction did:
 
 ```jsonc
 "plugins": {
-	"stogas_structured_pii_redaction": {
+	"redaction": {
 		"items_redacted": 3, // The number of replaced values.
 		"duration_us": 412 // Time spent scanning and replacing, in microseconds.
 	}

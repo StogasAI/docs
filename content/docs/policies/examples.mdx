@@ -195,7 +195,7 @@ The provider receives placeholders such as `<EMAIL_ADDRESS>` instead of the valu
 ```json title="Organization policy"
 {
 	"plugins": {
-		"stogasRedaction": { "email_address": true, "phone_number": true }
+		"redaction": { "email_address": true, "phone_number": true }
 	}
 }
 ```
@@ -256,7 +256,7 @@ Requests can send their own redaction settings in a [request policy](/docs/polic
 ```json title="Organization policy"
 {
 	"delegation": {
-		"request": ["plugins.stogasRedaction"]
+		"request": ["plugins.redaction"]
 	}
 }
 ```

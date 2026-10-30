@@ -17,7 +17,7 @@ Settings at the top level of a policy apply to every request. Put settings in a 
 	"rules": {
 		"redact_openai": {
 			"when": "provider.id == 'openai'",
-			"plugins": { "stogasRedaction": { "email_address": true } }
+			"plugins": { "redaction": { "email_address": true } }
 		},
 		"cheapest_first": {
 			"mode": "default",
@@ -115,7 +115,7 @@ another policy:
 | Routing filter        | `"filter": "true"`                |
 | Order and sort        | `"sort": []`                      |
 | Allowed catalog nodes | `"allowedCatalogNodes": {}`       |
-| Redaction             | `"stogasRedaction": {}`           |
+| Redaction             | `"redaction": {}`           |
 
 ## What rules can contain
 

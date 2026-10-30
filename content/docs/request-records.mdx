@@ -122,7 +122,7 @@ the first call, so the gateway called Azure:
 		"standard_text_tokens": { "input": "2753.5", "output": "322.75" }
 	},
 	"plugins": {
-		"stogas_structured_pii_redaction": { "duration_us": 310, "items_redacted": 2 }
+		"redaction": { "duration_us": 310, "items_redacted": 2 }
 	},
 	"gateway_version": "v1.5.93"
 }
@@ -349,8 +349,8 @@ backpressure. The time outside it is gateway preparation and response processing
 
 | Entry                             | Fields                          | Meaning                                                                                         |
 | --------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `stogas_structured_pii_redaction` | `items_redacted`, `duration_us` | Replacements, and the scan time in microseconds. `0` replacements means the scan found nothing. |
-| `stogas_export`                   | `duration_us`                   | Time that [Export](/docs/export) added to the request, in microseconds, mostly for attachments. |
+| `redaction` | `items_redacted`, `duration_us` | Replacements, and the scan time in microseconds. `0` replacements means the scan found nothing. |
+| `export`                   | `duration_us`                   | Time that [Export](/docs/export) added to the request, in microseconds, mostly for attachments. |
 
 - An entry is missing when the plugin recorded nothing, for example when no scan ran.
 - Plugin times overlap the request timeline. Do not add them to `total_ms`.
