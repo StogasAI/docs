@@ -199,6 +199,7 @@ status, never from message text. An unrecognized failure is `provider_error`.
 | `content_filter`                                                                   | The provider blocked or refused the content.                              |
 | `timeout`, `connection_error`                                                      | The call timed out, or the connection failed.                             |
 | `provider_unavailable`, `provider_overloaded`, `model_unavailable`                 | The provider or model was unavailable.                                    |
+| `model_retired`                                                                    | The provider retired the model.                                           |
 | `invalid_response`                                                                 | The response could not be used.                                           |
 | `cancelled`, `unknown`, `provider_error`                                           | The call was cancelled, its outcome is unknown, or it failed another way. |
 
@@ -346,10 +347,10 @@ backpressure. The time outside it is gateway preparation and response processing
 
 ## Plugin metrics
 
-| Entry                             | Fields                          | Meaning                                                                                         |
-| --------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Entry       | Fields                          | Meaning                                                                                         |
+| ----------- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `redaction` | `items_redacted`, `duration_us` | Replacements, and the scan time in microseconds. `0` replacements means the scan found nothing. |
-| `export`                   | `duration_us`                   | Time that [Export](/docs/export) added to the request, in microseconds, mostly for attachments. |
+| `export`    | `duration_us`                   | Time that [Export](/docs/export) added to the request, in microseconds, mostly for attachments. |
 
 - An entry is missing when the plugin recorded nothing, for example when no scan ran.
 - Plugin times overlap the request timeline. Do not add them to `total_ms`.

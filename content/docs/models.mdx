@@ -31,7 +31,8 @@ next day. A deployment stops receiving requests through a route once the route's
 and retires once its routes have all retired. A model retires with its last deployment. Retired
 deployments keep their pages but cannot receive requests: a request that names one gets
 `model_retired` with its retirement date. A request that reaches a provider after it stops tries
-the next deployment as a [fallback](/docs/policies/routing#retries-and-fallbacks). Policies keep
+the next deployment as a [fallback](/docs/policies/routing#retries-and-fallbacks), and gets
+`model_retired` without a date if that retirement ends it. Policies keep
 the IDs of retired and unlisted models, which match nothing; the policy editor warns about them.
 
 Some deployments work only for accounts that the provider has approved: GPT-5.6 Cyber on
