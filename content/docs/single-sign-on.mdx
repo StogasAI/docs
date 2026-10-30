@@ -1,0 +1,100 @@
+---
+title: Single sign-on
+description: Sign members in through your identity provider, and add people from your verified domains.
+icon: LogIn
+---
+
+An external organization can connect an OpenID Connect identity provider, such as Okta, Microsoft
+Entra ID or Google Workspace. Members then sign in through it, the organization can require that,
+and people at its verified domains can join on their first sign-in. Set it up in **Settings →
+Single sign-on**, which needs **Organization → Manage**.
+
+## Connect an identity provider
+
+<Steps>
+<Step>
+
+### Register Stogas with the provider
+
+Create a web application with the authorization code flow. Use the redirect URI that **Settings**
+shows, `https://app.stogas.ai/auth/sso/callback`. Stogas asks only for the `openid` and `email`
+scopes.
+
+</Step>
+<Step>
+
+### Enter the issuer, client ID and client secret
+
+Stogas reads the issuer's OpenID Connect discovery document, which must name exactly that issuer.
+A multi-tenant endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refused.
+For Microsoft Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0`.
+
+</Step>
+<Step>
+
+### Test the sign-in
+
+**Test sign-in** signs you in through the provider and links your account. Automatic joining and
+required sign-in stay off until a test succeeds.
+
+</Step>
+</Steps>
+
+A new issuer or client ID needs a new test, which turns automatic joining and required sign-in off
+until then. A new issuer also unlinks every member, because its people are not the old provider's.
+Stogas links a member to the provider's subject identifier, so a provider that gives each client
+its own identifiers keeps the links only while the client ID stays the same.
+
+## Verify a domain
+
+Add the domain, then publish the TXT record that **Settings** shows:
+
+| Name                            | Value                         |
+| ------------------------------- | ----------------------------- |
+| `_stogas-verification.<domain>` | `stogas-verification=<token>` |
+
+Select **Check** once the record is published. A domain belongs to the one organization that
+verified it. Public suffixes such as `co.uk` or `github.io`, and IP addresses, cannot be verified.
+An organization verifies up to 10 domains.
+
+Stogas checks verified domains every day. When the record is missing, automatic joining from that
+domain stops until the record is back. When it stays missing for 7 days, the verification ends, so
+the domain's new owner can verify it.
+
+## Add people automatically
+
+With **Automatic joining** on, a person joins with the role you choose the first time they sign in,
+when the provider sends a verified email at one of your verified domains. People sign in with
+**Sign in with single sign-on** on the sign-in page, then enter their work email.
+
+An account that joins this way has no password. It signs in through the provider, or with a passkey
+added in **Account**. Joining uses a seat, like an invitation.
+
+## Require single sign-on
+
+With **Require single sign-on** on, members sign in through the provider before they can open the
+organization or use an access token with it:
+
+- A browser session's sign-in lasts a day. The dashboard asks for it when it runs out.
+- An access token works for the organization when the session that created it had signed in.
+  Older access tokens are refused.
+- API keys are not affected. Their [policies](/docs/policies) control model requests.
+- Members who manage the organization are exempt, so a broken connection cannot lock everyone out.
+- A member can always leave the organization.
+
+## Accounts and identities
+
+An account links to one person at the provider in each organization, and that person to one
+account. Stogas uses the provider's subject identifier, never the email, which some providers let
+people change.
+
+- An account with a password signs in with it and its second factor. The dashboard then asks it to
+  link through the provider when it opens an organization that requires single sign-on.
+- An account without a password or second factor confirms sensitive changes through the provider,
+  which must sign the person in again.
+- Leaving the organization removes the link. An account with no password, no passkey and no other
+  organization's single sign-on can then no longer sign in, and the leave dialog says so.
+
+Stogas stores the issuer, the client ID, the client secret encrypted, and each linked member's
+subject identifier and last sign-in. [Activity](/docs/activity) records changes to the connection,
+the rules and the domains, never the secret.
