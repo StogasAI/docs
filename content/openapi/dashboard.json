@@ -8229,66 +8229,6 @@
 												"additionalProperties": false
 											}
 										},
-										"tax_rates": {
-											"default": {},
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"format": "uuid"
-											},
-											"additionalProperties": {
-												"type": "object",
-												"properties": {
-													"state": {
-														"type": "string"
-													},
-													"rate": {
-														"type": "string",
-														"pattern": "^0\\.\\d{0,7}[1-9]$"
-													},
-													"jurisdictions": {
-														"minItems": 1,
-														"maxItems": 16,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"name": {
-																	"type": "string",
-																	"minLength": 1,
-																	"maxLength": 200
-																},
-																"level": {
-																	"type": "string",
-																	"enum": [
-																		"state",
-																		"county",
-																		"city",
-																		"district"
-																	]
-																},
-																"rate": {
-																	"type": "string",
-																	"pattern": "^0\\.\\d{0,7}[1-9]$"
-																}
-															},
-															"required": [
-																"name",
-																"level",
-																"rate"
-															],
-															"additionalProperties": false
-														}
-													}
-												},
-												"required": [
-													"state",
-													"rate",
-													"jurisdictions"
-												],
-												"additionalProperties": false
-											}
-										},
 										"filters": {
 											"default": {
 												"api_keys": [],
@@ -9022,26 +8962,6 @@
 																"maxLength": 78,
 																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 															},
-															"tax_usd": {
-																"type": "string",
-																"maxLength": 78,
-																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-															},
-															"tax_rate": {
-																"type": "string",
-																"pattern": "^(0|0\\.\\d{0,7}[1-9])$"
-															},
-															"tax_rate_id": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
 															"cache_read_savings_usd": {
 																"type": "string",
 																"maxLength": 78,
@@ -9108,9 +9028,6 @@
 														"required": [
 															"upstream_cost_usd",
 															"billed_cost_usd",
-															"tax_usd",
-															"tax_rate",
-															"tax_rate_id",
 															"meters",
 															"standard_text_tokens"
 														],
@@ -9208,7 +9125,6 @@
 									},
 									"required": [
 										"catalog_chains",
-										"tax_rates",
 										"filters",
 										"items",
 										"nextCursor"
@@ -9716,6 +9632,43 @@
 												"regtest"
 											]
 										},
+										"taxRate": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"rate": {
+															"type": "string",
+															"pattern": "^0\\.\\d{0,7}[1-9]$"
+														},
+														"state": {
+															"type": "string"
+														},
+														"invoicedUsd": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"maxLength": 78,
+																	"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														}
+													},
+													"required": [
+														"rate",
+														"state",
+														"invoicedUsd"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
 										"invoices": {
 											"type": "array",
 											"items": {
@@ -9908,6 +9861,11 @@
 																"type": "null"
 															}
 														]
+													},
+													"taxUsd": {
+														"type": "string",
+														"maxLength": 78,
+														"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 													}
 												},
 												"required": [
@@ -9925,7 +9883,8 @@
 													"settledAt",
 													"status",
 													"pendingUsd",
-													"suspendedUsd"
+													"suspendedUsd",
+													"taxUsd"
 												],
 												"additionalProperties": false
 											}
@@ -9942,6 +9901,7 @@
 										"limits",
 										"estimates",
 										"walletNetwork",
+										"taxRate",
 										"invoices",
 										"invoicesNextCursor",
 										"recentPaymentsNextCursor",
@@ -10587,6 +10547,11 @@
 																"type": "null"
 															}
 														]
+													},
+													"taxUsd": {
+														"type": "string",
+														"maxLength": 78,
+														"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 													}
 												},
 												"required": [
@@ -10604,7 +10569,8 @@
 													"settledAt",
 													"status",
 													"pendingUsd",
-													"suspendedUsd"
+													"suspendedUsd",
+													"taxUsd"
 												],
 												"additionalProperties": false
 											}
@@ -10934,6 +10900,11 @@
 															"maxLength": 78,
 															"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 														},
+														"taxUsd": {
+															"type": "string",
+															"maxLength": 78,
+															"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+														},
 														"amountCrypto": {
 															"type": "string",
 															"maxLength": 97,
@@ -10976,6 +10947,7 @@
 													},
 													"required": [
 														"creditUsd",
+														"taxUsd",
 														"amountCrypto",
 														"rateUsd",
 														"rateSource",
@@ -11369,6 +11341,11 @@
 													"maxLength": 78,
 													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 												},
+												"taxUsd": {
+													"type": "string",
+													"maxLength": 78,
+													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+												},
 												"amountCrypto": {
 													"type": "string",
 													"maxLength": 97,
@@ -11411,6 +11388,7 @@
 											},
 											"required": [
 												"creditUsd",
+												"taxUsd",
 												"amountCrypto",
 												"rateUsd",
 												"rateSource",
@@ -11525,7 +11503,8 @@
 															"release",
 															"suspension",
 															"refund",
-															"adjustment"
+															"adjustment",
+															"tax"
 														]
 													}
 												},
