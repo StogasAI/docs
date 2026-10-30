@@ -514,6 +514,11 @@
 															"organization.created",
 															"organization.updated",
 															"organization.policy.updated",
+															"sso.updated",
+															"sso.deleted",
+															"domain.created",
+															"domain.verified",
+															"domain.deleted",
 															"member.joined",
 															"member.left",
 															"member.removed",
@@ -817,6 +822,11 @@
 												"organization.created",
 												"organization.updated",
 												"organization.policy.updated",
+												"sso.updated",
+												"sso.deleted",
+												"domain.created",
+												"domain.verified",
+												"domain.deleted",
 												"member.joined",
 												"member.left",
 												"member.removed",
@@ -2886,7 +2896,7 @@
 														]
 													},
 													"limitStates": {
-														"maxItems": 649,
+														"maxItems": 289,
 														"type": "array",
 														"items": {
 															"type": "object",
@@ -2918,51 +2928,80 @@
 																	"type": "string",
 																	"maxLength": 48
 																},
-																"schedule": {
+																"name": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 48
+																},
+																"measure": {
+																	"type": "string",
+																	"enum": [
+																		"requests",
+																		"tokens",
+																		"stt",
+																		"usd",
+																		"concurrentRequests"
+																	]
+																},
+																"per": {
 																	"anyOf": [
 																		{
 																			"type": "object",
 																			"properties": {
-																				"anchor": {
+																				"count": {
+																					"type": "integer",
+																					"minimum": 1,
+																					"maximum": 1000
+																				},
+																				"unit": {
 																					"type": "string",
-																					"format": "date-time"
+																					"enum": [
+																						"second",
+																						"minute",
+																						"hour",
+																						"day",
+																						"week",
+																						"month",
+																						"year"
+																					]
+																				},
+																				"refill": {
+																					"type": "string",
+																					"enum": [
+																						"reset",
+																						"gradual"
+																					]
+																				},
+																				"anchor": {
+																					"anyOf": [
+																						{
+																							"type": "string",
+																							"format": "date-time"
+																						},
+																						{
+																							"type": "null"
+																						}
+																					]
 																				},
 																				"timeZone": {
-																					"type": "string",
-																					"minLength": 1,
-																					"maxLength": 100
-																				},
-																				"window": {
-																					"type": "object",
-																					"properties": {
-																						"count": {
-																							"type": "integer",
-																							"exclusiveMinimum": 0,
-																							"maximum": 9007199254740991
-																						},
-																						"unit": {
+																					"anyOf": [
+																						{
 																							"type": "string",
-																							"enum": [
-																								"minute",
-																								"hour",
-																								"day",
-																								"week",
-																								"month",
-																								"year"
-																							]
+																							"minLength": 1,
+																							"maxLength": 100
+																						},
+																						{
+																							"type": "null"
 																						}
-																					},
-																					"required": [
-																						"count",
-																						"unit"
-																					],
-																					"additionalProperties": false
+																					]
 																				}
 																			},
 																			"required": [
+																				"count",
+																				"unit",
+																				"refill",
 																				"anchor",
-																				"timeZone",
-																				"window"
+																				"timeZone"
 																			],
 																			"additionalProperties": false
 																		},
@@ -2971,34 +3010,10 @@
 																		}
 																	]
 																},
-																"kind": {
-																	"type": "string",
-																	"enum": [
-																		"lifetime_spend",
-																		"lifetime_tokens",
-																		"recurring_spend",
-																		"requests",
-																		"tokens",
-																		"stt",
-																		"concurrent_requests"
-																	]
-																},
-																"name": {
-																	"type": "string",
-																	"minLength": 1,
-																	"maxLength": 48
-																},
 																"maximum": {
-																	"anyOf": [
-																		{
-																			"type": "string",
-																			"maxLength": 78,
-																			"pattern": "^\\d+(?:\\.\\d+)?$"
-																		},
-																		{
-																			"type": "null"
-																		}
-																	]
+																	"type": "string",
+																	"maxLength": 78,
+																	"pattern": "^\\d+(?:\\.\\d+)?$"
 																},
 																"used": {
 																	"type": "string",
@@ -3011,16 +3026,9 @@
 																	"pattern": "^\\d+(?:\\.\\d+)?$"
 																},
 																"available": {
-																	"anyOf": [
-																		{
-																			"type": "string",
-																			"maxLength": 78,
-																			"pattern": "^\\d+(?:\\.\\d+)?$"
-																		},
-																		{
-																			"type": "null"
-																		}
-																	]
+																	"type": "string",
+																	"maxLength": 78,
+																	"pattern": "^\\d+(?:\\.\\d+)?$"
 																},
 																"exhausted": {
 																	"type": "boolean"
@@ -3058,6 +3066,17 @@
 																			"type": "null"
 																		}
 																	]
+																},
+																"since": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
 																}
 															},
 															"required": [
@@ -3065,8 +3084,9 @@
 																"scopeId",
 																"scopeName",
 																"ruleName",
-																"kind",
 																"name",
+																"measure",
+																"per",
 																"maximum",
 																"used",
 																"held",
@@ -3074,7 +3094,8 @@
 																"exhausted",
 																"refillPerSecond",
 																"windowStart",
-																"resetAt"
+																"resetAt",
+																"since"
 															],
 															"additionalProperties": false
 														}
@@ -3095,12 +3116,6 @@
 														"type": "string",
 														"minLength": 1,
 														"maxLength": 100
-													},
-													"onHoldUsd": {
-														"default": "0",
-														"type": "string",
-														"maxLength": 78,
-														"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 													},
 													"organizationId": {
 														"type": "string",
@@ -3125,18 +3140,6 @@
 													"retrievedAt": {
 														"type": "string",
 														"format": "date-time"
-													},
-													"spendLimitUsd": {
-														"anyOf": [
-															{
-																"type": "string",
-																"maxLength": 49,
-																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-															},
-															{
-																"type": "null"
-															}
-														]
 													},
 													"totalSpentUsd": {
 														"default": "0",
@@ -3330,7 +3333,6 @@
 													"kind",
 													"limitStates",
 													"name",
-													"onHoldUsd",
 													"organizationId",
 													"preview",
 													"policyEditable",
@@ -6173,6 +6175,9 @@
 															],
 															"additionalProperties": false
 														}
+													},
+													"ssoRequired": {
+														"type": "boolean"
 													}
 												},
 												"required": [
@@ -6183,7 +6188,8 @@
 													"organizationId",
 													"organizationName",
 													"organizationType",
-													"roles"
+													"roles",
+													"ssoRequired"
 												],
 												"additionalProperties": false
 											}
@@ -8223,6 +8229,66 @@
 												"additionalProperties": false
 											}
 										},
+										"tax_rates": {
+											"default": {},
+											"type": "object",
+											"propertyNames": {
+												"type": "string",
+												"format": "uuid"
+											},
+											"additionalProperties": {
+												"type": "object",
+												"properties": {
+													"state": {
+														"type": "string"
+													},
+													"rate": {
+														"type": "string",
+														"pattern": "^0\\.\\d{0,7}[1-9]$"
+													},
+													"jurisdictions": {
+														"minItems": 1,
+														"maxItems": 16,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"name": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 200
+																},
+																"level": {
+																	"type": "string",
+																	"enum": [
+																		"state",
+																		"county",
+																		"city",
+																		"district"
+																	]
+																},
+																"rate": {
+																	"type": "string",
+																	"pattern": "^0\\.\\d{0,7}[1-9]$"
+																}
+															},
+															"required": [
+																"name",
+																"level",
+																"rate"
+															],
+															"additionalProperties": false
+														}
+													}
+												},
+												"required": [
+													"state",
+													"rate",
+													"jurisdictions"
+												],
+												"additionalProperties": false
+											}
+										},
 										"filters": {
 											"default": {
 												"api_keys": [],
@@ -8961,6 +9027,21 @@
 																"maxLength": 78,
 																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 															},
+															"tax_rate": {
+																"type": "string",
+																"pattern": "^(0|0\\.\\d{0,7}[1-9])$"
+															},
+															"tax_rate_id": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"format": "uuid"
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															},
 															"cache_read_savings_usd": {
 																"type": "string",
 																"maxLength": 78,
@@ -9028,6 +9109,8 @@
 															"upstream_cost_usd",
 															"billed_cost_usd",
 															"tax_usd",
+															"tax_rate",
+															"tax_rate_id",
 															"meters",
 															"standard_text_tokens"
 														],
@@ -9125,6 +9208,7 @@
 									},
 									"required": [
 										"catalog_chains",
+										"tax_rates",
 										"filters",
 										"items",
 										"nextCursor"
@@ -13407,6 +13491,9 @@
 										"hasPendingPayment": {
 											"type": "boolean"
 										},
+										"losesSignIn": {
+											"type": "boolean"
+										},
 										"organizationId": {
 											"type": "string",
 											"minLength": 1
@@ -13443,6 +13530,7 @@
 										"blockedByInvoicedBilling",
 										"blockedByLastRoleManager",
 										"hasPendingPayment",
+										"losesSignIn",
 										"organizationId",
 										"organizationName",
 										"organizationType",
@@ -13971,7 +14059,7 @@
 						]
 					},
 					"limitStates": {
-						"maxItems": 649,
+						"maxItems": 289,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -14003,51 +14091,80 @@
 									"type": "string",
 									"maxLength": 48
 								},
-								"schedule": {
+								"name": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 48
+								},
+								"measure": {
+									"type": "string",
+									"enum": [
+										"requests",
+										"tokens",
+										"stt",
+										"usd",
+										"concurrentRequests"
+									]
+								},
+								"per": {
 									"anyOf": [
 										{
 											"type": "object",
 											"properties": {
-												"anchor": {
+												"count": {
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 1000
+												},
+												"unit": {
 													"type": "string",
-													"format": "date-time"
+													"enum": [
+														"second",
+														"minute",
+														"hour",
+														"day",
+														"week",
+														"month",
+														"year"
+													]
+												},
+												"refill": {
+													"type": "string",
+													"enum": [
+														"reset",
+														"gradual"
+													]
+												},
+												"anchor": {
+													"anyOf": [
+														{
+															"type": "string",
+															"format": "date-time"
+														},
+														{
+															"type": "null"
+														}
+													]
 												},
 												"timeZone": {
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												"window": {
-													"type": "object",
-													"properties": {
-														"count": {
-															"type": "integer",
-															"exclusiveMinimum": 0,
-															"maximum": 9007199254740991
-														},
-														"unit": {
+													"anyOf": [
+														{
 															"type": "string",
-															"enum": [
-																"minute",
-																"hour",
-																"day",
-																"week",
-																"month",
-																"year"
-															]
+															"minLength": 1,
+															"maxLength": 100
+														},
+														{
+															"type": "null"
 														}
-													},
-													"required": [
-														"count",
-														"unit"
-													],
-													"additionalProperties": false
+													]
 												}
 											},
 											"required": [
+												"count",
+												"unit",
+												"refill",
 												"anchor",
-												"timeZone",
-												"window"
+												"timeZone"
 											],
 											"additionalProperties": false
 										},
@@ -14056,34 +14173,10 @@
 										}
 									]
 								},
-								"kind": {
-									"type": "string",
-									"enum": [
-										"lifetime_spend",
-										"lifetime_tokens",
-										"recurring_spend",
-										"requests",
-										"tokens",
-										"stt",
-										"concurrent_requests"
-									]
-								},
-								"name": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 48
-								},
 								"maximum": {
-									"anyOf": [
-										{
-											"type": "string",
-											"maxLength": 78,
-											"pattern": "^\\d+(?:\\.\\d+)?$"
-										},
-										{
-											"type": "null"
-										}
-									]
+									"type": "string",
+									"maxLength": 78,
+									"pattern": "^\\d+(?:\\.\\d+)?$"
 								},
 								"used": {
 									"type": "string",
@@ -14096,16 +14189,9 @@
 									"pattern": "^\\d+(?:\\.\\d+)?$"
 								},
 								"available": {
-									"anyOf": [
-										{
-											"type": "string",
-											"maxLength": 78,
-											"pattern": "^\\d+(?:\\.\\d+)?$"
-										},
-										{
-											"type": "null"
-										}
-									]
+									"type": "string",
+									"maxLength": 78,
+									"pattern": "^\\d+(?:\\.\\d+)?$"
 								},
 								"exhausted": {
 									"type": "boolean"
@@ -14143,6 +14229,17 @@
 											"type": "null"
 										}
 									]
+								},
+								"since": {
+									"anyOf": [
+										{
+											"type": "string",
+											"format": "date-time"
+										},
+										{
+											"type": "null"
+										}
+									]
 								}
 							},
 							"required": [
@@ -14150,8 +14247,9 @@
 								"scopeId",
 								"scopeName",
 								"ruleName",
-								"kind",
 								"name",
+								"measure",
+								"per",
 								"maximum",
 								"used",
 								"held",
@@ -14159,7 +14257,8 @@
 								"exhausted",
 								"refillPerSecond",
 								"windowStart",
-								"resetAt"
+								"resetAt",
+								"since"
 							],
 							"additionalProperties": false
 						}
@@ -14180,12 +14279,6 @@
 						"type": "string",
 						"minLength": 1,
 						"maxLength": 100
-					},
-					"onHoldUsd": {
-						"default": "0",
-						"type": "string",
-						"maxLength": 78,
-						"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
 					},
 					"organizationId": {
 						"type": "string",
@@ -14210,18 +14303,6 @@
 					"retrievedAt": {
 						"type": "string",
 						"format": "date-time"
-					},
-					"spendLimitUsd": {
-						"anyOf": [
-							{
-								"type": "string",
-								"maxLength": 49,
-								"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-							},
-							{
-								"type": "null"
-							}
-						]
 					},
 					"totalSpentUsd": {
 						"default": "0",
@@ -14419,7 +14500,6 @@
 					"kind",
 					"limitStates",
 					"name",
-					"onHoldUsd",
 					"organizationId",
 					"preview",
 					"policyEditable",
@@ -14824,208 +14904,124 @@
 											"description": "Checks on request text before redaction."
 										},
 										"limits": {
+											"minProperties": 1,
+											"maxProperties": 8,
+											"description": "Named limits. A request must fit every limit of every policy that applies to it. At most 8 per policy, counting its rules. Request policies cannot set limits.",
 											"type": "object",
-											"properties": {
-												"lifetimeTokens": {
-													"type": "integer",
-													"minimum": 0,
-													"maximum": 1000000000000
-												},
-												"concurrentRequests": {
-													"type": "integer",
-													"minimum": 1,
-													"maximum": 10000
-												},
-												"requests": {
-													"minProperties": 1,
-													"maxProperties": 5,
-													"type": "object",
-													"propertyNames": {
-														"type": "string",
-														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+											"propertyNames": {
+												"type": "string",
+												"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+											},
+											"additionalProperties": {
+												"type": "object",
+												"properties": {
+													"requests": {
+														"type": "integer",
+														"minimum": 1,
+														"maximum": 1000000000000,
+														"description": "Requests, each counted when the gateway admits it."
 													},
-													"additionalProperties": {
+													"tokens": {
+														"type": "integer",
+														"minimum": 1,
+														"maximum": 1000000000000,
+														"description": "Provider tokens: input, including cache reads and writes, and output, including reasoning."
+													},
+													"stt": {
+														"type": "integer",
+														"minimum": 1,
+														"maximum": 1000000000000,
+														"description": "Standard text tokens of input: the decoded UTF-8 bytes after redaction, divided by four."
+													},
+													"usd": {
+														"type": "string",
+														"maxLength": 49,
+														"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+														"description": "Full provider cost at catalog rates, including BYOK requests. Exact USD as a decimal string."
+													},
+													"concurrentRequests": {
+														"type": "integer",
+														"minimum": 1,
+														"maximum": 10000,
+														"description": "Requests running at the same time, across all gateways."
+													},
+													"per": {
 														"type": "object",
 														"properties": {
-															"burst": {
+															"count": {
 																"type": "integer",
 																"minimum": 1,
-																"maximum": 120
-															},
-															"max": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 1000000000000
-															},
-															"window": {
-																"type": "object",
-																"properties": {
-																	"count": {
-																		"type": "integer",
-																		"minimum": 1,
-																		"maximum": 999999
-																	},
-																	"unit": {
-																		"type": "string",
-																		"enum": [
-																			"second",
-																			"minute",
-																			"hour",
-																			"day",
-																			"week"
-																		]
-																	}
-																},
-																"required": [
-																	"count",
-																	"unit"
-																],
-																"additionalProperties": false
-															}
-														},
-														"required": [
-															"max",
-															"window"
-														],
-														"additionalProperties": false
-													}
-												},
-												"tokens": {
-													"minProperties": 1,
-													"maxProperties": 5,
-													"type": "object",
-													"propertyNames": {
-														"type": "string",
-														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-													},
-													"additionalProperties": {
-														"type": "object",
-														"properties": {
-															"max": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 1000000000000
+																"maximum": 1000
 															},
 															"unit": {
 																"type": "string",
 																"enum": [
-																	"tokens",
-																	"stt"
-																],
-																"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
+																	"second",
+																	"minute",
+																	"hour",
+																	"day",
+																	"week",
+																	"month",
+																	"year"
+																]
 															},
-															"window": {
-																"type": "object",
-																"properties": {
-																	"count": {
-																		"type": "integer",
-																		"minimum": 1,
-																		"maximum": 999999
-																	},
-																	"unit": {
-																		"type": "string",
-																		"enum": [
-																			"second",
-																			"minute",
-																			"hour",
-																			"day",
-																			"week"
-																		]
-																	}
-																},
-																"required": [
-																	"count",
-																	"unit"
+															"refill": {
+																"type": "string",
+																"enum": [
+																	"reset",
+																	"gradual"
 																],
-																"additionalProperties": false
+																"description": "reset gives back the whole amount when each period starts. gradual gives it back continuously, one period's amount over each period, so usage never bunches at a reset. Defaults to reset."
+															},
+															"anchor": {
+																"type": "string",
+																"format": "date-time",
+																"description": "When a period starts; the others follow on the calendar. Saving without one sets the start of the current unit in timeZone, such as midnight on the first of the month, and later saves keep it. Not for gradual refills."
+															},
+															"timeZone": {
+																"type": "string",
+																"maxLength": 64,
+																"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+																"description": "The calendar for days, weeks, months and years, including daylight saving time. Defaults to UTC. Not for gradual refills."
 															}
 														},
 														"required": [
-															"max",
-															"window"
+															"count",
+															"unit"
 														],
-														"additionalProperties": false
+														"additionalProperties": false,
+														"description": "Repeat the limit every period. Leave it out for a limit that never resets. Concurrent requests take no period."
 													}
 												},
-												"spend": {
-													"type": "object",
-													"properties": {
-														"lifetimeUsd": {
-															"type": "string",
-															"maxLength": 49,
-															"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-															"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-														},
-														"recurring": {
-															"minProperties": 1,
-															"maxProperties": 5,
-															"type": "object",
-															"propertyNames": {
-																"type": "string",
-																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-															},
-															"additionalProperties": {
-																"type": "object",
-																"properties": {
-																	"anchor": {
-																		"type": "string",
-																		"format": "date-time"
-																	},
-																	"maxUsd": {
-																		"type": "string",
-																		"maxLength": 49,
-																		"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-																		"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-																	},
-																	"timeZone": {
-																		"type": "string",
-																		"maxLength": 64,
-																		"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-																		"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-																	},
-																	"window": {
-																		"type": "object",
-																		"properties": {
-																			"count": {
-																				"type": "integer",
-																				"minimum": 1,
-																				"maximum": 1000
-																			},
-																			"unit": {
-																				"type": "string",
-																				"enum": [
-																					"minute",
-																					"hour",
-																					"day",
-																					"week",
-																					"month",
-																					"year"
-																				]
-																			}
-																		},
-																		"required": [
-																			"count",
-																			"unit"
-																		],
-																		"additionalProperties": false
-																	}
-																},
-																"required": [
-																	"maxUsd",
-																	"timeZone",
-																	"window"
-																],
-																"additionalProperties": false
-															}
-														}
+												"additionalProperties": false,
+												"oneOf": [
+													{
+														"required": [
+															"requests"
+														]
 													},
-													"additionalProperties": false,
-													"minProperties": 1
-												}
-											},
-											"additionalProperties": false,
-											"minProperties": 1,
-											"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
+													{
+														"required": [
+															"tokens"
+														]
+													},
+													{
+														"required": [
+															"stt"
+														]
+													},
+													{
+														"required": [
+															"usd"
+														]
+													},
+													{
+														"required": [
+															"concurrentRequests"
+														]
+													}
+												]
+											}
 										},
 										"plugins": {
 											"anyOf": [
@@ -15939,208 +15935,124 @@
 									"additionalProperties": false
 								},
 								"config": {
+									"minProperties": 1,
+									"maxProperties": 8,
+									"description": "Named limits. A request must fit every limit of every policy that applies to it. At most 8 per policy, counting its rules. Request policies cannot set limits.",
 									"type": "object",
-									"properties": {
-										"lifetimeTokens": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 1000000000000
-										},
-										"concurrentRequests": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 10000
-										},
-										"requests": {
-											"minProperties": 1,
-											"maxProperties": 5,
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+									"propertyNames": {
+										"type": "string",
+										"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+									},
+									"additionalProperties": {
+										"type": "object",
+										"properties": {
+											"requests": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 1000000000000,
+												"description": "Requests, each counted when the gateway admits it."
 											},
-											"additionalProperties": {
+											"tokens": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 1000000000000,
+												"description": "Provider tokens: input, including cache reads and writes, and output, including reasoning."
+											},
+											"stt": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 1000000000000,
+												"description": "Standard text tokens of input: the decoded UTF-8 bytes after redaction, divided by four."
+											},
+											"usd": {
+												"type": "string",
+												"maxLength": 49,
+												"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+												"description": "Full provider cost at catalog rates, including BYOK requests. Exact USD as a decimal string."
+											},
+											"concurrentRequests": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 10000,
+												"description": "Requests running at the same time, across all gateways."
+											},
+											"per": {
 												"type": "object",
 												"properties": {
-													"burst": {
+													"count": {
 														"type": "integer",
 														"minimum": 1,
-														"maximum": 120
-													},
-													"max": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 1000000000000
-													},
-													"window": {
-														"type": "object",
-														"properties": {
-															"count": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 999999
-															},
-															"unit": {
-																"type": "string",
-																"enum": [
-																	"second",
-																	"minute",
-																	"hour",
-																	"day",
-																	"week"
-																]
-															}
-														},
-														"required": [
-															"count",
-															"unit"
-														],
-														"additionalProperties": false
-													}
-												},
-												"required": [
-													"max",
-													"window"
-												],
-												"additionalProperties": false
-											}
-										},
-										"tokens": {
-											"minProperties": 1,
-											"maxProperties": 5,
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-											},
-											"additionalProperties": {
-												"type": "object",
-												"properties": {
-													"max": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 1000000000000
+														"maximum": 1000
 													},
 													"unit": {
 														"type": "string",
 														"enum": [
-															"tokens",
-															"stt"
-														],
-														"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
+															"second",
+															"minute",
+															"hour",
+															"day",
+															"week",
+															"month",
+															"year"
+														]
 													},
-													"window": {
-														"type": "object",
-														"properties": {
-															"count": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 999999
-															},
-															"unit": {
-																"type": "string",
-																"enum": [
-																	"second",
-																	"minute",
-																	"hour",
-																	"day",
-																	"week"
-																]
-															}
-														},
-														"required": [
-															"count",
-															"unit"
+													"refill": {
+														"type": "string",
+														"enum": [
+															"reset",
+															"gradual"
 														],
-														"additionalProperties": false
+														"description": "reset gives back the whole amount when each period starts. gradual gives it back continuously, one period's amount over each period, so usage never bunches at a reset. Defaults to reset."
+													},
+													"anchor": {
+														"type": "string",
+														"format": "date-time",
+														"description": "When a period starts; the others follow on the calendar. Saving without one sets the start of the current unit in timeZone, such as midnight on the first of the month, and later saves keep it. Not for gradual refills."
+													},
+													"timeZone": {
+														"type": "string",
+														"maxLength": 64,
+														"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+														"description": "The calendar for days, weeks, months and years, including daylight saving time. Defaults to UTC. Not for gradual refills."
 													}
 												},
 												"required": [
-													"max",
-													"window"
+													"count",
+													"unit"
 												],
-												"additionalProperties": false
+												"additionalProperties": false,
+												"description": "Repeat the limit every period. Leave it out for a limit that never resets. Concurrent requests take no period."
 											}
 										},
-										"spend": {
-											"type": "object",
-											"properties": {
-												"lifetimeUsd": {
-													"type": "string",
-													"maxLength": 49,
-													"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-													"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-												},
-												"recurring": {
-													"minProperties": 1,
-													"maxProperties": 5,
-													"type": "object",
-													"propertyNames": {
-														"type": "string",
-														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-													},
-													"additionalProperties": {
-														"type": "object",
-														"properties": {
-															"anchor": {
-																"type": "string",
-																"format": "date-time"
-															},
-															"maxUsd": {
-																"type": "string",
-																"maxLength": 49,
-																"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-																"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-															},
-															"timeZone": {
-																"type": "string",
-																"maxLength": 64,
-																"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-																"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-															},
-															"window": {
-																"type": "object",
-																"properties": {
-																	"count": {
-																		"type": "integer",
-																		"minimum": 1,
-																		"maximum": 1000
-																	},
-																	"unit": {
-																		"type": "string",
-																		"enum": [
-																			"minute",
-																			"hour",
-																			"day",
-																			"week",
-																			"month",
-																			"year"
-																		]
-																	}
-																},
-																"required": [
-																	"count",
-																	"unit"
-																],
-																"additionalProperties": false
-															}
-														},
-														"required": [
-															"maxUsd",
-															"timeZone",
-															"window"
-														],
-														"additionalProperties": false
-													}
-												}
+										"additionalProperties": false,
+										"oneOf": [
+											{
+												"required": [
+													"requests"
+												]
 											},
-											"additionalProperties": false,
-											"minProperties": 1
-										}
-									},
-									"additionalProperties": false,
-									"minProperties": 1,
-									"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
+											{
+												"required": [
+													"tokens"
+												]
+											},
+											{
+												"required": [
+													"stt"
+												]
+											},
+											{
+												"required": [
+													"usd"
+												]
+											},
+											{
+												"required": [
+													"concurrentRequests"
+												]
+											}
+										]
+									}
 								}
 							},
 							"required": [
@@ -17549,209 +17461,125 @@
 						"description": "Checks on request text before redaction."
 					},
 					"limits": {
+						"minProperties": 1,
+						"maxProperties": 8,
+						"description": "Named limits. A request must fit every limit of every policy that applies to it. At most 8 per policy, counting its rules. Request policies cannot set limits.",
 						"type": "object",
-						"properties": {
-							"lifetimeTokens": {
-								"type": "integer",
-								"minimum": 0,
-								"maximum": 1000000000000
-							},
-							"concurrentRequests": {
-								"type": "integer",
-								"minimum": 1,
-								"maximum": 10000
-							},
-							"requests": {
-								"minProperties": 1,
-								"maxProperties": 5,
-								"type": "object",
-								"propertyNames": {
-									"type": "string",
-									"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+						"propertyNames": {
+							"type": "string",
+							"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+						},
+						"additionalProperties": {
+							"type": "object",
+							"properties": {
+								"requests": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 1000000000000,
+									"description": "Requests, each counted when the gateway admits it."
 								},
-								"additionalProperties": {
+								"tokens": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 1000000000000,
+									"description": "Provider tokens: input, including cache reads and writes, and output, including reasoning."
+								},
+								"stt": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 1000000000000,
+									"description": "Standard text tokens of input: the decoded UTF-8 bytes after redaction, divided by four."
+								},
+								"usd": {
+									"type": "string",
+									"maxLength": 49,
+									"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+									"description": "Full provider cost at catalog rates, including BYOK requests. Exact USD as a decimal string."
+								},
+								"concurrentRequests": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 10000,
+									"description": "Requests running at the same time, across all gateways."
+								},
+								"per": {
 									"type": "object",
 									"properties": {
-										"burst": {
+										"count": {
 											"type": "integer",
 											"minimum": 1,
-											"maximum": 120
-										},
-										"max": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 1000000000000
-										},
-										"window": {
-											"type": "object",
-											"properties": {
-												"count": {
-													"type": "integer",
-													"minimum": 1,
-													"maximum": 999999
-												},
-												"unit": {
-													"type": "string",
-													"enum": [
-														"second",
-														"minute",
-														"hour",
-														"day",
-														"week"
-													]
-												}
-											},
-											"required": [
-												"count",
-												"unit"
-											],
-											"additionalProperties": false
-										}
-									},
-									"required": [
-										"max",
-										"window"
-									],
-									"additionalProperties": false
-								}
-							},
-							"tokens": {
-								"minProperties": 1,
-								"maxProperties": 5,
-								"type": "object",
-								"propertyNames": {
-									"type": "string",
-									"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-								},
-								"additionalProperties": {
-									"type": "object",
-									"properties": {
-										"max": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 1000000000000
+											"maximum": 1000
 										},
 										"unit": {
 											"type": "string",
 											"enum": [
-												"tokens",
-												"stt"
-											],
-											"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
+												"second",
+												"minute",
+												"hour",
+												"day",
+												"week",
+												"month",
+												"year"
+											]
 										},
-										"window": {
-											"type": "object",
-											"properties": {
-												"count": {
-													"type": "integer",
-													"minimum": 1,
-													"maximum": 999999
-												},
-												"unit": {
-													"type": "string",
-													"enum": [
-														"second",
-														"minute",
-														"hour",
-														"day",
-														"week"
-													]
-												}
-											},
-											"required": [
-												"count",
-												"unit"
+										"refill": {
+											"type": "string",
+											"enum": [
+												"reset",
+												"gradual"
 											],
-											"additionalProperties": false
+											"description": "reset gives back the whole amount when each period starts. gradual gives it back continuously, one period's amount over each period, so usage never bunches at a reset. Defaults to reset."
+										},
+										"anchor": {
+											"type": "string",
+											"format": "date-time",
+											"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+											"description": "When a period starts; the others follow on the calendar. Saving without one sets the start of the current unit in timeZone, such as midnight on the first of the month, and later saves keep it. Not for gradual refills."
+										},
+										"timeZone": {
+											"type": "string",
+											"maxLength": 64,
+											"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+											"description": "The calendar for days, weeks, months and years, including daylight saving time. Defaults to UTC. Not for gradual refills."
 										}
 									},
 									"required": [
-										"max",
-										"window"
+										"count",
+										"unit"
 									],
-									"additionalProperties": false
+									"additionalProperties": false,
+									"description": "Repeat the limit every period. Leave it out for a limit that never resets. Concurrent requests take no period."
 								}
 							},
-							"spend": {
-								"type": "object",
-								"properties": {
-									"lifetimeUsd": {
-										"type": "string",
-										"maxLength": 49,
-										"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-										"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-									},
-									"recurring": {
-										"minProperties": 1,
-										"maxProperties": 5,
-										"type": "object",
-										"propertyNames": {
-											"type": "string",
-											"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-										},
-										"additionalProperties": {
-											"type": "object",
-											"properties": {
-												"anchor": {
-													"type": "string",
-													"format": "date-time",
-													"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-												},
-												"maxUsd": {
-													"type": "string",
-													"maxLength": 49,
-													"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-													"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-												},
-												"timeZone": {
-													"type": "string",
-													"maxLength": 64,
-													"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-													"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-												},
-												"window": {
-													"type": "object",
-													"properties": {
-														"count": {
-															"type": "integer",
-															"minimum": 1,
-															"maximum": 1000
-														},
-														"unit": {
-															"type": "string",
-															"enum": [
-																"minute",
-																"hour",
-																"day",
-																"week",
-																"month",
-																"year"
-															]
-														}
-													},
-													"required": [
-														"count",
-														"unit"
-													],
-													"additionalProperties": false
-												}
-											},
-											"required": [
-												"maxUsd",
-												"timeZone",
-												"window"
-											],
-											"additionalProperties": false
-										}
-									}
+							"additionalProperties": false,
+							"oneOf": [
+								{
+									"required": [
+										"requests"
+									]
 								},
-								"additionalProperties": false,
-								"minProperties": 1
-							}
-						},
-						"additionalProperties": false,
-						"minProperties": 1,
-						"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
+								{
+									"required": [
+										"tokens"
+									]
+								},
+								{
+									"required": [
+										"stt"
+									]
+								},
+								{
+									"required": [
+										"usd"
+									]
+								},
+								{
+									"required": [
+										"concurrentRequests"
+									]
+								}
+							]
+						}
 					},
 					"plugins": {
 						"anyOf": [
@@ -18184,209 +18012,125 @@
 									"description": "Checks on request text before redaction."
 								},
 								"limits": {
+									"minProperties": 1,
+									"maxProperties": 8,
+									"description": "Named limits. A request must fit every limit of every policy that applies to it. At most 8 per policy, counting its rules. Request policies cannot set limits.",
 									"type": "object",
-									"properties": {
-										"lifetimeTokens": {
-											"type": "integer",
-											"minimum": 0,
-											"maximum": 1000000000000
-										},
-										"concurrentRequests": {
-											"type": "integer",
-											"minimum": 1,
-											"maximum": 10000
-										},
-										"requests": {
-											"minProperties": 1,
-											"maxProperties": 5,
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+									"propertyNames": {
+										"type": "string",
+										"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+									},
+									"additionalProperties": {
+										"type": "object",
+										"properties": {
+											"requests": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 1000000000000,
+												"description": "Requests, each counted when the gateway admits it."
 											},
-											"additionalProperties": {
+											"tokens": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 1000000000000,
+												"description": "Provider tokens: input, including cache reads and writes, and output, including reasoning."
+											},
+											"stt": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 1000000000000,
+												"description": "Standard text tokens of input: the decoded UTF-8 bytes after redaction, divided by four."
+											},
+											"usd": {
+												"type": "string",
+												"maxLength": 49,
+												"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
+												"description": "Full provider cost at catalog rates, including BYOK requests. Exact USD as a decimal string."
+											},
+											"concurrentRequests": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 10000,
+												"description": "Requests running at the same time, across all gateways."
+											},
+											"per": {
 												"type": "object",
 												"properties": {
-													"burst": {
+													"count": {
 														"type": "integer",
 														"minimum": 1,
-														"maximum": 120
-													},
-													"max": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 1000000000000
-													},
-													"window": {
-														"type": "object",
-														"properties": {
-															"count": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 999999
-															},
-															"unit": {
-																"type": "string",
-																"enum": [
-																	"second",
-																	"minute",
-																	"hour",
-																	"day",
-																	"week"
-																]
-															}
-														},
-														"required": [
-															"count",
-															"unit"
-														],
-														"additionalProperties": false
-													}
-												},
-												"required": [
-													"max",
-													"window"
-												],
-												"additionalProperties": false
-											}
-										},
-										"tokens": {
-											"minProperties": 1,
-											"maxProperties": 5,
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-											},
-											"additionalProperties": {
-												"type": "object",
-												"properties": {
-													"max": {
-														"type": "integer",
-														"minimum": 1,
-														"maximum": 1000000000000
+														"maximum": 1000
 													},
 													"unit": {
 														"type": "string",
 														"enum": [
-															"tokens",
-															"stt"
-														],
-														"description": "Provider total tokens by default. STT is decoded input UTF-8 bytes divided by four, charged only for successful billable requests."
+															"second",
+															"minute",
+															"hour",
+															"day",
+															"week",
+															"month",
+															"year"
+														]
 													},
-													"window": {
-														"type": "object",
-														"properties": {
-															"count": {
-																"type": "integer",
-																"minimum": 1,
-																"maximum": 999999
-															},
-															"unit": {
-																"type": "string",
-																"enum": [
-																	"second",
-																	"minute",
-																	"hour",
-																	"day",
-																	"week"
-																]
-															}
-														},
-														"required": [
-															"count",
-															"unit"
+													"refill": {
+														"type": "string",
+														"enum": [
+															"reset",
+															"gradual"
 														],
-														"additionalProperties": false
+														"description": "reset gives back the whole amount when each period starts. gradual gives it back continuously, one period's amount over each period, so usage never bunches at a reset. Defaults to reset."
+													},
+													"anchor": {
+														"type": "string",
+														"format": "date-time",
+														"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+														"description": "When a period starts; the others follow on the calendar. Saving without one sets the start of the current unit in timeZone, such as midnight on the first of the month, and later saves keep it. Not for gradual refills."
+													},
+													"timeZone": {
+														"type": "string",
+														"maxLength": 64,
+														"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+														"description": "The calendar for days, weeks, months and years, including daylight saving time. Defaults to UTC. Not for gradual refills."
 													}
 												},
 												"required": [
-													"max",
-													"window"
+													"count",
+													"unit"
 												],
-												"additionalProperties": false
+												"additionalProperties": false,
+												"description": "Repeat the limit every period. Leave it out for a limit that never resets. Concurrent requests take no period."
 											}
 										},
-										"spend": {
-											"type": "object",
-											"properties": {
-												"lifetimeUsd": {
-													"type": "string",
-													"maxLength": 49,
-													"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-													"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-												},
-												"recurring": {
-													"minProperties": 1,
-													"maxProperties": 5,
-													"type": "object",
-													"propertyNames": {
-														"type": "string",
-														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-													},
-													"additionalProperties": {
-														"type": "object",
-														"properties": {
-															"anchor": {
-																"type": "string",
-																"format": "date-time",
-																"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
-															},
-															"maxUsd": {
-																"type": "string",
-																"maxLength": 49,
-																"pattern": "^(?:(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{0,35}[1-9])?|1000000000000)$",
-																"description": "Exact nonnegative USD, at most 36 decimal places and $1 trillion. No exponent or trailing fractional zeros."
-															},
-															"timeZone": {
-																"type": "string",
-																"maxLength": 64,
-																"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-																"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-															},
-															"window": {
-																"type": "object",
-																"properties": {
-																	"count": {
-																		"type": "integer",
-																		"minimum": 1,
-																		"maximum": 1000
-																	},
-																	"unit": {
-																		"type": "string",
-																		"enum": [
-																			"minute",
-																			"hour",
-																			"day",
-																			"week",
-																			"month",
-																			"year"
-																		]
-																	}
-																},
-																"required": [
-																	"count",
-																	"unit"
-																],
-																"additionalProperties": false
-															}
-														},
-														"required": [
-															"maxUsd",
-															"timeZone",
-															"window"
-														],
-														"additionalProperties": false
-													}
-												}
+										"additionalProperties": false,
+										"oneOf": [
+											{
+												"required": [
+													"requests"
+												]
 											},
-											"additionalProperties": false,
-											"minProperties": 1
-										}
-									},
-									"additionalProperties": false,
-									"minProperties": 1,
-									"description": "At most 5 named limits per policy, across recurring spending, request rate and token limits. In a rule, lifetime and concurrency limits together count as one. Request policies cannot set limits."
+											{
+												"required": [
+													"tokens"
+												]
+											},
+											{
+												"required": [
+													"stt"
+												]
+											},
+											{
+												"required": [
+													"usd"
+												]
+											},
+											{
+												"required": [
+													"concurrentRequests"
+												]
+											}
+										]
+									}
 								},
 								"plugins": {
 									"anyOf": [
