@@ -177,19 +177,19 @@ test.describe('native browser zoom 200% at 400 × 378', () => {
 		page
 	}) => {
 		await page.goto('/docs');
-		await searchForSection(page, 'lifetime tokens', 'Limits');
-		await expect(page).toHaveURL(/\/policies\/limits#lifetime-tokens$/);
-		await expectReadingRegion(page, 'lifetime-tokens');
+		await searchForSection(page, 'lifetime or recurring', 'Limits');
+		await expect(page).toHaveURL(/\/policies\/limits#lifetime-or-recurring$/);
+		await expectReadingRegion(page, 'lifetime-or-recurring');
 		await page.getByRole('button', { name: 'Open Sidebar', exact: true }).click();
 		await page
 			.locator('#nd-sidebar-mobile')
 			.getByRole('button', { name: 'Close Sidebar', exact: true })
 			.click();
-		await expectReadingRegion(page, 'lifetime-tokens');
+		await expectReadingRegion(page, 'lifetime-or-recurring');
 		await page.goBack();
 		await expect(page).toHaveURL(/\/docs$/);
 		await page.goForward();
-		await expectReadingRegion(page, 'lifetime-tokens');
+		await expectReadingRegion(page, 'lifetime-or-recurring');
 	});
 
 	test('replacing a dismissed sidebar search reveals the current hash again', async ({ page }) => {
@@ -201,7 +201,9 @@ test.describe('native browser zoom 200% at 400 × 378', () => {
 			.getByRole('button', { name: 'Close Sidebar', exact: true });
 		await close.focus();
 		await page.keyboard.press('Control+k');
-		await page.getByRole('combobox', { name: 'Search documentation' }).fill('lifetime tokens');
+		await page
+			.getByRole('combobox', { name: 'Search documentation' })
+			.fill('lifetime or recurring');
 		await expect(page.getByRole('option').first()).toContainText('Limits');
 		await page.keyboard.press('Escape');
 		await expect(page.getByRole('combobox', { name: 'Search documentation' })).toHaveCount(0);
@@ -221,11 +223,11 @@ test('nested schemas open in their card with keyboard focus and their own filter
 	const schema = page.locator('[id="policy-fields.rule"]');
 	const filter = schema.getByRole('textbox', { name: 'Filter Properties' });
 	const current = schema.locator('[aria-current="page"]');
-	await filter.fill('limits');
+	await filter.fill('routing');
 	await expect(schema.getByRole('button', { name: 'object', exact: true })).toHaveCount(1);
 	await schema.getByRole('button', { name: 'object', exact: true }).focus();
 	await page.keyboard.press('Enter');
-	await expect(current).toHaveText('limits');
+	await expect(current).toHaveText('routing');
 	await expect(current).toBeFocused();
 	await expect(current).toBeInViewport({ ratio: 1 });
 	await expect(filter).toHaveValue('');
@@ -235,7 +237,7 @@ test('nested schemas open in their card with keyboard focus and their own filter
 	await expect(current).toHaveText('rules.<name>');
 	await expect(current).toBeFocused();
 	await expect(
-		schema.getByRole('button', { name: 'Copy Link: limits', exact: true })
+		schema.getByRole('button', { name: 'Copy Link: routing', exact: true })
 	).toBeVisible();
 });
 

@@ -157,7 +157,10 @@ test('routing field inventories survive Markdown export and query examples are h
 	expect(markdown).not.toContain('<RoutingFields');
 	for (const name of Object.keys(routingRegistry)) expect(markdown).toContain(`\`${name}\``);
 	await page.setViewportSize({ width: 390, height: 950 });
-	expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+	// The layout settles after the resize, so the width is read until it fits.
+	await expect
+		.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+		.toBe(true);
 	await expect(page.getByRole('table').getByRole('button')).toHaveCount(0);
 	await expect(
 		page
