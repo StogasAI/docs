@@ -48,8 +48,9 @@ request and uses more tokens. On Responses, set `reasoning.mode`:
   selects the standard deployment.
 - Without `reasoning.mode`, a model ID selects standard mode, and a deployment ID such as
   `openai-gpt-5.6-sol-pro` keeps its own mode.
-- A model without a deployment in the mode returns `reasoning_mode_unavailable`, also when you name
-  a deployment in the other mode. Other values return `unsupported_reasoning_mode`.
+- If your key can use the model only in the other mode, the request returns
+  `reasoning_mode_unavailable`, also when you name a deployment in the other mode. Other values
+  return `unsupported_reasoning_mode`.
 - Chat Completions rejects `reasoning.mode`.
 
 Mode and effort are independent. The mode combines with a [service tier](/docs/service-tiers), such

@@ -40,8 +40,10 @@ Or send the deployment ID of the tier, such as `openai-gpt-5.5-2026-04-23-flex`.
 | `ultrafast`             | Ultrafast                                                           |
 
 - Other values return `unsupported_service_tier`. Values are case sensitive.
-- If the model has no deployment for the tier, the request returns `service_tier_unavailable`. The
-  gateway never moves a request to another tier.
+- If your key can use the model only at other tiers, the request returns
+  `service_tier_unavailable`. If it can use the model at no tier, for example because no credential
+  serves it, the request returns `model_unavailable`. The gateway never moves a request to another
+  tier.
 - A deployment ID fixes the tier, so a `service_tier` for another tier returns
   `service_tier_unavailable`.
 
