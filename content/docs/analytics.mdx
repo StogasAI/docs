@@ -5,8 +5,9 @@ icon: ChartLine
 ---
 
 **Analytics** shows your organization's requests with their usage, cost, timing and outcome. It
-never stores prompts, responses or credentials. **Analytics → Read own** shows your own requests;
-**Read all** shows every request in the organization.
+never stores prompts, responses or credentials. **Analytics → Read own** shows your own requests,
+and access to view a folder, grant or API key adds its requests. **Read all** shows every request in
+the organization.
 
 The query bar holds filters and text search. Beside it, the period picker sets the time range: a
 recent period such as the last hour, 24 hours (the default) or 7 days, all time, or a custom range.
@@ -32,12 +33,13 @@ output. Generation speed divides generated tokens by the full request duration.
 
 ## Groups
 
-Group by model, final provider, final credential, API key, grant, member, request type, outcome or
-error code. The chart shows the first five groups and combines the rest as **Other**, and a table
+Group by model, final provider, final credential, API key, grant, member, role, request type,
+outcome or error code. The chart shows the first five groups and combines the rest as **Other**, and a table
 lists up to 100 groups with your metrics as columns. Select a column header to rank the groups by
 it; the table's total covers all matching requests. Model groups combine revisions of the same
 model. Requests without a value, such as requests outside a grant, form their own group, such as
-**No grant**. Select a group to filter the requests to it. These counts are analytics, not the
+**No grant**. Select a group to filter the requests to it. A request counts in every role its key's
+member held, so role groups can add up to more than the total. These counts are analytics, not the
 counters that enforce limits.
 
 ## Requests
@@ -68,6 +70,7 @@ An API key's **Requests** link opens the same history filtered to that key.
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `key:`              | An API key ID or name.                                                                                                                                                                            |
 | `grant:`, `member:` | Member keys under a grant, or keys owned by a member.                                                                                                                                             |
+| `role:`             | Member keys whose member held a role, by name or ID, when the request ran.                                                                                                                        |
 | `model:`            | A model ID. Suggestions include current catalog names.                                                                                                                                            |
 | `provider:`         | Any provider attempt.                                                                                                                                                                             |
 | `final_provider:`   | The last provider attempt.                                                                                                                                                                        |
@@ -85,8 +88,8 @@ An API key's **Requests** link opens the same history filtered to that key.
 `status:success` matches completed requests with no cancellation or gateway error. Other `status:`
 values check every provider attempt, including earlier failed ones.
 
-`none` selects requests without a value in `grant:`, `model:`, `final_provider:`, `final_byok:`,
-`error:`, `metadata.<key>:` and `session:`. For example, `error:none` selects requests without a
+`none` selects requests without a value in `grant:`, `role:`, `model:`, `final_provider:`,
+`final_byok:`, `error:`, `metadata.<key>:` and `session:`. For example, `error:none` selects requests without a
 gateway error.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
