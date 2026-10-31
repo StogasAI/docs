@@ -1754,7 +1754,7 @@
 													"inheritedPolicyLocked": {
 														"type": "boolean"
 													},
-													"assignedMemberCount": {
+													"memberCount": {
 														"type": "integer",
 														"minimum": 0,
 														"maximum": 9007199254740991
@@ -1814,7 +1814,7 @@
 													"folderId",
 													"configRevision",
 													"inheritedPolicyLocked",
-													"assignedMemberCount",
+													"memberCount",
 													"createdAt",
 													"enabled",
 													"expiresAt",
@@ -2389,6 +2389,44 @@
 											"items": {
 												"type": "object",
 												"properties": {
+													"access": {
+														"maxItems": 30,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"name": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 100
+																},
+																"roleId": {
+																	"type": "string",
+																	"format": "uuid"
+																},
+																"through": {
+																	"minItems": 1,
+																	"maxItems": 3,
+																	"type": "array",
+																	"items": {
+																		"type": "string",
+																		"enum": [
+																			"grant",
+																			"folder",
+																			"all"
+																		]
+																	},
+																	"uniqueItems": true
+																}
+															},
+															"required": [
+																"name",
+																"roleId",
+																"through"
+															],
+															"additionalProperties": false
+														}
+													},
 													"displayName": {
 														"type": "string",
 														"minLength": 1,
@@ -2405,6 +2443,7 @@
 													}
 												},
 												"required": [
+													"access",
 													"displayName",
 													"keyCount",
 													"userId"
@@ -6347,6 +6386,262 @@
 				}
 			}
 		},
+		"/api/{orgId}/analytics/options": {
+			"get": {
+				"operationId": "listRequestFilterOptions",
+				"tags": [
+					"Analytics"
+				],
+				"summary": "List filter options",
+				"description": "Lists the API keys, grants, members, roles and BYOK credentials that you can filter requests by. Each list holds at most 1,000 records and `truncated` names the lists that stop there; filters accept the names and IDs that a list leaves out.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"api_keys": {
+											"maxItems": 1000,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"grantId": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "uuid"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"kind": {
+														"type": "string",
+														"enum": [
+															"service",
+															"member"
+														]
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"preview": {
+														"type": "string",
+														"minLength": 1
+													},
+													"userId": {
+														"type": "string",
+														"format": "uuid"
+													}
+												},
+												"required": [
+													"id",
+													"grantId",
+													"kind",
+													"name",
+													"preview",
+													"userId"
+												],
+												"additionalProperties": false
+											}
+										},
+										"grants": {
+											"maxItems": 1000,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"id",
+													"name"
+												],
+												"additionalProperties": false
+											}
+										},
+										"members": {
+											"maxItems": 1000,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"displayName": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1
+													}
+												},
+												"required": [
+													"displayName",
+													"id"
+												],
+												"additionalProperties": false
+											}
+										},
+										"roles": {
+											"maxItems": 1000,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"minLength": 1
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"id",
+													"name"
+												],
+												"additionalProperties": false
+											}
+										},
+										"upstream_byok": {
+											"maxItems": 1001,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"byokId": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "uuid"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"id": {
+														"anyOf": [
+															{
+																"type": "string",
+																"const": "stogas"
+															},
+															{
+																"type": "string",
+																"format": "uuid"
+															}
+														]
+													},
+													"kind": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"stored",
+																	"encrypted"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"provider": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"anthropic",
+																	"azure",
+																	"chutes",
+																	"openai"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"byokId",
+													"id",
+													"kind",
+													"name",
+													"provider"
+												],
+												"additionalProperties": false
+											}
+										},
+										"truncated": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"api_keys",
+													"grants",
+													"members",
+													"roles",
+													"upstream_byok"
+												]
+											}
+										}
+									},
+									"required": [
+										"api_keys",
+										"grants",
+										"members",
+										"roles",
+										"upstream_byok",
+										"truncated"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/analytics/export/preview": {
 			"get": {
 				"operationId": "previewRequestExport",
@@ -6637,6 +6932,7 @@
 								"key",
 								"grant",
 								"member",
+								"role",
 								"model",
 								"provider",
 								"byok",
@@ -6819,6 +7115,7 @@
 												"key",
 												"grant",
 												"member",
+												"role",
 												"model",
 												"provider",
 												"byok",
@@ -7113,194 +7410,6 @@
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 216
-										},
-										"filters": {
-											"default": {
-												"api_keys": [],
-												"grants": [],
-												"members": [],
-												"upstream_byok": []
-											},
-											"type": "object",
-											"properties": {
-												"api_keys": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"id": {
-																"type": "string",
-																"format": "uuid"
-															},
-															"grantId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"kind": {
-																"type": "string",
-																"enum": [
-																	"service",
-																	"member"
-																]
-															},
-															"name": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															"preview": {
-																"type": "string",
-																"minLength": 1
-															},
-															"userId": {
-																"type": "string",
-																"format": "uuid"
-															}
-														},
-														"required": [
-															"id",
-															"grantId",
-															"kind",
-															"name",
-															"preview",
-															"userId"
-														],
-														"additionalProperties": false
-													}
-												},
-												"grants": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"id": {
-																"type": "string",
-																"format": "uuid"
-															},
-															"name": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															}
-														},
-														"required": [
-															"id",
-															"name"
-														],
-														"additionalProperties": false
-													}
-												},
-												"members": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"displayName": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															"id": {
-																"type": "string",
-																"minLength": 1
-															}
-														},
-														"required": [
-															"displayName",
-															"id"
-														],
-														"additionalProperties": false
-													}
-												},
-												"upstream_byok": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"byokId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"id": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"const": "stogas"
-																	},
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	}
-																]
-															},
-															"kind": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"enum": [
-																			"stored",
-																			"encrypted"
-																		]
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"name": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															"provider": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"enum": [
-																			"anthropic",
-																			"azure",
-																			"chutes",
-																			"openai"
-																		]
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															}
-														},
-														"required": [
-															"byokId",
-															"id",
-															"kind",
-															"name",
-															"provider"
-														],
-														"additionalProperties": false
-													}
-												}
-											},
-											"required": [
-												"api_keys",
-												"grants",
-												"members",
-												"upstream_byok"
-											],
-											"additionalProperties": false
 										},
 										"from": {
 											"type": "string"
@@ -7973,7 +8082,6 @@
 										"truncated",
 										"bucket",
 										"bucketCount",
-										"filters",
 										"from",
 										"series",
 										"summary",
@@ -8228,194 +8336,6 @@
 												],
 												"additionalProperties": false
 											}
-										},
-										"filters": {
-											"default": {
-												"api_keys": [],
-												"grants": [],
-												"members": [],
-												"upstream_byok": []
-											},
-											"type": "object",
-											"properties": {
-												"api_keys": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"id": {
-																"type": "string",
-																"format": "uuid"
-															},
-															"grantId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"kind": {
-																"type": "string",
-																"enum": [
-																	"service",
-																	"member"
-																]
-															},
-															"name": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															"preview": {
-																"type": "string",
-																"minLength": 1
-															},
-															"userId": {
-																"type": "string",
-																"format": "uuid"
-															}
-														},
-														"required": [
-															"id",
-															"grantId",
-															"kind",
-															"name",
-															"preview",
-															"userId"
-														],
-														"additionalProperties": false
-													}
-												},
-												"grants": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"id": {
-																"type": "string",
-																"format": "uuid"
-															},
-															"name": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															}
-														},
-														"required": [
-															"id",
-															"name"
-														],
-														"additionalProperties": false
-													}
-												},
-												"members": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"displayName": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															"id": {
-																"type": "string",
-																"minLength": 1
-															}
-														},
-														"required": [
-															"displayName",
-															"id"
-														],
-														"additionalProperties": false
-													}
-												},
-												"upstream_byok": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"byokId": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"id": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"const": "stogas"
-																	},
-																	{
-																		"type": "string",
-																		"format": "uuid"
-																	}
-																]
-															},
-															"kind": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"enum": [
-																			"stored",
-																			"encrypted"
-																		]
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
-															"name": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 100
-															},
-															"provider": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"enum": [
-																			"anthropic",
-																			"azure",
-																			"chutes",
-																			"openai"
-																		]
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															}
-														},
-														"required": [
-															"byokId",
-															"id",
-															"kind",
-															"name",
-															"provider"
-														],
-														"additionalProperties": false
-													}
-												}
-											},
-											"required": [
-												"api_keys",
-												"grants",
-												"members",
-												"upstream_byok"
-											],
-											"additionalProperties": false
 										},
 										"items": {
 											"type": "array",
@@ -9121,13 +9041,172 @@
 												"string",
 												"null"
 											]
+										},
+										"records": {
+											"type": "object",
+											"properties": {
+												"api_keys": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"id": {
+																"type": "string",
+																"format": "uuid"
+															},
+															"grantId": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"format": "uuid"
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															},
+															"kind": {
+																"type": "string",
+																"enum": [
+																	"service",
+																	"member"
+																]
+															},
+															"name": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 100
+															},
+															"preview": {
+																"type": "string",
+																"minLength": 1
+															},
+															"userId": {
+																"type": "string",
+																"format": "uuid"
+															}
+														},
+														"required": [
+															"id",
+															"grantId",
+															"kind",
+															"name",
+															"preview",
+															"userId"
+														],
+														"additionalProperties": false
+													}
+												},
+												"grants": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"id": {
+																"type": "string",
+																"format": "uuid"
+															},
+															"name": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 100
+															}
+														},
+														"required": [
+															"id",
+															"name"
+														],
+														"additionalProperties": false
+													}
+												},
+												"upstream_byok": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"byokId": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"format": "uuid"
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															},
+															"id": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"const": "stogas"
+																	},
+																	{
+																		"type": "string",
+																		"format": "uuid"
+																	}
+																]
+															},
+															"kind": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"enum": [
+																			"stored",
+																			"encrypted"
+																		]
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															},
+															"name": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 100
+															},
+															"provider": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"enum": [
+																			"anthropic",
+																			"azure",
+																			"chutes",
+																			"openai"
+																		]
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															}
+														},
+														"required": [
+															"byokId",
+															"id",
+															"kind",
+															"name",
+															"provider"
+														],
+														"additionalProperties": false
+													}
+												}
+											},
+											"required": [
+												"api_keys",
+												"grants",
+												"upstream_byok"
+											],
+											"additionalProperties": false
 										}
 									},
 									"required": [
 										"catalog_chains",
-										"filters",
 										"items",
-										"nextCursor"
+										"nextCursor",
+										"records"
 									],
 									"additionalProperties": false
 								}
@@ -9386,6 +9465,45 @@
 												"balance",
 												"payer",
 												"pendingUsd"
+											],
+											"additionalProperties": false
+										},
+										"pendingPayments": {
+											"type": "object",
+											"properties": {
+												"reviewUsd": {
+													"type": "string",
+													"maxLength": 78,
+													"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+												},
+												"unvalued": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"amount": {
+																"type": "string",
+																"maxLength": 97,
+																"pattern": "^(?:0|[1-9]\\d{0,59})(?:\\.\\d{1,36})?$"
+															},
+															"currency": {
+																"type": "string",
+																"minLength": 2,
+																"maxLength": 16,
+																"pattern": "^[A-Z0-9]+$"
+															}
+														},
+														"required": [
+															"amount",
+															"currency"
+														],
+														"additionalProperties": false
+													}
+												}
+											},
+											"required": [
+												"reviewUsd",
+												"unvalued"
 											],
 											"additionalProperties": false
 										},
@@ -9760,6 +9878,18 @@
 														"maxLength": 97,
 														"pattern": "^(?:0|[1-9]\\d{0,59})(?:\\.\\d{1,36})?$"
 													},
+													"confirmations": {
+														"anyOf": [
+															{
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 9007199254740991
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"createdAt": {
 														"type": "string",
 														"format": "date-time"
@@ -9870,6 +10000,7 @@
 												},
 												"required": [
 													"amount",
+													"confirmations",
 													"createdAt",
 													"creditStatus",
 													"creditUsd",
@@ -9899,6 +10030,7 @@
 										"balance",
 										"billing",
 										"limits",
+										"pendingPayments",
 										"estimates",
 										"walletNetwork",
 										"taxRate",
@@ -10446,6 +10578,18 @@
 														"maxLength": 97,
 														"pattern": "^(?:0|[1-9]\\d{0,59})(?:\\.\\d{1,36})?$"
 													},
+													"confirmations": {
+														"anyOf": [
+															{
+																"type": "integer",
+																"minimum": 0,
+																"maximum": 9007199254740991
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"createdAt": {
 														"type": "string",
 														"format": "date-time"
@@ -10556,6 +10700,7 @@
 												},
 												"required": [
 													"amount",
+													"confirmations",
 													"createdAt",
 													"creditStatus",
 													"creditUsd",
@@ -11625,8 +11770,15 @@
 														]
 													},
 													"code": {
-														"type": "string",
-														"minLength": 1
+														"anyOf": [
+															{
+																"type": "string",
+																"minLength": 1
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"createdAt": {
 														"type": "string",
@@ -11663,6 +11815,9 @@
 														"minimum": 1,
 														"maximum": 9007199254740991
 													},
+													"singleSignOn": {
+														"type": "boolean"
+													},
 													"usedCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -11677,6 +11832,7 @@
 													"expiresAt",
 													"id",
 													"maxUses",
+													"singleSignOn",
 													"usedCount"
 												],
 												"additionalProperties": false
@@ -11697,6 +11853,12 @@
 											"type": "string",
 											"format": "date-time"
 										},
+										"singleSignOnDomains": {
+											"type": "array",
+											"items": {
+												"type": "string"
+											}
+										},
 										"total": {
 											"type": "integer",
 											"minimum": 0,
@@ -11709,6 +11871,7 @@
 										"nextCursor",
 										"reservedInviteUses",
 										"retrievedAt",
+										"singleSignOnDomains",
 										"total"
 									],
 									"additionalProperties": false
@@ -11727,7 +11890,7 @@
 					"Invites"
 				],
 				"summary": "Create an invite",
-				"description": "An invite has one use unless you set maxUses. It lasts until its uses run out or a member deletes it, or until expiresInSeconds passes if you set it. Until then, each unused use holds a seat.",
+				"description": "An invite has one use unless you set maxUses. It lasts until its uses run out or a member deletes it, or until expiresInSeconds passes if you set it. Until then, each unused use holds a seat. With singleSignOn, the invite has no link: people with an email address at a verified domain join when the organization's identity provider signs them in. An organization has one such invite at a time.",
 				"security": [
 					{
 						"accessToken": [
@@ -11767,7 +11930,10 @@
 									"maxUses": {
 										"type": "integer",
 										"minimum": 1,
-										"maximum": 30
+										"maximum": 1000
+									},
+									"singleSignOn": {
+										"type": "boolean"
 									}
 								},
 								"additionalProperties": false
@@ -11796,8 +11962,15 @@
 											]
 										},
 										"code": {
-											"type": "string",
-											"minLength": 1
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1
+												},
+												{
+													"type": "null"
+												}
+											]
 										},
 										"expiresAt": {
 											"anyOf": [
@@ -11819,6 +11992,9 @@
 											"minimum": 1,
 											"maximum": 9007199254740991
 										},
+										"singleSignOn": {
+											"type": "boolean"
+										},
 										"usedCount": {
 											"type": "integer",
 											"minimum": 0,
@@ -11831,6 +12007,7 @@
 										"expiresAt",
 										"id",
 										"maxUses",
+										"singleSignOn",
 										"usedCount"
 									],
 									"additionalProperties": false
@@ -12179,6 +12356,9 @@
 															"additionalProperties": false
 														}
 													},
+													"singleSignOn": {
+														"type": "boolean"
+													},
 													"userId": {
 														"type": "string",
 														"minLength": 1
@@ -12190,6 +12370,7 @@
 													"id",
 													"invitedByUserId",
 													"roles",
+													"singleSignOn",
 													"userId"
 												],
 												"additionalProperties": false
@@ -12747,11 +12928,23 @@
 														"type": "string",
 														"minLength": 1,
 														"maxLength": 100
+													},
+													"folderId": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "uuid"
+															},
+															{
+																"type": "null"
+															}
+														]
 													}
 												},
 												"required": [
 													"id",
-													"name"
+													"name",
+													"folderId"
 												],
 												"additionalProperties": false
 											}
@@ -12854,13 +13047,25 @@
 														"type": "string",
 														"minLength": 1,
 														"maxLength": 100
+													},
+													"folderId": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "uuid"
+															},
+															{
+																"type": "null"
+															}
+														]
 													}
 												},
 												"required": [
 													"scope",
 													"id",
 													"permissions",
-													"name"
+													"name",
+													"folderId"
 												],
 												"additionalProperties": false
 											}
@@ -13470,9 +13675,6 @@
 										"hasPendingPayment": {
 											"type": "boolean"
 										},
-										"losesSignIn": {
-											"type": "boolean"
-										},
 										"organizationId": {
 											"type": "string",
 											"minLength": 1
@@ -13509,7 +13711,6 @@
 										"blockedByInvoicedBilling",
 										"blockedByLastRoleManager",
 										"hasPendingPayment",
-										"losesSignIn",
 										"organizationId",
 										"organizationName",
 										"organizationType",
@@ -16326,7 +16527,7 @@
 					"inheritedPolicyLocked": {
 						"type": "boolean"
 					},
-					"assignedMemberCount": {
+					"memberCount": {
 						"type": "integer",
 						"minimum": 0,
 						"maximum": 9007199254740991
@@ -16387,7 +16588,7 @@
 					"folderId",
 					"configRevision",
 					"inheritedPolicyLocked",
-					"assignedMemberCount",
+					"memberCount",
 					"createdAt",
 					"enabled",
 					"expiresAt",
