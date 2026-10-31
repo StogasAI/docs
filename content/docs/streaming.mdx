@@ -18,7 +18,7 @@ const cancellation = new AbortController();
 try {
 	const stream = await client.chat.completions.create(
 		{
-			model: 'chutes-mistral-nemo-instruct-2407',
+			model: 'chutes-gemma-4-31b-turbo',
 			messages: [{ role: 'user', content: 'Say hello.' }],
 			stream: true
 		},
@@ -36,7 +36,7 @@ try {
 
 ```python tab="Python" tab-group="client"
 with client.chat.completions.create(
-    model="chutes-mistral-nemo-instruct-2407",
+    model="chutes-gemma-4-31b-turbo",
     messages=[{"role": "user", "content": "Say hello."}],
     stream=True,
 ) as stream:

@@ -27,7 +27,7 @@ const cancellation = new AbortController(); // Your stop button calls cancellati
 
 const stream = await client.chat.completions.create(
 	{
-		model: 'chutes-mistral-nemo-instruct-2407',
+		model: 'chutes-gemma-4-31b-turbo',
 		messages: [{ role: 'user', content: 'Say hello in one sentence.' }],
 		stream: true
 	},
@@ -61,7 +61,7 @@ const transport = await StogasTransport.create();
 try {
 	const client = new OpenAI(transport.openAIOptions(apiKey));
 	const response = await client.responses.create({
-		model: 'chutes-mistral-nemo-instruct-2407',
+		model: 'chutes-gemma-4-31b-turbo',
 		input: 'Say hello.'
 	});
 	console.log(response.output_text);
