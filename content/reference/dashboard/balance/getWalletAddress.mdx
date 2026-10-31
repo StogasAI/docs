@@ -5,7 +5,9 @@ description: Returns your deposit address for this coin in the organization,
   toward your payer limit. With a desired credit, it also estimates what to send
   at the current price. Each account can get 10 new deposit addresses in any 24
   hours, across coins, networks and organizations, and all accounts on one IP
-  address or IPv6 /48 together 20.
+  address or IPv6 /48 together 20. A flood of new addresses over Tor, from
+  datacenter and VPN networks or from anywhere else pauses new ones from that
+  class for up to a day, with the code `DEPOSIT_ADDRESSES_PAUSED`.
 full: true
 _openapi:
   preload:
@@ -22,7 +24,9 @@ _openapi:
           estimates what to send at the current price. Each account can get 10
           new deposit addresses in any 24 hours, across coins, networks and
           organizations, and all accounts on one IP address or IPv6 /48 together
-          20.
+          20. A flood of new addresses over Tor, from datacenter and VPN
+          networks or from anywhere else pauses new ones from that class for up
+          to a day, with the code `DEPOSIT_ADDRESSES_PAUSED`.
 ---
 
 export default function Layout(props) {

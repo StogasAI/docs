@@ -4,7 +4,10 @@ description: Returns your deposit address for this coin and network in the
   organization, creating it the first time. Payments to it credit the
   organization and count toward your payer limit. Each account can get 10 new
   deposit addresses in any 24 hours, across coins, networks and organizations,
-  and all accounts on one IP address or IPv6 /48 together 20.
+  and all accounts on one IP address or IPv6 /48 together 20. A flood of new
+  addresses over Tor, from datacenter and VPN networks or from anywhere else
+  pauses new ones from that class for up to a day, with the code
+  `DEPOSIT_ADDRESSES_PAUSED`.
 full: true
 _openapi:
   preload:
@@ -20,7 +23,9 @@ _openapi:
           organization and count toward your payer limit. Each account can get
           10 new deposit addresses in any 24 hours, across coins, networks and
           organizations, and all accounts on one IP address or IPv6 /48 together
-          20.
+          20. A flood of new addresses over Tor, from datacenter and VPN
+          networks or from anywhere else pauses new ones from that class for up
+          to a day, with the code `DEPOSIT_ADDRESSES_PAUSED`.
 ---
 
 export default function Layout(props) {
