@@ -163,9 +163,12 @@ want to check: `release-manifest.json`, `qualification.json`, `github-attestatio
 stogas verify-release <directory>
 ```
 
-The command works offline, lists each file it checked, and rejects any other file in the
-directory. Use a `stogas` [CLI](/docs/cli) that you already trust, and check your first CLI download
-with `gh attestation verify`.
+The command lists each file it checked and rejects any other file in the directory. It takes
+Sigstore's current keys from our published evidence, where Sigstore's own signatures authenticate
+them, so it trusts no server for them. To work offline, save
+`https://evidence.stogas.ai/evidence/latest.json` and add `--evidence <file>`. Use a `stogas`
+[CLI](/docs/cli) that you already trust, and check your first CLI download with
+`gh attestation verify`.
 
 We sign an SDK release only after our own machines rebuild every platform except Apple from
 the tag and every file matches GitHub's build byte for byte. Apple's compilers run only on Apple
