@@ -1,8 +1,11 @@
 ---
 title: Create an invite
-description: An invite has one use unless you set maxUses. It lasts until its
+description: "An invite has one use unless you set maxUses. It lasts until its
   uses run out or a member deletes it, or until expiresInSeconds passes if you
-  set it. Until then, each unused use holds a seat.
+  set it. Until then, each unused use holds a seat. With singleSignOn, the
+  invite has no link: people with an email address at a verified domain join
+  when the organization's identity provider signs them in. An organization has
+  one such invite at a time."
 full: true
 _openapi:
   preload:
@@ -13,9 +16,12 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: An invite has one use unless you set maxUses. It lasts until its uses
+      - content: "An invite has one use unless you set maxUses. It lasts until its uses
           run out or a member deletes it, or until expiresInSeconds passes if
-          you set it. Until then, each unused use holds a seat.
+          you set it. Until then, each unused use holds a seat. With
+          singleSignOn, the invite has no link: people with an email address at
+          a verified domain join when the organization's identity provider signs
+          them in. An organization has one such invite at a time."
 ---
 
 export default function Layout(props) {
