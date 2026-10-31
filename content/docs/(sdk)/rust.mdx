@@ -129,8 +129,10 @@ for choice in response.choices {
 opened as needed. Use `SecurityMode::E2ee` for application encryption over ordinary HTTPS. The optional
 origin override cannot change the trusted signing keys or evidence endpoints.
 
-`refresh_evidence()` requests an explicit evidence refresh; there is no polling task. `close()` waits
-for bounded graceful cleanup. Dropping the transport signals cleanup without blocking.
+`refresh_evidence()` requests an explicit evidence refresh; there is no polling task. `start()` and
+`refresh_evidence()` fail with a `TransportError`, whose `code()` is the same stable code that every
+SDK reports. `close()` waits for bounded graceful cleanup. Dropping the transport signals cleanup
+without blocking.
 
 Send `Stogas-Metadata: v1` to request the final `stogas` metadata and automatic receipt verification.
 The [complete example](https://github.com/StogasAI/stogas/tree/main/examples/rust-openai) includes
