@@ -2303,7 +2303,8 @@
 					"max_tool_calls": {
 						"type": "integer",
 						"minimum": 1,
-						"description": "The most hosted tool calls, such as web searches, in the request. Default `50` when the request has a hosted tool. Omit it otherwise. See [Hosted tools](/docs/model-tools#hosted-tools)."
+						"maximum": 128,
+						"description": "The most hosted tool calls, such as web searches, in the request, from 1 to 128. It needs a hosted tool. Without it, the hold covers ten calls and the provider gets a limit of 20. See [Hosted tools](/docs/model-tools#hosted-tools)."
 					},
 					"metadata": {
 						"type": "object",

@@ -139,7 +139,7 @@ Hosted tools can make many calls in one request, so the [hold](/docs/usage#how-a
 reserves for them:
 
 - Without `max_tool_calls`, the hold covers ten calls of the most expensive hosted tool in the
-  request. A lower `max_tool_calls` lowers the hold.
+  request, and the provider gets a limit of 20 calls. A lower `max_tool_calls` lowers the hold.
 - The hold also covers the content that the tools return. For OpenAI search, each call reserves up
   to 128,000 tokens or the deployment's input limit, if smaller. For Anthropic, it covers input for
   up to ten tool rounds and one output limit. With caching on, rounds after the first are held at
