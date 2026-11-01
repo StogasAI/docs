@@ -79,23 +79,29 @@ None of them is proof that every component that can read content is trustworthy.
 
 #### Location values
 
-| Value         | Meaning                                                                                                                                                                                                                                                                           |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `US`, `DE`, … | One country, by uppercase ISO 3166-1 alpha-2 code.                                                                                                                                                                                                                                |
-| `eu`          | European Union member states: AT, BE, BG, CY, CZ, DE, DK, EE, ES, FI, FR, GR, HR, HU, IE, IT, LT, LU, LV, MT, NL, PL, PT, RO, SE, SI, SK.                                                                                                                                         |
-| `europe`      | Every `eu` country and the rest of Europe: AD, AL, AT, AX, BA, BE, BG, BY, CH, CY, CZ, DE, DK, EE, ES, FI, FO, FR, GB, GG, GI, GR, HR, HU, IE, IM, IS, IT, JE, LI, LT, LU, LV, MC, MD, ME, MK, MT, NL, NO, PL, PT, RO, RS, RU, SE, SI, SJ, SK, SM, UA, VA.                        |
-| `apac`        | Asia-Pacific: AF, AM, AS, AU, AZ, BD, BN, BT, CC, CK, CN, CX, FJ, FM, GE, GU, HK, ID, IN, IO, JP, KG, KH, KI, KP, KR, KZ, LA, LK, MH, MM, MN, MO, MP, MV, MY, NC, NF, NP, NR, NU, NZ, PF, PG, PH, PK, PN, PW, SB, SG, TH, TJ, TK, TL, TM, TO, TR, TV, TW, UM, UZ, VN, VU, WF, WS. |
-| `world`       | No narrower boundary. Content can be processed or stored in any country.                                                                                                                                                                                                          |
-| `unknown`     | The provider does not disclose a usable boundary. Treat it as `world`.                                                                                                                                                                                                            |
-| `none`        | `storageLocation` only. The provider does not keep request or response content after the response.                                                                                                                                                                                |
+| Value                     | Meaning                                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------------------- |
+| `US`, `DE`, …             | One country, by uppercase ISO 3166-1 alpha-2 code.                                                 |
+| `eu`, `europe`, `apac`, … | A region, such as the European Union, Europe or Asia-Pacific.                                      |
+| `world`                   | No narrower boundary. Content can be processed or stored in any country.                           |
+| `unknown`                 | The provider does not disclose a usable boundary. Treat it as `world`.                             |
+| `none`                    | `storageLocation` only. The provider does not keep request or response content after the response. |
 
-A value names the widest area where the activity can happen. `DE` is inside `eu`, and `eu` is
-inside `europe`. Routing comparisons are exact text matches, so
-`deployment.dataHandling.processingLocation == 'europe'` does not match a deployment whose value
-is `eu` or `DE`. List every value you accept, for example
-`deployment.dataHandling.processingLocation in ['eu', 'DE', 'FR']`. Prefer such lists to
-exclusions: `deployment.dataHandling.processingLocation != 'US'` also accepts `world` and
-`unknown`.
+A value names the widest area where the activity can happen. The catalog lists every place and the
+places that directly contain it: `DE` lies in `eu`, which lies in `europe`, which lies in `world`.
+`processingWithin` and `storageWithin` list a deployment's location with every place that contains
+it, so `'europe' in deployment.dataHandling.processingWithin` accepts deployments that process in
+`europe`, in `eu` or in a European country. `unknown` and `none` lie in no other place, and `world`
+only in itself, so the check refuses them.
+
+Location values are case-sensitive: countries are uppercase and regions lowercase. Saving a policy
+fails when it names a location that the catalog does not list, and the error names the place that
+differs only in case, such as `eu` for `EU`.
+
+`processingLocation` and `storageLocation` compare as exact text:
+`deployment.dataHandling.processingLocation == 'europe'` does not match a deployment whose value is
+`eu` or `DE`. Prefer checks that accept places to exclusions:
+`deployment.dataHandling.processingLocation != 'US'` also accepts `world` and `unknown`.
 
 ### Upstream details
 

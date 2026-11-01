@@ -57,7 +57,7 @@
 					"Catalog"
 				],
 				"summary": "Catalog",
-				"description": "Returns the root of the active public catalog: authors, groups and providers in full, a summary of each model, route and deployment, the scheduled changes to them, and the parts that hold models, routes and deployments in full. The root keeps each retired record, and each record gives its retirement date.",
+				"description": "Returns the root of the active public catalog: the places that data handling names, authors, groups and providers in full, a summary of each model, route and deployment, the scheduled changes to them, and the parts that hold models, routes and deployments in full. The root keeps each retired record, and each record gives its retirement date.",
 				"security": [],
 				"responses": {
 					"200": {
@@ -72,6 +72,30 @@
 										"value": {
 											"sequence": 184,
 											"digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+											"locations": {
+												"DE": {
+													"name": "Germany",
+													"parentIds": [
+														"eu"
+													]
+												},
+												"eu": {
+													"name": "European Union",
+													"parentIds": [
+														"europe"
+													]
+												},
+												"europe": {
+													"name": "Europe",
+													"parentIds": [
+														"world"
+													]
+												},
+												"world": {
+													"name": "World",
+													"parentIds": []
+												}
+											},
 											"parts": [
 												{
 													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
@@ -103,7 +127,7 @@
 													"summaries": {}
 												}
 											],
-											"schema": "stogas.catalog.v9",
+											"schema": "stogas.catalog.v10",
 											"summaries": {
 												"authors": {},
 												"deployments": {
@@ -924,6 +948,7 @@
 				"required": [
 					"sequence",
 					"digest",
+					"locations",
 					"parts",
 					"periods",
 					"schedule",
@@ -941,6 +966,30 @@
 						"type": "string",
 						"pattern": "^sha256:[0-9a-f]{64}$",
 						"description": "SHA-256 of the root that the release signs: this response without `sequence` and `digest`."
+					},
+					"locations": {
+						"type": "object",
+						"description": "The places that data handling names, by ID: `world`; regions, such as `eu` and `europe`; countries, by ISO 3166-1 alpha-2 code; and subdivisions, by ISO 3166-2 code. Every place but `world` lists the places that directly contain it, and lies in every place that contains those. A deployment's `processingLocation` and `storageLocation` are places, `unknown`, or, for storage only, `none`.",
+						"additionalProperties": {
+							"type": "object",
+							"required": [
+								"name",
+								"parentIds"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"name": {
+									"type": "string"
+								},
+								"parentIds": {
+									"type": "array",
+									"items": {
+										"type": "string"
+									},
+									"description": "In order. Empty only for `world`."
+								}
+							}
+						}
 					},
 					"parts": {
 						"type": "array",
@@ -1045,7 +1094,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.v9"
+						"const": "stogas.catalog.v10"
 					},
 					"summaries": {
 						"type": "object",

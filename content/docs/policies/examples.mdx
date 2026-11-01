@@ -87,14 +87,14 @@ Every request skips deployments whose provider does not commit to zero data rete
 
 ### Keep inference in Europe
 
-Location values are exact, so list each value that you accept. Add country codes, such as `'DE'`,
-to also accept deployments that run in one country. See
+`processingWithin` lists where a deployment processes requests and every place that contains it,
+so this accepts deployments in Europe, in the EU or in one European country. See
 [location values](/docs/policies/routing-fields#location-values).
 
 ```json title="Organization policy"
 {
 	"routing": {
-		"filter": "deployment.dataHandling.processingLocation in ['eu', 'europe']"
+		"filter": "'europe' in deployment.dataHandling.processingWithin"
 	}
 }
 ```
