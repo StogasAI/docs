@@ -6155,6 +6155,9 @@
 											"items": {
 												"type": "object",
 												"properties": {
+													"allowAccessTokens": {
+														"type": "boolean"
+													},
 													"capabilities": {
 														"maxItems": 17,
 														"type": "array",
@@ -6312,6 +6315,7 @@
 													}
 												},
 												"required": [
+													"allowAccessTokens",
 													"capabilities",
 													"scopedApiAccess",
 													"displayName",
@@ -12261,7 +12265,7 @@
 					"Organizations"
 				],
 				"summary": "Change organization settings",
-				"description": "Changing name needs organization management. displayName is your name in this organization.",
+				"description": "Changing name or allowAccessTokens needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once.",
 				"security": [
 					{
 						"accessToken": [
@@ -12281,6 +12285,9 @@
 							"schema": {
 								"type": "object",
 								"properties": {
+									"allowAccessTokens": {
+										"type": "boolean"
+									},
 									"displayName": {
 										"type": "string",
 										"minLength": 1,
@@ -12312,6 +12319,9 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"allowAccessTokens": {
+											"type": "boolean"
+										},
 										"displayName": {
 											"type": "string",
 											"minLength": 1,
@@ -12331,6 +12341,7 @@
 										}
 									},
 									"required": [
+										"allowAccessTokens",
 										"displayName",
 										"name"
 									],

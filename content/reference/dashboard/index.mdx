@@ -15,6 +15,10 @@ script.
   `403 TOKEN_READ_ONLY` to it.
 - A token for **Selected organizations** gets `404` for every other organization. Operations with
   the scope `all-organizations` return `403 TOKEN_ORGANIZATIONS_LIMITED` to it.
+- An organization can turn off **Allow access tokens** in its settings. Its operations then return
+  `403 ACCESS_TOKENS_NOT_ALLOWED` to every token at once, and a token can't select it.
+  `GET /api/organizations` still lists it, with `allowAccessTokens` set to `false`. The dashboard
+  and API keys aren't affected.
 - A token stops working when it expires, when you delete it, and when you change your password.
   When GitHub finds a token in public, requests with it return `401 TOKEN_EXPOSED` and the place
   where GitHub found it.
