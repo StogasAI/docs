@@ -241,7 +241,9 @@ are not in folders.
 - **Rotate a customer-encrypted credential:** encrypt the new secret locally and replace the saved
   JSON. The ID and assignments stay the same.
 - **Disable a credential:** new requests that would use it are rejected.
-- **Delete a credential:** remove its assignments first. Request history keeps its old ID.
+- **Delete a credential:** it leaves every key that uses it, and each key keeps its other credentials
+  in order. Requests through a key left with no credential for that provider fail with
+  `byok_required`. Request history keeps the old ID.
 
 For routine rotation, keep the old secret valid until running requests finish. To revoke a key
 urgently, disable the credential, then revoke the key with the provider. Disabling does not cancel

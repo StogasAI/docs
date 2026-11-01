@@ -3233,6 +3233,39 @@
 																	"additionalProperties": false
 																}
 															},
+															"aws": {
+																"maxItems": 10001,
+																"type": "array",
+																"items": {
+																	"type": "object",
+																	"properties": {
+																		"byokId": {
+																			"anyOf": [
+																				{
+																					"type": "string",
+																					"format": "uuid"
+																				},
+																				{
+																					"type": "null"
+																				}
+																			]
+																		},
+																		"mode": {
+																			"type": "string",
+																			"enum": [
+																				"managed",
+																				"stored",
+																				"encrypted"
+																			]
+																		}
+																	},
+																	"required": [
+																		"byokId",
+																		"mode"
+																	],
+																	"additionalProperties": false
+																}
+															},
 															"azure": {
 																"maxItems": 10001,
 																"type": "array",
@@ -3267,6 +3300,39 @@
 																}
 															},
 															"chutes": {
+																"maxItems": 10001,
+																"type": "array",
+																"items": {
+																	"type": "object",
+																	"properties": {
+																		"byokId": {
+																			"anyOf": [
+																				{
+																					"type": "string",
+																					"format": "uuid"
+																				},
+																				{
+																					"type": "null"
+																				}
+																			]
+																		},
+																		"mode": {
+																			"type": "string",
+																			"enum": [
+																				"managed",
+																				"stored",
+																				"encrypted"
+																			]
+																		}
+																	},
+																	"required": [
+																		"byokId",
+																		"mode"
+																	],
+																	"additionalProperties": false
+																}
+															},
+															"google-cloud": {
 																"maxItems": 10001,
 																"type": "array",
 																"items": {
@@ -3335,8 +3401,10 @@
 														},
 														"required": [
 															"anthropic",
+															"aws",
 															"azure",
 															"chutes",
+															"google-cloud",
 															"openai"
 														],
 														"additionalProperties": false
@@ -4270,8 +4338,10 @@
 										"type": "string",
 										"enum": [
 											"anthropic",
+											"aws",
 											"azure",
 											"chutes",
+											"google-cloud",
 											"openai"
 										]
 									}
@@ -4925,7 +4995,9 @@
 												"type": "string",
 												"enum": [
 													"anthropic",
+													"aws",
 													"chutes",
+													"google-cloud",
 													"openai"
 												]
 											},
@@ -5051,9 +5123,37 @@
 												"type": "string",
 												"enum": [
 													"anthropic",
+													"aws",
 													"chutes",
+													"google-cloud",
 													"openai"
 												]
+											},
+											"target": {
+												"type": "object",
+												"properties": {
+													"hosting": {
+														"minItems": 1,
+														"maxItems": 2,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"enum": [
+																"anthropic",
+																"aws",
+																"google"
+															]
+														}
+													},
+													"region": {
+														"type": "string",
+														"pattern": "^(af|ap|ca|eu|il|me|mx|sa|us)-(central|east|west|north|south|northeast|northwest|southeast|southwest)-[1-9][0-9]?$"
+													}
+												},
+												"required": [
+													"hosting"
+												],
+												"additionalProperties": false
 											}
 										},
 										"required": [
@@ -5456,50 +5556,16 @@
 														"type": "boolean"
 													},
 													"processingLocation": {
-														"anyOf": [
-															{
-																"type": "string",
-																"enum": [
-																	"apac",
-																	"eu",
-																	"europe",
-																	"world",
-																	"unknown"
-																]
-															},
-															{
-																"type": "string"
-															}
-														]
+														"type": "string",
+														"pattern": "^(?:[A-Z]{2}(?:-[A-Z0-9]{1,3})?|[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$"
 													},
 													"skuName": {
 														"type": "string",
 														"minLength": 1
 													},
 													"storageLocation": {
-														"anyOf": [
-															{
-																"type": "string",
-																"const": "none"
-															},
-															{
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"enum": [
-																			"apac",
-																			"eu",
-																			"europe",
-																			"world",
-																			"unknown"
-																		]
-																	},
-																	{
-																		"type": "string"
-																	}
-																]
-															}
-														]
+														"type": "string",
+														"pattern": "^(?:[A-Z]{2}(?:-[A-Z0-9]{1,3})?|[a-z][a-z0-9]*(?:-[a-z0-9]+)*)$"
 													}
 												},
 												"required": [
@@ -5899,6 +5965,32 @@
 										"type": "string",
 										"minLength": 1,
 										"maxLength": 4096
+									},
+									"target": {
+										"type": "object",
+										"properties": {
+											"hosting": {
+												"minItems": 1,
+												"maxItems": 2,
+												"type": "array",
+												"items": {
+													"type": "string",
+													"enum": [
+														"anthropic",
+														"aws",
+														"google"
+													]
+												}
+											},
+											"region": {
+												"type": "string",
+												"pattern": "^(af|ap|ca|eu|il|me|mx|sa|us)-(central|east|west|north|south|northeast|northwest|southeast|southwest)-[1-9][0-9]?$"
+											}
+										},
+										"required": [
+											"hosting"
+										],
+										"additionalProperties": false
 									}
 								},
 								"additionalProperties": false
@@ -6588,8 +6680,10 @@
 																"type": "string",
 																"enum": [
 																	"anthropic",
+																	"aws",
 																	"azure",
 																	"chutes",
+																	"google-cloud",
 																	"openai"
 																]
 															},
@@ -9172,8 +9266,10 @@
 																		"type": "string",
 																		"enum": [
 																			"anthropic",
+																			"aws",
 																			"azure",
 																			"chutes",
+																			"google-cloud",
 																			"openai"
 																		]
 																	},
@@ -9200,6 +9296,10 @@
 												"upstream_byok"
 											],
 											"additionalProperties": false
+										},
+										"running": {
+											"type": "boolean",
+											"const": true
 										}
 									},
 									"required": [
@@ -14537,6 +14637,39 @@
 									"additionalProperties": false
 								}
 							},
+							"aws": {
+								"maxItems": 10001,
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"byokId": {
+											"anyOf": [
+												{
+													"type": "string",
+													"format": "uuid"
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"mode": {
+											"type": "string",
+											"enum": [
+												"managed",
+												"stored",
+												"encrypted"
+											]
+										}
+									},
+									"required": [
+										"byokId",
+										"mode"
+									],
+									"additionalProperties": false
+								}
+							},
 							"azure": {
 								"maxItems": 10001,
 								"type": "array",
@@ -14571,6 +14704,39 @@
 								}
 							},
 							"chutes": {
+								"maxItems": 10001,
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"byokId": {
+											"anyOf": [
+												{
+													"type": "string",
+													"format": "uuid"
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"mode": {
+											"type": "string",
+											"enum": [
+												"managed",
+												"stored",
+												"encrypted"
+											]
+										}
+									},
+									"required": [
+										"byokId",
+										"mode"
+									],
+									"additionalProperties": false
+								}
+							},
+							"google-cloud": {
 								"maxItems": 10001,
 								"type": "array",
 								"items": {
@@ -14639,8 +14805,10 @@
 						},
 						"required": [
 							"anthropic",
+							"aws",
 							"azure",
 							"chutes",
+							"google-cloud",
 							"openai"
 						],
 						"additionalProperties": false
@@ -14758,6 +14926,11 @@
 						"minimum": 0,
 						"maximum": 9007199254740991
 					},
+					"exclusiveKeyCount": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 9007199254740991
+					},
 					"checkedAt": {
 						"anyOf": [
 							{
@@ -14857,14 +15030,49 @@
 						"type": "string",
 						"enum": [
 							"anthropic",
+							"aws",
 							"azure",
 							"chutes",
+							"google-cloud",
 							"openai"
 						]
 					},
 					"retrievedAt": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"target": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"hosting": {
+										"minItems": 1,
+										"maxItems": 2,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"enum": [
+												"anthropic",
+												"aws",
+												"google"
+											]
+										}
+									},
+									"region": {
+										"type": "string",
+										"pattern": "^(af|ap|ca|eu|il|me|mx|sa|us)-(central|east|west|north|south|northeast|northwest|southeast|southwest)-[1-9][0-9]?$"
+									}
+								},
+								"required": [
+									"hosting"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "null"
+							}
+						]
 					},
 					"updatedAt": {
 						"type": "string",
@@ -14877,6 +15085,7 @@
 					"canManage",
 					"canChangeAccess",
 					"assignedKeyCount",
+					"exclusiveKeyCount",
 					"checkedAt",
 					"checkError",
 					"azureTargets",
@@ -14889,6 +15098,7 @@
 					"preview",
 					"provider",
 					"retrievedAt",
+					"target",
 					"updatedAt"
 				],
 				"additionalProperties": false
