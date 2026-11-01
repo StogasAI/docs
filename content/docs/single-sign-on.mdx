@@ -4,106 +4,37 @@ description: Sign members in through your identity provider, and let people at y
 icon: LogIn
 ---
 
-An external organization can connect an OpenID Connect identity provider, such as Okta, Microsoft
-Entra ID or Google Workspace. Members then sign in through it, the organization can require that,
-and people at its verified domains can join through a single sign-on invite. SAML isn't supported.
-To set it up, open **Settings → Single sign-on** and select **Set up**. This needs
-**Organization → Manage**.
+An external organization can connect one OpenID Connect identity provider, such as Okta, Microsoft
+Entra ID or Google Workspace. Members can then sign in through it, the organization can require
+that, and people at its verified domains can join through a single sign-on invite. SAML isn't
+supported. Set it up in **Settings → Single sign-on**, which needs **Organization → Manage**.
 
-## Verify a domain
+## Register Stogas with your provider
 
-Add the domain, publish the TXT record that **Settings** shows, then select **Verify**:
-
-| Name                         | Value     |
-| ---------------------------- | --------- |
-| `_stogas-challenge.<domain>` | `<token>` |
-
-The value can also be `token=<token>`. A domain stays verified, so you can remove the record once
-it is. When another organization verifies the same domain with its own record, the domain moves to
-that organization. Public suffixes such as `co.uk` or `github.io`, and IP addresses, can't be
-verified. An organization verifies up to 10 domains.
-
-## Connect an identity provider
-
-<Steps>
-<Step>
-
-### Register Stogas with the provider
-
-Create a web application with the authorization code flow. Use the redirect URI that **Settings**
-shows, `https://app.stogas.ai/auth/sso/callback`. Sign-in asks only for the `openid` and `email`
-scopes.
-
-</Step>
-<Step>
-
-### Enter the issuer, client ID and client secret
+Create a web application that uses the authorization code flow, with the redirect URI that
+**Settings** shows, `https://app.stogas.ai/auth/sso/callback`. Sign-in asks only for the `openid`
+and `email` scopes.
 
 The issuer's OpenID Connect discovery document must name exactly that issuer. A multi-tenant
 endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refused. For Microsoft
 Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0`.
 
-</Step>
-<Step>
+## Domains
 
-### Test the sign-in
+A domain stays verified, so you can remove its TXT record once it is. When another organization
+verifies the same domain with its own record, the domain moves to that organization.
 
-**Test sign-in** signs you in through the provider and links your account. Members can sign in
-through the provider after a test succeeds.
+## Accounts
 
-</Step>
-</Steps>
+Single sign-on is another way to sign in to a Stogas account, and every account has a password,
+including accounts created through single sign-on. Leaving the organization or disconnecting the
+provider therefore never locks anyone out.
 
-A new issuer or client ID needs a new test, and turns **Require single sign-on** off until then. A
-new issuer also unlinks every member, because its people are not the old provider's. Members link
-by the provider's subject identifier, so a provider that gives each client its own identifiers
-keeps the links only while the client ID stays the same.
-
-## Let people join
-
-People join through the organization's single sign-on invite. Once a domain is verified and the
-sign-in is tested, create it in **Members → Invites** with the type **Single sign-on**, and set how
-many people can join, up to 1,000. Like any invite, each unused place holds a seat, and the invite
-is deleted when its places run out. An organization has one single sign-on invite at a time.
-
-A person joins when the provider signs them in with a verified email address at one of your
-verified domains and the invite has a place left. Their name in the organization starts as that
-email address.
-
-## Sign in
-
-On the sign-in page, people select **SSO** and enter their work email. After the
-provider signs them in:
-
-- A person whose account is linked is signed in to it. If the account has a passkey or an
-  authenticator app, that step follows.
-- Anyone else chooses an account. **Create an account** joins the organization with a new account
-  and shows its password once. **Use an existing account** signs in to an account and links it. An
-  account that isn't a member yet joins through the invite.
-
-Every account has a password, including accounts created through single sign-on. Members can always
-sign in with it, so leaving the organization or disconnecting the provider never locks anyone out.
-
-## Require single sign-on
-
-With **Require single sign-on** on, members must sign in through the provider every 24 hours to
-open the organization in the dashboard.
-
-- Members who manage the organization are exempt, so a broken connection can't lock everyone out.
-- Access tokens and API keys aren't affected, because programs use them. To refuse access tokens,
-  turn off **Allow access tokens** in **Settings**.
-- A member can always leave the organization.
-- Turning it on applies at once, also to members who are already signed in.
-
-## Accounts and identities
-
-An account links to one person at the provider in each organization, and that person to one
-account. Links use the provider's subject identifier, never the email, which some providers let
-people change. **Members** marks the members who use single sign-on, and the `sso:true` filter
-lists them. Leaving the organization removes the member's link. Disconnecting the provider removes
-every link and the single sign-on invite.
+An account links to its person by the provider's subject identifier, never the email, which some
+providers let people change. A new issuer unlinks every member, because its people are not the old
+provider's. A provider that gives each client its own identifiers keeps the links only while the
+client ID stays the same.
 
 Stogas stores the issuer, the client ID, the client secret encrypted, and each linked member's
-subject identifier and last sign-in. [Activity](/docs/activity) records changes to the connection,
-the setting, the domains and the invite, never the secret. It also records each member who joins
-through single sign-on or links an account to it.
+subject identifier and last sign-in. [Activity](/docs/activity) records each change to single
+sign-on and each member who joins or links through it, never the secret.
