@@ -41,6 +41,9 @@ parameter to get the next page.
 Every error has a JSON body with a `message`, and most have a `code` that a program can check. When
 the code is `INVALID_REQUEST`, `issues` lists each field to fix.
 
+Until an organization is [active](/docs/billing), its operations return `409 ORGANIZATION_INACTIVE`,
+except those for its balance, payments and billing details, and leaving it.
+
 ## Limits
 
 Each user can send 60 requests a minute, shared by the dashboard and all of the user's tokens.
