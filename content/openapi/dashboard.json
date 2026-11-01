@@ -6438,6 +6438,9 @@
 													"allowAccessTokens": {
 														"type": "boolean"
 													},
+													"allowPlaygroundAssistant": {
+														"type": "boolean"
+													},
 													"capabilities": {
 														"maxItems": 17,
 														"type": "array",
@@ -6596,6 +6599,7 @@
 												},
 												"required": [
 													"allowAccessTokens",
+													"allowPlaygroundAssistant",
 													"capabilities",
 													"scopedApiAccess",
 													"displayName",
@@ -12709,7 +12713,7 @@
 					"Organizations"
 				],
 				"summary": "Change organization settings",
-				"description": "Changing name or allowAccessTokens needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once.",
+				"description": "Changing name, allowAccessTokens or allowPlaygroundAssistant needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key.",
 				"security": [
 					{
 						"accessToken": [
@@ -12730,6 +12734,9 @@
 								"type": "object",
 								"properties": {
 									"allowAccessTokens": {
+										"type": "boolean"
+									},
+									"allowPlaygroundAssistant": {
 										"type": "boolean"
 									},
 									"displayName": {
@@ -12766,6 +12773,9 @@
 										"allowAccessTokens": {
 											"type": "boolean"
 										},
+										"allowPlaygroundAssistant": {
+											"type": "boolean"
+										},
 										"displayName": {
 											"type": "string",
 											"minLength": 1,
@@ -12786,6 +12796,7 @@
 									},
 									"required": [
 										"allowAccessTokens",
+										"allowPlaygroundAssistant",
 										"displayName",
 										"name"
 									],

@@ -1,0 +1,44 @@
+---
+title: Playground
+description: Chat with models in the dashboard, and ask the assistant about the docs and your organization.
+icon: Sparkles
+---
+
+Open **Playground** in your organization to chat with a model through one of your API keys. Its
+requests are requests of that key, so the key's policy and limits apply to them.
+
+## Assistant
+
+The assistant answers questions about Stogas and your organization from the documentation and the
+[dashboard API](/docs/reference/dashboard), and makes changes when you allow them. Turn it on with
+**Assistant** above the conversation.
+
+Each answer is one or more requests to GPT-6 Luna through the API key you chose. The key's policy
+must allow that model, and the requests cost what other requests to it cost. An answer makes at most
+8 requests, and stops if it has no answer by then.
+
+The assistant acts as you, so it can read and change only what your roles allow. What it reads, such
+as a key's policy or the organization's members, goes to GPT-6 Luna in its next request.
+
+### Changes wait for you
+
+The assistant reads documentation pages and calls `GET` operations at once. A request that changes
+something waits: the Playground shows its method, path and body, and you choose **Allow** or
+**Deny**. A denied request does not run, and the assistant reads that you denied it. **Stop** ends
+the answer, and a request that waits does not run.
+
+The assistant never reads the secret of a new key or the code of an invitation: the Playground
+removes them from responses first. It never reveals a key's secret or adds or changes a
+[BYOK](/docs/byok) credential, because it does not call those operations.
+
+### Ask about a key or grant
+
+**Ask the assistant** on the page of an API key or grant opens the Playground with the assistant on
+and that key or grant beside the message box, so "this key" or "this grant" means it. Remove it to
+ask about something else.
+
+### Allow the assistant
+
+The assistant is off in an organization until a member who can manage it turns on **Allow the
+assistant** in **Settings**. [Activity](/docs/activity) records the change. Personal organizations
+always allow it.
