@@ -13,8 +13,9 @@ script.
 
 - A **Read only** token can call only `GET` operations. Operations with the scope `write` return
   `403 TOKEN_READ_ONLY` to it.
-- A token for **Selected organizations** gets `404` for every other organization. Operations with
-  the scope `all-organizations` return `403 TOKEN_ORGANIZATIONS_LIMITED` to it.
+- A token for **Selected organizations** covers up to 30 of them and gets `404` for every other
+  organization. Operations with the scope `all-organizations` return
+  `403 TOKEN_ORGANIZATIONS_LIMITED` to it.
 - An organization can turn off **Allow access tokens** in its settings. Its operations then return
   `403 ACCESS_TOKENS_NOT_ALLOWED` to every token at once, and a token can't select it.
   `GET /api/organizations` still lists it, with `allowAccessTokens` set to `false`. The dashboard
@@ -29,7 +30,9 @@ the dashboard for those.
 ## Organizations
 
 Paths that start with `/api/{orgId}` act on one organization. `GET /api/organizations` lists the
-organizations that your token covers.
+organizations that your token covers: your personal organization first, then the others by name, up
+to 100 on each page. Set `search` to find organizations by part of their name. You can belong to up
+to 1,000 organizations.
 
 ## Lists
 

@@ -1,0 +1,34 @@
+---
+title: Get your access in an organization
+description: Returns your capabilities and resource access in your personal
+  organization and in selectedOrgId and fallbackOrgId when you belong to them
+  and the token covers them. selectedOrganizationId is selectedOrgId when
+  listed, else fallbackOrgId, else your personal organization.
+  notFoundOrganizationIds names the requested ones that are not listed.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns your capabilities and resource access in your personal
+          organization and in selectedOrgId and fallbackOrgId when you belong to
+          them and the token covers them. selectedOrganizationId is
+          selectedOrgId when listed, else fallbackOrgId, else your personal
+          organization. notFoundOrganizationIds names the requested ones that
+          are not listed.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/selection', method: 'get' }]} />
+    </>
+  );
+}
