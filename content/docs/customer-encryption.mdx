@@ -96,12 +96,18 @@ stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
 The command works offline and does not overwrite an existing output file. The `--purpose` decides
 which input it accepts:
 
-| Purpose          | Input                                                       |
-| ---------------- | ----------------------------------------------------------- |
-| `plugins`        | The inner plugin JSON object.                               |
-| `byok/openai`    | The exact OpenAI credential, without a trailing newline.    |
-| `byok/anthropic` | The exact Anthropic credential, without a trailing newline. |
-| `byok/chutes`    | The exact Chutes credential, without a trailing newline.    |
+| Purpose             | Input                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| `plugins`           | The inner plugin JSON object.                                                                |
+| `byok/openai`       | The exact OpenAI credential, without a trailing newline.                                     |
+| `byok/anthropic`    | The exact Anthropic credential, without a trailing newline.                                  |
+| `byok/chutes`       | The exact Chutes credential, without a trailing newline.                                     |
+| `byok/aws`          | An [AWS credential document](/docs/byok#aws-and-google-cloud).                               |
+| `byok/google-cloud` | A Google service-account key file or [credential document](/docs/byok#aws-and-google-cloud). |
+
+For `plugins`, the output is the encrypted envelope. For a credential, it is the envelope in
+`encryptedSecret`, with the `preview` and, for AWS and Google Cloud, the `target` that you register
+with it.
 
 </Step>
 <Step>
@@ -142,6 +148,11 @@ or the settings are invalid. To find problems first, use the
 
 [Policy size limits](/docs/policies/editing#document-rules) count the decrypted plugin bytes.
 
+Encryption hides only the plugin settings. Anyone who can read the policy still sees the rest:
+a rule's name and `when` condition tell them when the hidden settings apply, and the envelope's
+size shows roughly how large the settings are. Keep revealing words out of rule names and
+conditions.
+
 ## Send the key with a request
 
 Put each required key under its registered label in `encryption_keys` in the request body. Keep
@@ -155,8 +166,10 @@ your API key in the `Authorization` header:
 }
 ```
 
-- Send every key that the encrypted plugin settings of the request need. An encrypted provider
-  credential is used only when its key is sent.
+- Send every key that the request could need: the keys of encrypted credentials it could use,
+  including fallbacks, and of the encrypted policy settings that apply to it. A missing key fails
+  the request with `encryption_key_required`, which names the key's label, before any provider
+  call.
 - Each label must match its registered identifier.
 - The gateway removes `encryption_keys` before it calls the provider, and never stores the keys.
 - Send keys through the [SDK or CLI](/docs/connection-modes), so that only the verified gateway

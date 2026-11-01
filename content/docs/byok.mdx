@@ -1,6 +1,6 @@
 ---
 title: Bring your own key
-description: Send requests through your own OpenAI, Anthropic, Chutes or Azure account.
+description: Send requests through your own OpenAI, Anthropic, Chutes, Azure, AWS or Google Cloud account.
 icon: Plug
 ---
 
@@ -10,14 +10,13 @@ gateway's call to the provider. The provider bills you directly, and we charge a
 
 ## Choose a credential type
 
-| Type                   | Where the secret is       | Providers                        | Each request needs              |
-| ---------------------- | ------------------------- | -------------------------------- | ------------------------------- |
-| **Stogas managed**     | Our provider account      | Chutes                           | API key                         |
-| **Stored**             | Saved and encrypted by us | OpenAI, Anthropic, Chutes, Azure | API key                         |
-| **Customer encrypted** | Encrypted on your device  | OpenAI, Anthropic, Chutes        | API key and your encryption key |
+| Type                   | Where the secret is       | Providers                                           | Each request needs              |
+| ---------------------- | ------------------------- | --------------------------------------------------- | ------------------------------- |
+| **Stogas managed**     | Our provider account      | Chutes                                              | API key                         |
+| **Stored**             | Saved and encrypted by us | OpenAI, Anthropic, Chutes, Azure, AWS, Google Cloud | API key                         |
+| **Customer encrypted** | Encrypted on your device  | OpenAI, Anthropic, Chutes, AWS, Google Cloud        | API key and your encryption key |
 
-New keys start with Stogas-managed Chutes. OpenAI, Anthropic and Azure need a credential of your
-own.
+New keys start with Stogas-managed Chutes. Every other provider needs a credential of your own.
 
 ## Store a provider credential
 
@@ -28,7 +27,8 @@ own.
 
 Open **BYOK**, select **Add** and choose the provider. Enter a name and the credential. For Azure, you
 connect accounts that an Entra application can read; see
-[Connect your Azure account](/docs/providers/azure#connect-your-account).
+[Connect your Azure account](/docs/providers/azure#connect-your-account). AWS and Google Cloud take
+a credential document; see [AWS and Google Cloud](#aws-and-google-cloud).
 
 </Step>
 <Step>
@@ -36,7 +36,9 @@ connect accounts that an Entra application can read; see
 ### Wait for the check
 
 We check the credential with a free metadata call before saving it: the model list for OpenAI
-and Anthropic, the account quota for Chutes and deployment discovery for Azure. A rejected
+and Anthropic, the account quota for Chutes and deployment discovery for Azure. For AWS, an access
+key asks AWS STS who it is, a Bedrock API key lists Anthropic models and a Claude Platform on AWS
+API key lists its workspace's models. A Google Cloud key signs in to Google. A rejected
 credential is not saved. If the provider is unavailable or rate-limits the check, try again. A
 successful check does not prove quota or access to every model.
 
@@ -96,7 +98,10 @@ stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
   --purpose byok/openai --input provider-secret.txt --output credential.json
 ```
 
-Use `byok/openai`, `byok/anthropic` or `byok/chutes` to match the provider.
+Use `byok/openai`, `byok/anthropic`, `byok/chutes`, `byok/aws` or `byok/google-cloud` to match
+the provider. The CLI checks an AWS or Google Cloud credential before it encrypts it, and accepts
+Google's service-account key file as it is. `credential.json` holds the encrypted secret, a short
+preview and, for AWS and Google Cloud, the [target](#aws-and-google-cloud).
 
 </Step>
 <Step>
@@ -104,7 +109,8 @@ Use `byok/openai`, `byok/anthropic` or `byok/chutes` to match the provider.
 ### Save and assign it
 
 Open **BYOK → Add → Customer encrypted**, choose the provider and paste `credential.json`. Then
-assign the credential to an API key. Saving does not contact the provider.
+assign the credential to an API key. Saving does not contact the provider. Edit the preview first
+if you don't want its last four characters shown.
 
 </Step>
 <Step>
@@ -118,9 +124,87 @@ format and the safest connection.
 </Step>
 </Steps>
 
-If a request leaves out the key, the gateway skips that credential when it chooses one. A wrong key or
-damaged ciphertext fails the request. No header accepts a provider secret. For backups and
+If a request could use the credential but leaves out its key, the gateway rejects it with
+`encryption_key_required`, naming the key's label, before it calls any provider. It never moves the
+request to another credential instead. A key whose apps never send the key needs a credential list
+without that credential. A wrong key or damaged ciphertext also fails the request. No header accepts a provider secret. For backups and
 rotation, see [Key sharing and rotation](/docs/customer-encryption#key-sharing-and-rotation).
+
+## AWS and Google Cloud
+
+Each cloud runs Claude two ways, and the catalog lists each as its own deployment:
+
+| Provider     | Hosting     | Offering                                     | Deployment example                                |
+| ------------ | ----------- | -------------------------------------------- | ------------------------------------------------- |
+| AWS          | `aws`       | Claude in Amazon Bedrock                     | `aws-claude-fable-5-1`, `aws-claude-fable-5-1-us` |
+| AWS          | `anthropic` | Claude Platform on AWS, run by Anthropic     | `aws-claude-fable-5-1-anthropic-hosted`           |
+| Google Cloud | `google`    | Claude on Agent Platform (Vertex AI)         | `google-cloud-claude-fable-5-1-eu`                |
+| Google Cloud | `anthropic` | Claude on Google Cloud, managed by Anthropic | `google-cloud-claude-fable-5-1-anthropic-hosted`  |
+
+A credential is one JSON document. For AWS, give a commercial Region and either a long-term IAM
+access key or an API key. Add `workspaceId` for Claude Platform on AWS:
+
+```json title="AWS credential"
+{
+	"schema": "stogas.aws-byok.v1",
+	"region": "us-east-1",
+	"accessKeyId": "AKIA...",
+	"secretAccessKey": "...",
+	"workspaceId": "wrkspc_..."
+}
+```
+
+An access key serves Bedrock, and Claude Platform on AWS too when it has a workspace. An API key
+serves one of them: Claude Platform on AWS with a workspace, Bedrock without one. Temporary keys
+(`ASIA...`) expire, so they are not accepted.
+
+For Google Cloud, paste the service-account key file that Google downloads. To use Claude on Google
+Cloud managed by Anthropic, write the document yourself and add `workspaceId`; `privateKey` is the
+base64 between the PEM lines of the key file:
+
+```json title="Google Cloud credential"
+{
+	"schema": "stogas.google-cloud-byok.v1",
+	"projectId": "my-project",
+	"clientEmail": "stogas@my-project.iam.gserviceaccount.com",
+	"privateKeyId": "40_HEX_CHARACTERS",
+	"privateKey": "MIIEv...",
+	"workspaceId": "wrkspc_..."
+}
+```
+
+The **target** is the public part: the hostings a credential serves and, for AWS, its Region, such
+as `{"hosting":["anthropic","aws"],"region":"us-east-1"}`. Routing reads it instead of the secret,
+so a key never tries a credential that cannot serve a deployment. We work it out for stored
+credentials, and the CLI prints it for customer-encrypted ones. You can remove a hosting from a
+customer-encrypted credential's target to keep it off that hosting; the gateway refuses a secret
+that cannot serve its target. The US Bedrock deployment needs a US Region, because AWS's US profile
+also sends requests from Canada to Canada.
+
+Set up the account once:
+
+- **Bedrock:** allow `bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream` on the
+  inference profile and on the model in each Region the profile reaches; see AWS's
+  [cross-Region inference permissions](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html).
+  Claude Fable 5.1 also requires the account's data retention mode to be `aws_review`, under which
+  AWS keeps prompts and completions for 30 days to detect abuse; see
+  [Amazon Bedrock abuse detection](https://docs.aws.amazon.com/bedrock/latest/userguide/abuse-detection.html).
+  A Bedrock API key needs `bedrock:ListFoundationModels` for our check.
+- **Claude Platform on AWS:** allow `aws-external-anthropic:CreateInference` and
+  `aws-external-anthropic:ListModels` on the workspace, and
+  `aws-external-anthropic:CallWithBearerToken` for an API key.
+- **Agent Platform (Vertex AI):** enable the Agent Platform API (`aiplatform.googleapis.com`) and
+  the Claude model in Model Garden, then grant the service account Agent Platform User
+  (`roles/aiplatform.user`) on the project. Claude Fable models also need the project to accept
+  Google's Advanced AI Safety Addendum in Model Garden, under which Google keeps prompts and
+  responses for up to 30 days to monitor abuse.
+- **Claude on Google Cloud managed by Anthropic:** enable the Claude API in the project and give
+  the service account access to the workspace.
+
+Where AWS or Google runs Claude, URL sources, file IDs, web search and web fetch are not
+available; send files inline. Google offers web search, but it sends queries outside Google's data
+residency commitments, so we don't use it. Bedrock also has no task budgets. Claude Platform on AWS and Claude on
+Google Cloud managed by Anthropic work like Anthropic's own API.
 
 ## Choose and order credentials
 
@@ -189,3 +273,5 @@ provider cost and our charge separately. See [Billing](/docs/billing) for fundin
 | Customer-encrypted credential not used      | The request must send the registered key, and the credential must be assigned to the API key.                           |
 | Provider authentication or permission error | Check the credential, provider permissions, quota and model access with the provider.                                   |
 | Azure permission error                      | Check the [Azure roles](/docs/providers/azure#grant-roles), then open **Azure targets** and select **Refresh targets**. |
+| AWS access denied for Claude Fable 5.1      | Set the account's data retention mode to `aws_review`, and check the [Bedrock permissions](#aws-and-google-cloud).      |
+| Google Cloud permission error               | Enable the model in Model Garden and grant `roles/aiplatform.user`, or check the workspace access.                      |
