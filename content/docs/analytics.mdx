@@ -27,6 +27,11 @@ have p50, p95 and p99. The menu beside the chart sets its resolution.
 Select an interval in the chart to see its time range, then **Zoom in** to set the period to that
 interval.
 
+**Cache hit rate** is the share of requests with input usage that read any input from the provider's
+[cache](/docs/prompt-caching). **Cached input share** is the share of input tokens read from the
+cache. **Reasoning tokens** count only requests whose provider reports them, so a period without
+such a request shows no value instead of 0.
+
 Percentiles are approximate. They use only requests with a known value, and timing statistics use
 only successful requests that were not cancelled. Time to first token (TTFT) also needs streamed
 output. Generation speed divides generated tokens by the full request duration.

@@ -7050,6 +7050,8 @@
 							"enum": [
 								"requests",
 								"error_rate",
+								"tool_call_error_rate",
+								"structured_output_error_rate",
 								"latency",
 								"provider_latency",
 								"ttft",
@@ -7059,6 +7061,7 @@
 								"output_tokens",
 								"reasoning_tokens",
 								"cache_hit_rate",
+								"cached_input_share",
 								"cache_savings",
 								"cache_write_overhead",
 								"tokens_per_second",
@@ -7114,6 +7117,8 @@
 							"enum": [
 								"requests",
 								"error_rate",
+								"tool_call_error_rate",
+								"structured_output_error_rate",
 								"latency",
 								"provider_latency",
 								"ttft",
@@ -7123,6 +7128,7 @@
 								"output_tokens",
 								"reasoning_tokens",
 								"cache_hit_rate",
+								"cached_input_share",
 								"cache_savings",
 								"cache_write_overhead",
 								"tokens_per_second",
@@ -7301,9 +7307,52 @@
 														}
 													},
 													"cacheHitRate": {
-														"type": "number",
-														"minimum": 0,
-														"maximum": 100
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"cachedInputShare": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"toolCallErrorRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"structuredOutputErrorRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"cacheReadSavingsSampleCount": {
 														"type": "integer",
@@ -7413,8 +7462,15 @@
 														]
 													},
 													"totalReasoningTokens": {
-														"type": "string",
-														"pattern": "^\\d+$"
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^\\d+$"
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"key": {
 														"type": "string",
@@ -7428,6 +7484,9 @@
 												"required": [
 													"distributions",
 													"cacheHitRate",
+													"cachedInputShare",
+													"toolCallErrorRate",
+													"structuredOutputErrorRate",
 													"cacheReadSavingsSampleCount",
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
@@ -7590,9 +7649,52 @@
 														}
 													},
 													"cacheHitRate": {
-														"type": "number",
-														"minimum": 0,
-														"maximum": 100
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"cachedInputShare": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"toolCallErrorRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"structuredOutputErrorRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"cacheReadSavingsSampleCount": {
 														"type": "integer",
@@ -7702,8 +7804,15 @@
 														]
 													},
 													"totalReasoningTokens": {
-														"type": "string",
-														"pattern": "^\\d+$"
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^\\d+$"
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"bucketStart": {
 														"type": "string"
@@ -7712,6 +7821,9 @@
 												"required": [
 													"distributions",
 													"cacheHitRate",
+													"cachedInputShare",
+													"toolCallErrorRate",
+													"structuredOutputErrorRate",
 													"cacheReadSavingsSampleCount",
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
@@ -7809,9 +7921,52 @@
 													}
 												},
 												"cacheHitRate": {
-													"type": "number",
-													"minimum": 0,
-													"maximum": 100
+													"anyOf": [
+														{
+															"type": "number",
+															"minimum": 0,
+															"maximum": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"cachedInputShare": {
+													"anyOf": [
+														{
+															"type": "number",
+															"minimum": 0,
+															"maximum": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"toolCallErrorRate": {
+													"anyOf": [
+														{
+															"type": "number",
+															"minimum": 0,
+															"maximum": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"structuredOutputErrorRate": {
+													"anyOf": [
+														{
+															"type": "number",
+															"minimum": 0,
+															"maximum": 100
+														},
+														{
+															"type": "null"
+														}
+													]
 												},
 												"cacheReadSavingsSampleCount": {
 													"type": "integer",
@@ -7921,13 +8076,23 @@
 													]
 												},
 												"totalReasoningTokens": {
-													"type": "string",
-													"pattern": "^\\d+$"
+													"anyOf": [
+														{
+															"type": "string",
+															"pattern": "^\\d+$"
+														},
+														{
+															"type": "null"
+														}
+													]
 												}
 											},
 											"required": [
 												"distributions",
 												"cacheHitRate",
+												"cachedInputShare",
+												"toolCallErrorRate",
+												"structuredOutputErrorRate",
 												"cacheReadSavingsSampleCount",
 												"cacheWriteOverheadSampleCount",
 												"tokensPerSecond",
@@ -8025,9 +8190,52 @@
 															}
 														},
 														"cacheHitRate": {
-															"type": "number",
-															"minimum": 0,
-															"maximum": 100
+															"anyOf": [
+																{
+																	"type": "number",
+																	"minimum": 0,
+																	"maximum": 100
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"cachedInputShare": {
+															"anyOf": [
+																{
+																	"type": "number",
+																	"minimum": 0,
+																	"maximum": 100
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"toolCallErrorRate": {
+															"anyOf": [
+																{
+																	"type": "number",
+																	"minimum": 0,
+																	"maximum": 100
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"structuredOutputErrorRate": {
+															"anyOf": [
+																{
+																	"type": "number",
+																	"minimum": 0,
+																	"maximum": 100
+																},
+																{
+																	"type": "null"
+																}
+															]
 														},
 														"cacheReadSavingsSampleCount": {
 															"type": "integer",
@@ -8137,13 +8345,23 @@
 															]
 														},
 														"totalReasoningTokens": {
-															"type": "string",
-															"pattern": "^\\d+$"
+															"anyOf": [
+																{
+																	"type": "string",
+																	"pattern": "^\\d+$"
+																},
+																{
+																	"type": "null"
+																}
+															]
 														}
 													},
 													"required": [
 														"distributions",
 														"cacheHitRate",
+														"cachedInputShare",
+														"toolCallErrorRate",
+														"structuredOutputErrorRate",
 														"cacheReadSavingsSampleCount",
 														"cacheWriteOverheadSampleCount",
 														"tokensPerSecond",
