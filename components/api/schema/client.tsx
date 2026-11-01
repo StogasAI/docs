@@ -6,7 +6,7 @@ import { buttonVariants } from '../../ui/button';
 import { useCopyButton } from 'fumadocs-ui/utils/use-copy-button';
 import { Menu } from '@base-ui/react/menu';
 import { CheckIcon, ChevronRightIcon, FilterIcon, FilterXIcon, LinkIcon } from 'lucide-react';
-import type { SchemaData, SchemaUIGeneratedData } from '@fumadocs/json-schema/react';
+import type { InfoTag, SchemaData, SchemaUIGeneratedData } from '@fumadocs/json-schema/react';
 import {
 	SchemaUIProvider,
 	type SchemaUnion,
@@ -608,6 +608,27 @@ function TypeInfo({ name, $ref, children }: { name: string; $ref: string; childr
 	);
 }
 
+/** a tag that opens a referenced schema, as the type of a property named `name` does */
+function OpenTag({ label, value, open: { name, $ref } }: Extract<InfoTag, { open: unknown }>) {
+	const { open, isExpanded } = use(TypeContext)!;
+
+	return (
+		<button
+			type="button"
+			aria-expanded={isExpanded?.(name, $ref)}
+			onClick={() => open(name, $ref)}
+			className={cn(
+				tagClassName,
+				'group/open hover:bg-fd-accent hover:text-fd-accent-foreground focus-visible:ring-fd-ring aria-expanded:bg-fd-accent inline-flex max-w-full items-center gap-1.5 text-start transition-colors focus-visible:ring-2 focus-visible:outline-none motion-reduce:transition-none'
+			)}
+		>
+			<span className="not-prose text-fd-muted-foreground shrink-0">{label}</span>
+			{value && <code className="not-prose min-w-0 truncate">{value}</code>}
+			<ChevronRightIcon className="text-fd-muted-foreground size-3 shrink-0 transition-transform duration-200 group-hover/open:translate-x-0.5 motion-reduce:transition-none" />
+		</button>
+	);
+}
+
 function SchemaDescription({
 	schema: { description, infoTags = [] },
 	className
@@ -624,6 +645,8 @@ function SchemaDescription({
 				<div className="flex flex-wrap gap-1.5">
 					{infoTags.map((tag, i) => {
 						if ('node' in tag) return <Fragment key={i}>{tag.node}</Fragment>;
+
+						if ('open' in tag) return <OpenTag key={i} {...tag} />;
 
 						if ('list' in tag)
 							return (

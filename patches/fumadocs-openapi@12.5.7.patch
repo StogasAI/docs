@@ -1,0 +1,79 @@
+diff --git a/dist/packages/shared-api/dist/components/playground/panels.js b/dist/packages/shared-api/dist/components/playground/panels.js
+index 4561f4e..9fc9f73 100644
+--- a/dist/packages/shared-api/dist/components/playground/panels.js
++++ b/dist/packages/shared-api/dist/components/playground/panels.js
+@@ -288,15 +288,18 @@ function RequestExampleSelect({ items, value, onValueChange, disabled }) {
+ function SendShortcut() {
+ 	const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+ 	return /* @__PURE__ */ jsxs("kbd", {
++		"aria-hidden": true,
+ 		className: "hidden font-sans text-xs opacity-60 sm:inline",
+ 		children: [isMac ? "⌘" : "Ctrl", " ↵"]
+ 	});
+ }
+ function SendButton({ sending, disabled }) {
+ 	const t = useTranslations({ note: "playground" });
++	const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
+ 	return /* @__PURE__ */ jsxs("button", {
+ 		type: "submit",
+ 		disabled: sending || disabled,
++		"aria-keyshortcuts": isMac ? "Meta+Enter" : "Control+Enter",
+ 		className: cn(buttonVariants({ variant: "primary" }), "h-10 shrink-0 gap-2 rounded-xl px-4 transition-[background-color,scale] active:scale-[0.97] disabled:opacity-80 motion-reduce:transition-none"),
+ 		children: [
+ 			sending ? /* @__PURE__ */ jsx(Spinner, { className: "size-3.5" }) : /* @__PURE__ */ jsx(SendHorizontal, { className: "size-3.5" }),
+diff --git a/dist/ui/operation/index.js b/dist/ui/operation/index.js
+index 82f0615..77c2ad5 100644
+--- a/dist/ui/operation/index.js
++++ b/dist/ui/operation/index.js
+@@ -326,7 +326,7 @@ function ResponseSection({ responses, headingLevel }) {
+ 				className: "max-w-full overflow-x-auto font-mono [scrollbar-width:none]",
+ 				items: responses.map((item) => ({
+ 					value: item.status,
+-					label: item.status
++					label: /* @__PURE__ */ jsx("span", { "data-response-status": item.status, children: item.status })
+ 				}))
+ 			})
+ 		}), responses.map((item) => /* @__PURE__ */ jsx(ResponseContent, {
+diff --git a/dist/ui/operation/usage-tabs.js b/dist/ui/operation/usage-tabs.js
+index a7caa17..a068d18 100644
+--- a/dist/ui/operation/usage-tabs.js
++++ b/dist/ui/operation/usage-tabs.js
+@@ -183,7 +183,7 @@ function ResponseTabsDefaultContent({ tabs }) {
+ 			}), /* @__PURE__ */ jsx(ExampleSelect, {
+ 				items: tabs.map((item) => ({
+ 					value: item.code,
+-					label: item.code
++					label: /* @__PURE__ */ jsx("span", { "data-response-status": item.code, children: item.code })
+ 				})),
+ 				value: tab.code,
+ 				onValueChange: (v) => {
+diff --git a/dist/ui/playground/client.js b/dist/ui/playground/client.js
+index 663f3d5..cdf93ad 100644
+--- a/dist/ui/playground/client.js
++++ b/dist/ui/playground/client.js
+@@ -77,6 +77,13 @@ function PlaygroundDialog({ playground, renderParameterField, renderBodyField, R
+ 	}], [t]);
+ 	const onSubmit = (e) => {
+ 		e.preventDefault();
++		// a field with a custom validity error, like an invalid JSON draft, blocks the request
++		const invalid = Array.from(e.currentTarget.closest("[role=\"dialog\"]")?.querySelectorAll("input, textarea") ?? []).find((field) => field.validity.customError);
++		if (invalid) {
++			setView("request");
++			requestAnimationFrame(() => invalid.focus());
++			return;
++		}
+ 		send();
+ 		setView("response");
+ 	};
+diff --git a/dist/ui/playground/components/request-panel.js b/dist/ui/playground/components/request-panel.js
+index 1694aeb..af5be47 100644
+--- a/dist/ui/playground/components/request-panel.js
++++ b/dist/ui/playground/components/request-panel.js
+@@ -151,6 +151,7 @@ function AuthSection({ auth, onAuthorize }) {
+ 			value: selected,
+ 			onValueChange: (v) => v !== null && select(v),
+ 			children: [/* @__PURE__ */ jsx(SelectTrigger, {
++				"aria-label": t("Authorization"),
+ 				className: "h-7 w-auto max-w-60 gap-1.5 @sm:-me-2 border-0 bg-transparent px-2 text-xs hover:bg-fd-accent focus:ring-0 focus-visible:ring-2",
+ 				children: /* @__PURE__ */ jsx(SelectValue, { className: "truncate" })
+ 			}), /* @__PURE__ */ jsx(SelectContent, {

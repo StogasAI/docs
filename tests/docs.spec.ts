@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { chromium, expect, test as base, type Page } from '@playwright/test';
+import { chromium, expect, test as base, type Locator, type Page } from '@playwright/test';
 import { createServer } from 'node:http';
 import { resolve } from 'node:path';
 
@@ -65,18 +65,23 @@ async function expectReadingRegion(page: Page, id: string) {
 		.toBe(true);
 }
 
-// Radix registers the example tabs' keyboard entry point during hydration; earlier clicks are lost.
+// Base UI shows the response status indicator only after hydration; earlier clicks are lost.
 async function waitForHydration(page: Page) {
 	await expect(
-		page.locator('.stogas-api-operation-examples [role="tablist"][tabindex="0"]').first()
+		page.locator('.stogas-api-operation-main [role="tablist"] > [role="presentation"]').first()
 	).toBeVisible();
 }
 
+// The playground loads on demand and hydrates apart from the page; a click before then is lost.
 async function openPlayground(page: Page) {
-	await page.getByRole('button', { name: 'Try in Playground', exact: true }).click();
-	await expect(
-		page.getByRole('dialog').getByRole('textbox', { name: 'Request JSON' })
-	).toBeVisible();
+	const dialog = page.getByRole('dialog');
+	await expect(async () => {
+		if (!(await dialog.isVisible()))
+			await page.getByRole('button', { name: 'Try in Playground', exact: true }).click();
+		await expect(dialog.getByRole('textbox', { name: 'Request JSON' })).toBeVisible({
+			timeout: 1000
+		});
+	}).toPass({ timeout: 10_000 });
 }
 
 async function searchForSection(page: Page, query: string, title: string) {
@@ -333,9 +338,13 @@ test('dashboard API pages document the operation without a playground', async ({
 
 test('switching sample languages preserves highlighting', async ({ page }) => {
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
+	await waitForHydration(page);
+	const language = page.getByRole('combobox', { name: 'Code language' });
+	const sample = page.locator('figure', { has: language }).locator('pre');
 	for (const name of ['JavaScript', 'Go', 'Python', 'Java', 'C#', 'Rust', 'cURL']) {
-		await page.getByRole('tab', { name, exact: true }).click();
-		const sample = page.getByRole('tabpanel', { name, exact: true }).locator('pre');
+		await language.click();
+		await page.getByRole('option', { name, exact: true }).click();
+		await expect(language).toHaveText(name);
 		await expect(sample.locator('[style*="--shiki-"]').first()).toBeVisible();
 	}
 });
@@ -490,23 +499,59 @@ test('search dismissal restores the opener and its next keyboard position', asyn
 	}
 });
 
-test('JSON copy controls clear native scrollbars and response status tabs stay usable', async ({
+test('copy controls copy their example and clear native scrollbars, and statuses stay distinct', async ({
 	page,
 	context
 }) => {
 	await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
+	await waitForHydration(page);
+	// The clipboard is cleared first, so each copy is checked on its own.
+	const copiedText = async (button: Locator) => {
+		await page.evaluate(() => navigator.clipboard.writeText(''));
+		await button.click();
+		await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).not.toBe('');
+		return await page.evaluate(() => navigator.clipboard.readText());
+	};
+	const color = (status: Locator) =>
+		status.locator('[data-response-status]').evaluate((e) => getComputedStyle(e).color);
+	const main = page.locator('.stogas-api-operation-main');
+	expect(await color(main.getByRole('tab', { name: '200', exact: true }))).not.toBe(
+		await color(main.getByRole('tab', { name: '402', exact: true }))
+	);
+	// The title bars hold the copy buttons, first of the request and then of the response.
 	const examples = page.locator('.stogas-api-operation-examples');
+	const copies = examples.getByRole('button', { name: /^Cop(?:y|ied) Text$/ });
+	await expect(copies).toHaveCount(2);
+	expect(await copiedText(copies.first())).toContain('https://api.stogas.ai/v1/chat/completions');
+	expect(JSON.parse(await copiedText(copies.last()))).toHaveProperty('choices');
+	const status = examples.getByRole('combobox', { name: 'Response status' });
+	await status.click();
+	const error = page.getByRole('option', { name: '402', exact: true });
+	expect(await color(page.getByRole('option', { name: '200', exact: true }))).not.toBe(
+		await color(error)
+	);
+	await error.click();
+	await expect(status).toHaveText('402');
+	await expect(examples).toContainText('insufficient_balance');
+	expect(await copiedText(copies.last())).toContain('insufficient_balance');
+
+	// Without a title bar, the copy button stays in the scrollport of the code.
+	await openPlayground(page);
+	const dialog = page.getByRole('dialog');
 	// Short examples must not reserve space for a scrollbar that is not there.
-	const shortExample = page.getByRole('tabpanel', { name: 'cURL', exact: true });
+	await dialog.getByRole('tab', { name: '402', exact: true }).click();
+	const shortExample = dialog.getByRole('tabpanel', { name: '402', exact: true });
 	const shortCopy = shortExample.getByRole('button', { name: 'Copy Text', exact: true });
 	await expect(async () => {
-		const viewportRight = await shortExample
-			.getByRole('region')
-			.evaluate((element) => element.getBoundingClientRect().left + element.clientWidth);
+		const viewport = await shortExample.getByRole('region').evaluate((element) => ({
+			right: element.getBoundingClientRect().left + element.clientWidth,
+			scrolls: element.scrollHeight > element.clientHeight
+		}));
+		expect(viewport.scrolls).toBe(false);
 		const button = await shortCopy.boundingBox();
 		expect(button).not.toBeNull();
-		expect(viewportRight - button!.x - button!.width).toBeCloseTo(8, 0);
+		expect(viewport.right - button!.x - button!.width).toBeCloseTo(8, 0);
 	}).toPass({ timeout: 5000 });
 	await page.addStyleTag({
 		content:
@@ -514,11 +559,13 @@ test('JSON copy controls clear native scrollbars and response status tabs stay u
 	});
 	for (const width of [1440, 320]) {
 		await page.setViewportSize({ width, height: 1000 });
-		const panel = examples.getByRole('tabpanel', { name: '200', exact: true });
-		const copy = panel.getByRole('button', { name: /Copy Text|Copied Text/ });
+		// Narrow playgrounds show the request and the response one at a time.
+		if (width === 320) await dialog.getByRole('tab', { name: 'Response', exact: true }).click();
+		await dialog.getByRole('tab', { name: '200', exact: true }).click();
+		const panel = dialog.getByRole('tabpanel', { name: '200', exact: true });
+		const copy = panel.getByRole('button', { name: /^Cop(?:y|ied) Text$/ });
 		const viewport = panel.getByRole('region');
 		await expect(async () => {
-			await viewport.scrollIntoViewIfNeeded();
 			await expect(copy).toBeVisible();
 			const bounds = await viewport.evaluate((element) => ({
 				right: element.getBoundingClientRect().left + element.clientWidth,
@@ -539,25 +586,8 @@ test('JSON copy controls clear native scrollbars and response status tabs stay u
 			(element) => element.getBoundingClientRect().left + element.clientWidth
 		);
 		expect(contentRight - scrolledButton!.x - scrolledButton!.width).toBeCloseTo(8, 0);
-		await copy.click();
-		expect(JSON.parse(await page.evaluate(() => navigator.clipboard.readText()))).toHaveProperty(
-			'choices'
-		);
+		expect(JSON.parse(await copiedText(copy))).toHaveProperty('choices');
 	}
-	for (const statuses of [page.locator('.stogas-api-operation-main'), examples]) {
-		const color = (status: string) =>
-			statuses
-				.getByRole('tab', { name: status, exact: true })
-				.locator('[data-response-status]')
-				.evaluate((e) => getComputedStyle(e).color);
-		expect(await color('200')).not.toBe(await color('402'));
-	}
-	const error = examples.getByRole('tab', { name: '402', exact: true });
-	await error.click();
-	await expect(error).toHaveAttribute('aria-selected', 'true');
-	await expect(examples.getByRole('tabpanel', { name: '402', exact: true })).toContainText(
-		'insufficient_balance'
-	);
 });
 
 test('single-property schemas omit filtering and nested filters fit narrow cards', async ({
