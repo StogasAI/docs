@@ -32,6 +32,16 @@ interval.
 cache. **Reasoning tokens** count only requests whose provider reports them, so a period without
 such a request shows no value instead of 0.
 
+**Tool call error rate** is the share of requests with checked tool calls that returned at least one
+call whose arguments do not match its tool's `parameters` schema. A call to a tool without a schema
+that compiles is valid. The gateway rejects a response with a call to a tool that the request does
+not allow or with arguments that are not a JSON object, so that request fails instead. **Structured
+output error rate** is the share of requests with a JSON `response_format` or `text.format` whose
+output is not valid JSON or does not match the schema. Output is checked only when the model
+finishes normally, without a tool call or a refusal. A `format` keyword is an annotation, as in JSON
+Schema 2020-12, and a schema can refer only to itself. The gateway skips a check that would be too
+large, so it counts as neither valid nor invalid.
+
 Percentiles are approximate. They use only requests with a known value, and timing statistics use
 only successful requests that were not cancelled. Time to first token (TTFT) also needs streamed
 output. Generation speed divides generated tokens by the full request duration.
