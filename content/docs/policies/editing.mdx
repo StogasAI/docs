@@ -18,31 +18,26 @@ icon: FilePenLine
 A parent policy can [limit which sections](/docs/policies/delegation)
 anyone can save. See the [permission reference](/docs/members#permission-reference).
 
-## Choose a view
+## Edit the policy
 
-The editor shows the same draft in two views. A change in one view shows in the other. The
-dashboard opens the view that you used last on this device.
+The editor shows the policy as JSON, with suggestions as you type. See [Editor keys](#editor-keys).
 
-| View   | Shows                                                                           |
-| ------ | ------------------------------------------------------------------------------- |
-| Visual | Each setting as a field, with its description and its problems beside it        |
-| JSON   | The policy text, with suggestions as you type. See [Editor keys](#editor-keys). |
-
-- **Add setting** lists the settings that you can add, with a search. A new setting starts at its
-  default, or at a value that limits nothing, such as the longest timeout. A new limit starts
-  empty, and the editor asks for its value.
+- Away from the line that you edit, each section, routing setting, limit and redaction preset
+  shows its icon, and each catalog ID shows its provider's logo. Names show without quotes. The
+  text that you copy and save stays JSON.
+- On a key's page, each limit of the key's policy shows its usage. A limit whose measure changes,
+  or that starts or stops repeating, shows **Usage starts from zero when you save**. A renamed limit
+  is a new limit. A new limit, and a limit in any other policy, shows when it next resets, if it
+  resets.
+- The line under the pointer or the cursor shows a plus button, which adds to the object or list
+  that ends on that line, and a minus button, which removes the setting or item that starts on it.
+  The plus button lists what fits there. Nothing changes until you choose an item.
 - Removing the last setting of a section also removes the section. A list stays when you remove
   its last item, because an empty list has its own meaning: `"providers": []` allows no provider.
   A list that needs an item, such as `order`, goes with its last item.
-- **Undo** and **Redo**, or `Ctrl` + `Z` and `Ctrl` + `Shift` + `Z`, go back and forward through
-  your changes in the visual view. `Enter` keeps the value of a field. It does not save.
-- The visual view changes only the text of the setting that you change. Every other value keeps
-  the text that you wrote, such as `1e12`.
-- Routing expressions, encrypted sections and unknown settings show **Edit in JSON**, which opens
-  the JSON view at that setting.
-- The visual view needs valid JSON. If the draft is not valid JSON, choose **Fix in JSON**.
-- A combined draft after [someone else's save](#save-a-policy) opens in the JSON view, which
-  highlights your changes.
+- The line that you edit shows its text exactly, and so does a draft that is not valid JSON. The
+  editor names the line and column of the first error.
+- A combined draft after [someone else's save](#save-a-policy) highlights your changes.
 
 ## Save a policy
 
@@ -89,9 +84,8 @@ to see each limit and its usage.
 
 ### Editor keys
 
-In the JSON view, suggestions show fields, preset names, allowed values, time zones and catalog
-IDs as you type. Inside routing expressions, they also show request facts, operators and catalog
-values.
+Suggestions show fields, preset names, allowed values, time zones and catalog IDs as you type.
+Inside routing expressions, they also show request facts, operators and catalog values.
 
 | Key                    | Action                         |
 | ---------------------- | ------------------------------ |
@@ -116,34 +110,38 @@ calls no model and costs nothing.
 ### Choose a request
 
 On a key's own policy, the simulation uses that key. Elsewhere it starts with the most recently
-used key that the policy applies to, and you can choose another. Then fill in the request as a
-client would send it. The fields suggest catalog values.
+used key that the policy applies to, and you can choose another. Then choose the interface and
+write the request body as a client would send it, or paste one from your code. Suggestions offer
+the fields that routing reads and their catalog values.
 
-| Field          | Value                                                                                                                                       |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Model          | Any [`model` value](/docs/models#choose-a-model). Empty sends no model, which needs an `order`, a `sort` or a filter that leaves one model. |
-| Interface      | Chat Completions or Responses                                                                                                               |
-| Service tier   | Any [`service_tier` value](/docs/service-tiers). Empty uses the tier of the named model.                                                    |
-| Reasoning mode | On Responses, the [`reasoning.mode`](/docs/reasoning#select-pro-mode) to send                                                               |
+| Field            | Value                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model`          | Any [`model` value](/docs/models#choose-a-model). Without it, the request sends no model, which needs an `order`, a `sort` or a filter that leaves one model. |
+| `service_tier`   | Any [`service_tier` value](/docs/service-tiers). Without it, the request uses the tier of the named model.                                                    |
+| `reasoning.mode` | On Responses, the [`reasoning.mode`](/docs/reasoning#select-pro-mode) to send                                                                                 |
+
+Other fields show faded and do not change the result.
 
 </Step>
 <Step>
 
 ### Read the result
 
-| Part                    | Shows                                                                                     |
-| ----------------------- | ----------------------------------------------------------------------------------------- |
-| Tried in order          | Each deployment and credential that the request tries, and the policy that sets the order |
-| Over the fallback limit | Candidates after the last [fallback](/docs/policies/routing#retries-and-fallbacks)        |
-| Removed                 | Why routing removed each candidate, with the policy, rule and expression                  |
-| Error                   | The error that the request gets, such as `model_unavailable` or `schedule_denied`         |
+The section header names the providers that the request tries, in order.
+
+| Part                | Shows                                                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Routing settings    | The model when one matches, the order and the number of fallbacks, with the policy that sets each or **Default**                                          |
+| Tries in this order | Each deployment and credential that the request tries, then how many more are eligible past the [fallbacks](/docs/policies/routing#retries-and-fallbacks) |
+| Left out            | Why routing left out each candidate, grouped by the request and catalog, policies and credentials, with the policy and expression                         |
+| Error               | The error that the request gets, such as `model_unavailable` or `schedule_denied`                                                                         |
 
 </Step>
 </Steps>
 
 - The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
   key uses that credential. Enabled state, expiration and other changes apply after you save.
-- The simulated request has only these fields. `request.bodyBytes` is 0, and it has no
+- `request.bodyBytes` is 0, and the simulation reads no
   [request policy](/docs/policies/request-policies) or `provider` preference.
 - It uses the current catalog and time, so `access.deny` periods and rules that read
   `request.time` apply as they would now.

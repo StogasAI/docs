@@ -4457,13 +4457,15 @@
 								"type": "integer",
 								"minimum": 0,
 								"maximum": 3,
-								"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins."
+								"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins.",
+								"x-stogas-default": 0
 							},
 							"fallbacks": {
 								"type": "integer",
 								"minimum": 0,
 								"maximum": 2,
-								"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
+								"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
+								"x-stogas-default": 2
 							},
 							"filter": {
 								"type": "string",
@@ -4887,13 +4889,15 @@
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 3,
-											"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins."
+											"description": "Calls to the same deployment and credential after a lost connection or a 408, 409, 429 or 5xx response, unless the provider's x-should-retry header says otherwise. Defaults to 0. The smallest value that applies wins.",
+											"x-stogas-default": 0
 										},
 										"fallbacks": {
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 2,
-											"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it."
+											"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
+											"x-stogas-default": 2
 										},
 										"filter": {
 											"type": "string",
