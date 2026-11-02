@@ -6850,6 +6850,78 @@
 				}
 			}
 		},
+		"/api/organizations/join-preview": {
+			"get": {
+				"operationId": "previewJoiningOrganization",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Preview an invite",
+				"description": "Shows the organization an invite code opens. Uses none of its uses.",
+				"security": [
+					{
+						"accessToken": [
+							"all-organizations"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"name": "code",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 32,
+							"maxLength": 128
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"organizationId": {
+											"type": "string",
+											"format": "uuid"
+										},
+										"organizationName": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"inviterName": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"member": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"organizationId",
+										"organizationName",
+										"inviterName",
+										"member"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/organizations/join": {
 			"post": {
 				"operationId": "joinOrganization",
