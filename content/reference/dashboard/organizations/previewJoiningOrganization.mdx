@@ -1,0 +1,27 @@
+---
+title: Preview an invite
+description: Shows the organization that an invite code opens and who sent it.
+  Previewing does not use the invite.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Shows the organization that an invite code opens and who sent it.
+          Previewing does not use the invite.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/organizations/join-preview', method: 'get' }]} />
+    </>
+  );
+}
