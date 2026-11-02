@@ -78,6 +78,10 @@ cannot prove quota; Azure checks quota when a request runs.
 
 - We check each credential once a day. After a failed check we check again an hour later, and the
   wait doubles while the checks keep failing, until we check once a day.
+- Gateways also read your deployments when they use the credential. When the last read is more
+  than 30 minutes old, a request waits up to 5 seconds for a new one; after 10 minutes, a gateway
+  reads them again in the background. If Azure does not answer, requests use the targets for up
+  to 2 hours after the last read.
 - After you add, remove or change deployments or projects, select **Check credential** in the BYOK
   list, or **Refresh targets** in **Azure targets**, to update the targets at once.
 - If the application has no role that allows model requests, the check fails but the credential
@@ -94,11 +98,35 @@ each match.
 - Refreshing keeps your choices. New matches stay unselected.
 - If a check fails, requests use the targets from the last successful check, and the BYOK list
   shows the failure.
-- If a selected deployment disappears or its model retires, requests for it fail until you choose
-  another. The gateway never guesses a deployment name or falls back to another provider.
+- If a selected target [stops serving](#when-a-deployment-changes) or its model retires, the
+  gateway refuses this credential for it and tries the next candidate that your
+  [routing](/docs/policies/routing#retries-and-fallbacks) allows. It never sends the request to
+  another deployment in your account.
 - The BYOK list flags a credential that has no selected target or has selected targets that are
   unavailable. It also counts models that have targets but none selected, such as new deployments
   that a check found.
+
+## When a deployment changes
+
+Azure can [upgrade a deployment](https://learn.microsoft.com/azure/ai-foundry/openai/how-to/working-with-models)
+to a new model version on its own. A target is one exact model, version and SKU, so a request never
+reaches another version under the target's name. When a check finds that a target's deployment no
+longer serves it, the target stops serving, and **Azure targets** shows why and since when:
+
+| Status      | Meaning                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------- |
+| Changed     | The deployment serves another model, version or SKU. Requests fail with `byok_target_changed`.                |
+| Not serving | Azure reports the deployment in a state other than Succeeded, such as Creating or Failed.                     |
+| Not found   | Azure no longer lists the deployment. For an Instant target, Azure no longer offers the model to the project. |
+| Name taken  | A named deployment has an Instant target's name, so Azure sends its requests there.                           |
+
+- A stopped target serves again once a check finds its deployment serving it again. We check within
+  five minutes, then after 10 minutes, and the wait doubles while the target stays stopped, up to a
+  day. Select **Refresh targets** to check at once.
+- To keep a version, set the deployment's `versionUpgradeOption` to `NoAutoUpgrade`. The deployment
+  then stops at the version's retirement date, as its target does.
+- A check offers an upgraded deployment's new version as another target. Select it in
+  **Azure targets** to use it once the catalog lists that version.
 
 ## Deployment types
 

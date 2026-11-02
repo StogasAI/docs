@@ -5711,6 +5711,68 @@
 													"available": {
 														"type": "boolean"
 													},
+													"unavailableReason": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"missing",
+																	"changed",
+																	"failed",
+																	"shadowed"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"unavailableSince": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"observed": {
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"modelFormat": {
+																		"type": "string"
+																	},
+																	"modelName": {
+																		"type": "string"
+																	},
+																	"modelVersion": {
+																		"type": "string"
+																	},
+																	"skuName": {
+																		"type": "string"
+																	},
+																	"state": {
+																		"type": "string"
+																	}
+																},
+																"required": [
+																	"modelFormat",
+																	"modelName",
+																	"modelVersion",
+																	"skuName",
+																	"state"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"deploymentName": {
 														"type": "string",
 														"minLength": 1
@@ -5812,6 +5874,9 @@
 												},
 												"required": [
 													"available",
+													"unavailableReason",
+													"unavailableSince",
+													"observed",
 													"deploymentName",
 													"deploymentResourceId",
 													"deploymentType",
@@ -5847,13 +5912,25 @@
 										"updatedAt": {
 											"type": "string",
 											"format": "date-time"
+										},
+										"verifiedAt": {
+											"anyOf": [
+												{
+													"type": "string",
+													"format": "date-time"
+												},
+												{
+													"type": "null"
+												}
+											]
 										}
 									},
 									"required": [
 										"accountId",
 										"items",
 										"nextCursor",
-										"updatedAt"
+										"updatedAt",
+										"verifiedAt"
 									],
 									"additionalProperties": false
 								}
@@ -9194,6 +9271,7 @@
 																			"billing_price_invalid",
 																			"byok_not_allowed",
 																			"byok_required",
+																			"byok_target_changed",
 																			"byok_target_unavailable",
 																			"byok_unavailable",
 																			"catalog_unavailable",
