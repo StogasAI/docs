@@ -3,13 +3,11 @@ title: Get a deposit address
 description: Returns your deposit address for this coin in the organization,
   creating it the first time. Payments to it credit the organization and count
   toward your payer limit. With a desired credit, it also estimates what to send
-  at the current price. Each account can get 10 new deposit addresses in any 24
+  at the current price. Each account can get 12 new deposit addresses in any 24
   hours, across coins, networks and organizations, and all accounts on one IP
-  address or IPv6 /48 together 20. A flood of new addresses over Tor, from
+  address or IPv6 /48 together 24. A flood of new addresses over Tor, from
   datacenter and VPN networks or from anywhere else pauses new ones from that
-  class for up to a day, with the code `DEPOSIT_ADDRESSES_PAUSED`. Once payments
-  to your addresses in the organization have added $10 of credit, neither the
-  network limit nor a pause applies to your new addresses there.
+  class for up to a day, with the code `DEPOSIT_ADDRESSES_PAUSED`.
 full: true
 _openapi:
   preload:
@@ -23,14 +21,12 @@ _openapi:
       - content: Returns your deposit address for this coin in the organization,
           creating it the first time. Payments to it credit the organization and
           count toward your payer limit. With a desired credit, it also
-          estimates what to send at the current price. Each account can get 10
+          estimates what to send at the current price. Each account can get 12
           new deposit addresses in any 24 hours, across coins, networks and
           organizations, and all accounts on one IP address or IPv6 /48 together
-          20. A flood of new addresses over Tor, from datacenter and VPN
+          24. A flood of new addresses over Tor, from datacenter and VPN
           networks or from anywhere else pauses new ones from that class for up
-          to a day, with the code `DEPOSIT_ADDRESSES_PAUSED`. Once payments to
-          your addresses in the organization have added $10 of credit, neither
-          the network limit nor a pause applies to your new addresses there.
+          to a day, with the code `DEPOSIT_ADDRESSES_PAUSED`.
 ---
 
 export default function Layout(props) {
