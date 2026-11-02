@@ -15,21 +15,32 @@ The assistant answers questions about Stogas and your organization from the docu
 
 Each answer is one or more requests to GPT-6 Luna through the API key you chose. The key's policy
 must allow that model, and the requests cost what other requests to it cost. An answer makes at most
-8 requests, and stops if it has no answer by then.
+12 requests, and stops if it has no answer by then.
 
 The assistant acts as you, so it can read and change only what your roles allow. What it reads, such
 as a key's policy or the organization's members, goes to GPT-6 Luna in its next request.
 
 ### Changes wait for you
 
-The assistant reads documentation pages and calls `GET` operations at once. A request that changes
-something waits: the Playground shows its method, path and body, and you choose **Allow** or
-**Deny**. A denied request does not run, and the assistant reads that you denied it. **Stop** ends
-the answer, and a request that waits does not run.
+The assistant reads documentation pages and dashboard data at once. A change waits for you: the
+Playground shows what the assistant says it does, a link to the resource, the request, and what
+changes. A policy shows against the policy now, other fields show their current and new values, and
+a list of resources links each one. Choose **Allow** or **Deny**. A denied change does not run, and
+the assistant reads that you denied it. **Stop** ends the answer, and a change that waits does not
+run.
+
+When a change is done, the Playground links the resource it changed, and the other dashboard pages
+show the change without a reload.
+
+### Questions
+
+When your request leaves a choice open, such as which key a limit applies to, the assistant asks
+before it acts. Pick an option, or answer in your own words.
 
 The assistant never reads the secret of a new key or the code of an invitation: the Playground
-removes them from responses first. It never reveals a key's secret or adds or changes a
-[BYOK](/docs/byok) credential, because it does not call those operations.
+removes them from responses first. It never reveals a key's secret, adds or changes a
+[BYOK](/docs/byok) credential, or leaves the organization, because it does not call those
+operations.
 
 ### Ask about a key or grant
 
