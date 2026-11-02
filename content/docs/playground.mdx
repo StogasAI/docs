@@ -13,12 +13,14 @@ The assistant answers questions about Stogas and your organization from the docu
 [dashboard API](/docs/reference/dashboard), and makes changes when you allow them. Turn it on with
 **Assistant** above the conversation.
 
-Each answer is one or more requests to GPT-6 Luna through the API key you chose. The key's policy
-must allow that model, and the requests cost what other requests to it cost. An answer makes at most
-12 requests, and stops if it has no answer by then.
+Each answer is one or more requests to the model you chose, with your reasoning, output limit and
+system prompt, through the API key you chose. The model must accept function tools on Chat
+Completions. Some models refuse them, or accept them only with reasoning **Off**; then the answer
+shows the provider's error. The key's policy must allow the model, and the requests cost what other
+requests to it cost. An answer makes at most 12 requests, and stops if it has no answer by then.
 
 The assistant acts as you, so it can read and change only what your roles allow. What it reads, such
-as a key's policy or the organization's members, goes to GPT-6 Luna in its next request.
+as a key's policy or the organization's members, goes to the model in its next request.
 
 ### Changes wait for you
 

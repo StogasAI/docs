@@ -52,8 +52,8 @@ OpenAI sets these limits for its reasoning models, and returns `400` for a reque
 - `temperature`, `top_p`, `logprobs` and `top_logprobs` work only with effort `none`. GPT-6 Astra
   and GPT-6.1 Sol cannot turn reasoning off, so they never accept these fields.
 - On Chat Completions, GPT-6 Astra, GPT-6.1 Sol and GPT-6.1 Terra do not accept function tools,
-  and GPT-6 Sol and GPT-6 Luna accept them only with `reasoning_effort: "none"`. Use Responses for
-  tools with reasoning.
+  and GPT-6 Sol, GPT-6 Luna and GPT-5.6 Luna accept them only with `reasoning_effort: "none"`. Use
+  Responses for tools with reasoning.
 
 `max` effort works only on Responses. On Chat Completions, the gateway sends `xhigh` instead. See
 [Reasoning](/docs/reasoning).
