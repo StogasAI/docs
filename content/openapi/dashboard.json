@@ -4413,6 +4413,165 @@
 				}
 			}
 		},
+		"/api/{orgId}/policies/encryption-keys": {
+			"get": {
+				"operationId": "listEncryptionKeys",
+				"tags": [
+					"Policies"
+				],
+				"summary": "List encryption keys",
+				"description": "Returns each customer encryption key that the organization policy registers, with the policies whose plugin settings it encrypts and the credentials whose secrets it encrypts. A key that a policy or credential uses without a registration is listed with a null label, because requests that need it fail. Needs permission to read the organization policy; a credential and its policy appear only where you can view the credential.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"keys": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"label": {
+														"type": [
+															"string",
+															"null"
+														]
+													},
+													"keyId": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"policyCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"policies": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"scope": {
+																	"type": "string",
+																	"enum": [
+																		"organization",
+																		"folder",
+																		"grant",
+																		"role",
+																		"member",
+																		"credential",
+																		"key"
+																	]
+																},
+																"id": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"name": {
+																	"type": [
+																		"string",
+																		"null"
+																	]
+																},
+																"plugins": {
+																	"type": "boolean"
+																},
+																"rules": {
+																	"type": "array",
+																	"items": {
+																		"type": "string"
+																	}
+																}
+															},
+															"required": [
+																"scope",
+																"id",
+																"name",
+																"plugins",
+																"rules"
+															],
+															"additionalProperties": false
+														}
+													},
+													"credentialCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"credentials": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"id": {
+																	"type": "string",
+																	"format": "uuid"
+																},
+																"name": {
+																	"type": "string"
+																},
+																"provider": {
+																	"type": "string",
+																	"enum": [
+																		"anthropic",
+																		"aws",
+																		"azure",
+																		"chutes",
+																		"google-cloud",
+																		"openai"
+																	]
+																}
+															},
+															"required": [
+																"id",
+																"name",
+																"provider"
+															],
+															"additionalProperties": false
+														}
+													}
+												},
+												"required": [
+													"label",
+													"keyId",
+													"policyCount",
+													"policies",
+													"credentialCount",
+													"credentials"
+												],
+												"additionalProperties": false
+											}
+										}
+									},
+									"required": [
+										"keys"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/policies/{scope}/{id}": {
 			"get": {
 				"operationId": "getPolicy",
@@ -9242,6 +9401,10 @@
 																			"type": "integer",
 																			"minimum": 1,
 																			"maximum": 2147483647
+																		},
+																		"sha256": {
+																			"type": "string",
+																			"pattern": "^[0-9a-f]{64}$"
 																		}
 																	},
 																	"required": [

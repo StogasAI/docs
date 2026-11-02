@@ -187,9 +187,13 @@ Keep the original policies and provider credentials so you can encrypt them agai
 1. Generate a new key and register it under a new label.
 2. Update your clients to send both keys.
 3. Encrypt the plugin settings and provider credentials again with the new key, and save them.
-4. Remove the old registration, then stop sending the old key.
+   **Settings → Encryption keys** lists the policies and credentials you can view that each key
+   still encrypts.
+4. When the old key is no longer used, remove its registration, then stop sending it.
 
-Each step is a separate save that checks the current policy revision.
+Each step is a separate save that checks the current policy revision. A key that something still
+uses after you remove its registration appears there as not registered, and requests that need it
+fail.
 
 ## Encryption details
 

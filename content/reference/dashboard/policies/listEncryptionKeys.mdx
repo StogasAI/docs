@@ -1,0 +1,36 @@
+---
+title: List encryption keys
+description: Returns each customer encryption key that the organization policy
+  registers, with the policies whose plugin settings it encrypts and the
+  credentials whose secrets it encrypts. A key that a policy or credential uses
+  without a registration is listed with a null label, because requests that need
+  it fail. Needs permission to read the organization policy; a credential and
+  its policy appear only where you can view the credential.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns each customer encryption key that the organization policy
+          registers, with the policies whose plugin settings it encrypts and the
+          credentials whose secrets it encrypts. A key that a policy or
+          credential uses without a registration is listed with a null label,
+          because requests that need it fail. Needs permission to read the
+          organization policy; a credential and its policy appear only where you
+          can view the credential.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/policies/encryption-keys', method: 'get' }]} />
+    </>
+  );
+}
