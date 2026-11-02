@@ -7,11 +7,27 @@ icon: Sparkles
 Open **Playground** in your organization to chat with a model through one of your API keys. Its
 requests are requests of that key, so the key's policy and limits apply to them.
 
+## Model
+
+Choose the model beside **Send**. Under the model you chose, the list shows where it runs, one row
+for each deployment: choose one to send every request there, or choose the model to let routing
+choose. **Any model** sends no model, for keys whose policies pick one. The reasoning levels beside
+the model are the same for every model, except those that the model does not take. Where a
+deployment runs a level at another level, the list names that level.
+
+## Files
+
+Add images and documents with **+**, or drop or paste them into the message box. The Playground
+offers the file types that the model you chose takes: images where it reads images, and the
+document types that its provider takes, such as PDF. Each later message in the conversation sends
+the files again, so they count toward the input of every request.
+
 ## Assistant
 
 The assistant answers questions about Stogas and your organization from the documentation and the
-[dashboard API](/docs/reference/dashboard), and makes changes when you allow them. Turn it on with
-**Assistant** above the conversation.
+[dashboard API](/docs/reference/dashboard), and makes changes when you allow them. Turn it on in the
+**+** menu beside the message box. A chip beside the message shows that it is on, and its **×**
+turns it off.
 
 Each answer is one or more requests to the model you chose, with your reasoning, output limit and
 system prompt, through the API key you chose. The model must accept function tools on Chat
