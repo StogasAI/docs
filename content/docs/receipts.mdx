@@ -26,6 +26,7 @@ compact response receipt:
 	"usage": { ... }, // The standard usage field does not change.
 	"stogas": {
 		// Usage, routing and provider details.
+		"policy_versions_sha256": "6a0f...", // The policies that applied.
 		"receipt": {
 			"schema": "stogas.receipt.v1",
 			"boot_sha256": "9f2c...", // The gateway boot that signed it.
@@ -54,6 +55,13 @@ One signature covers:
 Keepalive and metadata comments are not part of the response hash. The gateway hashes a stream as
 it passes through, so a receipt adds no delay. The
 [receipt format](/docs/reference/security#receipt-format) lists each field.
+
+## Check which policies applied
+
+`policy_versions_sha256` is the SHA-256 of the RFC 8785 canonical JSON of the request record's
+[`policy_versions`](/docs/request-records#policy-hashes). Each entry there names a policy revision
+and the hash of its content, so the signature covers the exact policies that applied while the
+receipt stays small. To check it, hash the canonical form of that list and compare.
 
 ## Check a receipt later
 

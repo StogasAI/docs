@@ -38,8 +38,18 @@ the first call, so the gateway called Azure:
 	"client_stop_ms": null,
 	"catalog_version": 214,
 	"policy_versions": [
-		{ "scope": "organization", "id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf", "revision": 3 },
-		{ "scope": "key", "id": "019e275c-0e88-7b1d-bcdb-39ba5923457e", "revision": 1 }
+		{
+			"scope": "organization",
+			"id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
+			"revision": 3,
+			"sha256": "effb42cca638a95b0a06616ed23f244785d02f618544f8180f6e98bb188f0b02"
+		},
+		{
+			"scope": "key",
+			"id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
+			"revision": 1,
+			"sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+		}
 	],
 	"provider_attempts": [
 		{
@@ -148,7 +158,7 @@ the first call, so the gateway called Azure:
 | `transport`                                              | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.          |
 | `cancelled`, `client_stop_ms`                            | Whether the client cancelled, and when, on the [request clock](#timing).                            |
 | `catalog_version`                                        | The approved catalog that routed the request. `null` in [rejection records](#grouped-rejections).   |
-| `policy_versions`                                        | The scope, ID and revision of each [policy](/docs/policies/scopes) that applied.                    |
+| `policy_versions`                                        | Each [policy](/docs/policies/scopes) that applied: scope, ID, revision and [hash](#policy-hashes).  |
 | `provider_attempts`                                      | Each [provider call](#provider-attempts) and its result. Empty when the gateway called no provider. |
 | `node_id`                                                | The gateway VM that handled the request.                                                            |
 | `performance`                                            | [Timing](#timing).                                                                                  |
@@ -156,6 +166,13 @@ the first call, so the gateway called Azure:
 | `plugins`                                                | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                         |
 | `gateway_error`                                          | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).               |
 | `gateway_version`                                        | The gateway release that handled the request.                                                       |
+
+## Policy hashes
+
+Each `policy_versions` entry's `sha256` is the SHA-256 of the policy revision as saved, in RFC 8785
+canonical JSON without a final newline. An encrypted section is hashed as its ciphertext, and a
+policy with no settings is hashed as `{}`. A later edit gets a new revision and a new hash, so a
+record always names the exact policies that applied.
 
 ## Provider attempts
 
@@ -390,8 +407,18 @@ For example, 99 matching credit rejections in one minute produce five single rec
 	"client_stop_ms": null,
 	"catalog_version": null,
 	"policy_versions": [
-		{ "scope": "organization", "id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf", "revision": 3 },
-		{ "scope": "key", "id": "019e275c-0e88-7b1d-bcdb-39ba5923457e", "revision": 1 }
+		{
+			"scope": "organization",
+			"id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
+			"revision": 3,
+			"sha256": "effb42cca638a95b0a06616ed23f244785d02f618544f8180f6e98bb188f0b02"
+		},
+		{
+			"scope": "key",
+			"id": "019e275c-0e88-7b1d-bcdb-39ba5923457e",
+			"revision": 1,
+			"sha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+		}
 	],
 	"provider_attempts": [],
 	"node_id": "amber-falcon-69f9fdca1fa162f4d0ec706c70b3729d77cff726031f28d8c0b8a3586d50aeae",

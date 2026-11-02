@@ -93,7 +93,8 @@ The `receipt` field has the schema `stogas.receipt.v1`:
 | `signature`       | The gateway's signature                                            |
 
 One signature covers the request hash, response hash and SHA-256 of the RFC 8785 canonical
-`stogas` object without its `receipt` field. Metadata and keepalive comments are not part of the
+`stogas` object without its `receipt` field. That object's `policy_versions_sha256` is the SHA-256
+of the RFC 8785 canonical JSON of the request record's `policy_versions`. Metadata and keepalive comments are not part of the
 response hash. See [Receipts](/docs/receipts).
 
 ## Signed documents
