@@ -73,6 +73,12 @@ The `model` field accepts these forms:
 A deployment ID stays fixed: the gateway never moves the request to another tier, region or
 provider.
 
+The response's `model` field names the model that served the request by its model ID, such as
+`gpt-5.6-sol`, whichever form you sent and whichever provider served it. You can send that ID to
+select the same model again. Each attempt's
+[`catalog_chain_hash`](/docs/request-records#catalog-history) in the request record identifies the
+deployment.
+
 ### Groups
 
 Models belong to groups, such as `claude-opus` for every Claude Opus model and `claude` for every
