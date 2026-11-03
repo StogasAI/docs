@@ -12,14 +12,10 @@ prices.
 To get cache hits, put content that does not change, such as instructions, tools and reference
 documents, at the start of the prompt. Put the parts that change at the end.
 
-## Provider support
+## Provider controls
 
-| Provider                                                    | Caching   | Controls                                                |
-| ----------------------------------------------------------- | --------- | ------------------------------------------------------- |
-| [OpenAI](/docs/providers/openai#prompt-caching)             | Automatic | `prompt_cache_key`, retention, and explicit breakpoints |
-| [Anthropic](/docs/providers/anthropic#prompt-caching)       | Opt-in    | `cache_control` on the request, content blocks or tools |
-| [Azure](/docs/providers/azure#prompt-caching)               | Automatic | `prompt_cache_key` and retention                        |
-| [Chutes](/docs/providers/chutes#prompt-caching-and-billing) | Automatic | None                                                    |
+Each provider decides what it caches and how you control it. [Compare providers](/docs/providers)
+summarizes the controls, and each provider's page has the details.
 
 The gateway forwards the cache fields of the selected provider. It does not convert one provider's
 controls into another's: a request with `cache_control` that goes to OpenAI returns `400`. When you
@@ -43,9 +39,7 @@ The response reports cache reads and writes with the input tokens:
 }
 ```
 
-Responses reports the same fields in `usage.input_tokens_details`. For Anthropic,
-`cached_write_token_details` splits writes into `cached_write_tokens_5m` and
-`cached_write_tokens_1h`.
+Responses reports the same fields in `usage.input_tokens_details`[^durations].
 
 ## Billing
 
@@ -59,3 +53,7 @@ Settlement charges the actual reads and writes and releases the rest. Each
 
 If a provider reports usage that is missing, negative or inconsistent, the request fails with
 `upstream_protocol_error` instead of a guessed charge.
+
+[^durations]:
+    For Claude, `cached_write_token_details` splits writes into `cached_write_tokens_5m` and
+    `cached_write_tokens_1h`.

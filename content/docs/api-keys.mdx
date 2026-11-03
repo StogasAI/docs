@@ -1,110 +1,70 @@
 ---
 title: API keys
-description: Create, rotate and manage service keys and member keys.
+description: Service keys, member keys, rotation, leaks and folders.
 icon: KeyRound
 ---
 
 An API key authenticates inference requests. Each key belongs to one organization and has its own
-policy, provider credentials and usage.
+[policy](/docs/policies), [provider credentials](/docs/byok) and usage.
 
 | Key type                     | Owner            | Use it for                                                   |
 | ---------------------------- | ---------------- | ------------------------------------------------------------ |
 | [Service key](#service-keys) | The organization | Servers, applications and CI jobs that must outlive a member |
 | [Member key](#member-keys)   | One member       | A member's own work, within the limits of a grant            |
 
-A [grant](/docs/grants) lets selected members create member keys. It is not a key itself: it has
-no secret and cannot call the API.
+A [grant](/docs/grants) lets selected members create member keys. It has no secret and cannot call
+the API.
 
 ## Service keys
 
-Create a service key under **API keys → Create key**. The secret appears when you create or rotate
-the key. With **Use** permission, **Reveal secret** shows it again later.
+Organization-wide API key managers and folder managers create service keys, and
+[roles](/docs/members#permission-reference) give other members access to them. **Use** lets a
+member reveal the secret again.
 
-Removing someone's access hides the secret from them in the dashboard at once, but they can still
-use a copy they saved. Rotate the key to stop old copies: requests with an old secret fail with
-[`key_secret_replaced`](/docs/reference/errors#401-unauthorized). Access assignments do not change
-the key's owner or add the assignees' policies to its requests.
-
-Organization-wide API key managers and folder managers can create service keys. Give other
-members access in **Members → Roles**; the
-[permission reference](/docs/members#permission-reference) lists what View, Use, Manage and Admin
-allow. Personal organizations have no shared access.
+- Removing someone's access hides the secret from them at once, but a copy they saved keeps working
+  until you rotate the key. Requests with an old secret fail with
+  [`key_secret_replaced`](/docs/reference/errors#401-unauthorized).
+- Access does not change a key's owner, and the policies of members with access do not apply to its
+  requests.
+- A disabled key can still be rotated, and rotating does not enable it.
 
 ## Member keys
 
-A member creates a member key from a grant assigned to them. The member names, rotates, disables
-and deletes their own keys. Administrators can see and manage every key in the organization.
+A member creates member keys from a grant assigned to them, and manages their own keys.
+Administrators can manage every key in the organization.
 
-**Allow key policy edits by default** on the grant decides whether members can edit their keys'
-policies. It sets the default in `delegation.keys` and keeps any
+**Allow key policy edits by default** on the grant sets `delegation.keys`, which decides whether
+members can edit their keys' policies, and keeps any
 [exceptions by ID](/docs/policies/delegation#exceptions-by-id). When it is off, key policies can no
-longer add or change sections. Sections that keys already set keep applying until someone removes
-them, as [Delegation](/docs/policies/delegation#sections-saved-before-a-change) explains.
-Request policies have their [own permission](/docs/policies/request-policies#grant-permission).
-
-## Key page
-
-Click the key's name to rename it. The key page has three tabs:
-
-- **Overview** shows the key's lifetime cost, its secret, whether it is enabled, when it expires
-  and every [limit](/docs/policies/limits) that applies to it, with its usage, the amount held for
-  running requests and when it resets. Organization and grant limits apply in addition to the
-  key's own. Usage shows the values at the displayed update time.
-- **Policy** holds the key's policy, the combined policy that its requests follow and a routing
-  simulation.
-- **Credentials** holds provider credentials.
-
-The enabled switch and the expiration save at once. Enter the expiration in your time zone or one
-you choose; we store it in UTC. A disabled key can still be rotated, and rotation does not change
-whether it is enabled. The key's **Requests** link opens its history in
-[Analytics](/docs/analytics).
+longer add or change sections, and sections that keys already set keep applying until someone
+removes them. Request policies have their
+[own permission](/docs/policies/request-policies#grant-permission).
 
 ## Leaked secrets
 
 GitHub reports API key secrets that it finds in public repositories and other public GitHub
 content. If the secret still belongs to a key, we replace it at once. The key keeps its ID, settings
-and history, and requests with the old secret fail with
-[`key_secret_replaced`](/docs/reference/errors#401-unauthorized).
+and history, and requests with the old secret fail with `key_secret_replaced`. Reveal the new
+secret and update your apps. [Activity](/docs/activity) keeps the report.
 
-The key page shows when and where GitHub found the secret, and **API keys** lists every key with a
-leak notice. Reveal the new secret and update your apps. Revealing or rotating the secret removes
-the notice; [Activity](/docs/activity) keeps the report.
+## Policies and credentials
 
-## Policies
+Every request must pass the key's policy, the policies above it and the organization balance. See
+[Scopes and inheritance](/docs/policies/scopes) for how the levels combine.
 
-A key policy can narrow the models a key uses, limit spending, tokens, requests and concurrent
-requests, set access periods and add redaction rules. Every request must pass the key
-policy, the policies above it and the organization balance. Start with
-[Edit a policy](/docs/policies/editing), or see [Scopes and inheritance](/docs/policies/scopes) for
-how the levels combine. To keep redaction rules and export credentials private, use
-[customer encryption](/docs/customer-encryption#encrypt-plugin-settings).
-
-## Provider credentials
-
-Each key has an ordered credential list for each provider. New keys start with Stogas-managed
-credentials for providers that offer them, currently Chutes. OpenAI, Anthropic and Azure lists
-start empty; an empty list turns that provider off for the key. See
-[Bring your own provider key](/docs/byok) to add, order, encrypt and rotate credentials.
+New keys start with Stogas-managed credentials for providers that offer them, which today is
+Chutes. Other providers start with an empty credential list, which turns them off for the key until
+you [add a credential](/docs/byok).
 
 ## Folders
 
 Folders group service keys and grants. Member keys follow their grant's folder. Folder policies,
-permissions and shared limits apply to everything inside. Open **Manage folders** next to the search
-field on **API keys** or **Grants** to create, rename, color and configure folders.
+permissions and shared limits apply to everything inside.
 
 - An organization can have up to 50 folders, or as many as we agreed for it. Folder names are
   unique regardless of case, and folders cannot contain other folders.
 - Moving a key or grant needs Admin on both folders, or organization-wide Admin for the
   organization root. A move changes the inherited policies, permissions and shared limits.
 - Deleting a folder moves its keys and grants to the organization root.
-- A move or deletion deletes a member's keys under a grant if the member loses their last Use
-  permission on that grant. Other keys keep their IDs and secrets.
-
-## Search and bulk actions
-
-Search and sorting cover every key you can view. Type a filter such as `folder:` and press Enter
-to keep it as a chip. Keys are newest first; **Load more** adds the next results.
-
-Select keys with the checkboxes, or use **Select all matching** to select every match you can
-manage, up to 1,000 at a time in the list's order. Bulk actions check your permissions again when
-they run.
+- A move or deletion deletes a member's keys under a grant if the member loses their last **Use**
+  on that grant. Other keys keep their IDs and secrets.

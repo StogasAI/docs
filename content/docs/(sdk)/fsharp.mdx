@@ -83,7 +83,4 @@ to its complete printed URL.
 new Transport(TransportOptions(Security = "e2ee", MaxConnections = 4u))
 ```
 
-`BaseUrl` accepts an HTTPS origin. `Proxy` and `Onion` work as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Configure retry policy in `OpenAIClientOptions`; pass a `CancellationToken` with your deadline to each call.
-
-Native attested TLS is the default; this example selects E2EE. See
-[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+`TransportOptions` takes every [option](/docs/sdk-overview#options). Configure retries in `OpenAIClientOptions`, and pass a `CancellationToken` with your deadline to each call.

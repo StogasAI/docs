@@ -1,0 +1,45 @@
+---
+title: Text extraction
+description: Turn text files into prompt text that every model reads and redaction scans.
+icon: FileText
+---
+
+Text extraction turns inline text files, such as CSV, JSON and source code, into prompt text. The
+text works on any deployment, even one that accepts no documents, and goes through
+[PII redaction](/docs/pii-redaction) and input checks like the rest of the prompt.
+
+```json title="Policy"
+{
+	"plugins": { "textExtraction": true }
+}
+```
+
+The gateway replaces each text file with a text block that starts with the filename:
+
+```json tab="Request"
+{
+	"type": "file",
+	"file": {
+		"filename": "orders.csv",
+		"file_data": "data:text/csv;base64,aWQsYW1vdW50CjEsMjAKMiwzNQ=="
+	}
+}
+```
+
+```json tab="Sent to the provider"
+{
+	"type": "text",
+	"text": "orders.csv\nid,amount\n1,20\n2,35"
+}
+```
+
+On Responses, an `input_file` becomes `input_text`. A `cache_control` or `prompt_cache_breakpoint`
+on the file stays on the text.
+
+## What it extracts
+
+- `text/*`, `application/json`, `application/xml`, and media types that end in `+json` or `+xml`,
+  named in the data URL
+- Valid UTF-8 without NUL bytes, or the request fails
+
+PDFs, office documents, URLs and file IDs go to the provider unchanged.

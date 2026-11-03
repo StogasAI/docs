@@ -7,8 +7,8 @@ icon: Wrench
 A request can give the model two kinds of tools:
 
 - **Your tools** run in your application. `function` tools work on both endpoints and every
-  provider. `custom` tools, which take free-form text input, work on Responses with OpenAI models.
-  You pay only for tokens.
+  provider. `custom` tools take free-form text input and work on Responses[^custom]. You pay only
+  for tokens.
 - **Hosted tools**, such as web search, run at the provider during the request. They can have a
   price per call.
 
@@ -80,18 +80,19 @@ On Responses, the call is a `function_call` output item, and you send the result
 `function_call_output` input item with the same `call_id`.
 
 `tool_choice` accepts `auto`, `none`, `required` or a named function. A response can still have no
-tool call: some providers change a forced choice to `auto`, for example
-[Anthropic with reasoning on](/docs/providers/anthropic#tools). Check for tool calls before you
-continue.
+tool call, because some providers change a forced choice to `auto`[^forced]. Check for tool calls
+before you continue.
 
 ## Hosted tools
 
-| Tool                 | Providers                          | Endpoint         |
-| -------------------- | ---------------------------------- | ---------------- |
-| `web_search`         | OpenAI, Anthropic, Claude on Azure | Responses        |
-| `web_search_preview` | OpenAI                             | Responses        |
-| `web_search_options` | OpenAI search models               | Chat Completions |
-| `web_fetch`          | Anthropic, Claude on Azure         | Responses        |
+| Tool                 | Endpoint                             |
+| -------------------- | ------------------------------------ |
+| `web_search`         | Responses                            |
+| `web_search_preview` | Responses                            |
+| `web_search_options` | Chat Completions, search models only |
+| `web_fetch`          | Responses                            |
+
+[Compare providers](/docs/providers) shows which providers run each tool.
 
 ```jsonc title="Responses"
 {
@@ -102,9 +103,8 @@ continue.
 }
 ```
 
-The gateway accepts only tool versions with a price in the catalog. An unknown version returns `400`.
-Prices, versions and rules for each provider are on the
-[OpenAI](/docs/providers/openai#tools) and [Anthropic](/docs/providers/anthropic#tools) pages.
+The gateway accepts only tool versions with a price in the catalog, and returns `400` for an
+unknown version. Each provider's page lists its prices and versions.
 
 ### Domain filters
 
@@ -128,7 +128,8 @@ Prices, versions and rules for each provider are on the
 
 - Each entry is a bare domain, such as `go.dev`, and also covers its subdomains. A scheme, path or
   wildcard returns `400`.
-- Anthropic returns `400` for both lists in one tool. `web_search_preview` takes no filters.
+- Some providers take only one of the lists in a tool[^lists]. `web_search_preview` takes no
+  filters.
 - The gateway checks every source, citation and fetched page in the response against the filters,
   and returns `502` instead of a response that breaks them.
 - A block list covers only the domains it names. Copies of a site on other domains can still appear.
@@ -140,10 +141,7 @@ reserves for them:
 
 - Without `max_tool_calls`, the hold covers ten calls of the most expensive hosted tool in the
   request, and the provider gets a limit of 20 calls. A lower `max_tool_calls` lowers the hold.
-- The hold also covers the content that the tools return. For OpenAI search, each call reserves up
-  to 128,000 tokens or the deployment's input limit, if smaller. For Anthropic, it covers input for
-  up to ten tool rounds and one output limit. With caching on, rounds after the first are held at
-  the cache-read rate, so cache misses can cost more than the hold.
+- The hold also covers the content that the tools return[^content].
 - `tool_choice: "none"` turns hosted tools off, so they cost nothing.
 
 The provider does not stop at the hold. Settlement charges the calls and tokens that the provider
@@ -160,6 +158,17 @@ These tools return `400` before the gateway calls a provider:
 - Computer use and image generation
 - Provider memory and tool loading
 
-Remote MCP is not available because neither OpenAI nor Anthropic can limit MCP calls in a request,
-so the gateway could not limit the charge. A third-party MCP server would also receive your data outside
-the data handling that the catalog lists.
+Remote MCP is not available, because the gateway cannot limit a provider's MCP calls or their
+charge, and an MCP server would receive your data outside the data handling that the catalog lists.
+
+[^custom]: On OpenAI models, at [OpenAI](/docs/providers/openai#tools) and [Azure](/docs/providers/azure#tools-and-files).
+
+[^forced]: [Anthropic](/docs/providers/anthropic#tools) does, with reasoning on.
+
+[^lists]: [Anthropic](/docs/providers/anthropic#tools) returns `400` for both lists in one tool.
+
+[^content]:
+    For OpenAI search, each call reserves up to 128,000 tokens or the deployment's input limit, if
+    smaller. For Claude, the hold covers input for up to ten tool rounds and one output limit. With
+    caching on, rounds after the first are held at the cache-read rate, so cache misses can cost
+    more than the hold.

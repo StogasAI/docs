@@ -1,279 +1,107 @@
 ---
 title: Bring your own key
-description: Send requests through your own OpenAI, Anthropic, Chutes, Azure, AWS or Google Cloud account.
+description: Send requests through your own provider accounts.
 icon: Plug
 ---
 
-Bring your own key (BYOK) sends requests through your provider account. You still authenticate
-every request with your API key from the dashboard; the provider credential authenticates only the
-gateway's call to the provider. The provider bills you directly, and we charge a 2% fee.
+Bring your own key (BYOK) sends requests through your provider account. Your API key still
+authenticates every request to us, and the provider credential authenticates only the gateway's
+call to the provider. The provider bills you, and we charge a [2% fee](#billing).
 
-## Choose a credential type
-
-| Type                   | Where the secret is       | Providers                                           | Each request needs              |
-| ---------------------- | ------------------------- | --------------------------------------------------- | ------------------------------- |
-| **Stogas managed**     | Our provider account      | Chutes                                              | API key                         |
-| **Stored**             | Saved and encrypted by us | OpenAI, Anthropic, Chutes, Azure, AWS, Google Cloud | API key                         |
-| **Customer encrypted** | Encrypted on your device  | OpenAI, Anthropic, Chutes, AWS, Google Cloud        | API key and your encryption key |
+| Credential         | Where the secret is       | Providers                     | Each request sends              |
+| ------------------ | ------------------------- | ----------------------------- | ------------------------------- |
+| Stogas managed     | Our provider account      | Chutes                        | Your API key                    |
+| Stored             | Saved and encrypted by us | Every provider                | Your API key                    |
+| Customer encrypted | Encrypted on your device  | Every provider[^azure-secret] | Your API key and encryption key |
 
 New keys start with Stogas-managed Chutes. Every other provider needs a credential of your own.
+Each [provider page](/docs/providers) shows what its credential needs.
 
-## Store a provider credential
+## Checks
 
-<Steps>
-<Step>
-
-### Add the credential
-
-Open **BYOK**, select **Add** and choose the provider. Enter a name and the credential. For Azure, you
-connect accounts that an Entra application can read; see
-[Connect your Azure account](/docs/providers/azure#connect-your-account). AWS and Google Cloud take
-a credential document; see [AWS and Google Cloud](#aws-and-google-cloud).
-
-</Step>
-<Step>
-
-### Wait for the check
-
-We check the credential with a free metadata call before saving it: the model list for OpenAI
-and Anthropic, the account quota for Chutes and deployment discovery for Azure. For AWS, an access
-key asks AWS STS who it is, a Bedrock API key lists Anthropic models and a Claude Platform on AWS
-API key lists its workspace's models. A Google Cloud key signs in to Google. A rejected
-credential is not saved. If the provider is unavailable or rate-limits the check, try again. A
-successful check does not prove quota or access to every model.
-
-</Step>
-<Step>
-
-### Assign it to a key
-
-Open a service or member API key, then select the credential under **Credentials**.
-
-</Step>
-</Steps>
-
-The dashboard never shows a stored secret again. Replacing it keeps the credential's ID,
-assignments and analytics history.
-
-We repeat the free check for every stored credential once a day. If it fails, the BYOK list shows
-when and why, and we check again an hour later. While the checks keep failing, the wait doubles
-until we check once a day. Requests keep using the credential, because a provider can reject a
-check for a short time. To check at once, for example after you fix the account, select **Check
-credential** in the credential's menu. Customer-encrypted credentials are not checked, because we
-cannot decrypt them.
+We check a stored credential with a free call to the provider when you save it, and once a day
+after that. A rejected credential is not saved. If a daily check fails, requests keep using the
+credential, because a provider can reject a check for a short time. We check again after an hour,
+and double the wait while the checks keep failing, up to a day. A check does not prove quota or
+access to every model. We cannot check customer-encrypted credentials.
 
 ## Customer encryption
 
-With customer encryption, we store only ciphertext, and your requests send the key that unlocks it.
+With customer encryption, we store only ciphertext, and each request sends the key that unlocks it.
 
-<Steps>
-<Step>
+1. [Create an organization key](/docs/customer-encryption#create-a-key) and register it.
+2. Encrypt the credential on your machine:
 
-### Install the CLI
+   ```console
+   stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
+     --purpose byok/openai --input provider-secret.txt --output credential.json
+   ```
 
-The `stogas` CLI encrypts the credential on your machine. Download and verify it as described in
-[Install the CLI](/docs/cli#install).
+   The purpose is `byok/` and the provider ID. Save a plain key without a trailing newline. AWS
+   and Google Cloud take a credential document, which the CLI checks before it encrypts it.
 
-</Step>
-<Step>
+3. Save `credential.json` as a customer-encrypted credential. It holds the ciphertext, a preview
+   of the secret's last four characters that you can edit, and, for AWS and Google Cloud, the
+   target. Saving does not contact the provider.
+4. [Send the key](/docs/customer-encryption#send-the-key-with-a-request) with each request.
 
-### Create an organization key
-
-```console
-stogas encryption-key --output org.key
-```
-
-Register the printed identifier in the organization policy, as described in
-[Create a key](/docs/customer-encryption#create-a-key). Keep a secure backup of `org.key`.
-
-</Step>
-<Step>
-
-### Encrypt the credential
-
-Save the exact credential in a file without a trailing newline, then encrypt it locally:
-
-```console
-stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
-  --purpose byok/openai --input provider-secret.txt --output credential.json
-```
-
-Use `byok/openai`, `byok/anthropic`, `byok/chutes`, `byok/aws` or `byok/google-cloud` to match
-the provider. The CLI checks an AWS or Google Cloud credential before it encrypts it, and accepts
-Google's service-account key file as it is. `credential.json` holds the encrypted secret, a short
-preview and, for AWS and Google Cloud, the [target](#aws-and-google-cloud).
-
-</Step>
-<Step>
-
-### Save and assign it
-
-Open **BYOK → Add → Customer encrypted**, choose the provider and paste `credential.json`. Then
-assign the credential to an API key. Saving does not contact the provider. Edit the preview first
-if you don't want its last four characters shown.
-
-</Step>
-<Step>
-
-### Send the key with each request
-
-Put the contents of `org.key` under its registered label in `encryption_keys` in the request body.
-See [Send the key with a request](/docs/customer-encryption#send-the-key-with-a-request) for the
-format and the safest connection.
-
-</Step>
-</Steps>
-
-If a request could use the credential but leaves out its key, the gateway rejects it with
-`encryption_key_required`, naming the key's label, before it calls any provider. It never moves the
-request to another credential instead. A key whose apps never send the key needs a credential list
-without that credential. A wrong key or damaged ciphertext also fails the request. No header accepts a provider secret. For backups and
-rotation, see [Key sharing and rotation](/docs/customer-encryption#key-sharing-and-rotation).
+If a request could use the credential but does not send its key, the gateway rejects it with
+`encryption_key_required` before it calls any provider. It never moves the request to another
+credential. Give apps that never send the key an API key without that credential.
 
 ## AWS and Google Cloud
 
-Each cloud runs Claude two ways, and the catalog lists each as its own deployment:
+An AWS or Google Cloud credential is a JSON document. The [AWS](/docs/providers/aws#create-a-credential)
+and [Google Cloud](/docs/providers/google-cloud#create-a-credential) pages show its fields.
 
-| Provider     | Hosting     | Offering                                     | Deployment example                                |
-| ------------ | ----------- | -------------------------------------------- | ------------------------------------------------- |
-| AWS          | `aws`       | Claude in Amazon Bedrock                     | `aws-claude-fable-5-1`, `aws-claude-fable-5-1-us` |
-| AWS          | `anthropic` | Claude Platform on AWS, run by Anthropic     | `aws-claude-fable-5-1-anthropic-hosted`           |
-| Google Cloud | `google`    | Claude on Agent Platform (Vertex AI)         | `google-cloud-claude-fable-5-1-eu`                |
-| Google Cloud | `anthropic` | Claude on Google Cloud, managed by Anthropic | `google-cloud-claude-fable-5-1-anthropic-hosted`  |
+Each of these credentials has a public target: the hostings that it serves and, for AWS, its
+Region, such as `{"hosting":["anthropic","aws"],"region":"us-east-1"}`. Routing reads the target
+instead of the secret. To keep a customer-encrypted credential off a hosting, remove the hosting
+from its target.
 
-A credential is one JSON document. For AWS, give a commercial Region and either a long-term IAM
-access key or an API key. Add `workspaceId` for Claude Platform on AWS:
+## Order credentials
 
-```json title="AWS credential"
-{
-	"schema": "stogas.aws-byok.v1",
-	"region": "us-east-1",
-	"accessKeyId": "AKIA...",
-	"secretAccessKey": "...",
-	"workspaceId": "wrkspc_..."
-}
-```
+Each API key has an ordered credential list for each provider. [Routing](/docs/policies/routing)
+chooses the deployment, and the gateway uses the first credential in the list that can serve it,
+under that credential's [policy](/docs/policies/scopes). A
+[fallback](/docs/policies/routing#retries-and-fallbacks) tries the deployment's next credential
+before the next deployment. An empty list turns the provider off for that key.
 
-An access key serves Bedrock, and Claude Platform on AWS too when it has a workspace. An API key
-serves one of them: Claude Platform on AWS with a workspace, Bedrock without one. Temporary keys
-(`ASIA...`) expire, so they are not accepted.
+For example, put a customer-encrypted Chutes credential before Stogas managed, and requests that
+send its key use your account.
 
-For Google Cloud, paste the service-account key file that Google downloads. To use Claude on Google
-Cloud managed by Anthropic, write the document yourself and add `workspaceId`; `privateKey` is the
-base64 between the PEM lines of the key file:
-
-```json title="Google Cloud credential"
-{
-	"schema": "stogas.google-cloud-byok.v1",
-	"projectId": "my-project",
-	"clientEmail": "stogas@my-project.iam.gserviceaccount.com",
-	"privateKeyId": "40_HEX_CHARACTERS",
-	"privateKey": "MIIEv...",
-	"workspaceId": "wrkspc_..."
-}
-```
-
-The **target** is the public part: the hostings a credential serves and, for AWS, its Region, such
-as `{"hosting":["anthropic","aws"],"region":"us-east-1"}`. Routing reads it instead of the secret,
-so a key never tries a credential that cannot serve a deployment. We work it out for stored
-credentials, and the CLI prints it for customer-encrypted ones. You can remove a hosting from a
-customer-encrypted credential's target to keep it off that hosting; the gateway refuses a secret
-that cannot serve its target. The US Bedrock deployment needs a US Region, because AWS's US profile
-also sends requests from Canada to Canada.
-
-Set up the account once:
-
-- **Bedrock:** allow `bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream` on the
-  inference profile and on the model in each Region the profile reaches; see AWS's
-  [cross-Region inference permissions](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html).
-  Claude Fable 5.1 also requires the account's data retention mode to be `aws_review`, under which
-  AWS keeps prompts and completions for 30 days to detect abuse; see
-  [Amazon Bedrock abuse detection](https://docs.aws.amazon.com/bedrock/latest/userguide/abuse-detection.html).
-  A Bedrock API key needs `bedrock:ListFoundationModels` for our check.
-- **Claude Platform on AWS:** allow `aws-external-anthropic:CreateInference` and
-  `aws-external-anthropic:ListModels` on the workspace, and
-  `aws-external-anthropic:CallWithBearerToken` for an API key.
-- **Agent Platform (Vertex AI):** enable the Agent Platform API (`aiplatform.googleapis.com`) and
-  the Claude model in Model Garden, then grant the service account Agent Platform User
-  (`roles/aiplatform.user`) on the project. Claude Fable models also need the project to accept
-  Google's Advanced AI Safety Addendum in Model Garden, under which Google keeps prompts and
-  responses for up to 30 days to monitor abuse.
-- **Claude on Google Cloud managed by Anthropic:** enable the Claude API in the project and give
-  the service account access to the workspace.
-
-Where AWS or Google runs Claude, URL sources, file IDs, web search and web fetch are not
-available; send files inline. Google offers web search, but it sends queries outside Google's data
-residency commitments, so we don't use it. Bedrock also has no task budgets. Claude Platform on AWS and Claude on
-Google Cloud managed by Anthropic work like Anthropic's own API.
-
-## Choose and order credentials
-
-Each API key has an ordered credential list for each provider. An empty list turns the provider off
-for that key. The gateway uses the first credential in the list that can serve the deployment, with
-its own credential policy. [Routing settings](/docs/policies/routing) choose the deployment; the
-credential order chooses between credentials for it.
-
-For example, put a customer-encrypted Chutes credential before Stogas managed to use it whenever
-the request sends its key.
-
-When a call fails, a [fallback](/docs/policies/routing#retries-and-fallbacks) uses the deployment's
-next credential before the next deployment.
-
-Adding a credential to a key needs **Manage** on the key and **Use** on the credential. Reordering or
-removing needs only **Manage** on the key. If a key's policies and credentials grow too large,
-requests fail with `key_configuration_too_large`.
-
-## Credential access
-
-In an external organization, add a credential to a role in **Members → Roles**. **Use** lets members
-assign the credential to keys they manage. The
-[permission reference](/docs/members#permission-reference) lists all permissions. Creating
-credentials needs organization-wide **BYOK → Manage all**.
-
-Removing someone's **Use** stops new assignments; existing assignments keep working. Disable the
-credential to stop all of them. Credential access does not give access to API keys, and credentials
-are not in folders.
+- Adding a credential to a key needs **Manage** on the key and **Use** on the credential. Reordering
+  or removing needs only **Manage** on the key.
+- Removing a member's **Use** stops new assignments, and existing assignments keep working. Disable
+  the credential to stop them all.
+- If a key's policies and credentials grow too large, requests fail with
+  `key_configuration_too_large`.
 
 ## Rotate or revoke a credential
 
-- **Replace a stored secret:** open the credential, choose **Edit** and enter the new secret. We
-  check it. The ID, assignments and history stay the same.
-- **Rotate a customer-encrypted credential:** encrypt the new secret locally and replace the saved
-  JSON. The ID and assignments stay the same.
-- **Disable a credential:** new requests that would use it are rejected.
-- **Delete a credential:** it leaves every key that uses it, and each key keeps its other credentials
-  in order. Requests through a key left with no credential for that provider fail with
-  `byok_required`. Request history keeps the old ID.
+- A replaced secret keeps the credential's ID, assignments and history.
+- A disabled credential rejects new requests. Requests that already started finish.
+- A deleted credential leaves every key, and each key keeps its other credentials in order.
+  Requests through a key left with no credential for that provider fail with `byok_required`.
 
 For routine rotation, keep the old secret valid until running requests finish. To revoke a key
-urgently, disable the credential, then revoke the key with the provider. Disabling does not cancel
-requests that already started.
+urgently, disable the credential, then revoke the key with the provider.
 
 ## Security
 
-- We encrypt stored secrets before we save them. The dashboard and API show only the name,
-  status and a short preview, never the secret or ciphertext.
-- For customer-encrypted credentials, we store ciphertext and a public key identifier. Your
-  key travels with each request to the gateway and is never written to databases or analytics.
+- We encrypt stored secrets before we save them. The dashboard and API never show a secret or its
+  ciphertext again.
 - The confidential gateway decrypts a secret only for requests from keys that the credential is
-  assigned to. Our control service also decrypts stored secrets to run the
-  [checks](#wait-for-the-check). Only the gateway can decrypt customer-encrypted secrets.
+  assigned to. Our control service also decrypts stored secrets to run the [checks](#checks).
+- Only the gateway can decrypt customer-encrypted secrets. Your key travels with each request and
+  is never written to databases or analytics.
 - Request records keep the credential ID, never the secret.
+- No request field or header takes a provider secret.
 
 ## Billing
 
-BYOK requests cost 2% of the usage at catalog rates, charged to your balance. Spending limits
-count the full usage at catalog rates, not only the fee. The provider bills you separately, and
-your negotiated provider prices do not change the fee. [Analytics](/docs/analytics) shows the
-provider cost and our charge separately. See [Billing](/docs/billing) for funding fees.
+BYOK requests cost 2% of the usage at catalog rates, charged to your balance. Spending limits count
+the full usage at catalog rates, not only the fee. Your provider bills you separately, and
+negotiated provider prices do not change the fee. See [Billing](/docs/billing) for funding fees.
 
-## Troubleshooting
-
-| Problem                                     | Check                                                                                                                   |
-| ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `byok_required`                             | The key has no usable credential for this provider. Assign one, and send its key if it is customer encrypted.           |
-| Customer-encrypted credential not used      | The request must send the registered key, and the credential must be assigned to the API key.                           |
-| Provider authentication or permission error | Check the credential, provider permissions, quota and model access with the provider.                                   |
-| Azure permission error                      | Check the [Azure roles](/docs/providers/azure#grant-roles), then open **Azure targets** and select **Refresh targets**. |
-| AWS access denied for Claude Fable 5.1      | Set the account's data retention mode to `aws_review`, and check the [Bedrock permissions](#aws-and-google-cloud).      |
-| Google Cloud permission error               | Enable the model in Model Garden and grant `roles/aiplatform.user`, or check the workspace access.                      |
+[^azure-secret]: Except [Azure](/docs/providers/azure#connect-your-account).

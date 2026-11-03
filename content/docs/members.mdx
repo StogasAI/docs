@@ -4,64 +4,31 @@ description: Invite members, assign roles and control who can use each key, gran
 icon: Users
 ---
 
-**Members** in an external organization manages its members, roles and invitations. Roles give
-organization-wide permissions, and View, Use, Manage or Admin on selected folders, grants, service
-keys and provider credentials. A [grant](/docs/grants) controls which member keys a person can
-create. Personal organizations have no members, roles or grants; see
-[organization types](/docs/quickstart#create-an-api-key).
+A personal organization is for your own work and has no members, roles or grants. An external
+organization has members, and roles give them organization-wide permissions, and **View**, **Use**,
+**Manage** or **Admin** on selected folders, grants, service keys and provider credentials. A
+[grant](/docs/grants) controls which member keys a person can create.
 
 ## Give a teammate API access
 
-<Steps>
-<Step>
-
-### Choose a grant
-
-Select the external organization. Reuse a grant with suitable limits, or create one in **Grants**.
-
-</Step>
-<Step>
-
-### Choose a role
-
-Reuse a role, or create one in **Members → Roles** with **Use** on that grant or its folder. It
-needs no organization-wide API key permissions.
-
-</Step>
-<Step>
-
-### Invite the teammate
-
-Invite them from **Invites**, then assign the role from **Members**. Check the default role they get
-when they join, and their other roles: broader access from another role still applies.
-
-</Step>
-<Step>
-
-### Create a member key
-
-The teammate opens **API keys** and creates their own key under the grant.
-
-</Step>
-</Steps>
+1. Choose or create a [grant](/docs/grants) with suitable limits.
+2. Choose or create a role with **Use** on that grant or its folder. It needs no organization-wide
+   API key permissions.
+3. Invite the teammate and assign the role. Their default role and any other roles also apply.
+4. The teammate creates their own key under the grant.
 
 Inviting and assigning roles needs **Members → Manage**. Assigning a role that gives grant access
 also needs **Admin** on that grant, its folder or the organization. Creating or editing a role needs
 **Roles → Manage**.
 
-## Invite a member
+## Invitations
 
-Create an invitation on **Invites**, choose when it expires and how many people can use it, and
-share the link. Joining assigns the organization's current default role, so creating an invitation
-also needs the permissions to assign that role. Deleting an invitation stops further joins; members
-who already joined stay. A [single sign-on](/docs/single-sign-on) invite has no link. People at
-your verified domains join through it when they sign in through your identity provider.
+Joining assigns the organization's current default role, so creating an invitation also needs the
+permissions to assign that role. Deleting an invitation stops further joins, and members who
+already joined stay. A [single sign-on](/docs/single-sign-on) invite has no link: people at your
+verified domains join through it when they sign in through your identity provider.
 
-## Assign roles
-
-Create a role on **Roles**. Choose organization-wide permissions, then add folders, grants, service
-keys or provider credentials with the permissions for each. Assign roles from the member list, to
-one member or to a selection. Give administrative permissions only to people who need them.
+## Roles
 
 - A member gets the combined access of all their roles.
 - A role with no organization-wide permissions can still give access to the resources it lists.
@@ -135,5 +102,5 @@ access to someone else.
 
 The editor adds the read permissions that a management permission needs. Permissions decide what a
 member can do; [policies](/docs/policies/scopes) on their roles can still narrow their requests.
-[Who can edit each policy](/docs/policies/editing#open-the-editor) also depends on the parent
+[Who can edit each policy](/docs/policies/editing#who-can-edit) also depends on the parent
 policy's delegation settings.

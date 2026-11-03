@@ -90,25 +90,13 @@ const transport = await StogasTransport.create({
 });
 ```
 
-| Option           | Effect                                                                                                         |
-| ---------------- | -------------------------------------------------------------------------------------------------------------- |
-| `maxConnections` | The most sessions to open, as needed. Default `4`.                                                             |
-| `fetch`          | The `fetch` function to send requests with. See [Connect through Tor](/docs/sdk-overview#connect-through-tor). |
-| `onMetadata`     | Receives the `stogas` object of a [receipt](/docs/receipts) after the receipt is checked.                      |
-| `baseURL`        | Another HTTPS address ending in `/v1`. The trusted evidence does not change.                                   |
-
-See [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every
-SDK.
-
-The transport loads evidence when it starts, and once more if a session needs newer evidence. It
-does not poll.
+`StogasTransport.create` takes `baseURL`, `maxConnections`, `fetch` and `onMetadata`, as
+[Options](/docs/sdk-overview#options) describes.
 
 - `await transport.refreshEvidence()` loads new evidence now.
 - `transport.evidenceSnapshot` shows the verified evidence, evidence URL, fetch time, verification
   time and status.
 - `transport.subscribe(listener)` reports changes and returns an unsubscribe function.
-
-The evidence lists approved releases and hardware, not live gateways.
 
 ## Receipts
 

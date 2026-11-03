@@ -37,8 +37,7 @@ Email ana.silva+orders@contoso.com about EMP-123456 and project aurora.
 Email <EMAIL_ADDRESS> about <CUSTOM_PII> and <CUSTOM_PII>.
 ```
 
-Open the request in **Analytics** to see how many values were replaced. Every setting is optional.
-An empty `redaction` object adds no rules and replaces
+Every setting is optional. An empty `redaction` object adds no rules and replaces
 [default plugin settings](/docs/policies/rules#defaults).
 
 ## Presets
@@ -58,8 +57,7 @@ Each preset turns on a group of detectors:
 | `health_identifiers`     | Health insurance and provider IDs from 4 countries                | One for each type, such as `<US_NPI>`                                                   |
 
 Detectors check the format, checksum and nearby labels, so ordinary numbers do not match. Some
-values match only with a label nearby, such as `ITIN`, `NHS` or `routing number`. A match does not
-mean that the value was issued or is in use. Known sample values, such as the card number
+values match only with a label nearby, such as `ITIN`, `NHS` or `routing number`. Known sample values, such as the card number
 `4242 4242 4242 4242` and the SSN `123-45-6789`, never match. Numbers written with other digits,
 such as full-width or Arabic-Indic digits, also match.
 
@@ -238,7 +236,7 @@ calls the provider.
 | Structured output schemas                  | Images, audio and files                          |
 | Stop sequences                             | Signed or encrypted reasoning from earlier turns |
 
-To scan text files too, turn on [text extraction](/docs/input-files#turn-text-files-into-prompt-text).
+To scan text files too, turn on [text extraction](/docs/text-extraction).
 
 - Replacement cannot be undone. The gateway keeps no record of the original values, and does not
   put them back into the response.
@@ -301,16 +299,14 @@ The [request record](/docs/request-records) shows what redaction did:
 }
 ```
 
-The record has no original values, positions or counts for each preset. In **Analytics**, open a
-request to see the same values under **Redaction**, or filter requests:
+The record has no original values, positions or counts for each preset. To find requests in
+[Analytics](/docs/analytics#filters), filter on `redaction:`:
 
 | Filter                   | Requests                                                        |
 | ------------------------ | --------------------------------------------------------------- |
 | `redaction:redacted`     | One or more values were replaced                                |
 | `redaction:no_matches`   | Redaction ran and replaced nothing                              |
 | `redaction:not_recorded` | The record has no redaction data. Redaction may still have run. |
-
-Filters combine, for example `redaction:redacted AND provider:openai`.
 
 ## What redaction does not detect
 

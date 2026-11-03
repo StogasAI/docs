@@ -110,16 +110,8 @@ still be billed. See [Streaming](/docs/streaming).
 transport, err := stogas.NewTransport(stogas.TransportOptions{Security: "e2ee", MaxConnections: 4})
 ```
 
-| Option           | Effect                                                                                                  |
-| ---------------- | ------------------------------------------------------------------------------------------------------- |
-| `Security`       | `"tls"` (default) or `"e2ee"`. See [Connection modes](/docs/connection-modes).                          |
-| `MaxConnections` | The most connections to open, as needed. Default `4`.                                                   |
-| `BaseURL`        | Another HTTPS origin, with no path. The trusted evidence does not change.                               |
-| `Proxy`          | A SOCKS5 proxy for every connection. See [Connect through Tor](/docs/sdk-overview#connect-through-tor). |
-| `Onion`          | `true` to reach Stogas at its onion address through `Proxy`.                                            |
-
-`transport.RefreshEvidence()` loads new evidence now. See
-[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+`TransportOptions` takes every [option](/docs/sdk-overview#options).
+`transport.RefreshEvidence()` loads new evidence now.
 
 ## Receipts
 

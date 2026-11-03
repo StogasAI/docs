@@ -4,79 +4,30 @@ description: Chat with models in the dashboard, and ask the assistant about the 
 icon: Sparkles
 ---
 
-Open **Playground** in your organization to chat with a model through one of your API keys. Its
-requests are requests of that key, so the key's policy and limits apply to them.
+The Playground sends requests through one of your API keys, so the key's policy, limits and
+credentials apply, and each request costs what an API request costs. Choose a model to let routing
+pick a deployment, or a deployment to send every request there.
 
-## Model
-
-Choose the model beside **Send**. Under the model you chose, the list shows where it runs, one row
-for each deployment: choose one to send every request there, or choose the model to let routing
-choose. **Any model** sends no model, for keys whose policies pick one. The reasoning levels beside
-the model are the same for every model, except those that the model does not take. Where a
-deployment runs a level at another level, the list names that level.
-
-## Files
-
-Add images and documents with **+**, or drop or paste them into the message box. The Playground
-offers the file types that the model you chose takes: images where it reads images, and the
-document types that its provider takes, such as PDF. Each later message in the conversation sends
-the files again, so they count toward the input of every request.
-
-## Details
-
-Under each answer are its time, its generated tokens and its cost. **Details** shows the request as
-**Analytics** shows it, with what only your browser has: the request and response hashes that it
-checked in the response's receipt, and the exact request and response. The request's log reaches
-Analytics within a minute or two. Until then, **Details** shows what the gateway signed in the
-response: the request ID, the gateway node, the deployment, the catalog version, and the usage and
-cost.
+- Each message sends the conversation's files again, so they count toward the input of every
+  request.
+- A request reaches [Analytics](/docs/analytics) within a minute or two. Until then, **Details**
+  shows what the gateway signed in the response's [receipt](/docs/receipts), and it also checks the
+  receipt's request and response hashes against what your browser sent and received.
 
 ## Assistant
 
-The assistant answers questions about Stogas and your organization from the documentation and the
-[dashboard API](/docs/reference/dashboard), and makes changes when you allow them. Turn it on in the
-**+** menu beside the message box. A chip beside the message shows that it is on, and its **×**
-turns it off.
+The assistant answers questions about Stogas and your organization from these docs and the
+[dashboard API](/docs/reference/dashboard), and makes changes when you allow them.
 
-Each answer is one or more requests to the model you chose, with your reasoning, output limit and
-system prompt, through the API key you chose. The model must accept function tools on Chat
-Completions. Some models refuse them, or accept them only with reasoning **Off**; then the answer
-shows the provider's error. The key's policy must allow the model, and the requests cost what other
-requests to it cost. An answer makes at most 12 requests, and stops if it has no answer by then.
+- It runs on the model, key, reasoning, output limit and system prompt that you chose. The model
+  must accept function tools on Chat Completions. An answer makes at most 12 requests.
+- It acts as you, so it can read and change only what your roles allow. What it reads goes to the
+  model in its next request.
+- It reads at once, and every change waits for you to allow it. **Stop** ends the answer, and a
+  waiting change does not run.
+- It never sees the secret of a new key or the code of an invitation. It cannot reveal a key's
+  secret, add or change a [BYOK](/docs/byok) credential, or leave the organization.
 
-The assistant acts as you, so it can read and change only what your roles allow. What it reads, such
-as a key's policy or the organization's members, goes to the model in its next request.
-
-### Changes wait for you
-
-The assistant reads documentation pages and dashboard data at once. A change waits for you: the
-Playground shows what the assistant says it does, a link to the resource, the request, and what
-changes. A policy shows against the policy now, other fields show their current and new values, and
-a list of resources links each one. Choose **Allow** or **Deny**. A denied change does not run, and
-the assistant reads that you denied it. **Stop** ends the answer, and a change that waits does not
-run.
-
-When a change is done, the Playground links the resource it changed, and the other dashboard pages
-show the change without a reload.
-
-### Questions
-
-When your request leaves a choice open, such as which key a limit applies to, the assistant asks
-before it acts. Pick an option, or answer in your own words.
-
-The assistant never reads the secret of a new key or the code of an invitation: the Playground
-removes them from responses first. It never reveals a key's secret, adds or changes a
-[BYOK](/docs/byok) credential, or leaves the organization, because it does not call those
-operations.
-
-### Ask about a key or grant
-
-**Ask the assistant** on the page of an API key or grant opens the Playground with the assistant on
-and that key or grant beside the message box, so "this key" or "this grant" means it. Remove it to
-ask about something else.
-
-### Allow the assistant
-
-The assistant is off in an organization until a member who can manage it turns on **Allow the
-assistant** in **Settings**. [Activity](/docs/activity) records the change. Personal organizations
-always allow it.
+An external organization allows the assistant once a member who can manage the organization turns
+on **Allow the assistant** in **Settings**. [Activity](/docs/activity) records the change. Personal
+organizations always allow it.

@@ -80,9 +80,8 @@ const stream = await client.chat.completions.create(
 );
 ```
 
-After `acknowledged`, show that the model is working until the first output arrives. Show success
-only when the stream ends without an error. Keep one status per request, so that concurrent
-requests do not overwrite each other. Other languages have no progress callback.
+After `acknowledged`, show that the model is working until the first output arrives. Other
+languages have no progress callback.
 
 ## Keepalives
 
@@ -100,8 +99,7 @@ you forward a stream to another client, pass keepalives on or send your own whil
 available. Buffered requests over HTTPS or attested TLS get no keepalives.
 
 A keepalive shows that the gateway is working on the request. It does not mean that the provider
-accepted the request or that the request will succeed, and it is not a reason to retry. Keepalives
-are not progress events.
+accepted the request or that the request will succeed.
 
 With [E2EE](/docs/connection-modes#e2ee-over-https), keepalives are encrypted records outside the
 response body, for streaming and buffered requests. They do not fix the HTTP status, so a provider

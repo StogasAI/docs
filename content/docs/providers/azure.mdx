@@ -1,136 +1,65 @@
 ---
 title: Azure
-description: Connect your Azure account, choose deployments, and use GPT, Claude and open models on Microsoft Foundry.
+description: Use GPT, Claude and open models from your own Microsoft Foundry deployments.
 icon: logo:azure
 ---
 
-Azure deployments run GPT, Claude and open models in your own Azure account through Microsoft
-Foundry. The gateway calls your Foundry deployments with a Microsoft Entra application that you
-create. Azure bills you for inference, and we charge the [BYOK fee](/docs/byok#billing).
+Azure deployments run GPT, Claude and open models in your Azure account through Microsoft Foundry.
+The gateway calls your Foundry deployments with a Microsoft Entra application that you create.
+Azure bills you for inference, and we charge the [BYOK fee](/docs/byok#billing).
 
 ## Connect your account
 
-<Steps>
-<Step>
-
-### Create an application with the Foundry User role
-
-Create one Microsoft Entra application with a client secret, and give it the **Foundry User** role
-on your model accounts, or on a resource group or subscription that contains them. One application
-can serve all of your accounts. With the Azure CLI:
+Create an Entra application with a client secret, and give it the **Foundry User** role on your
+model accounts, or on a resource group or subscription that holds them:
 
 ```bash
 az ad sp create-for-rbac --name stogas-gateway \
   --role 53ca6127-db72-4b80-b1b0-d745d6d5456d \
-  --scopes /subscriptions/<subscription-id>/resourceGroups/<group>/providers/Microsoft.CognitiveServices/accounts/<account>
+  --scopes /subscriptions/<subscription-id>/resourceGroups/<group>
 ```
 
 The output shows the tenant ID as `tenant`, the client ID as `appId` and the client secret as
-`password`. Azure shows the secret only once.
+`password`. Enter them in [BYOK](/docs/byok) with the subscriptions to search. Each account that
+you connect becomes its own credential.
 
-In the Azure portal, register the application under **Microsoft Entra ID → App registrations** and
-add a client secret under **Certificates & secrets**. Then open each account's **Access control
-(IAM)** and add a **Foundry User** role assignment for the application.
-
-- Foundry User lets us read the account and its deployments, and lets the gateway run model
-  requests. **Owner**, **Contributor** and **Reader** do not allow model requests.
-- `53ca6127-db72-4b80-b1b0-d745d6d5456d` is the ID of Foundry User, which Azure used to call Azure
-  AI User. The ID stays the same under both names.
-- A new role can take several minutes to apply.
-
-</Step>
-<Step>
-
-### Connect accounts
-
-Open **BYOK → Add → Azure**, enter the tenant ID, client ID, client secret and the IDs of the
-subscriptions that hold your accounts, and select **Find accounts**. Choose the accounts and select
-**Connect**. Each account becomes its own credential, named after the account.
-
-The list marks an account that needs a change before you can connect it. For **Needs a custom
-subdomain**, select **Generate Custom Domain Name** on the account's **Overview** page, because only
-an endpoint on a subdomain accepts Entra sign-in. Apps that use the regional endpoint keep working,
-but you cannot change the subdomain later.
-
-Accounts created in the Azure portal, Cloud Shell or Azure CLI already have a subdomain, and an
-Azure OpenAI account without one has its own `openai.azure.com` endpoint. A Foundry account created
-from a template can lack one. To add it with the Azure CLI:
-
-```bash
-az cognitiveservices account update --name <account> --resource-group <group> \
-  --custom-domain <subdomain>
-```
-
-</Step>
-<Step>
-
-### Assign it to a key
-
-Open an API key and select the credential under **Credentials**.
-
-</Step>
-</Steps>
-
-## Credential checks
-
-We read your deployments and projects through Azure Resource Manager. These reads are free, so they
-cannot prove quota; Azure checks quota when a request runs.
-
-- We check each credential once a day. After a failed check we check again an hour later, and the
-  wait doubles while the checks keep failing, until we check once a day.
-- Gateways also read your deployments when they use the credential. When the last read is more
-  than 30 minutes old, a request waits up to 5 seconds for a new one; after 10 minutes, a gateway
-  reads them again in the background. If Azure does not answer, requests use the targets for up
-  to 2 hours after the last read.
-- After you add, remove or change deployments or projects, select **Check credential** in the BYOK
-  list, or **Refresh targets** in **Azure targets**, to update the targets at once.
-- If the application has no role that allows model requests, the check fails but the credential
-  keeps its targets, because a new role can take several minutes to show.
-- To change the application or its secret, edit the credential. It keeps its account.
+- Foundry User, which Azure used to call Azure AI User, lets us read your deployments and lets the
+  gateway run model requests. **Owner**, **Contributor** and **Reader** do not allow model
+  requests.
+- A new role can take several minutes to apply. Until it does, checks fail, and the credential
+  keeps its targets.
+- Customer encryption is not available, because we read your deployments with the secret.
 
 ## Choose Azure targets
 
 Each catalog deployment matches an exact model, version, hosting and deployment type in your
-account. Open **Azure targets** on the credential to choose which of your Azure deployments serves
-each match.
+account, and you choose which of your Azure deployments serves each match. A single match is
+selected for you. New matches stay unselected.
 
-- A single match is selected for you. When there are several, you choose.
-- Refreshing keeps your choices. New matches stay unselected.
-- If a check fails, requests use the targets from the last successful check, and the BYOK list
-  shows the failure.
-- If a selected target [stops serving](#when-a-deployment-changes) or its model retires, the
-  gateway refuses this credential for it and tries the next candidate that your
+- We read your deployments through Azure Resource Manager once a day, and a gateway reads them when
+  it uses the credential. A request waits up to 5 seconds for a read older than 30 minutes, and a
+  read older than 10 minutes repeats in the background. If Azure does not answer, requests use the
+  last targets for up to 2 hours.
+- If a selected target [stops serving](#when-a-deployment-changes) or its model retires, the gateway
+  refuses this credential for it and tries the next candidate that your
   [routing](/docs/policies/routing#retries-and-fallbacks) allows. It never sends the request to
   another deployment in your account.
-- The BYOK list flags a credential that has no selected target or has selected targets that are
-  unavailable. It also counts models that have targets but none selected, such as new deployments
-  that a check found.
 
 ## When a deployment changes
 
 Azure can [upgrade a deployment](https://learn.microsoft.com/azure/ai-foundry/openai/how-to/working-with-models)
 to a new model version on its own. A target is one exact model, version and SKU, so a request never
-reaches another version under the target's name. When a check finds that a target's deployment no
-longer serves it, the target stops serving, and **Azure targets** shows why and since when:
+reaches another version under the target's name. The target stops serving, and requests to it fail
+with `byok_target_changed`.
 
-| Status      | Meaning                                                                                                       |
-| ----------- | ------------------------------------------------------------------------------------------------------------- |
-| Changed     | The deployment serves another model, version or SKU. Requests fail with `byok_target_changed`.                |
-| Not serving | Azure reports the deployment in a state other than Succeeded, such as Creating or Failed.                     |
-| Not found   | Azure no longer lists the deployment. For an Instant target, Azure no longer offers the model to the project. |
-| Name taken  | A named deployment has an Instant target's name, so Azure sends its requests there.                           |
-
-- A stopped target serves again once a check finds its deployment serving it again. We check within
-  five minutes, then after 10 minutes, and the wait doubles while the target stays stopped, up to a
-  day. Select **Refresh targets** to check at once.
+- A stopped target serves again once a check finds its deployment serving it. We check within five
+  minutes, then after 10 minutes, and the wait doubles up to a day.
 - To keep a version, set the deployment's `versionUpgradeOption` to `NoAutoUpgrade`. The deployment
   then stops at the version's retirement date, as its target does.
-- A check offers an upgraded deployment's new version as another target. Select it in
-  **Azure targets** to use it once the catalog lists that version.
+- A check offers an upgraded deployment's new version as another target, which you can choose once
+  the catalog lists that version.
 
 ## Deployment types
-
-The deployment ID shows the Azure deployment type:
 
 | Deployment ID suffix | Azure deployment type           | Where inference runs                   |
 | -------------------- | ------------------------------- | -------------------------------------- |
@@ -140,20 +69,12 @@ The deployment ID shows the Azure deployment type:
 | `-apac`              | Asia Pacific Data Zone Standard | Asia Pacific                           |
 | `-instant`           | Instant access                  | A Foundry project in West US 3         |
 
-For example, `azure-gpt-5.5-2026-04-23-us` runs GPT-5.5 only in the United States. To keep every
-request of a key in the United States, on any provider, add this
-[routing filter](/docs/policies/routing):
-
-```json title="Policy"
-{
-	"routing": { "filter": "deployment.dataHandling.processingLocation == 'US'" }
-}
-```
+For example, `azure-gpt-5.5-2026-04-23-us` runs GPT-5.5 only in the United States.
 
 Instant access uses models that Microsoft runs for a Foundry project, without a deployment of your
 own. The gateway finds them through a West US 3 project that the credential can reach. If one of
-your deployments uses the same model name, the gateway skips the Instant target, because Azure would
-send the request to your deployment instead.
+your deployments has the same name, the gateway skips the Instant target, because Azure would send
+the request to your deployment instead.
 
 `deployment.upstream.hosting` shows who runs the model. Claude runs on Azure, or on Anthropic for
 IDs that end in `-anthropic-hosted`. Partners host some open models for Azure, and their processing
@@ -168,12 +89,10 @@ location is unknown.
 | Fast | Claude Opus 5.5 | A separate model, `claude-opus-5-5-fast`, that you deploy                    |
 | Pro  | Some GPT models | A request mode of your GPT deployment, on Responses only, at no extra charge |
 
-Select Flex or Fast with `service_tier` or a `-flex` or `-fast` deployment ID, and Pro with
-[`reasoning.mode`](/docs/reasoning#select-pro-mode) or a `-pro` deployment ID. A GPT deployment serves all of its request modes, so it needs no other target. For
-Claude Opus 5.5 Fast, deploy `claude-opus-5-5-fast` in your account and choose it in **Azure
-targets**. Azure runs every request to that deployment at Fast, and it does not share prompt caches
-with standard Claude Opus 5.5. The catalog lists the tiers that each model has. See
-[Service tiers](/docs/service-tiers).
+A GPT deployment serves all of its request modes, so it needs no other target. For Claude Opus 5.5
+Fast, deploy `claude-opus-5-5-fast` and choose it as the target. Azure runs every request to that
+deployment at Fast, and it does not share prompt caches with standard Claude Opus 5.5. See
+[Service tiers](/docs/service-tiers) and [Pro mode](/docs/reasoning#select-pro-mode).
 
 ## Endpoints
 
@@ -192,10 +111,8 @@ with standard Claude Opus 5.5. The catalog lists the tiers that each model has. 
 
 ## Prompt caching
 
-GPT deployments use the same cache controls as [OpenAI](/docs/providers/openai#prompt-caching).
-Azure reports cache reads and writes, and they are billed at the catalog rates.
-
-Claude deployments use `cache_control`, as on [Anthropic](/docs/providers/anthropic#prompt-caching).
+GPT deployments use the same cache controls as [OpenAI](/docs/providers/openai#prompt-caching),
+and Claude deployments use `cache_control`, as on [Anthropic](/docs/providers/anthropic#prompt-caching).
 
 ## Claude on Azure
 
@@ -214,11 +131,9 @@ Claude on Azure works as on [Anthropic](/docs/providers/anthropic), with these d
 
 - GPT models accept `function` tools, and `custom` tools on Responses. They have no hosted tools.
 - GPT models read PDFs on Responses. Chat Completions accepts no documents.
-- DeepSeek models can return several tool calls in one turn, even when
-  `parallel_tool_calls` is `false`.
+- DeepSeek models can return several tool calls in one turn, even when `parallel_tool_calls` is
+  `false`.
 - Claude reads PDFs and plain text, as on [Anthropic](/docs/providers/anthropic#files).
-
-See [Images and files](/docs/input-files).
 
 ## Data handling
 
@@ -232,10 +147,8 @@ with Microsoft governs your account.
 | Claude hosted on Azure                  | Prompts and responses stay in Azure. Anthropic receives only usage data and content that its safety systems flag.                                       |
 | Claude hosted by Anthropic              | IDs end in `-anthropic-hosted`. [Anthropic's data handling](/docs/providers/anthropic#data-handling) applies.                                           |
 
-A filter such as `deployment.dataHandling.retentionDays == 0` skips previews.
-
-Customer encryption is not available for Azure credentials. Your deployment names, resource IDs,
-endpoints and locations never appear in the public catalog.
+A filter such as `deployment.dataHandling.retentionDays == 0` skips previews. Your deployment
+names, resource IDs, endpoints and locations never appear in the public catalog.
 
 ## References
 

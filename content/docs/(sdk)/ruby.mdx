@@ -82,7 +82,4 @@ if you prefer running the [verifier CLI](/docs/cli) separately.
 Stogas::Transport.new(security: 'e2ee', max_connections: 4)
 ```
 
-The constructor also accepts `base_url:`, and `proxy:` and `onion:` as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Set `max_retries:` and `timeout:` on `OpenAI::Client`. Close the stream when cancelling.
-
-Native attested TLS is the default; this example selects E2EE. See
-[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+The constructor takes every [option](/docs/sdk-overview#options) as a keyword. Set `max_retries:` and `timeout:` on `OpenAI::Client`, and close the stream to cancel it.

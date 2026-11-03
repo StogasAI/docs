@@ -4,13 +4,10 @@ description: Review changes to your organization, access settings, and policies.
 icon: RotateCcwClock
 ---
 
-Open **Activity** in your organization to see who changed its settings and when. Changes made
-through the dashboard and API appear in the same history. A change made with an
-[access token](/docs/reference/dashboard#access-tokens) shows the token's name under its owner.
-Names are saved with each event, so renaming or deleting a resource does not erase its context.
-
-Open an event to see each changed field with its values before and after, and the IDs of the
-member, access token and resources involved.
+Activity records who changed your organization's settings and when, with each changed field's
+values before and after. Changes through the dashboard and the API appear in the same history, and
+a change made with an [access token](/docs/reference/dashboard#access-tokens) names the token.
+Each event keeps the names it had, so renaming or deleting a resource does not erase its context.
 
 ## Refused attempts
 
@@ -53,11 +50,10 @@ should see those settings, even after they change.
 ## Recorded changes
 
 Activity covers organization and member names, membership, invitations, roles, folders, grants,
-API keys, credentials, single sign-on, billing details, and saved policies. A policy edit shows the changed fields
-and their before-and-after values and policy version. Literal dictionaries and custom redaction
-expressions are excluded: their entries show rule counts and whether the rules changed.
-An inherited change is recorded at the scope where it
-was made; it does not create an event for every affected key.
+API keys, credentials, single sign-on, billing details, and saved policies. A policy edit shows the
+changed fields, their values before and after, and the policy version. Literal dictionaries and
+custom redaction expressions show only rule counts and whether the rules changed. An inherited
+change is recorded once, at the scope where it was made, not for every affected key.
 
 Credential tokens, API-key secrets, invitation codes, and inference content are excluded.
 A secret rotation records the action without the secret. Export events record that an
@@ -68,7 +64,7 @@ export was requested, not whether the file was saved.
 Events are kept for one year. **Export** counts the events that match your filters, then
 downloads them as CSV or NDJSON with every change. CSV keeps lists, names and changes as JSON text,
 and puts an apostrophe before text that a spreadsheet would run as a formula, such as `=SUM(A1)`.
-An export holds at most 50,000 events and 64 MiB; narrow the filters if it is larger.
+An export holds at most 50,000 events and 64 MiB. Narrow the filters if it is larger.
 For a change that happened, `refusal` is `null`, or empty in CSV. For a refused attempt it is
 `permission`, `policy` or `read_only_token`.
 

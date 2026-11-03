@@ -4,140 +4,43 @@ description: Open the policy editor, check a draft, and save it.
 icon: FilePenLine
 ---
 
-## Open the editor
+## Who can edit
 
-| Scope          | Where to edit                                                               | Who can edit                                                                                     |
-| -------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Organization   | **API Keys**, then **Organization policy**                                  | Members who manage all API keys                                                                  |
-| Folder         | **Manage folders**, then the folder's **Policy**                            | The folder's managers, and members who manage all API keys                                       |
-| Grant          | **Grants**, then the grant's **Settings**                                   | The grant's managers, its folder's managers, and members who manage all API keys                 |
-| Member or role | **Members**, then the **Members** or **Roles** tab and the row's **Policy** | Members who manage all API keys                                                                  |
-| Credential     | **BYOK**, then the credential's **Policy**                                  | Members who manage credentials                                                                   |
-| API key        | The key's **Settings**                                                      | The key's owner and managers, its folder and grant managers, and members who manage all API keys |
+| Scope          | Who can edit                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| Organization   | Members who manage all API keys                                                                  |
+| Folder         | The folder's managers, and members who manage all API keys                                       |
+| Grant          | The grant's managers, its folder's managers, and members who manage all API keys                 |
+| Member or role | Members who manage all API keys                                                                  |
+| Credential     | Members who manage credentials                                                                   |
+| API key        | The key's owner and managers, its folder and grant managers, and members who manage all API keys |
 
-A parent policy can [limit which sections](/docs/policies/delegation)
-anyone can save. See the [permission reference](/docs/members#permission-reference).
-
-## Edit the policy
-
-The editor shows the policy as JSON, with suggestions as you type. See [Editor keys](#editor-keys).
-
-- Away from the line that you edit, each section, routing setting, limit and redaction preset
-  shows its icon, and each catalog ID shows its provider's logo. Names show without quotes. The
-  text that you copy and save stays JSON.
-- On a key's page, each limit of the key's policy shows its usage. A limit whose measure changes,
-  or that starts or stops repeating, shows **Usage starts from zero when you save**. A renamed limit
-  is a new limit. A new limit, and a limit in any other policy, shows when it next resets, if it
-  resets.
-- The line under the pointer or the cursor shows a plus button, which adds to the object or list
-  that ends on that line, and a minus button, which removes the setting or item that starts on it.
-  The plus button lists what fits there. Nothing changes until you choose an item.
-- Removing the last setting of a section also removes the section. A list stays when you remove
-  its last item, because an empty list has its own meaning: `"providers": []` allows no provider.
-  A list that needs an item, such as `order`, goes with its last item.
-- The line that you edit shows its text exactly, and so does a draft that is not valid JSON. The
-  editor names the line and column of the first error.
-- A combined draft after [someone else's save](#save-a-policy) highlights your changes.
+A parent policy can [limit which sections](/docs/policies/delegation) anyone can save. In the
+editor, `Ctrl` + `Space` shows suggestions, and `Esc` then `Tab` leaves the editor.
 
 ## Save a policy
 
-<Steps>
-<Step>
-
-### Edit the draft
-
-The editor opens the saved policy. A save replaces the whole policy at that scope. Use
-[the document fields](/docs/policies#document-fields) to find a setting.
-
-</Step>
-<Step>
-
-### Save
-
-The gateway checks the policy together with the other policies that apply at this scope. It checks
-[encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) only when a request
-or a [policy check](#check-a-policy-before-saving) sends their key.
-
-</Step>
-<Step>
-
-### Check the result
-
-On a key, open **Combined policy** to see the result of every policy that applies, and **Overview**
-to see each limit and its usage.
-
-</Step>
-</Steps>
-
-- If someone else saved the policy while you edited it, saving applies your changes to their
-  version. If you both changed the same setting, or the result is not a valid policy, nothing is
-  saved. The editor then shows the combined draft with your changes highlighted, and names the
-  settings that you both changed. Check it and save again, or select **Use saved policy** to
-  discard your draft.
-- Notes above the editor name the parent that no longer lets this policy change some of its
-  sections, and the policy whose order applies instead of this one's. On an organization, folder
-  or grant, they count the policies below that keep sections it does not let them set.
+- A save replaces the whole policy at that scope. The gateway checks it together with the other
+  policies that apply there, and checks
+  [encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) only when a
+  request or a [policy check](#check-a-policy-before-saving) sends their key.
+- If someone else saved the policy while you edited it, your changes apply to their version. If you
+  both changed the same setting, or the result is not a valid policy, nothing is saved.
 - A parent save can make a policy below it invalid. That policy stays readable so that its manager
   can fix it.
 - Enabled state and expiration are settings of the resource, not of its policy.
 - See [When changes take effect](/docs/policies/scopes#when-changes-take-effect).
 
-### Editor keys
-
-Suggestions show fields, preset names, allowed values, time zones and catalog IDs as you type.
-Inside routing expressions, they also show request facts, operators and catalog values.
-
-| Key                    | Action                         |
-| ---------------------- | ------------------------------ |
-| `Ctrl` + `Space`       | Show suggestions               |
-| `Enter`                | Insert the selected suggestion |
-| `Esc`                  | Close suggestions              |
-| `Tab`, `Shift` + `Tab` | Indent, outdent                |
-| `Esc`, then `Tab`      | Leave the editor               |
-
-**Format JSON** changes only whitespace. Encrypted sections show their key name and size: choose
-**Show encrypted blob** to expand one. **Copy JSON** copies the whole saved policy, including
-ciphertext.
-
 ## Simulate routing
 
-**Routing simulation**, below the policy editor, shows where requests would go with your draft. It
-calls no model and costs nothing.
-
-<Steps>
-<Step>
-
-### Choose a request
-
-On a key's own policy, the simulation uses that key. Elsewhere it starts with the most recently
-used key that the policy applies to, and you can choose another. Then choose the interface and
-write the request body as a client would send it, or paste one from your code. Suggestions offer
-the fields that routing reads and their catalog values.
+The routing simulation below the editor shows where a request would go with your draft. It calls no
+model and costs nothing. Routing reads only these request fields:
 
 | Field            | Value                                                                                                                                                         |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `model`          | Any [`model` value](/docs/models#choose-a-model). Without it, the request sends no model, which needs an `order`, a `sort` or a filter that leaves one model. |
 | `service_tier`   | Any [`service_tier` value](/docs/service-tiers). Without it, the request uses the tier of the named model.                                                    |
 | `reasoning.mode` | On Responses, the [`reasoning.mode`](/docs/reasoning#select-pro-mode) to send                                                                                 |
-
-Other fields show faded and do not change the result.
-
-</Step>
-<Step>
-
-### Read the result
-
-The section header names the providers that the request tries, in order.
-
-| Part                | Shows                                                                                                                                                     |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Routing settings    | The model when one matches, the order and the number of fallbacks, with the policy that sets each or **Default**                                          |
-| Tries in this order | Each deployment and credential that the request tries, then how many more are eligible past the [fallbacks](/docs/policies/routing#retries-and-fallbacks) |
-| Left out            | Why routing left out each candidate, grouped by the request and catalog, policies and credentials, with the policy and expression                         |
-| Error               | The error that the request gets, such as `model_unavailable` or `schedule_denied`                                                                         |
-
-</Step>
-</Steps>
 
 - The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
   key uses that credential. Enabled state, expiration and other changes apply after you save.
@@ -183,8 +86,8 @@ saved version of its scope:
 | `400` with `invalid_policy`          | A policy is invalid. The message does not say which one, to keep encrypted content private. |
 | `400` with `encryption_key_required` | A key is wrong, or does not match a registered identifier.                                  |
 
-The editor checks spending and rate limits, editing permissions and conflicts with other edits
-when you save. Validation counts redaction limits as if every conditional rule applied at once.
+Saving also checks spending and rate limits, editing permissions and conflicts with other edits.
+Validation counts redaction limits as if every conditional rule applied at once.
 
 ## Read inherited policies
 

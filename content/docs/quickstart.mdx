@@ -12,16 +12,9 @@ base URL and API key.
 
 ### Create an API key
 
-Open the [dashboard](https://app.stogas.ai) and select the organization that will own the
-key. Your **personal organization** is for your own work. An **external organization** is a shared
-workspace with members and roles; create one from the organization menu.
-
-If the organization is inactive, add at least $1 in credit under **Balance** to activate it. See
-[Billing](/docs/billing) for payment methods and fees.
-
-Create an API key. New keys can use Stogas-managed Chutes models immediately. OpenAI, Anthropic
-and Azure models need [your own provider key](/docs/byok), assigned under the key's **Credentials**
-tab. Copy the key and export it:
+Create an API key in the [dashboard](https://app.stogas.ai). A new organization becomes active
+with its first $1 of [credit](/docs/billing). New keys can use Stogas-managed Chutes models at
+once, and other providers need [your own credential](/docs/byok).
 
 ```console
 export STOGAS_API_KEY="your-key"
@@ -32,8 +25,9 @@ export STOGAS_API_KEY="your-key"
 
 ### Send a request
 
-This request uses the Chutes deployment `chutes-gemma-4-31b-turbo`. The 64-token output
-limit keeps the cost hold small; without it, the gateway holds funds for the deployment's maximum output.
+This request uses the Chutes deployment `chutes-gemma-4-31b-turbo`. The 64-token output limit
+keeps the [hold](/docs/usage#how-a-request-is-charged) small. Without it, the gateway holds funds
+for the deployment's maximum output.
 
 ```console tab="cURL" tab-group="client"
 curl https://api.stogas.ai/v1/chat/completions \
@@ -82,9 +76,8 @@ const response = await client.chat.completions.create({
 console.log(response.choices[0].message.content);
 ```
 
-The examples turn off automatic retries: if a connection drops, the model may already have run,
-and a retry runs and bills it again. If your dashboard shows a different API base URL, use that
-URL and a key from the same environment. Each request is billed.
+The examples turn off automatic retries, because a retry after a dropped connection can run and
+bill the model again. If your dashboard shows another API base URL, use that URL.
 
 </Step>
 <Step>

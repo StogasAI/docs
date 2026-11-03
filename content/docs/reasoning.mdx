@@ -27,14 +27,15 @@ selected deployment:
 }
 ```
 
-If you omit the effort, the gateway sends no reasoning control and the provider uses its default. This
-is different from `none`, which turns optional reasoning off.
+If you omit the effort, the provider uses its default. `none` turns optional reasoning off.
+
+Chat Completions also accepts `"reasoning": { "enabled": true }`, which selects the level nearest
+to `medium`. `false` means `none`, and a value that conflicts with the effort is rejected.
 
 ## Select Pro mode
 
-Some GPT models on [OpenAI](/docs/providers/openai#tiers-and-pro) and
-[Azure](/docs/providers/azure#tiers-and-pro) also run in Pro mode, which does more model work per
-request and uses more tokens. On Responses, set `reasoning.mode`:
+Some models also have a Pro deployment[^pro], which does more work per request at its own price. On
+Responses, set `reasoning.mode`:
 
 ```json
 {
@@ -44,20 +45,13 @@ request and uses more tokens. On Responses, set `reasoning.mode`:
 }
 ```
 
-- `pro` selects the model's Pro deployment, which has its own catalog entry and price. `standard`
-  selects the standard deployment.
+- `pro` selects the model's Pro deployment, and `standard` its standard deployment.
 - Without `reasoning.mode`, a model ID selects standard mode, and a deployment ID such as
   `openai-gpt-5.6-sol-pro` keeps its own mode.
-- If your key can use the model only in the other mode, the request returns
-  `reasoning_mode_unavailable`, also when you name a deployment in the other mode. Other values
-  return `unsupported_reasoning_mode`.
+- A mode that your key cannot use returns `reasoning_mode_unavailable`, also when you name a
+  deployment in that mode. Other values return `unsupported_reasoning_mode`.
 - Chat Completions rejects `reasoning.mode`.
-
-Mode and effort are independent. The mode combines with a [service tier](/docs/service-tiers), such
-as Pro at Flex.
-
-Chat Completions also accepts `"reasoning": { "enabled": true }`. `true` selects the level nearest
-to `medium`, and `false` means `none`. An `enabled` value that conflicts with the effort is rejected.
+- Pro combines with a [service tier](/docs/service-tiers), such as Pro at Flex.
 
 ## How the gateway converts an effort
 
@@ -98,8 +92,8 @@ Some deployments accept a maximum number of reasoning tokens:
 }
 ```
 
-The budget must be within the deployment's `reasoningMaxTokens` and below the request's output
-limit. The model can use fewer tokens. Send a budget or an effort, not both.
+The budget must be within the deployment's `reasoningMaxTokens`. Send a budget or an effort, not
+both.
 
 When a deployment accepts only a budget, the gateway converts the effort to a position between the
 deployment's `minimum` and the output limit:
@@ -118,16 +112,20 @@ provider requires the budget to be below the output limit, `max` uses one token 
 
 ## Show or hide the reasoning summary
 
-Some models can return a summary of their reasoning:
-
-- On Responses, set `reasoning.summary`. Anthropic models accept `auto` or `none`; OpenAI models
-  accept OpenAI's values.
-- On Chat Completions, Anthropic models accept `reasoning_display: "summarized"` or `"omitted"`.
-
-Omit the field to keep the provider's default. The summary changes what you see, not what you pay.
+Some models can return a summary of their reasoning. On Responses, set `reasoning.summary`[^summary].
+Omit it to keep the provider's default. The summary changes what you see, not what you pay.
 
 ## Billing
 
 Reasoning tokens are a separate [usage meter](/docs/usage), billed at the deployment's output rate
 unless the catalog lists a reasoning rate. The hold before the request covers the full output limit,
 including reasoning.
+
+[^pro]:
+    GPT models on [OpenAI](/docs/providers/openai#tiers-and-pro) and
+    [Azure](/docs/providers/azure#tiers-and-pro).
+
+[^summary]:
+    Anthropic models accept `auto` or `none`, and on Chat Completions also
+    `reasoning_display: "summarized"` or `"omitted"`. OpenAI models accept
+    [OpenAI's values](https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries).

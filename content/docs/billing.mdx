@@ -1,194 +1,83 @@
 ---
 title: Billing
-description: Add credit, pay invoices, save billing details, and download receipts.
+description: Fees, payment methods, invoices, receipts and billing emails.
 icon: Wallet
 ---
 
 Usage is prepaid unless your organization has an [invoiced billing](#invoiced-billing) agreement.
-Requests spend your organization's credit at the [catalog](https://stogas.ai/catalog) rates.
+Requests spend your organization's credit at the [catalog](https://stogas.ai/catalog) rates, and
+each request [holds](/docs/usage#how-a-request-is-charged) its largest possible cost until it
+settles.
 
-A new organization becomes active with its first $1 of confirmed credit, after fees, or with an
-invoiced billing agreement, and it stays active. Until then, you can only add credit, manage its
-billing and leave it. API keys, members, settings, single sign-on, Analytics, Activity and the
-Playground are available once it is active.
-
-## Add credit
-
-<Steps>
-<Step>
-
-### Save billing details
-
-Select the organization that receives the credit and save its [billing details](#billing-details).
-
-</Step>
-<Step>
-
-### Choose a payment method
-
-On **Balance**, choose [Bitcoin or Monero](#pay-with-bitcoin-or-monero), or **Choose currency**
-for [CCPayment](#pay-through-ccpayment). Select the coin and network, then check the estimated
-fees and USD credit.
-
-</Step>
-<Step>
-
-### Send the payment
-
-Select **Deposit address** and send from your wallet.
-
-</Step>
-<Step>
-
-### Check the credit
-
-**Recent payments** shows when the credit is confirmed.
-
-</Step>
-</Steps>
+A new organization becomes active with its first $1 of credit after fees, or with an invoiced
+billing agreement, and stays active. Until then, you can only add credit, manage billing and leave
+it.
 
 ## Fees
 
-| Charge                           | Fee                                                                                      |
-| -------------------------------- | ---------------------------------------------------------------------------------------- |
-| Adding credit                    | 2%, plus the payment processor, network and conversion costs. Each is listed separately. |
-| Requests with managed providers  | The catalog rates. No other fee.                                                         |
-| Requests with [BYOK](/docs/byok) | 2% of the usage at catalog rates. Your provider bills you for the usage.                 |
+| Charge                           | Fee                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| Adding credit                    | 2%, plus the payment processor, network and conversion costs             |
+| Requests with managed providers  | The catalog rates                                                        |
+| Requests with [BYOK](/docs/byok) | 2% of the usage at catalog rates. Your provider bills you for the usage. |
 
-Your wallet's sending fee is separate. The BYOK fee uses catalog rates even if you pay your
-provider a negotiated rate.
+## Payment methods
 
-Each request [holds](/docs/usage#how-a-request-is-charged) its largest possible cost, then charges
-its actual usage. If a request's final record cannot be recovered, contact
-[billing@stogas.ai](mailto:billing@stogas.ai).
+We receive Bitcoin and Monero directly. Other coins and networks go through
+[CCPayment](https://ccpayment.com). A payment is credited at its price when we receive it, less
+these costs and then the 2% fee.
+
+| Method    | Credited after                    | Costs                                 | Smallest payment                          |
+| --------- | --------------------------------- | ------------------------------------- | ----------------------------------------- |
+| Bitcoin   | 2 confirmations, about 20 minutes | Network cost                          | More than the network cost                |
+| Monero    | 30 confirmations, about an hour   | Network cost, then 0.4% conversion    | 0.0001 XMR and more than the network cost |
+| CCPayment | CCPayment confirms it             | Processor fee, network and conversion | The processor's minimum                   |
+
+- Each member gets their own Bitcoin and Monero deposit addresses, which they can reuse.
+- If our price sources disagree by more than 3% on a payment's price, we check that price before
+  we credit it.
+- CCPayment has no payment deadline, and credits a late payment or a different amount. A payment
+  on the wrong network or without its memo may be lost.
 
 ## Billing details
 
-Each organization has its own billing details. Save them before you pay: each payment keeps the
-details saved when we received it, and later changes do not change earlier payments or
-receipts.
+Save your organization's billing details before you pay. Each receipt keeps the details saved when
+we received its payment. We sell only in the 50 U.S. states and the District of Columbia, as
+[Availability](/docs/availability) explains.
 
-- Choose **Individual** or **Business**, and add your country, state and ZIP code. We sell only
-  in the 50 U.S. states and the District of Columbia; see [Availability](/docs/availability).
-- You can add a name and street address. A business can also add a billing email and a purchase
-  order reference, which appear on its receipts and invoices. We send its invoices and receipts to
-  the billing email; see [Billing emails](#billing-emails).
-
-## Pay with Bitcoin or Monero
-
-We receive Bitcoin and Monero directly, without a payment processor. Each member of an
-organization gets their own deposit address for each coin. You can save it and reuse it for later
-payments.
-
-Scan the QR code, select **Open wallet**, or copy the address. Send only the selected coin, on its
-own blockchain, and check the address and amount in your wallet.
-
-- Any amount is credited at the price and network cost when we receive it, after the 2% fee and,
-  for Monero, a 0.4% conversion fee. A payment smaller than the network cost, or a Monero payment
-  below 0.0001 XMR, adds no credit.
-- Credit is added after 2 Bitcoin confirmations, about 20 minutes, or 30 Monero confirmations,
-  about an hour. If our price sources disagree by more than 3% on a payment's price, we check that
-  price before crediting it.
-- If a payment is missing, contact [billing@stogas.ai](mailto:billing@stogas.ai) with its coin and
-  transaction ID.
-
-## Pay through CCPayment
-
-Choose a coin and network, then enter the USD credit that you want. The calculator estimates the
-coin amount and each fee. There is no payment deadline.
-
-- Copy the amount separately, because the QR code contains only the address.
-- Include the memo or tag when one is shown, and send at least the processor's minimum. A wrong
-  network or a missing memo can make a payment impossible to recover.
-- Each payment is credited at its price when received, after the actual processor fee, the network
-  and conversion costs shown, and the 2% fee. A late payment or a different amount is still
-  credited.
-
-## Prepaid limits
-
-U.S. rules for prepaid balances limit how much credit a prepaid organization can take:
-
-- Its balance, plus what it spent in the last 24 hours, can't exceed $2,000.
-- Each member's payments can add up to $10,000 of credit in 24 hours, across all their
-  organizations. Each member gets their own crypto deposit address, and a payment counts toward
-  the member whose address it was sent to.
-
-Credit above a limit stays pending and is added as the limits allow: 24 hours after the
-organization spends, or as the member's earlier payments pass 24 hours. **Balance** shows the
-pending credit and when more is available, and the amount box tells you before you pay. Pending
-credit belongs to the organization, like its balance. For higher limits, contact
-[ops@stogas.ai](mailto:ops@stogas.ai). [Invoiced billing](#invoiced-billing) has no prepaid limits.
-
-## Payment status
-
-**Recent payments** on the **Balance** page lists each payment with its status. Select a status
-with an icon to see more.
-
-| Status              | Meaning                                                                                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Confirming**      | We see the payment and are waiting for network confirmations.                                                                                                |
-| **Crediting**       | The payment is confirmed, and we are adding the credit.                                                                                                      |
-| **Credited**        | The credit is on your balance.                                                                                                                               |
-| **Partly credited** | Part of the credit is on your balance, and the rest is pending under the [prepaid limits](#prepaid-limits).                                                  |
-| **Pending**         | The payment is confirmed, and its credit is pending under the [prepaid limits](#prepaid-limits).                                                             |
-| **Under review**    | We or CCPayment are checking the payment. If CCPayment holds it, contact [billing@stogas.ai](mailto:billing@stogas.ai); another payment does not release it. |
-| **Failed**          | The payment did not complete on the network, so we added no credit.                                                                                          |
-| **Too small**       | The payment was smaller than the fees to receive it, so we added no credit.                                                                                  |
-
-## Receipts
-
-Once a payment's credit, or its first part, is on your balance, select **Receipt** in its row.
-The PDF lists the AI credit, our fee, network costs and any conversion fee, with your billing
-details, the dates, the exchange rate and the transaction reference. It shows cents; an attached
-record keeps the exact amounts. The receipt number and details stay the same when you download it
-again.
+Receipt PDFs show cents and attach a JSON record with the exact amounts and exchange rates. A
+receipt keeps its number and details when you download it again.
 
 ## Invoiced billing
 
-An organization with a signed agreement can pay for its usage by invoice. To set one up, save the
-organization's [billing details](#billing-details) and contact
-[billing@stogas.ai](mailto:billing@stogas.ai).
+An organization with a signed agreement can pay for its usage by invoice, with no prepaid limits.
+To set one up, contact [billing@stogas.ai](mailto:billing@stogas.ai).
 
-- Requests can spend until the balance reaches minus the agreed credit limit. **Credit left** on
-  the **Balance** page shows how much more they can spend.
-- On the 1st of each month, we issue an invoice for the previous month's usage. Months follow UTC.
-  **Not yet invoiced** shows the usage that the next invoice will bill.
-- An invoice is due after the agreed payment terms, such as 30 days. **Add funds** starts at the
-  amount due, and you can pay it with any payment method. The usual [fees](#fees) for adding credit
-  apply, and payments apply to the oldest invoice first.
-- **Invoices** on the **Balance** page lists each invoice with its status and PDF. Members who can
-  view billing can download invoices; members who manage billing can pay them.
+- Requests can spend until the balance reaches minus the agreed credit limit.
+- On the 1st of each month, we invoice the previous month's usage. Months follow UTC.
+- An invoice is due after the agreed payment terms, such as 30 days. You can pay it with any
+  payment method, the usual [fees](#fees) apply, and payments go to the oldest invoice first.
 - If an invoice stays overdue, we can end the agreement. The organization then returns to prepaid
-  billing, new requests fail while its balance is below zero, and its invoices stay due. **Add
-  funds** then starts at everything the balance owes plus $10, so requests can run again.
+  billing, new requests fail while its balance is below zero, and its invoices stay due.
 - Until the organization pays what it owes and the agreement ends, you cannot delete it, and its
   last member cannot leave it or delete their account.
 
-| Status          | Meaning                                                     |
-| --------------- | ----------------------------------------------------------- |
-| **Open**        | The invoice is not paid and not yet due.                    |
-| **Partly paid** | Payments cover part of the invoice, and it is not yet due.  |
-| **Overdue**     | The due date has passed, and part of the invoice is unpaid. |
-| **Paid**        | Payments cover the whole invoice.                           |
-
 ## Billing emails
 
-If a business saves a billing email in its [billing details](#billing-details), we send it these
-emails from [billing@stogas.ai](mailto:billing@stogas.ai). Each one attaches the PDF, and we send
-each one once.
+If a business saves a billing email, we send it only these emails, each with its PDF, from
+[billing@stogas.ai](mailto:billing@stogas.ai):
 
-| Email                | When we send it                                                             | Attached    |
-| -------------------- | --------------------------------------------------------------------------- | ----------- |
-| **Invoice**          | We issue an invoice.                                                        | The invoice |
-| **Payment reminder** | 3 days before an unpaid invoice is due, on payment terms of 7 days or more. | The invoice |
-| **Overdue notice**   | An unpaid invoice becomes overdue.                                          | The invoice |
-| **Receipt**          | A payment's credit reaches your balance.                                    | The receipt |
+| Email                | When we send it                                                             |
+| -------------------- | --------------------------------------------------------------------------- |
+| **Invoice**          | We issue an invoice.                                                        |
+| **Payment reminder** | 3 days before an unpaid invoice is due, on payment terms of 7 days or more. |
+| **Overdue notice**   | An unpaid invoice becomes overdue.                                          |
+| **Receipt**          | A payment's credit reaches your balance.                                    |
 
-- If you pay an invoice before its reminder or notice goes out, we do not send it.
-- We send nothing else to this address. The **Balance** page keeps every invoice and receipt.
-- To stop these emails, remove the billing email. To reach us, reply to any of them.
+Reply to any of them to reach us. To stop them, remove the billing email.
 
 ## Refunds
 
 You cannot withdraw prepaid credit. Refunds follow the [Terms of Service](https://stogas.ai/tos)
-and the law. Contact [billing@stogas.ai](mailto:billing@stogas.ai) about payment errors or refunds.
+and the law. Contact [billing@stogas.ai](mailto:billing@stogas.ai) about a refund or a missing
+payment, with its coin and transaction ID.

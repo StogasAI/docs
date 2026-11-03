@@ -123,21 +123,6 @@ for choice in response.choices {
 }
 ```
 
-## Transport options
-
-`TransportOptions::default()` selects native attested TLS in production, with up to four connections
-opened as needed. Use `SecurityMode::E2ee` for application encryption over ordinary HTTPS. The optional
-origin override cannot change the trusted signing keys or evidence endpoints.
-
-`refresh_evidence()` requests an explicit evidence refresh; there is no polling task. `start()` and
-`refresh_evidence()` fail with a `TransportError`, whose `code()` is the same stable code that every
-SDK reports. `close()` waits for bounded graceful cleanup. Dropping the transport signals cleanup
-without blocking.
-
-Send `Stogas-Metadata: v1` to request the final `stogas` metadata and automatic receipt verification.
-The [complete example](https://github.com/StogasAI/stogas/tree/main/examples/rust-openai) includes
-client integration tests.
-
 ## Options
 
 ```rust
@@ -148,7 +133,15 @@ stogas::TransportOptions {
 }
 ```
 
-`base_url` accepts an HTTPS origin. `proxy` and `onion` work as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Configure retry middleware and deadlines on the HTTP/OpenAI client. The example deliberately uses `ReqwestService` without retry middleware.
+`TransportOptions` takes every [option](/docs/sdk-overview#options). Configure retry middleware and
+deadlines on the HTTP or OpenAI client.
 
-Native attested TLS is the default; this example selects E2EE. See
-[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+- `refresh_evidence()` loads new evidence now.
+- `start()` and `refresh_evidence()` fail with a `TransportError`, whose `code()` is the stable code
+  that every SDK reports.
+- `close()` waits up to five seconds for active work. Dropping the transport starts the same cleanup
+  without waiting.
+
+Send `Stogas-Metadata: v1` to request the final `stogas` metadata and automatic receipt
+verification. The [complete example](https://github.com/StogasAI/stogas/tree/main/examples/rust-openai)
+includes client integration tests.

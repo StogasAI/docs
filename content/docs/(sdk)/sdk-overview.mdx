@@ -3,13 +3,13 @@ title: SDKs
 description: Verify the gateway and encrypt the connection, with the OpenAI client you already use.
 ---
 
-The SDK works with the OpenAI client you already use. Before it sends your API key or a
-prompt, it checks on your device that the gateway runs an approved release on confidential
-hardware. Then it opens a connection that ends inside that gateway. Your code keeps calling Chat
-Completions and Responses.
+The SDK works with the OpenAI client you already use. Before it sends your API key or a prompt, it
+checks on your device that the gateway runs an approved release on confidential hardware. Then it
+opens a connection that ends inside that gateway.
 
 Published packages trust production gateways only. Native packages need a 64-bit x86-64 or ARM64
-processor. To check a download, see [Verify an SDK download](/docs/reproducible-builds#verify-an-sdk-download).
+processor. To check a download, see
+[Verify an SDK download](/docs/reproducible-builds#verify-an-sdk-download).
 
 ## How the SDK connects
 
@@ -18,59 +18,70 @@ processor. To check a download, see [Verify an SDK download](/docs/reproducible-
 | Rust, Python, Go, C, Java, .NET, Ruby, Swift | Runs the Rust connection engine in your process, and gives your client a local URL protected by a random secret | Attested TLS, or E2EE on request |
 | JavaScript, browsers and Workers             | Gives your client a `fetch` function that runs the same engine as WebAssembly                                   | E2EE                             |
 
-Kotlin, Scala, Clojure and F# use the Java or .NET package. Other languages embed the C library, or
-run [`stogas serve`](/docs/cli) on the same machine. [Connection modes](/docs/connection-modes)
-compares attested TLS and E2EE, and [Gateway verification](/docs/verification) lists each check.
+Kotlin, Scala, Clojure and F# use the Java or .NET package. Other languages embed the C library,
+or run [`stogas serve`](/docs/cli#serve) beside the application.
+[Connection modes](/docs/connection-modes) compares attested TLS and E2EE.
 
-## Connection settings
+## Options
 
 Create one transport when your application starts, reuse it for every request, and close it at
 shutdown. In async native applications, start and close it away from the event loop or UI thread.
 
-| Setting                         | Native SDKs                                                             | JavaScript SDKs                                |
-| ------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
-| Protection                      | `tls` (default) or `e2ee`                                               | E2EE                                           |
-| Connection maximum              | `max_connections`, default `4`                                          | `maxConnections`, default `4`                  |
-| Origin                          | `base_url`: an HTTPS origin with no path                                | `baseURL`: an HTTPS address that ends in `/v1` |
-| Proxy                           | `proxy`: a SOCKS5 or HTTP proxy URL, such as `socks5h://127.0.0.1:9050` | The `fetch` function that you supply           |
-| Onion address                   | `onion`: `true` to reach Stogas at its onion address                    | Not available                                  |
-| Retries, timeouts, cancellation | Your OpenAI client                                                      | Your OpenAI client and `AbortSignal`           |
+| Option            | Default | Effect                                                                                                                                 |
+| ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `security`        | `tls`   | `tls` for [attested TLS](/docs/connection-modes#attested-tls), or `e2ee` for [E2EE over HTTPS](/docs/connection-modes#e2ee-over-https) |
+| `max_connections` | `4`     | The most connections or E2EE sessions. The transport opens one, and another only while requests wait.                                  |
+| `base_url`        |         | Another HTTPS origin, with no path. The trusted keys and evidence sources stay the same.                                               |
+| `proxy`           |         | A [proxy](#connect-through-a-proxy-or-tor) for every connection, as `socks5h://host:port` or `http://host:port`                        |
+| `onion`           | `false` | `true` reaches Stogas at its [onion address](#connect-through-a-proxy-or-tor) through `proxy`                                          |
 
-Each language page gives the exact names. The origin setting cannot change the trusted keys or the
-evidence sources.
+Each language spells the names its own way, such as `MaxConnections` in Go and .NET and
+`maxConnections` in Swift. [`stogas serve`](/docs/cli#serve) takes them as flags.
 
-- The transport opens one connection, and more only when requests wait, up to the maximum. A
-  higher maximum does not spread requests across gateways.
+JavaScript always uses E2EE. Its `baseURL` ends in `/v1`, and these options replace `proxy` and
+`onion`:
+
+| Option       | Effect                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------- |
+| `fetch`      | The `fetch` function that sends every request, evidence included                              |
+| `onMetadata` | Receives each response's `stogas` object after its [receipt](/docs/receipts) passes the check |
+
+The transport loads evidence when it starts, and again only when a session needs newer evidence.
+To load it now, call the transport's refresh method, such as `refresh_evidence()` in Python.
+
+### Limits
+
 - Connection setup, including the wait for a free connection, can take up to 15 seconds of your
-  request deadline.
+  request deadline, or 60 seconds through a proxy.
 - A request through a native SDK's local URL can run for up to one hour.
 - E2EE request bodies can be up to 128 MiB, and response bodies up to 64 MiB.
-- JavaScript SDKs keep each encrypted upload in memory until it is sent. Limit how many large
-  uploads run at once, especially in browsers.
+- JavaScript keeps each encrypted upload in memory until it is sent, so limit how many large uploads
+  run at once.
+- More connections do not spread requests across gateways.
 
-## Connect through Tor
+## Connect through a proxy or Tor
 
-Set `proxy` to the SOCKS port of Tor, usually `socks5h://127.0.0.1:9050`, or `9150` for Tor
-Browser. Every connection that the SDK opens then goes through Tor: evidence downloads, attested
-TLS and E2EE. Stogas sees a Tor address instead of yours, and the Tor relays see only encrypted
-traffic. With `socks5h`, Tor looks up the host names, so they do not go to your DNS server. To keep
-your application's connections on Tor circuits of their own, add any username and password, as
-`socks5h://myapp:secret@127.0.0.1:9050`: Tor builds separate circuits for each pair.
+Set `proxy` to Tor's SOCKS port, usually `socks5h://127.0.0.1:9050`, or `9150` for Tor Browser.
+Every connection that the SDK opens then goes through Tor: evidence downloads, attested TLS and
+E2EE. Stogas sees a Tor address instead of yours, and with `socks5h`, Tor resolves the host names
+instead of your DNS server. A username and password give your application Tor circuits of its own:
 
-`proxy` also takes an HTTP proxy, such as a company network's, as `http://host:port`, with an
-optional `username:password@`. The SDK asks it to connect to each host by name, so TLS still runs
-from your application to Stogas. The SDK ignores proxy environment variables; only this setting
-sends its traffic through a proxy. Your own HTTP client talks only to the local URL, so turn off
-proxies for it.
+```text
+socks5h://myapp:secret@127.0.0.1:9050
+```
+
+An HTTP proxy, such as a company network's, takes `http://host:port`. The SDK asks it to connect to
+each host by name, so TLS still runs from your application to Stogas.
 
 Set `onion` to `true` as well to reach Stogas at its onion address, so that your traffic does not
-leave Tor. TLS still names the usual Stogas host and checks the same certificate and attestation;
-the onion service only passes the encrypted connection on. Stogas has no production onion address
-yet; until an environment publishes one, `onion` connections leave Tor through an exit relay.
+leave Tor. TLS checks the same certificate and attestation. In an environment without an onion
+address, `onion` connections leave Tor through an exit relay.
 
-Through a proxy, each connection setup step may take four times as long, because every round trip
-crosses several relays. JavaScript SDKs send every request through the `fetch` function that you
-give them, so a `fetch` that uses your proxy sends them all through Tor.
+- The SDK ignores proxy environment variables. Your HTTP client talks only to the local URL, so
+  turn off proxies for it.
+- JavaScript sends every request through the `fetch` that you give it, so a `fetch` that uses your
+  proxy sends them all through Tor.
+- The [CLI](/docs/cli#connect-through-tor) finds Tor itself with `--tor`.
 
 ## Retries
 
@@ -78,29 +89,12 @@ The OpenAI client decides whether to retry. The SDK keeps the HTTP status, the b
 `Retry-After` and `X-Should-Retry` headers.
 
 If a connection drops after a request was sent, the model may already have run, and a retry runs it
-again. The examples set retries to zero for this reason. The SDK sends a request once more only
-when the gateway refused it before starting it, for example because the gateway closed an idle
-connection or began an update as the request arrived. Requests that are already
-running when a gateway begins an update finish. [Sessions](/docs/connection-modes#sessions)
-explains what happens to later requests.
+again. The examples set retries to zero for this reason. The SDK itself resends only requests that
+the gateway refused before starting them, as [Sessions](/docs/connection-modes#sessions) explains.
 
 ## Check evidence offline
 
-The Rust core, and its WebAssembly and C APIs, also verify caller-supplied evidence without network
-access, with the same checks as the transport. See [JavaScript](/docs/javascript#check-evidence-offline),
-[Python](/docs/python#check-evidence-offline) and the [CLI](/docs/cli).
-
-## Next steps
-
-<Cards>
-	<Card
-		title="Streaming"
-		description="Read output as it arrives, show progress, and cancel requests."
-		href="/docs/streaming"
-	/>
-	<Card
-		title="Receipts"
-		description="Get a signed record of a request, and check it later."
-		href="/docs/receipts"
-	/>
-</Cards>
+The Rust core, and its WebAssembly and C APIs, also verify evidence that you supply, without network
+access and with the same checks as the transport. See
+[JavaScript](/docs/javascript#check-evidence-offline), [Python](/docs/python#check-evidence-offline)
+and the [CLI](/docs/cli#check-evidence-and-receipts).

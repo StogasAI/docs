@@ -1,0 +1,128 @@
+---
+title: AWS
+description: Run Claude in your AWS account on Amazon Bedrock or Claude Platform on AWS.
+icon: logo:aws
+---
+
+AWS deployments run Claude in your AWS account. AWS bills you for inference, and we charge the
+[BYOK fee](/docs/byok#billing).
+
+| Deployment ID suffix | Offering                       | Who runs Claude, and where |
+| -------------------- | ------------------------------ | -------------------------- |
+| None                 | Amazon Bedrock, global profile | AWS, in any Region         |
+| `-us`                | Amazon Bedrock, US profile     | AWS, in US Regions         |
+| `-anthropic-hosted`  | Claude Platform on AWS         | Anthropic                  |
+
+For example, `aws-claude-fable-5-1-us` runs Claude Fable 5.1 on Bedrock only in US Regions.
+
+## Create a credential
+
+A credential is one JSON document with a commercial Region and a long-term key:
+
+```json tab="Access key"
+{
+	"schema": "stogas.aws-byok.v1",
+	"region": "us-east-1",
+	"accessKeyId": "AKIA...",
+	"secretAccessKey": "...",
+	"workspaceId": "wrkspc_..."
+}
+```
+
+```json tab="API key"
+{
+	"schema": "stogas.aws-byok.v1",
+	"region": "us-east-1",
+	"apiKey": "..."
+}
+```
+
+| Key                                                | Serves                                                 |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| IAM access key                                     | Bedrock, and Claude Platform on AWS with `workspaceId` |
+| Bedrock API key                                    | Bedrock                                                |
+| Claude Platform on AWS API key, with `workspaceId` | Claude Platform on AWS                                 |
+
+- Requests start in `region`. The `-us` deployments need `us-east-1`, `us-east-2`, `us-west-1` or
+  `us-west-2`, because the US profile also runs requests in Canada when they start there. A Claude
+  Platform workspace belongs to one Region, which must be this one.
+- Temporary access keys (`ASIA...`) and short-term API keys expire within 12 hours, so they are
+  refused.
+
+Save the document in [BYOK](/docs/byok), or [encrypt it](/docs/byok#customer-encryption) with
+`--purpose byok/aws`.
+
+## Grant access
+
+Attach this policy to the IAM user that owns the key:
+
+```json title="IAM policy"
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+			"Resource": [
+				"arn:aws:bedrock:*:*:inference-profile/*.anthropic.claude-*",
+				"arn:aws:bedrock:*::foundation-model/anthropic.claude-*"
+			]
+		},
+		{
+			"Effect": "Allow",
+			"Action": ["aws-external-anthropic:CreateInference", "aws-external-anthropic:ListModels"],
+			"Resource": "arn:aws:aws-external-anthropic:*:*:workspace/*"
+		}
+	]
+}
+```
+
+- If you narrow `Resource`, keep the model in every Region that a profile uses, and the model ARN
+  without a Region for the global profile.
+- We check a Bedrock API key with `bedrock:ListFoundationModels`, so allow it too. A Claude
+  Platform on AWS API key also needs `aws-external-anthropic:CallWithBearerToken`.
+
+Claude Fable models also need the data retention mode `aws_review` in the credential's Region:
+
+```bash
+curl -X PUT https://bedrock.us-east-1.amazonaws.com/data-retention \
+  -H "Authorization: Bearer $AWS_BEARER_TOKEN_BEDROCK" \
+  -H "Content-Type: application/json" \
+  -d '{"mode": "aws_review"}'
+```
+
+## Differences from Anthropic
+
+Claude Platform on AWS works as on [Anthropic](/docs/providers/anthropic). On Bedrock, the
+gateway rejects:
+
+- `file_url`, image URLs and `file_id`. Send files inline.
+- The `web_search` and `web_fetch` tools.
+- `task_budget`.
+
+## Data handling
+
+On Bedrock, AWS runs Claude and shares nothing with Anthropic. Under `aws_review`, AWS keeps the
+prompts and completions of Claude Fable models for up to 30 days in the Region that ran them, and
+people at AWS can review flagged ones. Model invocation logging, if you turn it on, also copies
+prompts to your S3 bucket or CloudWatch logs.
+
+On Claude Platform on AWS, Anthropic runs Claude, and
+[Anthropic's data handling](/docs/providers/anthropic#data-handling) applies.
+
+## Troubleshooting
+
+| Problem                                          | Fix                                                                              |
+| ------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Claude Fable is "not available for this account" | AWS turns on Claude Fable for accounts gradually. AWS Support can speed this up. |
+| Claude Fable returns a validation error          | Set the data retention mode to `aws_review` in the credential's Region.          |
+| Access denied                                    | Check the [IAM policy](#grant-access) for every Region that the profile uses.    |
+| The `-us` deployment never serves                | Use a credential in `us-east-1`, `us-east-2`, `us-west-1` or `us-west-2`.        |
+
+## References
+
+- [Claude in Amazon Bedrock](https://platform.claude.com/docs/en/build-with-claude/claude-in-amazon-bedrock)
+- [Claude Platform on AWS](https://platform.claude.com/docs/en/build-with-claude/claude-platform-on-aws)
+- [Claude Fable 5.1 on Bedrock](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-anthropic-claude-fable-5-1.html)
+- [Inference profile permissions](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html)
+- [Bedrock data retention](https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html)

@@ -75,13 +75,5 @@ can suspend or discard a worker at any time, so keep a transport only while the 
 
 ## Options
 
-`StogasTransport.create()` accepts:
-
-| Option           | Default | Use                                                   |
-| ---------------- | ------- | ----------------------------------------------------- |
-| `maxConnections` | `4`     | The most encrypted sessions that the transport opens. |
-| `baseURL`        |         | An HTTPS API address that ends in `/v1`.              |
-
-Set `maxRetries` and `timeout` on the OpenAI client, and cancel requests with an `AbortSignal`.
-Browsers keep each encrypted upload in memory until it is sent, so limit how many large uploads run
-at once. See [Connection settings](/docs/sdk-overview#connection-settings).
+`StogasTransport.create()` takes the [JavaScript options](/docs/sdk-overview#options). Set
+`maxRetries` and `timeout` on the OpenAI client, and cancel requests with an `AbortSignal`.

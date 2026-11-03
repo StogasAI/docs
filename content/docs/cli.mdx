@@ -6,12 +6,9 @@ icon: Terminal
 
 The `stogas` CLI runs a local endpoint that verifies the gateway and protects each request. Point
 any OpenAI-compatible client at it; only the base URL changes. Use it from languages without an
-[SDK](/docs/sdk-overview), or from tools you cannot change. It also creates and uses keys for
-[customer encryption](/docs/customer-encryption), and it can create an account, add credit and call
-the dashboard API.
-
-Only `signup`, `login`, `logout`, `topup` and `api` use your account. `serve` passes on the API key
-that your client sends, and the other commands need no key.
+[SDK](/docs/sdk-overview), or from tools you cannot change. It also checks evidence and receipts
+offline, encrypts secrets for [customer encryption](/docs/customer-encryption), and manages your
+account.
 
 ## Install
 
@@ -20,10 +17,10 @@ that your client sends, and the other commands need no key.
 
 ### Download the archive
 
-Each [release](https://github.com/StogasAI/stogas/releases) has an archive for each platform,
-named `stogas-v<version>-<platform>.tar.gz`, or `.zip` for Windows. The platforms are
-`linux-amd64`, `linux-arm64`, `darwin-amd64`, `darwin-arm64`, `windows-amd64` and `windows-arm64`.
-On Alpine and other musl systems, use `linux-musl-amd64` or `linux-musl-arm64`.
+Each [release](https://github.com/StogasAI/stogas/releases) has an archive for each platform:
+`linux-amd64`, `linux-arm64`, `linux-musl-amd64`, `linux-musl-arm64`, `darwin-amd64`,
+`darwin-arm64`, `windows-amd64` and `windows-arm64`. Use a `linux-musl` archive on Alpine and other
+musl systems.
 
 ```console
 gh release download v<version> --repo StogasAI/stogas --pattern 'stogas-v<version>-linux-amd64.tar.gz'
@@ -50,110 +47,55 @@ gh attestation verify stogas-v<version>-linux-amd64.tar.gz --repo StogasAI/stoga
 ```console
 tar -xzf stogas-v<version>-linux-amd64.tar.gz
 sudo install stogas-v<version>-linux-amd64/stogas /usr/local/bin/
-stogas --version
 ```
 
 </Step>
 </Steps>
 
-With a Rust toolchain, you can instead build it from source with
-`cargo install stogas-cli --locked`.
+With a Rust toolchain, you can instead run `cargo install stogas-cli --locked`.
 
-## Start
+## Serve
 
 ```console
 stogas serve
 ```
-
-The command prints a private URL such as:
 
 ```text
 OpenAI base URL: http://127.0.0.1:8787/<random-capability>/v1
 ```
 
 Use the complete URL as your client's base URL, and turn off the client's automatic retries. The
-endpoint accepts only local connections that include the random part of the URL. It installs no
-certificate authority. It accepts Chat Completions, Responses and the policy check endpoint; other
-routes fail.
+endpoint accepts only local connections that include the random part of the URL, and passes on the
+API key that your client sends. It serves Chat Completions, Responses and the policy check
+endpoint, and installs no certificate authority.
 
-## Options
+| Option                  | Default          | Effect                                                                           |
+| ----------------------- | ---------------- | -------------------------------------------------------------------------------- |
+| `--security`            | `tls`            | `tls` or `e2ee`. See [Connection modes](/docs/connection-modes).                 |
+| `--max-connections`     | `4`              | The most connections or E2EE sessions, opened as requests wait                   |
+| `--listen`              | `127.0.0.1:8787` | The loopback address and port                                                    |
+| `--upstream`            |                  | Another HTTPS origin, with no path. The trusted evidence stays the same.         |
+| `--browser-origin`      |                  | The only [web origin](#browser-applications) that may call the endpoint          |
+| `--exit-on-stdin-close` |                  | Stop when the parent process closes stdin, for a CLI that another program starts |
 
-```console
-stogas serve --security tls --max-connections 4
-stogas serve --security e2ee
-```
+The CLI loads evidence when a session starts, and again only when a session needs newer evidence.
+A `POST` to the separately printed refresh URL loads it now.
 
-| Option                  | Effect                                                                                        |
-| ----------------------- | --------------------------------------------------------------------------------------------- |
-| `--security`            | `tls` (default) or `e2ee`. See [connection modes](/docs/connection-modes).                    |
-| `--max-connections`     | The most connections to open, as needed. Default `4`.                                         |
-| `--browser-origin`      | Let only this [web origin](#browser-applications) call the endpoint.                          |
-| `--upstream`            | Another HTTPS origin, without a path, credentials or query. Trusted evidence does not change. |
-| `--exit-on-stdin-close` | Stop when the parent process closes stdin. Use it when another program starts the CLI.        |
+Ctrl+C or SIGTERM stops new work and allows active streams and sessions up to five seconds to
+close. A cancelled request may have run, so do not send it again automatically.
 
-The CLI loads evidence when a session starts, and once more if a session needs newer evidence. It
-does not poll. A local application can force a refresh with a `POST` to the separately printed
-refresh URL. Published packages trust production gateways only.
+### Browser applications
 
-## Connect through Tor
-
-```console
-stogas --tor serve
-```
-
-`--tor` sends every connection of any command through Tor: the dashboard, evidence, attested TLS
-and E2EE. The CLI finds Tor on your computer: the tor service on port 9050, or Tor Browser on
-port 9150 while it runs. If Tor listens elsewhere, give its port or address, as `--tor=9150` or
-`--tor=[::1]:9150`. Each run gets its own Tor circuits, so Tor does not mix its connections with
-those of your other programs. The CLI reaches Stogas at its onion address once Stogas publishes
-one, so that your traffic does not leave Tor. Stogas has no production onion address yet, so for
-now the traffic leaves Tor through an exit relay, still encrypted.
-
-`--proxy` sends every connection through another proxy instead: SOCKS5 as
-`socks5h://host:port`, or HTTP as `http://host:port`, either with an optional
-`username:password@`. `--onion` also reaches the onion address through that proxy. Without
-`--tor` or `--proxy`, the CLI uses the proxy that `HTTPS_PROXY` or `ALL_PROXY` names, as curl
-does, except for the hosts that `NO_PROXY` names. `STOGAS_TOR`, `STOGAS_PROXY` and `STOGAS_ONION`
-set the options for every command. The local endpoint itself takes connections from your machine
-only, so your client needs no proxy. See [Connect through Tor](/docs/sdk-overview#connect-through-tor).
-
-## Stop
-
-Press Ctrl+C or, on Unix, send SIGTERM. The CLI stops new work and allows up to five seconds for
-active streams and sessions to close. A request that was cancelled did not complete, but it may
-have run; do not send it again automatically.
-
-## Check gateway availability
-
-```console
-stogas probe --security tls
-stogas probe --security e2ee --timeout-ms 8000
-```
-
-Each call verifies current evidence and a fresh session, then sends a fixed invalid credential
-to the inference route. Success requires the expected authentication rejection after the gateway's
-readiness and memory admission checks. No API key or provider request is involved.
-
-The command prints a `stogas.probe.v1` JSON report with `security`, `ready`, the verified `node_id`
-when available, `http_status`, and a fixed `error_code`. It exits zero only when `ready` is true.
-The timeout covers evidence, connection setup and the response. It is 8 seconds by default, or 32
-seconds through a proxy. `--upstream` works as for `serve`.
-
-This checks connection and admission availability from the caller's location. It does not measure
-provider health, database-backed authorization, or the success rate of all customer requests.
-
-## Browser applications
-
-Give the web page the complete printed URL. Any page that has it can call the endpoint, and a page
-without it cannot read any response. The endpoint holds no API key, so the page sends its own. To
-let only your application's origin call it, start the CLI with that origin:
+Give the web page the complete printed URL. A page without it cannot read any response. The
+endpoint holds no API key, so the page sends the user's own. To let only your application call it:
 
 ```console
 stogas serve --browser-origin https://app.example.com
 ```
 
-The CLI answers CORS and local-network preflight requests itself and keeps its `--security` mode.
-The browser can ask the user for local-network permission.
+The CLI answers CORS and local-network preflight requests, and the browser can ask the user for
+local-network permission. Local applications can use an HTTP loopback origin; public origins need
+HTTPS.
 
 ```js
 import OpenAI from 'openai';
@@ -166,43 +108,104 @@ const client = new OpenAI({
 });
 ```
 
-Local applications can use an HTTP loopback origin; public origins need HTTPS. Never put a shared
-API key in browser code that you ship.
+## Global options
 
-## Verify an evidence file
+These options work with every command, and their environment variables set them for every run:
+
+| Option          | Environment variable | Effect                                                                                            |
+| --------------- | -------------------- | ------------------------------------------------------------------------------------------------- |
+| `--tor`         | `STOGAS_TOR`         | Connect through [Tor](#connect-through-tor), and reach Stogas at its onion address                |
+| `--proxy <url>` | `STOGAS_PROXY`       | A proxy for every connection: `socks5h://host:port` or `http://host:port`, with an optional login |
+| `--onion`       | `STOGAS_ONION`       | Reach Stogas at its onion address through the proxy                                               |
+
+Without `--tor` or `--proxy`, the CLI uses the proxy that `https_proxy`, `HTTPS_PROXY`, `all_proxy`
+or `ALL_PROXY` names, as curl does, except for the hosts that `no_proxy` or `NO_PROXY` names.
+
+### Connect through Tor
 
 ```console
-stogas verify evidence.json --json
+stogas --tor serve
 ```
 
-Use `-` for standard input. The command makes no network requests. It checks the root-signed key
-manifest, the signed evidence document with its release evidence, hardware policies and AMD
-collateral, and both Rekor proofs. It reports the approved software, not a list of live gateways;
-only a fresh session proves which gateway you reach. See [Gateway verification](/docs/verification).
+`--tor` sends every connection through Tor: the dashboard, evidence, attested TLS and E2EE. It
+finds the tor service on port 9050, or Tor Browser on port 9150. Give another port or address as
+`--tor=9150` or `--tor=[::1]:9150`. Each run gets its own Tor circuits.
 
-## Sign in
+Stogas has no production onion address yet, so traffic leaves Tor through an exit relay, still
+encrypted. The local endpoint takes connections from your machine only, so your client needs no
+proxy. The [SDKs](/docs/sdk-overview#connect-through-a-proxy-or-tor) take the same proxies.
+
+## Check gateway availability
+
+```console
+stogas probe --security e2ee
+```
+
+`probe` verifies current evidence and a fresh session, then sends a fixed invalid credential to the
+inference route. It succeeds when the gateway rejects the credential after its readiness and memory
+admission checks, so no API key or provider is involved. It does not measure provider health or
+the success rate of your requests.
+
+| Option         | Default                         | Effect                                            |
+| -------------- | ------------------------------- | ------------------------------------------------- |
+| `--security`   | `tls`                           | The connection mode to check                      |
+| `--timeout-ms` | `8000`, or `32000` with a proxy | The deadline for evidence, setup and the response |
+| `--upstream`   |                                 | As for `serve`                                    |
+
+It prints a `stogas.probe.v1` JSON report with `security`, `ready`, the verified `node_id` when
+available, `http_status` and a fixed `error_code`, and exits with status 0 only when `ready` is
+`true`.
+
+## Check evidence and receipts
+
+These commands make no network requests unless a description says so.
+
+| Command                                                     | Effect                                                                                                                                     |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `stogas verify <file> [--json]`                             | Checks saved evidence, or `-` for standard input. See [Gateway verification](/docs/verification).                                          |
+| `stogas proof --request <file> --response <file> [--json]`  | Checks a saved [receipt](/docs/receipts#check-a-receipt-later). Downloads the evidence it needs unless you pass `--boot` and `--evidence`. |
+| `stogas download-evidence --boot <sha256> [--output <dir>]` | Downloads the boot record and evidence that a receipt names                                                                                |
+| `stogas verify-release <dir> [--evidence <file>]`           | Checks a [downloaded SDK release](/docs/reproducible-builds#verify-an-sdk-download). Downloads current evidence without `--evidence`.      |
+
+`proof` also takes `--stream` for an SSE response, and `--proof <file>` for a `stogas` object saved
+on its own, with only the signed response bytes in `--response`.
+
+## Encrypt secrets
+
+```console
+stogas encryption-key --output org.key
+stogas encrypt --key-file org.key --organization <id> --purpose byok/openai \
+  --input secret.txt --output credential.json
+```
+
+`encryption-key` creates an organization key for [customer encryption](/docs/customer-encryption)
+and prints its public identifier. `encrypt` encrypts a file with it. `--purpose` is `plugins` for
+[plugin settings](/docs/customer-encryption#encrypt-plugin-settings), or `byok/openai`,
+`byok/anthropic`, `byok/chutes`, `byok/aws` or `byok/google-cloud` for a
+[provider credential](/docs/byok#customer-encryption).
+
+## Use your account
 
 ```console
 stogas signup
 stogas login
+stogas logout
 ```
 
-`signup` creates an account and prints its password once. Save the password; it cannot be
-recovered. `login` asks for the password and, when the account uses an authenticator app, a code.
-An account whose only second step is a passkey must create its token on the **Account** page.
+`signup` creates an account and prints its password once, which cannot be recovered. `login` asks
+for the password and, for an account with an authenticator app, a code. An account whose only
+second step is a passkey creates its token on the **Account** page.
 
-Each sign-in creates an access token named `Stogas CLI on <host>` that can read and change all of
-your organizations that allow access tokens, and does not expire. The CLI keeps it in the system keychain: Keychain on
-macOS, Credential Manager on Windows, or a Secret Service such as GNOME Keyring or KWallet on
-Linux. Without a keychain, as on most servers, the CLI prints the token instead. Signing in again
-deletes the token that the new one replaces, and `stogas logout` deletes the current one.
+Each sign-in creates an access token named `Stogas CLI on <host>`, which can read and change all of
+your organizations that allow access tokens, and does not expire. The CLI keeps it in the system
+keychain, or prints it where there is none, as on most servers. Signing in again deletes the token
+that the new one replaces, and `logout` deletes the current one.
 
-For servers and CI, create a token on the **Account** page with only the access and organizations
-that the job needs, and set it as `STOGAS_TOKEN`. The CLI then uses it instead of the keychain, and
-`signup`, `login` and `logout` refuse to run. See [Access tokens](/docs/reference/dashboard#access-tokens)
-for what each token can do and when it stops working.
+For servers and CI, create a token on the **Account** page with only the access that the job needs,
+and set it as `STOGAS_TOKEN`. The CLI then uses it, and `signup`, `login` and `logout` refuse to
+run. See [Access tokens](/docs/reference/dashboard#access-tokens).
 
-## Add credit
+### Add credit
 
 ```console
 stogas topup 25 BTC
@@ -210,39 +213,21 @@ stogas topup 25 USDT --network TRX
 stogas topup 25 XMR --organization <organization-id>
 ```
 
-The amount is the USD credit you want; the CLI prints the coin amount to send and the estimated
-fees, which are added on top. Bitcoin and Monero go to the organization's
-[deposit address](/docs/billing#pay-with-bitcoin-or-monero), and other coins through
-[CCPayment](/docs/billing#pay-through-ccpayment). Use `--network` when a coin is available on
-several networks; the error lists them. Without `--organization`, the credit goes to your personal
-organization.
+The amount is the USD credit that you want. The CLI prints the coin amount, the fees on top, and
+the address with any memo and a QR code, then waits until the payment is credited. Bitcoin and
+Monero go to a [deposit address](/docs/billing#payment-methods), and other coins through CCPayment.
+`--network` picks a network for a coin that has several. Without `--organization`, the credit goes
+to your personal organization. If the organization has no billing country, state and ZIP code yet,
+the CLI asks for them.
 
-When the organization's billing details have no country, state and ZIP code yet, the CLI asks
-for them.
-The CLI then prints the address, any memo, and a QR code on a terminal, and waits until the
-payment is credited. Press Ctrl+C to
-stop waiting; the payment is still credited, and **Balance** shows it.
-
-## Call the dashboard API
+### Call the dashboard API
 
 ```console
 stogas api GET /api/account
 stogas api POST /api/<organization-id>/keys --input key.json
 ```
 
-The CLI sends the request with your token and prints the response. On a terminal it formats JSON;
-otherwise it writes the exact response, ready for `jq` or a file. `--input` reads a JSON body from
-a file, or from standard input with `-`. A refused request prints the error, and the command exits
-with status 1. The [Dashboard API](/docs/reference/dashboard) reference lists every operation.
-
-## Other commands
-
-| Command                    | Use                                                                              |
-| -------------------------- | -------------------------------------------------------------------------------- |
-| `stogas encryption-key`    | Create an organization key for [customer encryption](/docs/customer-encryption). |
-| `stogas encrypt`           | Encrypt plugin settings or a provider credential with that key.                  |
-| `stogas proof`             | Check a saved [receipt](/docs/receipts#check-a-receipt-later).                   |
-| `stogas download-evidence` | Save the evidence that a receipt names, to check it without network access.      |
-| `stogas verify-release`    | Check a [downloaded release](/docs/reproducible-builds#verify-an-sdk-download).  |
-
-Run `stogas <command> --help` for every option.
+The CLI sends the request with your token and prints the response: formatted JSON on a terminal,
+and the exact bytes otherwise, ready for `jq` or a file. `--input` reads the JSON body from a file,
+or from standard input with `-`. A refused request prints the error and exits with status 1. The
+[Dashboard API](/docs/reference/dashboard) lists every operation.

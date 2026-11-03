@@ -236,7 +236,4 @@ transport instead of loading the native library.
 StogasNative.Transport(library; configuration=Dict("security" => "e2ee", "max_connections" => 4))
 ```
 
-The dictionary also accepts `base_url`, and `proxy` and `onion` as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Configure `retry`, `readtimeout` and cancellation in the HTTP client; the example also enforces an overall stream deadline.
-
-Native attested TLS is the default; this example selects E2EE. See
-[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+The dictionary takes every [option](/docs/sdk-overview#options). Configure `retry`, `readtimeout` and cancellation in the HTTP client.

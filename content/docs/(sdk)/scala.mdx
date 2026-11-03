@@ -102,7 +102,4 @@ to its complete printed URL.
 new Transport(java.util.Map.of("security", "e2ee", "max_connections", Integer.valueOf(4)))
 ```
 
-The map also accepts `base_url`, and `proxy` and `onion` as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Configure `maxRetries` and `timeout` on the OpenAI builder. The example separately prevents transparent HTTP-stack replay.
-
-Native attested TLS is the default; this example selects E2EE. See
-[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+The map takes every [option](/docs/sdk-overview#options). Configure `maxRetries` and `timeout` on the OpenAI builder.

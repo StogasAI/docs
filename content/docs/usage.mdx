@@ -70,22 +70,22 @@ charge:
 }
 ```
 
-| Meter                                                                 | Counts                                                                                                 |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `input_tokens`                                                        | Input tokens, without cache reads and writes                                                           |
-| `cached_input_tokens`                                                 | Input tokens read from the provider cache                                                              |
-| `cache_write_5m_input_tokens`, `cache_write_1h_input_tokens`          | Input tokens written to a five-minute or one-hour cache                                                |
-| `cache_write_input_tokens`                                            | Cache writes with no reported duration                                                                 |
-| `output_tokens`                                                       | Output tokens, without reasoning                                                                       |
-| `reasoning_tokens`                                                    | Reasoning tokens that the provider reports. Otherwise absent, and `output_tokens` includes them        |
-| `total_input_tokens`, `total_output_tokens`, `total_tokens`           | Totals, with each token counted once. [Token limits](/docs/policies/limits#tokens) use `total_tokens`. |
-| `total_cache_write_tokens`                                            | All cache writes                                                                                       |
-| `estimated_input_tokens`                                              | The gateway's [input estimate](#input-estimates) for the hold                                          |
-| `hosted_tool_calls`, `client_tool_calls`                              | Hosted tool calls, and calls returned to your application                                              |
-| `checked_client_tool_calls`, `invalid_client_tool_calls`              | Returned calls [checked](/docs/analytics#metrics-and-chart) against their tool's schema, and failures  |
-| `checked_structured_outputs`, `invalid_structured_outputs`            | JSON outputs checked against the requested format, and failures                                        |
-| `input_text_bytes`, `output_text_bytes`, `reasoning_text_bytes`       | UTF-8 bytes of text: input after redaction, visible output and visible reasoning                       |
-| `input_file_count`, `input_file_url_count`, `input_inline_file_bytes` | Attachments, attachments sent as URLs, and decoded inline bytes                                        |
+| Meter                                                                 | Counts                                                                                                                |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `input_tokens`                                                        | Input tokens, without cache reads and writes                                                                          |
+| `cached_input_tokens`                                                 | Input tokens read from the provider cache                                                                             |
+| `cache_write_5m_input_tokens`, `cache_write_1h_input_tokens`          | Input tokens written to a five-minute or one-hour cache                                                               |
+| `cache_write_input_tokens`                                            | Cache writes with no reported duration                                                                                |
+| `output_tokens`                                                       | Output tokens, without reasoning                                                                                      |
+| `reasoning_tokens`                                                    | Reasoning tokens that the provider reports. Otherwise absent, and `output_tokens` includes them                       |
+| `total_input_tokens`, `total_output_tokens`, `total_tokens`           | Totals, with each token counted once. [Token limits](/docs/policies/limits#tokens-and-input-text) use `total_tokens`. |
+| `total_cache_write_tokens`                                            | All cache writes                                                                                                      |
+| `estimated_input_tokens`                                              | The gateway's [input estimate](#input-estimates) for the hold                                                         |
+| `hosted_tool_calls`, `client_tool_calls`                              | Hosted tool calls, and calls returned to your application                                                             |
+| `checked_client_tool_calls`, `invalid_client_tool_calls`              | Returned calls [checked](/docs/analytics#metrics) against their tool's schema, and failures                           |
+| `checked_structured_outputs`, `invalid_structured_outputs`            | JSON outputs checked against the requested format, and failures                                                       |
+| `input_text_bytes`, `output_text_bytes`, `reasoning_text_bytes`       | UTF-8 bytes of text: input after redaction, visible output and visible reasoning                                      |
+| `input_file_count`, `input_file_url_count`, `input_inline_file_bytes` | Attachments, attachments sent as URLs, and decoded inline bytes                                                       |
 
 Some models charge more for every token of a request whose prompt is over a size. The prompt counts
 cache reads and writes. For example, a GPT-6 Sol request with a 300,000-token prompt prices each
@@ -106,8 +106,6 @@ for some failed calls. A free meter has a rate of `"0"`.
 | `cache_read_savings_usd`   | What cache reads saved compared with ordinary input.               |
 | `cache_write_overhead_usd` | What cache writes cost above ordinary input.                       |
 
-For example, a cache write that costs $1.25 instead of $1 of input has $0.25 overhead.
-
 Amounts are exact decimal strings with up to 36 decimal places. The gateway adds each meter's usage
 before it rounds the charge up once, so a rate of $0.001 per million tokens costs exactly
 $0.000000001 for one token. [Billing](/docs/billing#fees) lists the fees.
@@ -123,10 +121,9 @@ counts on different models. Standard text tokens (STT) measure text the same way
 - Input is the request text after [PII redaction](/docs/pii-redaction), including tool definitions
   and arguments. JSON syntax, property names and attachments do not count.
 - Output and reasoning count only visible text. Hidden or encrypted reasoning cannot be measured.
-- Values are not rounded, so they can end in `.25`, `.5` or `.75`.
 
 Use STT to compare text size across models, or to cap input text the same way on every model with
-an [STT token quota](/docs/policies/limits#count-stt). STT never sets the price.
+an [STT token quota](/docs/policies/limits#tokens-and-input-text). STT never sets the price.
 
 ## Input estimates
 
@@ -137,7 +134,7 @@ always uses the provider's count.
 
 - The estimate is never more than the deployment's input limit. A large prompt can therefore hold
   the full input limit.
-- URLs, file IDs and files that the gateway does not [extract](/docs/input-files#turn-text-files-into-prompt-text)
+- URLs, file IDs and files that the gateway does not [extract](/docs/text-extraction)
   hold the full input limit, because the gateway cannot count them.
 - Hosted tools add their own [holds](/docs/model-tools#holds-for-hosted-tools).
 - Text is never sampled or cut to lower a hold.

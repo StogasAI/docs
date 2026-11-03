@@ -26,22 +26,19 @@ and its ID adds a suffix to the standard deployment ID:
 | Fast   | Faster output                       | `anthropic-claude-opus-5-fast`    |
 | Both   |                                     | `anthropic-claude-opus-5-fast-us` |
 
-Select Fast with `service_tier: "fast"`, as on OpenAI, or with its deployment ID. See
-[Service tiers](/docs/service-tiers). Claude Opus 5.5 Fast works for every organization except those
-in Anthropic's Evaluation usage tier. Fast for Claude Opus 5 and Claude Opus 4.8 is a research
-preview that works only after Anthropic enables it for your organization: ask your Anthropic account
-manager or join [Anthropic's waitlist](https://claude.com/fast-mode). The catalog marks those
-deployments with `approvalRequired`. Select US with its deployment ID, or require it in a
-[routing filter](/docs/policies/routing), for example `deployment.dataHandling.processingLocation == 'US'`,
-which also matches Claude in Azure's US Data Zone. Requests that send Anthropic's `speed` or
-`inference_geo` field return `400`.
+Choose them by deployment ID, a [service tier](/docs/service-tiers) or a
+[routing filter](/docs/policies/routing). Requests that send Anthropic's `speed` or `inference_geo`
+field return `400`.
 
-A workspace can allow only US inference. Anthropic then refuses requests from the workspace's keys
-to deployments of Claude 4.6 and later without `-us`. For a key from such a workspace, open the
-credential's **Policy** in [BYOK](/docs/byok) and turn on **Workspace allows only US inference**.
-The credential then serves Claude 4.6 and later only on their `-us` deployments. Older models take
-no location setting, so the credential still serves them. The switch adds this rule to the
-credential's policy:
+Claude Opus 5.5 Fast works for every organization except those in Anthropic's Evaluation usage
+tier. Fast for Claude Opus 5 and Claude Opus 4.8 is a research preview that works only after
+Anthropic enables it for your organization: ask your Anthropic account manager or join
+[Anthropic's waitlist](https://claude.com/fast-mode). The catalog marks those deployments with
+`approvalRequired`.
+
+If your Anthropic workspace allows only US inference, turn on **Workspace allows only US
+inference** in the credential's policy. It adds this rule, so the credential serves Claude 4.6 and
+later only on their `-us` deployments, and older models, which take no location, as before:
 
 ```json
 {

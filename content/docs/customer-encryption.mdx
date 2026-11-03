@@ -96,14 +96,14 @@ stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
 The command works offline and does not overwrite an existing output file. The `--purpose` decides
 which input it accepts:
 
-| Purpose             | Input                                                                                        |
-| ------------------- | -------------------------------------------------------------------------------------------- |
-| `plugins`           | The inner plugin JSON object.                                                                |
-| `byok/openai`       | The exact OpenAI credential, without a trailing newline.                                     |
-| `byok/anthropic`    | The exact Anthropic credential, without a trailing newline.                                  |
-| `byok/chutes`       | The exact Chutes credential, without a trailing newline.                                     |
-| `byok/aws`          | An [AWS credential document](/docs/byok#aws-and-google-cloud).                               |
-| `byok/google-cloud` | A Google service-account key file or [credential document](/docs/byok#aws-and-google-cloud). |
+| Purpose             | Input                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `plugins`           | The inner plugin JSON object.                                                                                 |
+| `byok/openai`       | The exact OpenAI credential, without a trailing newline.                                                      |
+| `byok/anthropic`    | The exact Anthropic credential, without a trailing newline.                                                   |
+| `byok/chutes`       | The exact Chutes credential, without a trailing newline.                                                      |
+| `byok/aws`          | An [AWS credential document](/docs/providers/aws#create-a-credential).                                        |
+| `byok/google-cloud` | A Google service account key file or [credential document](/docs/providers/google-cloud#create-a-credential). |
 
 For `plugins`, the output is the encrypted envelope. For a credential, it is the envelope in
 `encryptedSecret`, with the `preview` and, for AWS and Google Cloud, the `target` that you register

@@ -16,72 +16,62 @@ source.
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Your device to gateway | [Attested TLS or E2EE](/docs/connection-modes), which ends inside the verified gateway                                             |
 | Inside the gateway     | SEV-SNP memory encryption. Policies, PII redaction, routing and billing run here.                                                  |
-| Gateway to provider    | TLS 1.3, post-quantum where the provider supports it. Chutes adds [E2EE to its TEE](/docs/providers/chutes#end-to-end-encryption). |
+| Gateway to provider    | TLS 1.3, with post-quantum key exchange or E2EE where the [provider](/docs/providers) supports it                                  |
 | After the request      | The [request record](/docs/request-records) has no prompt or response. A [receipt](/docs/receipts) signs both, if you ask for one. |
 
-Ordinary HTTPS without the SDK still works, but it does not check the gateway. It relies on our
-routing and TLS endpoint, and a later receipt does not change that.
+Without the SDK, plain HTTPS still reaches the gateway, but you trust our routing and TLS
+certificate instead of the hardware evidence. A receipt cannot show afterwards that no one else
+read the request.
 
 ## What you trust
 
-- **AMD:** the processor, its firmware and AMD's signing keys. A hardware flaw can break the
-  protection.
-- **The gateway source code:** it is public. You can [rebuild it](/docs/reproducible-builds) from
-  the same pinned upstream sources and patches and get the same launch measurement, so you do not
-  have to trust the builds that we or GitHub publish. Approval does not prove that the code has
-  no bugs.
-- **Our signing keys:** they decide which releases, catalogs and hardware policies are
-  approved. Every approval is in the public Rekor log, so it is visible and cannot be changed
-  later.
-- **The model provider:** it receives the prompt, and its [data terms](/docs/providers) apply.
-  We cannot prove how a provider handles it.
+- **AMD:** the processor, its firmware and AMD's signing keys.
+- **The gateway source code**, which is public. You can [rebuild it](/docs/reproducible-builds) to
+  the same launch measurement, so you do not have to trust the builds that we or GitHub publish.
+- **Our signing keys**, which approve releases, catalogs and hardware policies. Every approval is
+  in the public, append-only Rekor log.
+- **The model provider**, which receives the prompt under its [data terms](/docs/providers).
 - **Your own device**, and the device or service that runs the SDK.
 
 ## Design rules
 
-- **You can use Stogas without trusting us.** Assume we act with maximum malice. The SDK checks
-  every claim on your device, so to read your data we would have to approve a release that does
-  so, publicly, built from public source that anyone can inspect.
-- **Cryptographic proof where possible, signed public commitments everywhere else.** What you
-  cannot check yourself, such as our decision to approve a release or start a gateway, we sign and
-  log. If we lie, the proof against us is permanent.
-- **Anything you trust is publicly and permanently logged.** Signing keys, evidence revisions,
-  gateway and SDK releases, catalogs, hardware policy and gateway boots are in the append-only
-  Rekor log. The SDK rejects evidence and boot records that are not in the log.
+- **You can use Stogas without trusting us.** The SDK checks every claim on your device. To read
+  your data, we would have to publicly approve a release that does so, built from source that
+  anyone can inspect.
+- **Proof where possible, signed public commitments elsewhere.** We sign and log what you cannot
+  check yourself, such as our decision to approve a release or start a gateway, so a false claim
+  stays on record.
+- **Everything you trust is in a public log.** Signing keys, evidence revisions, gateway and SDK
+  releases, catalogs, hardware policy and gateway boots are in the append-only Rekor log. The SDK
+  rejects evidence and boot records that are not in it.
 - **All software we release is reproducible.** Gateway images and SDK packages
-  [rebuild](/docs/reproducible-builds) from public source to the same bytes. A gateway release
-  needs both GitHub's build proof and our own matching rebuild.
+  [rebuild](/docs/reproducible-builds) from public source to the same bytes.
 - **We don't trust our own infrastructure.** Any of our servers, our database, our hosting
   providers, GitHub, Sigstore, Rekor or the evidence hosts can be compromised. None of them alone
   can read your data or get a gateway approved that differs from its public source. The evidence
   hosts can delay an update but cannot change it.
-- **The hardware boundary can fail.** Each release fixes strict VM settings, such as debugging and
-  migration off, and the hardware policy sets the minimum firmware for each chip. Both are signed
-  and logged, and the SDK checks them in every hardware report. A gateway serves you only after
-  its boot is in the public log.
-- **Defense in depth.** Gateway memory is already encrypted, yet E2EE still deletes each record's
-  key after use, and its ratchet keeps adding fresh secrets. If a key leaks from a gateway,
-  earlier traffic stays protected and later exchanges can lock the attacker out.
-- **We design for a future with quantum computers.** Attested TLS, E2EE and our signatures use
-  [post-quantum algorithms](#post-quantum-protection). Key exchanges and our signatures also keep
-  a classical algorithm, so they hold unless both algorithms break.
+- **Strict hardware settings.** Each release fixes the VM's policy, such as debugging and migration
+  off, and the hardware policy sets each chip's minimum firmware. The SDK checks both in every
+  hardware report, and a gateway serves you only after its boot is in the public log.
+- **Defense in depth.** E2EE adds forward secrecy and post-compromise security to memory
+  encryption.
+- **Post-quantum.** Attested TLS, E2EE and our signatures use
+  [hybrid post-quantum algorithms](#post-quantum-protection).
 
 ## What the hardware does not protect
 
 - **Availability.** The host can stop, slow or block a gateway.
-- **Traffic patterns.** Network observers see addresses, timing and encrypted sizes. Traffic is not
-  padded.
+- **Traffic patterns.** Network observers see addresses, timing and unpadded message sizes.
 - **Location.** A gateway's region, such as `FR` or `US-VA`, is a statement by the operator. AMD
   evidence does not prove where a machine is.
-- **Time.** Gateways set their clock inside the VM from five independent time servers over
-  [Network Time Security](https://www.rfc-editor.org/rfc/rfc8915), and start only after three
-  agree. A host that blocks those servers can slow the gateway's clock and delay its expiry checks.
-  The SDK checks the same dates with your device clock.
+- **Time.** Gateways set their clock from five independent
+  [Network Time Security](https://www.rfc-editor.org/rfc/rfc8915) servers and start only after
+  three agree. A host that blocks them can slow the clock and delay expiry checks, which the SDK
+  repeats with your device clock.
 - **Side channels.** Depending on the processor generation, the host can watch memory ciphertext
   and cache timing, and steer branch prediction, while a gateway runs. Published attacks have used
   such access to recover keys from protected VMs.
-- **Bugs.** Evidence proves which code runs, not that the code is correct. An attacker who
-  controls a gateway or your device can read the data there.
+- **Bugs.** Evidence proves which code runs, not that it is correct.
 
 ## Chain of trust
 
@@ -106,8 +96,8 @@ releases, catalogs and hardware policies, Sigstore's keys and AMD's certificates
 lists. Each change gets the next revision number, and we log every revision to Rekor, so every
 version that a client could have received is public. The evidence expires with the key manifest
 it contains. The online key cannot authorize itself or another key. Gateways recheck the evidence
-about every two minutes and stop accepting new requests when their release is withdrawn, so your
-client does not need to poll for changes.
+every two minutes and stop accepting new requests when their release is withdrawn, so your client
+does not need to poll for changes.
 
 </Step>
 <Step>
@@ -143,18 +133,13 @@ yourself.
 
 ## Post-quantum protection
 
-| Part                                                                 | Algorithms                                                     | Post-quantum |
-| -------------------------------------------------------------------- | -------------------------------------------------------------- | ------------ |
-| Attested TLS                                                         | TLS 1.3 with X25519MLKEM768 and an ML-DSA-65 certificate       | Yes          |
-| E2EE                                                                 | X-Wing (X25519 and ML-KEM-768), then a ratchet with ML-KEM-768 | Yes          |
-| Our signatures on key manifests, evidence, boot records and receipts | Composite ML-DSA-65 and Ed25519; both must verify              | Yes          |
-| Gateway to OpenAI and Anthropic                                      | TLS 1.3 with X25519MLKEM768                                    | Yes          |
-| Gateway to Azure                                                     | TLS 1.3, which can fall back to X25519                         | No           |
-| AMD reports, GitHub build proofs and Rekor                           | Classical signatures                                           | No           |
+| Part                                                                 | Algorithms                                                       | Post-quantum |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------ |
+| Attested TLS                                                         | TLS 1.3 with X25519MLKEM768 and an ML-DSA-65 certificate         | Yes          |
+| E2EE                                                                 | X-Wing (X25519 and ML-KEM-768), then a ratchet with ML-KEM-768   | Yes          |
+| Our signatures on key manifests, evidence, boot records and receipts | Composite ML-DSA-65 and Ed25519                                  | Yes          |
+| Gateway to provider                                                  | X25519MLKEM768 where the [provider](/docs/providers) supports it | Varies       |
+| AMD reports, GitHub build proofs and Rekor                           | Classical signatures                                             | No           |
 
-The hybrid key exchanges protect recorded traffic from future quantum computers. The full chain of
-trust is not quantum safe, because AMD, GitHub and Rekor still use classical signatures.
-
-ML-KEM-768 targets [NIST security category 3](https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.203.pdf).
-A security category compares estimated attack costs. It does not promise that the algorithm will
-resist future discoveries.
+Hybrid key exchange protects recorded traffic from future quantum computers, but AMD, GitHub and
+Rekor still sign with classical algorithms, so the chain of trust is not yet quantum safe.

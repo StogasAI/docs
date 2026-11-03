@@ -4,43 +4,25 @@ description: Inspect request volume, cost, timing and errors, and open individua
 icon: ChartLine
 ---
 
-**Analytics** shows your organization's requests with their usage, cost, timing and outcome. It
-never stores prompts, responses or credentials. **Analytics → Read own** shows your own requests,
-and access to view a folder, grant or API key adds its requests. **Read all** shows every request in
-the organization.
+Analytics shows each request's usage, cost, timing and outcome. It never stores prompts, responses
+or credentials. **Analytics → Read own** shows your own requests, view access to a folder, grant or
+API key adds its requests, and **Read all** shows every request in the organization.
 
-The query bar holds filters and text search. Beside it, the period picker sets the time range: a
-recent period such as the last hour, 24 hours (the default) or 7 days, all time, or a custom range.
-A custom range of dates covers whole local days. The group picker splits the results into groups.
+## Metrics
 
-The page address holds the filters, period, grouping and sort order, so you can share or bookmark a
-view, and **Back** undoes the last change. When you open Analytics without a view in the address, it
-resumes your last view in that organization. This browser also remembers your metrics.
+| Metric                       | Counts                                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Cache hit rate               | Requests with input usage that read any input from the provider's [cache](/docs/prompt-caching)             |
+| Cached input share           | Input tokens read from the cache                                                                            |
+| Reasoning tokens             | Only requests whose provider reports them, so a period without one shows no value instead of 0              |
+| Tool call error rate         | Requests with at least one tool call whose arguments do not match the tool's `parameters` schema            |
+| Structured output error rate | Requests with a JSON `response_format` or `text.format` whose output is not valid JSON or breaks the schema |
 
-## Metrics and chart
-
-The metric tiles show totals for the selected period and, except for all time, their change from
-the period of the same length just before it. Select a tile to chart it over time, and use **Add
-metric** to show token counts, cache use, costs, timing or generation speed. Timing metrics also
-have p50, p95 and p99. The menu beside the chart sets its resolution.
-
-Select an interval in the chart to see its time range, then **Zoom in** to set the period to that
-interval.
-
-**Cache hit rate** is the share of requests with input usage that read any input from the provider's
-[cache](/docs/prompt-caching). **Cached input share** is the share of input tokens read from the
-cache. **Reasoning tokens** count only requests whose provider reports them, so a period without
-such a request shows no value instead of 0.
-
-**Tool call error rate** is the share of requests with checked tool calls that returned at least one
-call whose arguments do not match its tool's `parameters` schema. A call to a tool without a schema
-that compiles is valid. The gateway rejects a response with a call to a tool that the request does
-not allow or with arguments that are not a JSON object, so that request fails instead. **Structured
-output error rate** is the share of requests with a JSON `response_format` or `text.format` whose
-output is not valid JSON or does not match the schema. Output is checked only when the model
-finishes normally, without a tool call or a refusal. A `format` keyword is an annotation, as in JSON
-Schema 2020-12, and a schema can refer only to itself. The gateway skips a check that would be too
-large, so it counts as neither valid nor invalid.
+- A tool without a schema that compiles accepts any arguments. A call to a tool that the request
+  does not allow, or arguments that are not a JSON object, fail the request instead.
+- Output is checked only when the model finishes normally, without a tool call or a refusal. A
+  `format` keyword is an annotation, as in JSON Schema 2020-12, and a schema can refer only to
+  itself. A check that would be too large is skipped and counts as neither valid nor invalid.
 
 Percentiles are approximate. They use only requests with a known value, and timing statistics use
 only successful requests that were not cancelled. Time to first token (TTFT) also needs streamed
@@ -48,42 +30,25 @@ output. Generation speed divides generated tokens by the full request duration.
 
 ## Groups
 
-Group by model, final provider, final credential, API key, grant, member, role, request type,
-outcome or error code. The chart shows the first five groups and combines the rest as **Other**, and a table
-lists up to 100 groups with your metrics as columns. Select a column header to rank the groups by
-it; the table's total covers all matching requests. Model groups combine revisions of the same
-model. Requests without a value, such as requests outside a grant, form their own group, such as
-**No grant**. Select a group to filter the requests to it. A request counts in every role its key's
-member held, so role groups can add up to more than the total. These counts are analytics, not the
-counters that enforce limits.
+- Model groups combine revisions of the same model.
+- A request counts in every role that its key's member held, so role groups can add up to more
+  than the total.
+- These counts are analytics, not the counters that enforce [limits](/docs/policies/limits).
 
 ## Requests
 
-Without a grouping, the requests that match the query follow the chart. Select a column header to
-sort them by time, cost or timing. Select a request to see its timeline, provider attempts, usage,
-cost and plugin results.
-
-- The header shows the outcome. Each provider attempt keeps its own result, so a provider can
-  succeed and the request can still fail later in the gateway.
-- Each provider call is one attempt, including [retries and fallbacks](/docs/policies/routing#retries-and-fallbacks).
-  An attempt shows its result, duration and provider credential, or **Managed** for a
-  Stogas-managed credential. With several attempts, each also shows when it started.
-- The gateway node links to its boot record in the Trust Center. Gateway versions and catalog
-  releases link to their evidence there.
-- Expand **Catalog** to see the deployment settings that applied when the request ran, even if the
-  catalog has changed since. Select a setting to see its recorded values and a link to its
-  current catalog page.
-- Select the session or a metadata value to see every request that shares it, over all time.
-- A row can stand for several identical rejections in the same minute. The row shows the count.
-  See [grouped rejections](/docs/request-records#grouped-rejections).
-
-An API key's **Requests** link opens the same history filtered to that key.
+- Each provider call is one attempt, including
+  [retries and fallbacks](/docs/policies/routing#retries-and-fallbacks), and keeps its own result.
+  A provider can succeed and the request can still fail later in the gateway.
+- A request keeps the catalog settings that applied when it ran, even after the catalog changes.
+- A row can stand for several identical rejections in the same minute. See
+  [grouped rejections](/docs/request-records#grouped-rejections).
 
 ### Filters
 
 Type words to search request, API key, grant and provider credential IDs, model IDs and names,
 providers, provider results, request types, error codes and HTTP statuses, or filter with
-`field:value`. A space between filters means `AND`; you can also use `OR`, `NOT` and parentheses.
+`field:value`. A space between filters means `AND`, and you can also use `OR`, `NOT` and parentheses.
 Quote values that contain spaces, and the words `and`, `or` and `not` when you search for them.
 
 | Filter              | Matches                                                                                                                                                                                           |

@@ -275,7 +275,4 @@ includes locked dependencies and native ownership checks.
 withTransport (object ["security" .= ("e2ee" :: String), "max_connections" .= (4 :: Int)]) request
 ```
 
-The JSON object also accepts `base_url`, and `proxy` and `onion` as in [Connect through Tor](/docs/sdk-overview#connect-through-tor). Configure HTTP timeouts and cancellation in the caller; `withTransport` releases the transport when the action exits.
-
-Native attested TLS is the default; this example selects E2EE. See
-[Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.
+The JSON object takes every [option](/docs/sdk-overview#options). Configure HTTP timeouts and cancellation in the caller. `withTransport` releases the transport when the action exits.

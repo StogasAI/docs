@@ -47,8 +47,7 @@ deployment accepts the input type before it calls the provider. The provider che
 }
 ```
 
-An image can be an HTTP(S) URL or a base64 data URL. On Responses, `file_id` also works, except on
-Anthropic models.
+An image can be an HTTP(S) URL or a base64 data URL. On Responses, `file_id` also works[^sources].
 
 ## Send a document
 
@@ -92,56 +91,34 @@ Anthropic models.
 
 Give each document exactly one source:
 
-| Field       | Contents                                                     | Works on                                              |
-| ----------- | ------------------------------------------------------------ | ----------------------------------------------------- |
-| `file_data` | A base64 data URL, such as `data:application/pdf;base64,...` | Every deployment that accepts documents               |
-| `file_url`  | An HTTP(S) URL                                               | Responses, and Chat Completions with Anthropic models |
-| `file_id`   | A file that you uploaded to the provider                     | [BYOK](/docs/byok) credentials only                   |
+| Field       | Contents                                                     | Works on                                 |
+| ----------- | ------------------------------------------------------------ | ---------------------------------------- |
+| `file_data` | A base64 data URL, such as `data:application/pdf;base64,...` | Every deployment that accepts documents  |
+| `file_url`  | An HTTP(S) URL                                               | Responses[^sources]                      |
+| `file_id`   | A file that you uploaded to the provider                     | [BYOK](/docs/byok) credentials[^sources] |
 
 If the data URL has no MIME type or uses `application/octet-stream`, `filename` must end in an
 extension that the route accepts.
 
 ## Supported formats
 
-Each catalog route lists the document MIME types and extensions that it accepts as
-`documentFormats`. Each deployment lists its input types on each of its `routes` as
-`inputModalities`.
+Each catalog route lists the document types that it reads as `documentFormats`, and each
+deployment lists its input types as `inputModalities`. Search the
+[catalog](https://stogas.ai/catalog) to find them:
 
-| Provider                                            | Images | Documents                                                                          |
-| --------------------------------------------------- | ------ | ---------------------------------------------------------------------------------- |
-| [OpenAI](/docs/providers/openai#files)              | Yes    | PDF on Chat Completions; PDF, text, office documents and spreadsheets on Responses |
-| [Anthropic](/docs/providers/anthropic#files)        | Yes    | PDF and plain text                                                                 |
-| [Azure](/docs/providers/azure#tools-and-files)      | Yes    | GPT: PDF on Responses. Claude: PDF and plain text                                  |
-| [Chutes](/docs/providers/chutes#supported-requests) | No     | No                                                                                 |
+| Search                                  | Finds                        |
+| --------------------------------------- | ---------------------------- |
+| `deployment.inputModalities:image`      | Deployments that read images |
+| `route.documentFormats.extensions:.pdf` | Routes that read PDFs        |
 
 The provider can convert a document before the model reads it, so a model that reads only text can
-still accept a PDF.
-
-## Turn text files into prompt text
-
-Text extraction turns inline text files, such as CSV, JSON and source code, into ordinary prompt
-text. The text then works on any deployment, even one that accepts no documents, and goes through
-the same [PII redaction](/docs/pii-redaction) and input checks as the rest of the prompt. Turn it on
-in a [policy](/docs/policies):
-
-```json
-{
-	"plugins": { "textExtraction": true }
-}
-```
-
-- Extraction accepts `text/*`, `application/json`, `application/xml`, and types that end in `+json`
-  or `+xml`. The MIME type must be in the data URL.
-- The file must be valid UTF-8 without NUL bytes.
-- The gateway puts the filename before the text when you give one.
-- PDFs, office documents, URLs and file IDs are not extracted. There is no OCR.
-- A policy cannot turn off extraction that a required parent policy turns on.
+still accept a PDF. The [provider pages](/docs/providers) list each provider's file rules.
 
 ## Limits
 
-- The gateway cannot read URLs, file IDs, or files that it does not extract. [ASCII-only
-  input](/docs/pii-redaction#ascii-only-input) and active [PII redaction](/docs/pii-redaction) reject
-  them.
+- The gateway cannot read URLs, file IDs, or files that it does not
+  [extract](/docs/text-extraction). [ASCII-only input](/docs/pii-redaction#ascii-only-input) and
+  active [PII redaction](/docs/pii-redaction) reject them.
 - Those inputs reserve the deployment's full input limit in the
   [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their tokens.
 - Base64 and JSON encoding count toward the [128 MiB request limit](/docs/reference/security#limits).
@@ -149,3 +126,7 @@ in a [policy](/docs/policies):
 - Audio input (`input_audio` on Chat Completions) works only on deployments that list `audio` in
   `inputModalities`.
 - Models return text, tool calls and citations. Image and audio output are not available.
+
+[^sources]:
+    Anthropic models also take `file_url` on Chat Completions, and do not take an image
+    `file_id`. Claude that AWS or Google runs takes neither URLs nor file IDs.

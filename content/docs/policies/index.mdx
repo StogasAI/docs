@@ -56,16 +56,16 @@ Every policy follows these rules. The topic pages give the details.
   request.
 - **Requests can only narrow further.** A [request policy](/docs/policies/request-policies) can
   add the settings that saved policies permit. It cannot set limits or delegation.
-- **You can see the result.** A key's [**Combined policy**](/docs/policies/editing#check-the-result)
-  shows what applies and names the policy behind each limit, rule and order. A routing simulation
-  names the policy that removed each deployment.
+- **You can see the result.** A key's **Combined policy** shows what applies and names the policy
+  behind each limit, rule and order. A routing simulation names the policy that removed each
+  deployment.
 
 <Cards>
 	<Card title="Examples" href="/docs/policies/examples">
 		Policies to copy for budgets, rates, providers, schedules and redaction.
 	</Card>
 	<Card title="Edit a policy" href="/docs/policies/editing">
-		Where to edit, how to check a draft, and size limits.
+		Who can edit, how to check a draft, and size limits.
 	</Card>
 	<Card title="Scopes and inheritance" href="/docs/policies/scopes">
 		Which policies apply to a request, and how they combine.
@@ -105,11 +105,11 @@ The [JSON Schema](/schemas/key-config-v1.json) gives these fields to the dashboa
 
 ## Plugins
 
-| Plugin                 | Use it to                                                                                                |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `textExtraction` | [Turn text files into prompt text](/docs/input-files#turn-text-files-into-prompt-text) before redaction. |
-| `redaction`      | [Replace sensitive text](/docs/pii-redaction) before Stogas calls the provider.                          |
-| `export`         | [Send each request and response](/docs/export) to your webhook.                                          |
+| Plugin           | Use it to                                                                       |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `textExtraction` | [Turn text files into prompt text](/docs/text-extraction) before redaction.     |
+| `redaction`      | [Replace sensitive text](/docs/pii-redaction) before Stogas calls the provider. |
+| `export`         | [Send each request and response](/docs/export) to your webhook.                 |
 
 To keep plugin settings private, such as redaction terms or webhook tokens,
 [encrypt them](/docs/customer-encryption#encrypt-plugin-settings).
