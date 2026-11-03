@@ -209,6 +209,8 @@ names. `--purpose` is `plugins/export` or `plugins/redaction` for
 `byok/anthropic`, `byok/chutes`, `byok/aws`, `byok/azure` or `byok/google-cloud` for a
 [provider credential](/docs/byok#customer-encryption). `byok/azure` takes what
 `az ad sp create-for-rbac` prints, as [Azure](/docs/providers/azure#customer-encryption) shows.
+Before it encrypts a plugin's settings, `encrypt` has a gateway check them, which needs you signed
+in. It encrypts a credential without connecting anywhere.
 
 ## Use your account
 

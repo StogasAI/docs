@@ -96,8 +96,11 @@ stogas encrypt --key providers --organization YOUR_ORGANIZATION_ID \
 ```
 
 `--key` names the label of a key in your keychain; for a key file, pass `--key-file org.key`
-instead. The command works offline and does not overwrite an existing output file. The
-`--purpose` decides which input it accepts:
+instead. Before it encrypts a plugin's settings, the command has a gateway check them over a
+verified connection, so a mistake shows now, by name, instead of in the requests that need them.
+Only the gateway sees the settings, and the check needs you signed in with `stogas login` or
+`STOGAS_TOKEN`. A credential is encrypted without connecting anywhere. The command never
+overwrites an existing output file. The `--purpose` decides which input it accepts:
 
 | Purpose             | Input                                                                                                         |
 | ------------------- | ------------------------------------------------------------------------------------------------------------- |

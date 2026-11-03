@@ -510,9 +510,12 @@
 				"security": [
 					{
 						"bearerAuth": []
+					},
+					{
+						"policyCheckGrant": []
 					}
 				],
-				"description": "Checks the policies that would apply to a request, without saving them or calling a model.",
+				"description": "Checks the policies that would apply to a request, without saving them or calling a model. A member can check with a grant from `POST /api/{orgId}/policies/check-grant` instead of an API key, such as for a plugin's settings before encrypting them.",
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -657,7 +660,7 @@
 						}
 					},
 					"400": {
-						"description": "The policies are invalid (`invalid_policy`), or an encryption key is missing or wrong. See [400 errors](/docs/reference/errors#400-bad-request)."
+						"description": "The policies are invalid (`invalid_policy`), or an encryption key is missing or wrong. Without `encryption_keys`, an `invalid_policy` message says what is wrong; with them, it does not, since it could repeat encrypted settings. See [400 errors](/docs/reference/errors#400-bad-request)."
 					},
 					"401": {
 						"$ref": "#/components/responses/Unauthorized"
@@ -875,6 +878,12 @@
 				"scheme": "bearer",
 				"bearerFormat": "Credential check grant",
 				"description": "Send the grant from `POST /api/{orgId}/byok/{byokId}/check-grant` as `Authorization: Bearer <grant>`. It lets you check that one credential for five minutes."
+			},
+			"policyCheckGrant": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "Policy check grant",
+				"description": "Send the grant from `POST /api/{orgId}/policies/check-grant` as `Authorization: Bearer <grant>`. For five minutes, it lets you check policies for that organization."
 			}
 		},
 		"parameters": {

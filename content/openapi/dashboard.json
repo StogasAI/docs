@@ -5130,6 +5130,60 @@
 				}
 			}
 		},
+		"/api/{orgId}/policies/check-grant": {
+			"post": {
+				"operationId": "createPolicyCheckGrant",
+				"tags": [
+					"Policies"
+				],
+				"summary": "Allow a gateway to check policy text",
+				"description": "A gateway checks the policies that you send it, such as a plugin's settings before you encrypt them. Within five minutes, send the grant to the gateway's `POST /v1/policies/validate` in place of an API key. The check reads nothing that you do not send, and opens only the encrypted settings whose keys you send. `stogas encrypt` makes both requests for a plugin's settings.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"expiresAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"grant": {
+											"type": "string",
+											"maxLength": 8192,
+											"pattern": "^stogas_policy_check_v1\\.[\\w-]+\\.[\\w-]+\\.[\\w-]+$",
+											"description": "Send it as the bearer token of the gateway check, within five minutes."
+										}
+									},
+									"required": [
+										"expiresAt",
+										"grant"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/policies/versions": {
 			"get": {
 				"operationId": "getPolicyVersions",

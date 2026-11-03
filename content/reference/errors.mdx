@@ -33,43 +33,43 @@ that a grant's spending limit is reached.
 
 Fix the request before you send it again. Requests rejected before dispatch cost nothing.
 
-| Code                          | Meaning                                                                                                                          |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `invalid_json`                | The body is not valid JSON.                                                                                                      |
-| `invalid_request`             | A field is unknown or invalid, or the selected deployment cannot accept it. `param` names the field when known.                  |
-| `unsupported_request`         | The endpoint does not support this kind of request.                                                                              |
-| `model_unavailable`           | No deployment can serve the request. Check the model ID, credentials and routing policies.                                       |
-| `model_retired`               | The model or deployment retired; the message gives the date. Choose another [model](/docs/models).                               |
-| `model_ambiguous`             | The routing order ties models that the request would try. Name one, or add a [sort criterion](/docs/policies/routing#ties).      |
-| `deployment_ambiguous`        | The routing order ties deployments of one model that the request would try. Add a [sort criterion](/docs/policies/routing#ties). |
-| `provider_not_allowed`        | The model is not available from the requested provider.                                                                          |
-| `provider_unavailable`        | The requested provider is not available.                                                                                         |
-| `service_tier_unavailable`    | Your key can use the model only at other [service tiers](/docs/service-tiers).                                                   |
-| `unsupported_service_tier`    | The `service_tier` value is not one of the [supported values](/docs/service-tiers#select-a-tier).                                |
-| `reasoning_mode_unavailable`  | Your key can use the model only in the other [`reasoning.mode`](/docs/reasoning#select-pro-mode).                                |
-| `unsupported_reasoning_mode`  | `reasoning.mode` is not `standard` or `pro`.                                                                                     |
-| `unsupported_tool`            | The request uses an [unavailable tool](/docs/model-tools#unavailable-tools) or one its deployments do not run.                   |
-| `parameter_limit_exceeded`    | A token limit, such as `max_output_tokens`, is outside the range that the deployment allows.                                     |
-| `byok_required`               | The provider needs [your own credential](/docs/byok) on this key.                                                                |
-| `byok_target_unavailable`     | No credential on the key provides this model. Check each credential's Region, hostings and Azure deployments.                    |
-| `byok_target_changed`         | Azure now serves another model, version or SKU from the chosen deployment. Choose its new Azure target.                          |
-| `byok_not_allowed`            | The key does not allow this credential.                                                                                          |
-| `encryption_key_required`     | An [encrypted policy or credential](/docs/customer-encryption) needs its key in `encryption_keys`.                               |
-| `encrypted_content_invalid`   | Encrypted policy content cannot be read.                                                                                         |
-| `input_ascii_required`        | A policy [allows only ASCII input](/docs/pii-redaction#ascii-only-input).                                                        |
-| `key_configuration_too_large` | The key's policies and credentials are too large. Remove some of them.                                                           |
-| `policy_work_limit_exceeded`  | The policies that apply need too much work for one request. Simplify them.                                                       |
-| `invalid_policy`              | Only from [Validate policy](/docs/reference/policies/validatePolicy): the policies are invalid.                                  |
-| `byok_key_unregistered`       | The organization policy no longer registers the key that encrypted the credential, so requests skip it.                          |
-| `credential_stored`           | We store the credential you [check](/docs/reference/credentials/checkCredential); check it on the dashboard.                     |
+| Code                          | Meaning                                                                                                                                          |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `invalid_json`                | The body is not valid JSON.                                                                                                                      |
+| `invalid_request`             | A field is unknown or invalid, or the selected deployment cannot accept it. `param` names the field when known.                                  |
+| `unsupported_request`         | The endpoint does not support this kind of request.                                                                                              |
+| `model_unavailable`           | No deployment can serve the request. Check the model ID, credentials and routing policies.                                                       |
+| `model_retired`               | The model or deployment retired; the message gives the date. Choose another [model](/docs/models).                                               |
+| `model_ambiguous`             | The routing order ties models that the request would try. Name one, or add a [sort criterion](/docs/policies/routing#ties).                      |
+| `deployment_ambiguous`        | The routing order ties deployments of one model that the request would try. Add a [sort criterion](/docs/policies/routing#ties).                 |
+| `provider_not_allowed`        | The model is not available from the requested provider.                                                                                          |
+| `provider_unavailable`        | The requested provider is not available.                                                                                                         |
+| `service_tier_unavailable`    | Your key can use the model only at other [service tiers](/docs/service-tiers).                                                                   |
+| `unsupported_service_tier`    | The `service_tier` value is not one of the [supported values](/docs/service-tiers#select-a-tier).                                                |
+| `reasoning_mode_unavailable`  | Your key can use the model only in the other [`reasoning.mode`](/docs/reasoning#select-pro-mode).                                                |
+| `unsupported_reasoning_mode`  | `reasoning.mode` is not `standard` or `pro`.                                                                                                     |
+| `unsupported_tool`            | The request uses an [unavailable tool](/docs/model-tools#unavailable-tools) or one its deployments do not run.                                   |
+| `parameter_limit_exceeded`    | A token limit, such as `max_output_tokens`, is outside the range that the deployment allows.                                                     |
+| `byok_required`               | The provider needs [your own credential](/docs/byok) on this key.                                                                                |
+| `byok_target_unavailable`     | No credential on the key provides this model. Check each credential's Region, hostings and Azure deployments.                                    |
+| `byok_target_changed`         | Azure now serves another model, version or SKU from the chosen deployment. Choose its new Azure target.                                          |
+| `byok_not_allowed`            | The key does not allow this credential.                                                                                                          |
+| `encryption_key_required`     | An [encrypted policy or credential](/docs/customer-encryption) needs its key in `encryption_keys`.                                               |
+| `encrypted_content_invalid`   | Encrypted policy content cannot be read.                                                                                                         |
+| `input_ascii_required`        | A policy [allows only ASCII input](/docs/pii-redaction#ascii-only-input).                                                                        |
+| `key_configuration_too_large` | The key's policies and credentials are too large. Remove some of them.                                                                           |
+| `policy_work_limit_exceeded`  | The policies that apply need too much work for one request. Simplify them.                                                                       |
+| `invalid_policy`              | Only from [Validate policy](/docs/reference/policies/validatePolicy): the policies are invalid. Without `encryption_keys`, the message says why. |
+| `byok_key_unregistered`       | The organization policy no longer registers the key that encrypted the credential, so requests skip it.                                          |
+| `credential_stored`           | We store the credential you [check](/docs/reference/credentials/checkCredential); check it on the dashboard.                                     |
 
 ### 401 Unauthorized
 
-| Code                  | Meaning                                                                                                               |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `invalid_api_key`     | The API key is missing, wrong or deleted.                                                                             |
-| `invalid_check_grant` | The grant to [check a credential](/docs/reference/credentials/checkCredential) is invalid or expired.                 |
-| `key_secret_replaced` | The key's secret was rotated, or GitHub [found it in public](/docs/api-keys#leaked-secrets). Copy the current secret. |
+| Code                  | Meaning                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `invalid_api_key`     | The API key is missing, wrong or deleted.                                                                                                                    |
+| `invalid_check_grant` | The grant to [check a credential](/docs/reference/credentials/checkCredential) or [policies](/docs/reference/policies/validatePolicy) is invalid or expired. |
+| `key_secret_replaced` | The key's secret was rotated, or GitHub [found it in public](/docs/api-keys#leaked-secrets). Copy the current secret.                                        |
 
 ### 402 Payment required
 

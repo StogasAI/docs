@@ -1,7 +1,9 @@
 ---
 title: Validate policy
 description: Checks the policies that would apply to a request, without saving
-  them or calling a model.
+  them or calling a model. A member can check with a grant from `POST
+  /api/{orgId}/policies/check-grant` instead of an API key, such as for a
+  plugin's settings before encrypting them.
 full: true
 _openapi:
   preload:
@@ -13,7 +15,9 @@ _openapi:
     headings: []
     contents:
       - content: Checks the policies that would apply to a request, without saving them
-          or calling a model.
+          or calling a model. A member can check with a grant from `POST
+          /api/{orgId}/policies/check-grant` instead of an API key, such as for
+          a plugin's settings before encrypting them.
 ---
 
 export default function Layout(props) {

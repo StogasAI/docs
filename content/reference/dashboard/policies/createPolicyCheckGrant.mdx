@@ -1,0 +1,34 @@
+---
+title: Allow a gateway to check policy text
+description: A gateway checks the policies that you send it, such as a plugin's
+  settings before you encrypt them. Within five minutes, send the grant to the
+  gateway's `POST /v1/policies/validate` in place of an API key. The check reads
+  nothing that you do not send, and opens only the encrypted settings whose keys
+  you send. `stogas encrypt` makes both requests for a plugin's settings.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: A gateway checks the policies that you send it, such as a plugin's
+          settings before you encrypt them. Within five minutes, send the grant
+          to the gateway's `POST /v1/policies/validate` in place of an API key.
+          The check reads nothing that you do not send, and opens only the
+          encrypted settings whose keys you send. `stogas encrypt` makes both
+          requests for a plugin's settings.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/policies/check-grant', method: 'post' }]} />
+    </>
+  );
+}
