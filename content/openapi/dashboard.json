@@ -5492,7 +5492,7 @@
 											}
 										},
 										"notes": {
-											"maxItems": 43,
+											"maxItems": 115,
 											"type": "array",
 											"items": {
 												"oneOf": [
@@ -5623,6 +5623,86 @@
 														],
 														"additionalProperties": false,
 														"description": "How many policies of this scope keep sections that this policy does not let them set. They still apply."
+													},
+													{
+														"type": "object",
+														"properties": {
+															"kind": {
+																"type": "string",
+																"const": "replaced"
+															},
+															"scope": {
+																"type": "string",
+																"enum": [
+																	"organization",
+																	"folder",
+																	"grant",
+																	"role",
+																	"member",
+																	"credential",
+																	"key"
+																]
+															},
+															"id": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 64
+															},
+															"sections": {
+																"minItems": 1,
+																"maxItems": 21,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"enum": [
+																		"access",
+																		"input",
+																		"limits",
+																		"timeouts",
+																		"timeouts.totalSeconds",
+																		"timeouts.outputIdleSeconds",
+																		"plugins",
+																		"plugins.redaction",
+																		"plugins.textExtraction",
+																		"plugins.export",
+																		"plugins.encrypted",
+																		"routing",
+																		"routing.filter",
+																		"routing.order",
+																		"routing.sort",
+																		"routing.allowedCatalogNodes",
+																		"routing.retries",
+																		"routing.fallbacks",
+																		"routing.missingEncryptionKeys",
+																		"delegation",
+																		"encryption"
+																	]
+																}
+															},
+															"rules": {
+																"minItems": 1,
+																"maxItems": 10,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 48
+																}
+															},
+															"ruleCount": {
+																"type": "integer",
+																"minimum": 11,
+																"maximum": 9007199254740991,
+																"description": "How many rules replace them, when there are more than rules lists."
+															}
+														},
+														"required": [
+															"kind",
+															"scope",
+															"sections"
+														],
+														"additionalProperties": false,
+														"description": "The named policy requires settings that replace this policy's default settings in these sections: on every request, or with rules only on the requests that those rules match."
 													}
 												]
 											}
@@ -15767,7 +15847,7 @@
 						}
 					},
 					"policyNotes": {
-						"maxItems": 43,
+						"maxItems": 115,
 						"type": "array",
 						"items": {
 							"oneOf": [
@@ -15898,6 +15978,86 @@
 									],
 									"additionalProperties": false,
 									"description": "How many policies of this scope keep sections that this policy does not let them set. They still apply."
+								},
+								{
+									"type": "object",
+									"properties": {
+										"kind": {
+											"type": "string",
+											"const": "replaced"
+										},
+										"scope": {
+											"type": "string",
+											"enum": [
+												"organization",
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64
+										},
+										"sections": {
+											"minItems": 1,
+											"maxItems": 21,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"timeouts",
+													"timeouts.totalSeconds",
+													"timeouts.outputIdleSeconds",
+													"plugins",
+													"plugins.redaction",
+													"plugins.textExtraction",
+													"plugins.export",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.order",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.retries",
+													"routing.fallbacks",
+													"routing.missingEncryptionKeys",
+													"delegation",
+													"encryption"
+												]
+											}
+										},
+										"rules": {
+											"minItems": 1,
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 48
+											}
+										},
+										"ruleCount": {
+											"type": "integer",
+											"minimum": 11,
+											"maximum": 9007199254740991,
+											"description": "How many rules replace them, when there are more than rules lists."
+										}
+									},
+									"required": [
+										"kind",
+										"scope",
+										"sections"
+									],
+									"additionalProperties": false,
+									"description": "The named policy requires settings that replace this policy's default settings in these sections: on every request, or with rules only on the requests that those rules match."
 								}
 							]
 						}
@@ -17490,6 +17650,90 @@
 										}
 									},
 									"additionalProperties": false
+								},
+								"replaced": {
+									"minItems": 1,
+									"maxItems": 21,
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"setting": {
+												"type": "string",
+												"enum": [
+													"access",
+													"input",
+													"limits",
+													"timeouts",
+													"timeouts.totalSeconds",
+													"timeouts.outputIdleSeconds",
+													"plugins",
+													"plugins.redaction",
+													"plugins.textExtraction",
+													"plugins.export",
+													"plugins.encrypted",
+													"routing",
+													"routing.filter",
+													"routing.order",
+													"routing.sort",
+													"routing.allowedCatalogNodes",
+													"routing.retries",
+													"routing.fallbacks",
+													"routing.missingEncryptionKeys",
+													"delegation",
+													"encryption"
+												]
+											},
+											"policy": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"organization",
+															"folder",
+															"grant",
+															"role",
+															"member",
+															"credential",
+															"key"
+														]
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													}
+												},
+												"required": [
+													"scope"
+												],
+												"additionalProperties": false
+											},
+											"rule": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 48
+											},
+											"conditional": {
+												"type": "boolean",
+												"const": true,
+												"description": "The rule replaces the setting only on the requests that its when matches."
+											},
+											"others": {
+												"type": "integer",
+												"exclusiveMinimum": 0,
+												"maximum": 9007199254740991,
+												"description": "How many other requirements of the same reach replace the setting too."
+											}
+										},
+										"required": [
+											"setting",
+											"policy"
+										],
+										"additionalProperties": false
+									},
+									"description": "A default rule's settings that a required one of the same kind replaces, each with the requirement that does: a policy's own settings, or its rule. One that applies to every request is named first. For routing.order and routing.sort, the one ordering that applies."
 								}
 							},
 							"required": [
@@ -17574,6 +17818,74 @@
 							],
 							"additionalProperties": false
 						}
+					},
+					"setBy": {
+						"minItems": 1,
+						"maxItems": 756,
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"setting": {
+									"type": "string",
+									"enum": [
+										"access",
+										"input",
+										"limits",
+										"timeouts",
+										"timeouts.totalSeconds",
+										"timeouts.outputIdleSeconds",
+										"plugins",
+										"plugins.redaction",
+										"plugins.textExtraction",
+										"plugins.export",
+										"plugins.encrypted",
+										"routing",
+										"routing.filter",
+										"routing.order",
+										"routing.sort",
+										"routing.allowedCatalogNodes",
+										"routing.retries",
+										"routing.fallbacks",
+										"routing.missingEncryptionKeys",
+										"delegation",
+										"encryption"
+									]
+								},
+								"policy": {
+									"type": "object",
+									"properties": {
+										"scope": {
+											"type": "string",
+											"enum": [
+												"organization",
+												"folder",
+												"grant",
+												"role",
+												"member",
+												"credential",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 64
+										}
+									},
+									"required": [
+										"scope"
+									],
+									"additionalProperties": false
+								}
+							},
+							"required": [
+								"setting",
+								"policy"
+							],
+							"additionalProperties": false
+						},
+						"description": "The policies that set each combined setting outside rules. Where the smallest value or the stricter choice wins, the first policy that sets the winning value. Where values combine, every policy that sets one. routing.orderFrom names the policy whose ordering applies."
 					},
 					"delegation": {
 						"type": "object",

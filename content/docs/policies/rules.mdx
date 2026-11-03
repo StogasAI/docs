@@ -103,6 +103,17 @@ kinds of setting:
   the closest default applies.
 - [Limits](/docs/policies/limits) cannot be defaults.
 
+### See which defaults apply
+
+Above the editor, the policy page names each other policy whose required settings replace this
+policy's defaults, with the settings they replace. A required rule with a `when` replaces them only
+on the requests that it matches, so the page names those rules as well.
+
+In **Combined policy**, each default rule lists its replaced settings in `replaced`, with the policy
+that requires each one and, for a required rule, its name. The editor strikes those settings
+through. A dashed line marks a setting that a rule replaces only on the requests that its `when`
+matches. `others` counts further requirements that replace the same setting.
+
 ### Replace a default without adding a restriction
 
 Set a neutral value. It replaces the defaults of its kind and never removes a required setting of
