@@ -8505,6 +8505,7 @@
 							"type": "string",
 							"enum": [
 								"requests",
+								"errors",
 								"error_rate",
 								"tool_call_error_rate",
 								"structured_output_error_rate",
@@ -8516,6 +8517,9 @@
 								"cache_write_tokens",
 								"output_tokens",
 								"reasoning_tokens",
+								"total_tokens",
+								"hosted_tool_calls",
+								"client_tool_calls",
 								"cache_hit_rate",
 								"cached_input_share",
 								"cache_savings",
@@ -8572,6 +8576,7 @@
 							"type": "string",
 							"enum": [
 								"requests",
+								"errors",
 								"error_rate",
 								"tool_call_error_rate",
 								"structured_output_error_rate",
@@ -8583,6 +8588,9 @@
 								"cache_write_tokens",
 								"output_tokens",
 								"reasoning_tokens",
+								"total_tokens",
+								"hosted_tool_calls",
+								"client_tool_calls",
 								"cache_hit_rate",
 								"cached_input_share",
 								"cache_savings",
@@ -8630,8 +8638,8 @@
 								"1h",
 								"6h",
 								"1d",
-								"7d",
-								"30d",
+								"1w",
+								"1mo",
 								"auto"
 							]
 						}
@@ -8829,6 +8837,11 @@
 														"minimum": 0,
 														"maximum": 9007199254740991
 													},
+													"errorCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
 													"successRate": {
 														"type": "number",
 														"minimum": 0,
@@ -8947,6 +8960,7 @@
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
 													"requestCount",
+													"errorCount",
 													"successRate",
 													"totalCachedInputTokens",
 													"totalCacheWriteInputTokens",
@@ -9015,8 +9029,8 @@
 												"1h",
 												"6h",
 												"1d",
-												"7d",
-												"30d"
+												"1w",
+												"1mo"
 											]
 										},
 										"bucketCount": {
@@ -9171,6 +9185,11 @@
 														"minimum": 0,
 														"maximum": 9007199254740991
 													},
+													"errorCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
 													"successRate": {
 														"type": "number",
 														"minimum": 0,
@@ -9284,6 +9303,7 @@
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
 													"requestCount",
+													"errorCount",
 													"successRate",
 													"totalCachedInputTokens",
 													"totalCacheWriteInputTokens",
@@ -9443,6 +9463,11 @@
 													"minimum": 0,
 													"maximum": 9007199254740991
 												},
+												"errorCount": {
+													"type": "integer",
+													"minimum": 0,
+													"maximum": 9007199254740991
+												},
 												"successRate": {
 													"type": "number",
 													"minimum": 0,
@@ -9553,6 +9578,7 @@
 												"cacheWriteOverheadSampleCount",
 												"tokensPerSecond",
 												"requestCount",
+												"errorCount",
 												"successRate",
 												"totalCachedInputTokens",
 												"totalCacheWriteInputTokens",
@@ -9712,6 +9738,11 @@
 															"minimum": 0,
 															"maximum": 9007199254740991
 														},
+														"errorCount": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 9007199254740991
+														},
 														"successRate": {
 															"type": "number",
 															"minimum": 0,
@@ -9822,6 +9853,7 @@
 														"cacheWriteOverheadSampleCount",
 														"tokensPerSecond",
 														"requestCount",
+														"errorCount",
 														"successRate",
 														"totalCachedInputTokens",
 														"totalCacheWriteInputTokens",
