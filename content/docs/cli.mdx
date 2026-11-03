@@ -207,17 +207,19 @@ and prints its public identifier. `encrypt` encrypts a file with it. `--purpose`
 ```console
 stogas register
 stogas login
+stogas login --device-code
 stogas logout
 ```
 
-`register` creates an account and prints its password once, which cannot be recovered. `login` asks
-for the password and, for an account with an authenticator app, a code. An account whose only
-second step is a passkey creates its token on the **Account** page.
+`register` creates an account, prints its password once, which cannot be recovered, and signs the
+CLI in for 7 days. `login` opens the dashboard in your browser, where you approve the sign-in and
+choose the organizations, access and expiry of its access token. Over SSH, through Tor, without a
+display or with `--device-code`, it prints a code to enter on any device instead. Approve only a
+code that your own `stogas login` printed, since approving a code signs in the CLI that printed it.
 
-Each sign-in creates an access token named `Stogas CLI on <host>`, which can read and change all of
-your organizations that allow access tokens, and does not expire. The CLI keeps it in the system
-keychain, or prints it where there is none, as on most servers. Signing in again deletes the token
-that the new one replaces, and `logout` deletes the current one.
+Each sign-in creates an access token named `Stogas CLI on <host>` unless you name it otherwise. The
+CLI keeps it in the system keychain, or prints it where there is none, as on most servers. Signing
+in again deletes the token that the new one replaces, and `logout` deletes the current one.
 
 For servers and CI, create a token on the **Account** page with only the access that the job needs,
 and set it as `STOGAS_TOKEN`. The CLI then uses it, and `register`, `login` and `logout` refuse to
