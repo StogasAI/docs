@@ -60,7 +60,9 @@ the first call, so the gateway called Azure:
 			"start_ms": 14,
 			"latency_ms": 96,
 			"output_observed": false,
-			"provider_request_id": "",
+			"provider_request_id": "req_4b1d9e07c2a64f3b8e5a90d1c7f26a38",
+			"provider_response_id": "",
+			"provider_model": "",
 			"finish_reason": "",
 			"byok": null
 		},
@@ -72,7 +74,9 @@ the first call, so the gateway called Azure:
 			"start_ms": 118,
 			"latency_ms": 1840,
 			"output_observed": true,
-			"provider_request_id": "chatcmpl-tyyIcevsCWs7aUIgZsZtT3hSjXf7W",
+			"provider_request_id": "9f2c41d6-0b7e-4a85-b3c9-6e1f08d5a274",
+			"provider_response_id": "chatcmpl-tyyIcevsCWs7aUIgZsZtT3hSjXf7W",
+			"provider_model": "gpt-5.5-2026-04-23",
 			"finish_reason": "stop",
 			"byok": null
 		}
@@ -180,18 +184,24 @@ record always names the exact policies that applied.
 [retry and fallback](/docs/policies/routing#retries-and-fallbacks), in call order. A candidate that
 the gateway refused before it called the provider has no entry.
 
-| Field                                               | Meaning                                                                                            |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `provider`                                          | The provider, such as `openai`.                                                                    |
-| `status`                                            | The [result](#provider-results).                                                                   |
-| `status_code`                                       | The provider's HTTP status. `null` when there was none, such as after a lost connection.           |
-| `start_ms`                                          | When the call started, on the [request clock](#timing).                                            |
-| `latency_ms`                                        | How long the call took.                                                                            |
-| `output_observed`                                   | Whether output from this call reached the request. Only the last call can have `true`.             |
-| `provider_request_id`                               | The provider's response ID, such as `chatcmpl-…`, `resp_…` or `msg_…`. Empty when the call failed. |
-| `finish_reason`                                     | Why the model stopped, such as `stop` or `length`. Empty when the provider did not say.            |
-| `byok`                                              | The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential.               |
-| `catalog_chain_hash`, `resolved_catalog_chain_hash` | The catalog settings that the call used. See [Catalog history](#catalog-history).                  |
+| Field                                               | Meaning                                                                                                                                   |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `provider`                                          | The provider, such as `openai`.                                                                                                           |
+| `status`                                            | The [result](#provider-results).                                                                                                          |
+| `status_code`                                       | The provider's HTTP status. `null` when there was none, such as after a lost connection.                                                  |
+| `start_ms`                                          | When the call started, on the [request clock](#timing).                                                                                   |
+| `latency_ms`                                        | How long the call took.                                                                                                                   |
+| `output_observed`                                   | Whether output from this call reached the request. Only the last call can have `true`.                                                    |
+| `provider_request_id`                               | The provider's ID for the call, which its support asks for. Empty when the provider sent none.                                            |
+| `provider_response_id`                              | The ID of the provider's reply, such as `chatcmpl-…`, `resp_…` or `msg_…`. It is the `id` that you received. Empty when no reply arrived. |
+| `provider_model`                                    | The model that the provider reported serving, such as `gpt-5.5-2026-04-23`. Empty when the provider did not say.                          |
+| `finish_reason`                                     | Why the model stopped, such as `stop` or `length`. Empty when the provider did not say.                                                   |
+| `byok`                                              | The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential.                                                      |
+| `catalog_chain_hash`, `resolved_catalog_chain_hash` | The catalog settings that the call used. See [Catalog history](#catalog-history).                                                         |
+
+Each provider sends `provider_request_id` in its own response header: OpenAI in `x-request-id`,
+Anthropic in `request-id`, Azure in `apim-request-id`, and AWS in `x-amzn-requestid`. A call that the
+provider answered with an error has one too, so you can ask the provider about the failure.
 
 `provider_attempts` and `gateway_error` record different failures:
 
