@@ -8,11 +8,11 @@ Bring your own key (BYOK) sends requests through your provider account. Your API
 authenticates every request to us, and the provider credential authenticates only the gateway's
 call to the provider. The provider bills you, and we charge a [2% fee](#billing).
 
-| Credential         | Where the secret is       | Providers                     | Each request sends              |
-| ------------------ | ------------------------- | ----------------------------- | ------------------------------- |
-| Stogas managed     | Our provider account      | Chutes                        | Your API key                    |
-| Stored             | Saved and encrypted by us | Every provider                | Your API key                    |
-| Customer encrypted | Encrypted on your device  | Every provider[^azure-secret] | Your API key and encryption key |
+| Credential         | Where the secret is       | Providers      | Each request sends              |
+| ------------------ | ------------------------- | -------------- | ------------------------------- |
+| Stogas managed     | Our provider account      | Chutes         | Your API key                    |
+| Stored             | Saved and encrypted by us | Every provider | Your API key                    |
+| Customer encrypted | Encrypted on your device  | Every provider | Your API key and encryption key |
 
 New keys start with Stogas-managed Chutes. Every other provider needs a credential of your own.
 Each [provider page](/docs/providers) shows what its credential needs.
@@ -24,7 +24,9 @@ after that. A rejected credential is not saved. If a daily check fails, requests
 credential, because a provider can reject a check for a short time. We check again after an hour,
 and double the wait while the checks keep failing, up to a day. A check does not prove quota or
 access to every model. A customer-encrypted credential is checked only when you
-[check it with its encryption key](#check-a-customer-encrypted-credential).
+[check it with its encryption key](#check-a-customer-encrypted-credential). An Azure credential's
+check also finds its account's deployments, which become its
+[targets](/docs/providers/azure#targets).
 
 ## Customer encryption
 
@@ -39,11 +41,14 @@ With customer encryption, we store only ciphertext, and each request sends the k
    ```
 
    The purpose is `byok/` and the provider ID. Save a plain key without a trailing newline. AWS
-   and Google Cloud take a credential document, which the CLI checks before it encrypts it.
+   and Google Cloud take a credential document, and Azure takes an
+   [application](/docs/providers/azure#customer-encryption), which the CLI checks before it
+   encrypts them.
 
 3. Save `credential.json` as a customer-encrypted credential. It holds the ciphertext, a preview
    of the secret's last four characters that you can edit, and, for AWS and Google Cloud, the
-   target. Saving does not contact the provider.
+   target. An Azure credential takes the resource IDs of the accounts that it connects instead of
+   a preview. Saving does not contact the provider.
 4. [Send the key](/docs/customer-encryption#send-the-key-with-a-request) with each request.
 
 If a request could use the credential but doesn't send its key, the gateway rejects it with
@@ -61,7 +66,8 @@ key:
 stogas byok check CREDENTIAL_ID --organization YOUR_ORGANIZATION_ID --key-file org.key
 ```
 
-Without `--key-file`, enter the key when prompted. The [CLI](/docs/cli#check-a-credential) sends
+Without `--key-file`, enter the key when prompted. One command can check several credentials, and
+asks for each key once. The [CLI](/docs/cli#check-a-credential) sends
 the key over a [verified connection](/docs/connection-modes) to a gateway, which opens the
 credential, calls the provider and saves the result on the credential. The gateway uses the key
 for this check only and never stores it. You need permission to manage the credential.
@@ -121,5 +127,3 @@ urgently, disable the credential, then revoke the key with the provider.
 BYOK requests cost 2% of the usage at catalog rates, charged to your balance. Spending limits count
 the full usage at catalog rates, not only the fee. Your provider bills you separately, and
 negotiated provider prices do not change the fee. See [Billing](/docs/billing) for funding fees.
-
-[^azure-secret]: Except [Azure](/docs/providers/azure#connect-your-account).

@@ -103,11 +103,12 @@ which input it accepts:
 | `byok/anthropic`    | The exact Anthropic credential, without a trailing newline.                                                   |
 | `byok/chutes`       | The exact Chutes credential, without a trailing newline.                                                      |
 | `byok/aws`          | An [AWS credential document](/docs/providers/aws#create-a-credential).                                        |
+| `byok/azure`        | An [Azure application](/docs/providers/azure#customer-encryption), as `az ad sp create-for-rbac` prints it.   |
 | `byok/google-cloud` | A Google service account key file or [credential document](/docs/providers/google-cloud#create-a-credential). |
 
 For `plugins`, the output is the encrypted envelope. For a credential, it is the envelope in
-`encryptedSecret`, with the `preview` and, for AWS and Google Cloud, the `target` that you register
-with it.
+`encryptedSecret`, with the `preview` except for Azure, and for AWS and Google Cloud the `target`
+that you register with it.
 
 </Step>
 <Step>

@@ -198,8 +198,9 @@ stogas encrypt --key-file org.key --organization <id> --purpose byok/openai \
 `encryption-key` creates an organization key for [customer encryption](/docs/customer-encryption)
 and prints its public identifier. `encrypt` encrypts a file with it. `--purpose` is `plugins` for
 [plugin settings](/docs/customer-encryption#encrypt-plugin-settings), or `byok/openai`,
-`byok/anthropic`, `byok/chutes`, `byok/aws` or `byok/google-cloud` for a
-[provider credential](/docs/byok#customer-encryption).
+`byok/anthropic`, `byok/chutes`, `byok/aws`, `byok/azure` or `byok/google-cloud` for a
+[provider credential](/docs/byok#customer-encryption). `byok/azure` takes what
+`az ad sp create-for-rbac` prints, as [Azure](/docs/providers/azure#customer-encryption) shows.
 
 ## Use your account
 
@@ -268,16 +269,20 @@ a key, grant, member or credential copies its ID, and
 
 ```console
 stogas byok check <credential-id> --organization <organization-id>
-stogas byok check <credential-id> --organization <organization-id> --key-file org.key
+stogas byok check <credential-id>... --organization <organization-id> --key-file org.key
 ```
 
-`byok check` checks a [provider credential](/docs/byok#checks) with the same free call to the
-provider as **Check credential** on the dashboard, and prints whether the provider accepted it.
-**Copy ID** in the credential's menu copies its ID. A stored credential needs nothing else. For a
+`byok check` checks [provider credentials](/docs/byok#checks) with the same free call to the
+provider as **Check credential** on the dashboard, and prints whether the provider accepted each.
+**Copy ID** in a credential's menu copies its ID. A stored credential needs nothing else. For a
 customer-encrypted credential, pass the file with the key that encrypted it, or enter the key
-when prompted. The CLI sends the key over a verified connection to a gateway, the only place that
-can open the credential, and the gateway saves the result. You need permission to manage the
-credential. Without `--organization`, the credential is in your personal organization.
+when prompted, once for each key. The CLI sends the key over a verified connection to a gateway,
+the only place that can open the credential, and the gateway saves the result. An Azure
+credential's check also finds its account's deployments, and the CLI prints how many targets are
+selected, how many of those are unavailable, and how many models have none, with a link to choose
+them. You need permission to manage the credentials. A failed check leaves the others to run, and
+the command then exits with status 1. Without `--organization`, the credentials are in your
+personal organization.
 
 ### Call the dashboard API
 

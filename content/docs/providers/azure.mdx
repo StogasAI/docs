@@ -32,8 +32,44 @@ az ad sp create-for-rbac --name stogas-gateway \
 ```
 
 Enter `tenant`, `appId` and `password` from the output in [BYOK](/docs/byok) as the tenant ID,
-client ID and client secret. Each account that you connect becomes its own credential. Customer
-encryption is not available, because we read your deployments with the secret.
+client ID and client secret. Each account that you connect becomes its own credential. To connect
+more accounts with the same application later, choose **Add accounts** in a credential's menu.
+
+## Customer encryption
+
+With [customer encryption](/docs/byok#customer-encryption), we store only the encrypted
+application, and only a gateway can open it with your key.
+
+1. Save the application, then encrypt it. The CLI also takes `tenantId`, `clientId` and
+   `clientSecret` in a JSON object.
+
+   ```bash
+   az ad sp create-for-rbac --name stogas-gateway \
+     --role 53ca6127-db72-4b80-b1b0-d745d6d5456d \
+     --scopes /subscriptions/<subscription-id>/resourceGroups/<group> > app.json
+   stogas encrypt --key-file org.key --organization <organization-id> \
+     --purpose byok/azure --input app.json --output application.json
+   ```
+
+   Then delete `app.json`, which holds the secret.
+
+2. In [BYOK](/docs/byok), add an Azure credential, select **Customer encrypted**, and paste
+   `application.json`. Enter the resource ID of each account to connect, which
+   `az cognitiveservices account list --query "[].id" --output tsv` lists. Each account becomes
+   its own credential, and **Add accounts** in a credential's menu connects more with the same
+   application.
+3. Run the command that the dashboard shows where you keep the key, such as:
+
+   ```console
+   stogas byok check CREDENTIAL_ID ... --organization YOUR_ORGANIZATION_ID --key-file org.key
+   ```
+
+   A gateway signs in with the application, finds each account's deployments and saves them as
+   targets, as for a stored credential. The CLI prints the targets that it found.
+
+Until its first check, a credential has no targets, so no request uses it. After that, gateways
+look for new deployments once a day while requests use the credential, and each check looks at
+once. A replaced application keeps its targets until the next check.
 
 ## Targets
 

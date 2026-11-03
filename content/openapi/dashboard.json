@@ -6005,6 +6005,7 @@
 															"type": "string",
 															"enum": [
 																"checkFailed",
+																"notChecked",
 																"noTargets",
 																"targetsUnavailable"
 															]
@@ -6155,6 +6156,100 @@
 											"kind",
 											"name",
 											"provider"
+										],
+										"additionalProperties": false
+									},
+									{
+										"type": "object",
+										"properties": {
+											"accountId": {
+												"type": "string",
+												"pattern": "^\\/subscriptions\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/resourcegroups\\/[-\\w.()\\p{L}\\p{N}]{0,89}[-\\w()\\p{L}\\p{N}]\\/providers\\/microsoft\\.cognitiveservices\\/accounts\\/[a-z0-9][a-z0-9-]{1,63}$"
+											},
+											"encryptedSecret": {
+												"type": "object",
+												"properties": {
+													"version": {
+														"type": "number",
+														"const": 1
+													},
+													"keyId": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"salt": {
+														"type": "string",
+														"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+													},
+													"nonce": {
+														"type": "string",
+														"pattern": "^[A-Za-z0-9_-]{16}$"
+													},
+													"blob": {
+														"type": "string",
+														"minLength": 22,
+														"maxLength": 5483,
+														"pattern": "^[A-Za-z0-9_-]+$"
+													}
+												},
+												"required": [
+													"version",
+													"keyId",
+													"salt",
+													"nonce",
+													"blob"
+												],
+												"additionalProperties": false
+											},
+											"kind": {
+												"type": "string",
+												"const": "encrypted"
+											},
+											"name": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 100
+											},
+											"provider": {
+												"type": "string",
+												"const": "azure"
+											}
+										},
+										"required": [
+											"accountId",
+											"encryptedSecret",
+											"kind",
+											"name",
+											"provider"
+										],
+										"additionalProperties": false
+									},
+									{
+										"type": "object",
+										"properties": {
+											"accountId": {
+												"type": "string",
+												"pattern": "^\\/subscriptions\\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\/resourcegroups\\/[-\\w.()\\p{L}\\p{N}]{0,89}[-\\w()\\p{L}\\p{N}]\\/providers\\/microsoft\\.cognitiveservices\\/accounts\\/[a-z0-9][a-z0-9-]{1,63}$"
+											},
+											"name": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 100
+											},
+											"provider": {
+												"type": "string",
+												"const": "azure"
+											},
+											"sameApplicationAs": {
+												"type": "string",
+												"format": "uuid"
+											}
+										},
+										"required": [
+											"accountId",
+											"name",
+											"provider",
+											"sameApplicationAs"
 										],
 										"additionalProperties": false
 									},
@@ -6372,36 +6467,62 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"type": "object",
-								"properties": {
-									"clientId": {
-										"type": "string"
-									},
-									"clientSecret": {
-										"type": "string",
-										"minLength": 1,
-										"maxLength": 4096
-									},
-									"tenantId": {
-										"type": "string"
-									},
-									"subscriptionIds": {
-										"minItems": 1,
-										"maxItems": 64,
-										"type": "array",
-										"items": {
-											"type": "string"
+								"anyOf": [
+									{
+										"type": "object",
+										"properties": {
+											"clientId": {
+												"type": "string"
+											},
+											"clientSecret": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 4096
+											},
+											"tenantId": {
+												"type": "string"
+											},
+											"subscriptionIds": {
+												"minItems": 1,
+												"maxItems": 64,
+												"type": "array",
+												"items": {
+													"type": "string"
+												},
+												"uniqueItems": true
+											}
 										},
-										"uniqueItems": true
+										"required": [
+											"clientId",
+											"clientSecret",
+											"tenantId",
+											"subscriptionIds"
+										],
+										"additionalProperties": false
+									},
+									{
+										"type": "object",
+										"properties": {
+											"byokId": {
+												"type": "string",
+												"format": "uuid"
+											},
+											"subscriptionIds": {
+												"minItems": 1,
+												"maxItems": 64,
+												"type": "array",
+												"items": {
+													"type": "string"
+												},
+												"uniqueItems": true
+											}
+										},
+										"required": [
+											"byokId"
+										],
+										"additionalProperties": false
 									}
-								},
-								"required": [
-									"clientId",
-									"clientSecret",
-									"tenantId",
-									"subscriptionIds"
-								],
-								"additionalProperties": false
+								]
 							}
 						}
 					}
@@ -6470,10 +6591,21 @@
 												],
 												"additionalProperties": false
 											}
+										},
+										"subscriptionIds": {
+											"minItems": 1,
+											"maxItems": 64,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"format": "uuid"
+											},
+											"uniqueItems": true
 										}
 									},
 									"required": [
-										"items"
+										"items",
+										"subscriptionIds"
 									],
 									"additionalProperties": false
 								}
