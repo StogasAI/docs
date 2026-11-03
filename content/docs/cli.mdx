@@ -1,14 +1,14 @@
 ---
 title: CLI
-description: Run a verified local endpoint for any OpenAI client, check evidence offline, sign in and add credit.
+description: Run a verified local endpoint for any OpenAI client, check evidence offline, sign in, add credit and edit policies.
 icon: Terminal
 ---
 
 The `stogas` CLI runs a local endpoint that verifies the gateway and protects each request. Point
 any OpenAI-compatible client at it; only the base URL changes. Use it from languages without an
 [SDK](/docs/sdk-overview), or from tools you cannot change. It also checks evidence and receipts
-offline, encrypts secrets for [customer encryption](/docs/customer-encryption), and manages your
-account.
+offline, encrypts secrets for [customer encryption](/docs/customer-encryption), edits policies in
+your own editor, and manages your account.
 
 ## Install
 
@@ -233,6 +233,33 @@ Monero go to a [deposit address](/docs/billing#payment-methods), and other coins
 `--network` picks a network for a coin that has several. Without `--organization`, the credit goes
 to your personal organization. If the organization has no billing country, state and ZIP code yet,
 the CLI asks for them.
+
+### Edit a policy
+
+```console
+stogas policy edit key <key-id>
+stogas policy edit organization --organization <organization-id>
+```
+
+`policy edit` opens a [policy](/docs/policies) as JSON in your `$VISUAL` or `$EDITOR`, or in `vi`
+(`notepad` on Windows) without either, and saves it when you close the file. The scope is
+`organization`, `folder`, `grant`, `role`, `member`, `credential` or `key`. **Copy ID** in the menu of
+a key, grant, member or credential copies its ID, and
+[List folders](/docs/reference/dashboard/folders/listFolders) and
+[List roles](/docs/reference/dashboard/roles/listRoles) return the others. Without
+`--organization`, the policy is in your personal organization.
+
+- The file starts with the [schema link](/docs/policies/editing#use-an-external-editor), so
+  editors such as VS Code complete and check fields. Close the file unchanged to keep the policy,
+  empty it to cancel, or replace it with `null` to clear the policy.
+- If the JSON is invalid or the dashboard refuses the policy, the CLI shows why and offers to open
+  your text again.
+- If someone saved the policy while you edited it, your changes apply to their version, as in the
+  [dashboard's editor](/docs/policies/editing#save-a-policy). The CLI lists the settings that you
+  both changed, where your values stay, and opens the result for you to review before it saves.
+- When an edit is not saved, the CLI prints the path of the file with your text, which only you
+  can read.
+- An editor that opens a window must wait until you close the file, as `code --wait` does.
 
 ### Call the dashboard API
 
