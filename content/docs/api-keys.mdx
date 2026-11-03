@@ -47,6 +47,11 @@ content. If the secret still belongs to a key, we replace it at once. The key ke
 and history, and requests with the old secret fail with `key_secret_replaced`. Reveal the new
 secret and update your apps. [Activity](/docs/activity) keeps the report.
 
+An organization with keys that are meant to be public can turn off **Replace secrets that GitHub
+finds in public** in Settings. A found secret then keeps working, and its key shows a warning until
+someone rotates the secret or dismisses the warning. Turning replacement back on leaves secrets
+found before as they are. Personal organizations always replace found secrets.
+
 ## Policies and credentials
 
 Every request must pass the key's policy, the policies above it and the organization balance. See

@@ -306,12 +306,16 @@
 																				"type": "null"
 																			}
 																		]
+																	},
+																	"replaced": {
+																		"type": "boolean"
 																	}
 																},
 																"required": [
 																	"reportedAt",
 																	"source",
-																	"url"
+																	"url",
+																	"replaced"
 																],
 																"additionalProperties": false
 															},
@@ -580,6 +584,7 @@
 															"key.secret.rotated",
 															"key.secret.revealed",
 															"key.secret.exposed",
+															"key.secret.exposure_dismissed",
 															"credential.created",
 															"credential.updated",
 															"credential.deleted",
@@ -889,6 +894,7 @@
 												"key.secret.rotated",
 												"key.secret.revealed",
 												"key.secret.exposed",
+												"key.secret.exposure_dismissed",
 												"credential.created",
 												"credential.updated",
 												"credential.deleted",
@@ -1878,6 +1884,142 @@
 														"type": "string",
 														"format": "uuid"
 													},
+													"reachedLimits": {
+														"maxItems": 24,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"scope": {
+																	"type": "string",
+																	"enum": [
+																		"organization",
+																		"folder",
+																		"grant"
+																	]
+																},
+																"scopeId": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 64
+																},
+																"scopeName": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 100
+																},
+																"name": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 48
+																},
+																"measure": {
+																	"type": "string",
+																	"enum": [
+																		"requests",
+																		"tokens",
+																		"stt",
+																		"usd",
+																		"concurrentRequests"
+																	]
+																},
+																"per": {
+																	"anyOf": [
+																		{
+																			"type": "object",
+																			"properties": {
+																				"count": {
+																					"type": "integer",
+																					"minimum": 1,
+																					"maximum": 1000
+																				},
+																				"unit": {
+																					"type": "string",
+																					"enum": [
+																						"second",
+																						"minute",
+																						"hour",
+																						"day",
+																						"week",
+																						"month",
+																						"year"
+																					]
+																				},
+																				"refill": {
+																					"type": "string",
+																					"enum": [
+																						"reset",
+																						"gradual"
+																					]
+																				},
+																				"anchor": {
+																					"anyOf": [
+																						{
+																							"type": "string",
+																							"format": "date-time"
+																						},
+																						{
+																							"type": "null"
+																						}
+																					]
+																				},
+																				"timeZone": {
+																					"anyOf": [
+																						{
+																							"type": "string",
+																							"minLength": 1,
+																							"maxLength": 100
+																						},
+																						{
+																							"type": "null"
+																						}
+																					]
+																				}
+																			},
+																			"required": [
+																				"count",
+																				"unit",
+																				"refill",
+																				"anchor",
+																				"timeZone"
+																			],
+																			"additionalProperties": false
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"maximum": {
+																	"type": "string",
+																	"maxLength": 78,
+																	"pattern": "^\\d+(?:\\.\\d+)?$"
+																},
+																"resetAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																}
+															},
+															"required": [
+																"scope",
+																"scopeId",
+																"scopeName",
+																"name",
+																"measure",
+																"per",
+																"maximum",
+																"resetAt"
+															],
+															"additionalProperties": false
+														}
+													},
 													"totalKeyCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -1905,6 +2047,7 @@
 													"maxKeysPerMember",
 													"name",
 													"organizationId",
+													"reachedLimits",
 													"totalKeyCount",
 													"updatedAt"
 												],
@@ -1955,6 +2098,153 @@
 													"type": "null"
 												}
 											]
+										},
+										"reachedLimits": {
+											"maxItems": 20,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"organization",
+															"folder",
+															"grant"
+														]
+													},
+													"scopeId": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													},
+													"scopeName": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 48
+													},
+													"measure": {
+														"type": "string",
+														"enum": [
+															"requests",
+															"tokens",
+															"stt",
+															"usd",
+															"concurrentRequests"
+														]
+													},
+													"per": {
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"count": {
+																		"type": "integer",
+																		"minimum": 1,
+																		"maximum": 1000
+																	},
+																	"unit": {
+																		"type": "string",
+																		"enum": [
+																			"second",
+																			"minute",
+																			"hour",
+																			"day",
+																			"week",
+																			"month",
+																			"year"
+																		]
+																	},
+																	"refill": {
+																		"type": "string",
+																		"enum": [
+																			"reset",
+																			"gradual"
+																		]
+																	},
+																	"anchor": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"format": "date-time"
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	},
+																	"timeZone": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"minLength": 1,
+																				"maxLength": 100
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	}
+																},
+																"required": [
+																	"count",
+																	"unit",
+																	"refill",
+																	"anchor",
+																	"timeZone"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"maximum": {
+														"type": "string",
+														"maxLength": 78,
+														"pattern": "^\\d+(?:\\.\\d+)?$"
+													},
+													"resetAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"grantCount": {
+														"type": "integer",
+														"exclusiveMinimum": 0,
+														"maximum": 9007199254740991
+													}
+												},
+												"required": [
+													"scope",
+													"scopeId",
+													"scopeName",
+													"name",
+													"measure",
+													"per",
+													"maximum",
+													"resetAt",
+													"grantCount"
+												],
+												"additionalProperties": false
+											}
+										},
+										"reachedLimitCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
 										}
 									},
 									"required": [
@@ -1964,7 +2254,9 @@
 										"manageableCount",
 										"total",
 										"organizationCount",
-										"organizationLimit"
+										"organizationLimit",
+										"reachedLimits",
+										"reachedLimitCount"
 									],
 									"additionalProperties": false
 								}
@@ -2946,12 +3238,16 @@
 																				"type": "null"
 																			}
 																		]
+																	},
+																	"replaced": {
+																		"type": "boolean"
 																	}
 																},
 																"required": [
 																	"reportedAt",
 																	"source",
-																	"url"
+																	"url",
+																	"replaced"
 																],
 																"additionalProperties": false
 															},
@@ -3584,7 +3880,7 @@
 											]
 										},
 										"exposedKeys": {
-											"maxItems": 10000,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "object",
@@ -3605,6 +3901,175 @@
 												],
 												"additionalProperties": false
 											}
+										},
+										"exposedKeyCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 10000
+										},
+										"reachedLimits": {
+											"maxItems": 20,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"organization",
+															"folder",
+															"grant",
+															"role",
+															"member",
+															"key"
+														]
+													},
+													"scopeId": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													},
+													"scopeName": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 48
+													},
+													"measure": {
+														"type": "string",
+														"enum": [
+															"requests",
+															"tokens",
+															"stt",
+															"usd",
+															"concurrentRequests"
+														]
+													},
+													"per": {
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"count": {
+																		"type": "integer",
+																		"minimum": 1,
+																		"maximum": 1000
+																	},
+																	"unit": {
+																		"type": "string",
+																		"enum": [
+																			"second",
+																			"minute",
+																			"hour",
+																			"day",
+																			"week",
+																			"month",
+																			"year"
+																		]
+																	},
+																	"refill": {
+																		"type": "string",
+																		"enum": [
+																			"reset",
+																			"gradual"
+																		]
+																	},
+																	"anchor": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"format": "date-time"
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	},
+																	"timeZone": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"minLength": 1,
+																				"maxLength": 100
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	}
+																},
+																"required": [
+																	"count",
+																	"unit",
+																	"refill",
+																	"anchor",
+																	"timeZone"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"maximum": {
+														"type": "string",
+														"maxLength": 78,
+														"pattern": "^\\d+(?:\\.\\d+)?$"
+													},
+													"resetAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"keyCount": {
+														"type": "integer",
+														"exclusiveMinimum": 0,
+														"maximum": 9007199254740991
+													}
+												},
+												"required": [
+													"scope",
+													"scopeId",
+													"scopeName",
+													"name",
+													"measure",
+													"per",
+													"maximum",
+													"resetAt",
+													"keyCount"
+												],
+												"additionalProperties": false
+											}
+										},
+										"reachedLimitCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"organizationRefusal": {
+											"anyOf": [
+												{
+													"type": "string",
+													"enum": [
+														"organization_restricted",
+														"insufficient_balance"
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
 										}
 									},
 									"required": [
@@ -3615,7 +4080,11 @@
 										"total",
 										"organizationCount",
 										"organizationLimit",
-										"exposedKeys"
+										"exposedKeys",
+										"exposedKeyCount",
+										"reachedLimits",
+										"reachedLimitCount",
+										"organizationRefusal"
 									],
 									"additionalProperties": false
 								}
@@ -4316,6 +4785,52 @@
 				}
 			}
 		},
+		"/api/{orgId}/keys/{keyId}/exposure": {
+			"delete": {
+				"operationId": "dismissApiKeyExposure",
+				"tags": [
+					"API keys"
+				],
+				"summary": "Dismiss a leak notice",
+				"description": "Ends the notice of a secret that GitHub found in public and that the organization kept working, as for a key meant to be public. A replaced secret’s notice ends when someone reveals or rotates the new secret instead, so dismissing it answers 409.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ApiKey"
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/keys/{keyId}/byok": {
 			"put": {
 				"operationId": "setApiKeyByok",
@@ -4960,7 +5475,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 20,
+																"maxItems": 21,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -4983,6 +5498,7 @@
 																		"routing.allowedCatalogNodes",
 																		"routing.retries",
 																		"routing.fallbacks",
+																		"routing.missingEncryptionKeys",
 																		"delegation",
 																		"encryption"
 																	]
@@ -5338,6 +5854,48 @@
 													"type": "null"
 												}
 											]
+										},
+										"problemCredentials": {
+											"maxItems": 20,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
+													"problems": {
+														"minItems": 1,
+														"maxItems": 2,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"enum": [
+																"checkFailed",
+																"noTargets",
+																"targetsUnavailable"
+															]
+														}
+													}
+												},
+												"required": [
+													"id",
+													"name",
+													"problems"
+												],
+												"additionalProperties": false
+											}
+										},
+										"problemCredentialCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
 										}
 									},
 									"required": [
@@ -5347,7 +5905,9 @@
 										"manageableCount",
 										"total",
 										"organizationCount",
-										"organizationLimit"
+										"organizationLimit",
+										"problemCredentials",
+										"problemCredentialCount"
 									],
 									"additionalProperties": false
 								}
@@ -5903,36 +6463,61 @@
 													"observed": {
 														"anyOf": [
 															{
-																"type": "object",
-																"properties": {
-																	"modelFormat": {
-																		"type": "string"
+																"anyOf": [
+																	{
+																		"type": "object",
+																		"properties": {
+																			"modelFormat": {
+																				"type": "string"
+																			},
+																			"modelName": {
+																				"type": "string"
+																			},
+																			"modelVersion": {
+																				"type": "string"
+																			},
+																			"skuName": {
+																				"type": "string"
+																			},
+																			"state": {
+																				"type": "string"
+																			}
+																		},
+																		"required": [
+																			"modelFormat",
+																			"modelName",
+																			"modelVersion",
+																			"skuName",
+																			"state"
+																		],
+																		"additionalProperties": false
 																	},
-																	"modelName": {
-																		"type": "string"
-																	},
-																	"modelVersion": {
-																		"type": "string"
-																	},
-																	"skuName": {
-																		"type": "string"
-																	},
-																	"state": {
-																		"type": "string"
+																	{
+																		"type": "object",
+																		"properties": {
+																			"servedModel": {
+																				"type": "string",
+																				"minLength": 1
+																			}
+																		},
+																		"required": [
+																			"servedModel"
+																		],
+																		"additionalProperties": false
 																	}
-																},
-																"required": [
-																	"modelFormat",
-																	"modelName",
-																	"modelVersion",
-																	"skuName",
-																	"state"
-																],
-																"additionalProperties": false
+																]
 															},
 															{
 																"type": "null"
 															}
+														]
+													},
+													"autoUpgrade": {
+														"type": "string",
+														"enum": [
+															"none",
+															"at_retirement",
+															"new_default"
 														]
 													},
 													"deploymentName": {
@@ -6039,6 +6624,7 @@
 													"unavailableReason",
 													"unavailableSince",
 													"observed",
+													"autoUpgrade",
 													"deploymentName",
 													"deploymentResourceId",
 													"deploymentType",
@@ -13237,13 +13823,82 @@
 			}
 		},
 		"/api/{orgId}/settings": {
+			"get": {
+				"operationId": "getOrganizationSettings",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Get organization settings",
+				"description": "Returns what Change organization settings changes. A personal organization has none of them.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"allowAccessTokens": {
+											"type": "boolean"
+										},
+										"allowPlaygroundAssistant": {
+											"type": "boolean"
+										},
+										"displayName": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 100
+										},
+										"name": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 100
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"replaceExposedKeys": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"allowAccessTokens",
+										"allowPlaygroundAssistant",
+										"displayName",
+										"name",
+										"replaceExposedKeys"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
 			"patch": {
 				"operationId": "updateOrganization",
 				"tags": [
 					"Organizations"
 				],
 				"summary": "Change organization settings",
-				"description": "Changing name, allowAccessTokens or allowPlaygroundAssistant needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key.",
+				"description": "Changing name, allowAccessTokens, allowPlaygroundAssistant or replaceExposedKeys needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key. With replaceExposedKeys false, a key secret that GitHub finds in public keeps working, and the key shows a notice until someone rotates the secret or dismisses the notice.",
 				"security": [
 					{
 						"accessToken": [
@@ -13285,6 +13940,9 @@
 												"type": "null"
 											}
 										]
+									},
+									"replaceExposedKeys": {
+										"type": "boolean"
 									}
 								},
 								"additionalProperties": false
@@ -13322,13 +13980,17 @@
 													"type": "null"
 												}
 											]
+										},
+										"replaceExposedKeys": {
+											"type": "boolean"
 										}
 									},
 									"required": [
 										"allowAccessTokens",
 										"allowPlaygroundAssistant",
 										"displayName",
-										"name"
+										"name",
+										"replaceExposedKeys"
 									],
 									"additionalProperties": false
 								}
@@ -15088,7 +15750,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 20,
+											"maxItems": 21,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -15111,6 +15773,7 @@
 													"routing.allowedCatalogNodes",
 													"routing.retries",
 													"routing.fallbacks",
+													"routing.missingEncryptionKeys",
 													"delegation",
 													"encryption"
 												]
@@ -15263,12 +15926,16 @@
 												"type": "null"
 											}
 										]
+									},
+									"replaced": {
+										"type": "boolean"
 									}
 								},
 								"required": [
 									"reportedAt",
 									"source",
-									"url"
+									"url",
+									"replaced"
 								],
 								"additionalProperties": false
 							},
@@ -15950,6 +16617,17 @@
 							}
 						]
 					},
+					"checkFailingSince": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"azureTargets": {
 						"anyOf": [
 							{
@@ -16084,6 +16762,7 @@
 					"exclusiveKeyCount",
 					"checkedAt",
 					"checkError",
+					"checkFailingSince",
 					"azureTargets",
 					"encryptionKeyId",
 					"createdAt",
@@ -16688,6 +17367,15 @@
 													"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
 													"x-stogas-default": 2
 												},
+												"missingEncryptionKeys": {
+													"type": "string",
+													"enum": [
+														"fail",
+														"skip"
+													],
+													"description": "What happens when a deployment and credential pair needs an encryption key that the request didn't send. fail, the default, fails the request. skip leaves out only that pair, so the request can use its other pairs. fail wins when policies differ.",
+													"x-stogas-default": "fail"
+												},
 												"filter": {
 													"type": "string",
 													"minLength": 1,
@@ -16849,7 +17537,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -16872,6 +17560,7 @@
 												"routing.allowedCatalogNodes",
 												"routing.retries",
 												"routing.fallbacks",
+												"routing.missingEncryptionKeys",
 												"delegation",
 												"encryption"
 											]
@@ -16886,7 +17575,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -16909,6 +17598,7 @@
 												"routing.allowedCatalogNodes",
 												"routing.retries",
 												"routing.fallbacks",
+												"routing.missingEncryptionKeys",
 												"delegation",
 												"encryption"
 											]
@@ -16923,7 +17613,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -16946,6 +17636,7 @@
 												"routing.allowedCatalogNodes",
 												"routing.retries",
 												"routing.fallbacks",
+												"routing.missingEncryptionKeys",
 												"delegation",
 												"encryption"
 											]
@@ -16960,7 +17651,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -16983,6 +17674,7 @@
 												"routing.allowedCatalogNodes",
 												"routing.retries",
 												"routing.fallbacks",
+												"routing.missingEncryptionKeys",
 												"delegation",
 												"encryption"
 											]
@@ -16997,7 +17689,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -17020,6 +17712,7 @@
 												"routing.allowedCatalogNodes",
 												"routing.retries",
 												"routing.fallbacks",
+												"routing.missingEncryptionKeys",
 												"delegation",
 												"encryption"
 											]
@@ -17034,7 +17727,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -17057,6 +17750,7 @@
 												"routing.allowedCatalogNodes",
 												"routing.retries",
 												"routing.fallbacks",
+												"routing.missingEncryptionKeys",
 												"delegation",
 												"encryption"
 											]
@@ -17071,7 +17765,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -17092,7 +17786,8 @@
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
-												"routing.fallbacks"
+												"routing.fallbacks",
+												"routing.missingEncryptionKeys"
 											]
 										},
 										"uniqueItems": true
@@ -17523,6 +18218,15 @@
 								"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
 								"x-stogas-default": 2
 							},
+							"missingEncryptionKeys": {
+								"type": "string",
+								"enum": [
+									"fail",
+									"skip"
+								],
+								"description": "What happens when a deployment and credential pair needs an encryption key that the request didn't send. fail, the default, fails the request. skip leaves out only that pair, so the request can use its other pairs. fail wins when policies differ.",
+								"x-stogas-default": "fail"
+							},
 							"filter": {
 								"type": "string",
 								"minLength": 1,
@@ -17778,6 +18482,142 @@
 						"type": "string",
 						"format": "uuid"
 					},
+					"reachedLimits": {
+						"maxItems": 24,
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"scope": {
+									"type": "string",
+									"enum": [
+										"organization",
+										"folder",
+										"grant"
+									]
+								},
+								"scopeId": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 64
+								},
+								"scopeName": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 100
+								},
+								"name": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 48
+								},
+								"measure": {
+									"type": "string",
+									"enum": [
+										"requests",
+										"tokens",
+										"stt",
+										"usd",
+										"concurrentRequests"
+									]
+								},
+								"per": {
+									"anyOf": [
+										{
+											"type": "object",
+											"properties": {
+												"count": {
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 1000
+												},
+												"unit": {
+													"type": "string",
+													"enum": [
+														"second",
+														"minute",
+														"hour",
+														"day",
+														"week",
+														"month",
+														"year"
+													]
+												},
+												"refill": {
+													"type": "string",
+													"enum": [
+														"reset",
+														"gradual"
+													]
+												},
+												"anchor": {
+													"anyOf": [
+														{
+															"type": "string",
+															"format": "date-time"
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"timeZone": {
+													"anyOf": [
+														{
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												}
+											},
+											"required": [
+												"count",
+												"unit",
+												"refill",
+												"anchor",
+												"timeZone"
+											],
+											"additionalProperties": false
+										},
+										{
+											"type": "null"
+										}
+									]
+								},
+								"maximum": {
+									"type": "string",
+									"maxLength": 78,
+									"pattern": "^\\d+(?:\\.\\d+)?$"
+								},
+								"resetAt": {
+									"anyOf": [
+										{
+											"type": "string",
+											"format": "date-time"
+										},
+										{
+											"type": "null"
+										}
+									]
+								}
+							},
+							"required": [
+								"scope",
+								"scopeId",
+								"scopeName",
+								"name",
+								"measure",
+								"per",
+								"maximum",
+								"resetAt"
+							],
+							"additionalProperties": false
+						}
+					},
 					"totalKeyCount": {
 						"type": "integer",
 						"minimum": 0,
@@ -17806,6 +18646,7 @@
 					"maxKeysPerMember",
 					"name",
 					"organizationId",
+					"reachedLimits",
 					"totalKeyCount",
 					"updatedAt"
 				],
@@ -17882,7 +18723,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -17905,6 +18746,7 @@
 														"routing.allowedCatalogNodes",
 														"routing.retries",
 														"routing.fallbacks",
+														"routing.missingEncryptionKeys",
 														"delegation",
 														"encryption"
 													]
@@ -17922,7 +18764,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -17945,6 +18787,7 @@
 																"routing.allowedCatalogNodes",
 																"routing.retries",
 																"routing.fallbacks",
+																"routing.missingEncryptionKeys",
 																"delegation",
 																"encryption"
 															]
@@ -17974,7 +18817,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -17997,6 +18840,7 @@
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
 																	"routing.fallbacks",
+																	"routing.missingEncryptionKeys",
 																	"delegation",
 																	"encryption"
 																]
@@ -18023,7 +18867,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -18046,6 +18890,7 @@
 														"routing.allowedCatalogNodes",
 														"routing.retries",
 														"routing.fallbacks",
+														"routing.missingEncryptionKeys",
 														"delegation",
 														"encryption"
 													]
@@ -18063,7 +18908,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -18086,6 +18931,7 @@
 																"routing.allowedCatalogNodes",
 																"routing.retries",
 																"routing.fallbacks",
+																"routing.missingEncryptionKeys",
 																"delegation",
 																"encryption"
 															]
@@ -18115,7 +18961,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -18138,6 +18984,7 @@
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
 																	"routing.fallbacks",
+																	"routing.missingEncryptionKeys",
 																	"delegation",
 																	"encryption"
 																]
@@ -18164,7 +19011,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -18187,6 +19034,7 @@
 														"routing.allowedCatalogNodes",
 														"routing.retries",
 														"routing.fallbacks",
+														"routing.missingEncryptionKeys",
 														"delegation",
 														"encryption"
 													]
@@ -18204,7 +19052,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -18227,6 +19075,7 @@
 																"routing.allowedCatalogNodes",
 																"routing.retries",
 																"routing.fallbacks",
+																"routing.missingEncryptionKeys",
 																"delegation",
 																"encryption"
 															]
@@ -18256,7 +19105,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -18279,6 +19128,7 @@
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
 																	"routing.fallbacks",
+																	"routing.missingEncryptionKeys",
 																	"delegation",
 																	"encryption"
 																]
@@ -18305,7 +19155,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -18328,6 +19178,7 @@
 														"routing.allowedCatalogNodes",
 														"routing.retries",
 														"routing.fallbacks",
+														"routing.missingEncryptionKeys",
 														"delegation",
 														"encryption"
 													]
@@ -18345,7 +19196,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -18368,6 +19219,7 @@
 																"routing.allowedCatalogNodes",
 																"routing.retries",
 																"routing.fallbacks",
+																"routing.missingEncryptionKeys",
 																"delegation",
 																"encryption"
 															]
@@ -18397,7 +19249,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -18420,6 +19272,7 @@
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
 																	"routing.fallbacks",
+																	"routing.missingEncryptionKeys",
 																	"delegation",
 																	"encryption"
 																]
@@ -18446,7 +19299,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -18469,6 +19322,7 @@
 														"routing.allowedCatalogNodes",
 														"routing.retries",
 														"routing.fallbacks",
+														"routing.missingEncryptionKeys",
 														"delegation",
 														"encryption"
 													]
@@ -18486,7 +19340,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -18509,6 +19363,7 @@
 																"routing.allowedCatalogNodes",
 																"routing.retries",
 																"routing.fallbacks",
+																"routing.missingEncryptionKeys",
 																"delegation",
 																"encryption"
 															]
@@ -18538,7 +19393,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -18561,6 +19416,7 @@
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
 																	"routing.fallbacks",
+																	"routing.missingEncryptionKeys",
 																	"delegation",
 																	"encryption"
 																]
@@ -18587,7 +19443,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -18610,6 +19466,7 @@
 														"routing.allowedCatalogNodes",
 														"routing.retries",
 														"routing.fallbacks",
+														"routing.missingEncryptionKeys",
 														"delegation",
 														"encryption"
 													]
@@ -18627,7 +19484,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -18650,6 +19507,7 @@
 																"routing.allowedCatalogNodes",
 																"routing.retries",
 																"routing.fallbacks",
+																"routing.missingEncryptionKeys",
 																"delegation",
 																"encryption"
 															]
@@ -18679,7 +19537,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -18702,6 +19560,7 @@
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
 																	"routing.fallbacks",
+																	"routing.missingEncryptionKeys",
 																	"delegation",
 																	"encryption"
 																]
@@ -18726,7 +19585,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -18747,7 +19606,8 @@
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
-												"routing.fallbacks"
+												"routing.fallbacks",
+												"routing.missingEncryptionKeys"
 											]
 										},
 										"uniqueItems": true
@@ -19249,6 +20109,15 @@
 								"maximum": 2,
 								"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
 								"x-stogas-default": 2
+							},
+							"missingEncryptionKeys": {
+								"type": "string",
+								"enum": [
+									"fail",
+									"skip"
+								],
+								"description": "What happens when a deployment and credential pair needs an encryption key that the request didn't send. fail, the default, fails the request. skip leaves out only that pair, so the request can use its other pairs. fail wins when policies differ.",
+								"x-stogas-default": "fail"
 							},
 							"filter": {
 								"type": "string",
@@ -19802,6 +20671,15 @@
 											"maximum": 2,
 											"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
 											"x-stogas-default": 2
+										},
+										"missingEncryptionKeys": {
+											"type": "string",
+											"enum": [
+												"fail",
+												"skip"
+											],
+											"description": "What happens when a deployment and credential pair needs an encryption key that the request didn't send. fail, the default, fails the request. skip leaves out only that pair, so the request can use its other pairs. fail wins when policies differ.",
+											"x-stogas-default": "fail"
 										},
 										"filter": {
 											"type": "string",
