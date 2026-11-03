@@ -76,13 +76,14 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 
 ### 403 Forbidden
 
-| Code                   | Meaning                                                                     |
-| ---------------------- | --------------------------------------------------------------------------- |
-| `<scope>_disabled`     | That scope is disabled.                                                     |
-| `<scope>_expired`      | That scope's access has expired.                                            |
-| `schedule_denied`      | A [deny period](/docs/policies/access#deny-periods) blocks requests now.    |
-| `dashboard_key_denied` | Your dashboard session cannot use this key.                                 |
-| `permission_denied`    | The key does not allow a [request policy](/docs/policies/request-policies). |
+| Code                      | Meaning                                                                                      |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| `<scope>_disabled`        | That scope is disabled.                                                                      |
+| `<scope>_expired`         | That scope's access has expired.                                                             |
+| `organization_restricted` | The organization is restricted, so its requests are refused until the restriction is lifted. |
+| `schedule_denied`         | A [deny period](/docs/policies/access#deny-periods) blocks requests now.                     |
+| `dashboard_key_denied`    | Your dashboard session cannot use this key.                                                  |
+| `permission_denied`       | The key does not allow a [request policy](/docs/policies/request-policies).                  |
 
 ### 404, 405, 408 and 415
 
