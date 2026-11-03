@@ -1,0 +1,29 @@
+---
+title: Get organization limits
+description: Returns each limit with its default and, for members who may list
+  everything it counts, how much is in use. Stogas sets the limits, and support
+  raises them on request.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns each limit with its default and, for members who may list
+          everything it counts, how much is in use. Stogas sets the limits, and
+          support raises them on request.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/limits', method: 'get' }]} />
+    </>
+  );
+}
