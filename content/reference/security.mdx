@@ -79,23 +79,47 @@ See [Connection modes](/docs/connection-modes).
 
 ## Receipt format
 
-Send `Stogas-Metadata: v1` to get a final `stogas` object with usage, routing and provider details,
-and a receipt. A buffered response adds the object to the JSON. A stream sends it in a
+Send `Stogas-Metadata: v2` to get a final `stogas` object with usage, routing and provider details,
+a receipt and its salts. A buffered response adds the object to the JSON. A stream sends it in a
 `: stogas {...}` SSE comment before the last event.
 
-The `receipt` field has the schema `stogas.receipt.v1`:
+The `receipt` field has the schema `stogas.receipt.v2`:
 
-| Field             | Value                                                              |
-| ----------------- | ------------------------------------------------------------------ |
-| `boot_sha256`     | The boot record of the gateway that signed the receipt             |
-| `request_sha256`  | SHA-256 of the exact request body                                  |
-| `response_sha256` | SHA-256 of the exact response, including the endpoint's last event |
-| `signature`       | The gateway's signature                                            |
+| Field                 | Value                                          |
+| --------------------- | ---------------------------------------------- |
+| `boot_sha256`         | The boot record whose key signed the receipt   |
+| `request_commitment`  | The request's commitment, as lowercase hex     |
+| `response_commitment` | The response's commitment, as lowercase hex    |
+| `signature`           | The gateway's signature, as unpadded base64url |
 
-One signature covers the request hash, response hash and SHA-256 of the RFC 8785 canonical
-`stogas` object without its `receipt` field. That object's `policy_versions_sha256` is the SHA-256
-of the RFC 8785 canonical JSON of the request record's `policy_versions`. Metadata and keepalive comments are not part of the
-response hash. See [Receipts](/docs/receipts).
+`salts.request` and `salts.response` are 32 random bytes each, as lowercase hex. Only the client
+receives them.
+
+Each side's commitment is the SHA-256 of `stogas.receipt.v2.commitment`, a zero byte, `request` or
+`response`, a zero byte, the side's salt and the SHA-512 of the side's content as RFC 8785 JSON.
+Content is one JSON object without duplicate keys or invalid Unicode, at most 128 levels deep, whose
+integers are from -9007199254740991 to 9007199254740991:
+
+- A request is its body without the top-level `encryption_keys`.
+- A buffered response is its body without the top-level `stogas`.
+- A Responses stream is the `response` of its `response.completed` or `response.incomplete` event.
+- A Chat Completions stream is the `chat.completion` that its chunks assemble to. `id`, `created`,
+  `model` and `system_fingerprint` come from the first chunk that sets them, where `""` and `0` set
+  nothing. `service_tier`, `speed`, `inference_geo`, `usage` and `prompt_filter_results` come from
+  the last chunk that has them. Choices are matched by `index`: each keeps its last
+  `finish_reason`, appends the `content` and `refusal` of its `logprobs`, and lists each chunk's
+  `content_filter_results`. Its deltas build its `message`: `role` must not change, `content`,
+  `refusal`, `reasoning` and `reasoning_content` are joined, and `annotations` and `images` are
+  appended. `tool_calls` and `reasoning_details` are matched by `index`: their `id`, `type`,
+  function `name` and `cache_control` must not change, and their text is joined. A field that is
+  null or missing in every chunk is left out, and a chunk with any other field cannot be assembled.
+
+Comment lines, such as keepalives and the `stogas` comment, are not part of a stream's content.
+
+The signature covers `stogas.receipt.v2`, a zero byte, the request commitment, the response
+commitment and the SHA-256 of the RFC 8785 `stogas` object without its `receipt` and `salts`.
+That object's `policy_versions_sha256` is the SHA-256 of the RFC 8785 canonical JSON of the request
+record's `policy_versions`. See [Receipts](/docs/receipts).
 
 ## Signed documents
 

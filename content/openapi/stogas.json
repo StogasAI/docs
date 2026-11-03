@@ -705,10 +705,10 @@
 				"schema": {
 					"type": "string",
 					"enum": [
-						"v1"
+						"v2"
 					]
 				},
-				"description": "Set to `v1` to add the `stogas` object, with usage, cost and a signed [receipt](/docs/receipts), to the response."
+				"description": "Set to `v2` to add the `stogas` object, with usage, cost, a signed [receipt](/docs/receipts) and its salts, to the response."
 			},
 			"SessionId": {
 				"name": "X-Session-Id",
@@ -3561,6 +3561,7 @@
 					"catalog",
 					"timing",
 					"receipt",
+					"salts",
 					"meters",
 					"upstream_cost_usd",
 					"billed_cost_usd",
@@ -3662,6 +3663,25 @@
 					"receipt": {
 						"$ref": "#/components/schemas/StogasReceipt"
 					},
+					"salts": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": [
+							"request",
+							"response"
+						],
+						"properties": {
+							"request": {
+								"type": "string",
+								"pattern": "^[0-9a-f]{64}$"
+							},
+							"response": {
+								"type": "string",
+								"pattern": "^[0-9a-f]{64}$"
+							}
+						},
+						"description": "The random salt that each commitment covers. Only you receive them: share a side's salt to prove that side. Request records and exports don't have them."
+					},
 					"meters": {
 						"type": "object",
 						"maxProperties": 64,
@@ -3758,7 +3778,7 @@
 						"description": "Exact USD amount as a decimal string."
 					}
 				},
-				"description": "Added to the response when the request sends `Stogas-Metadata: v1`. The receipt signs the request hash, the response hash and the rest of this object. See [Receipts](/docs/receipts)."
+				"description": "Added to the response when the request sends `Stogas-Metadata: v2`. The receipt signs a commitment to the request, a commitment to the response and the rest of this object without its `salts`. See [Receipts](/docs/receipts)."
 			},
 			"StogasReceipt": {
 				"type": "object",
@@ -3766,30 +3786,31 @@
 				"required": [
 					"schema",
 					"boot_sha256",
-					"request_sha256",
-					"response_sha256",
+					"request_commitment",
+					"response_commitment",
 					"signature"
 				],
 				"properties": {
 					"schema": {
 						"type": "string",
-						"const": "stogas.receipt.v1"
+						"const": "stogas.receipt.v2"
 					},
 					"boot_sha256": {
 						"type": "string",
-						"pattern": "^[0-9a-f]{64}$"
+						"pattern": "^[0-9a-f]{64}$",
+						"description": "The boot record whose key signed the receipt."
 					},
-					"request_sha256": {
+					"request_commitment": {
 						"type": "string",
 						"pattern": "^[0-9a-f]{64}$"
 					},
-					"response_sha256": {
+					"response_commitment": {
 						"type": "string",
 						"pattern": "^[0-9a-f]{64}$"
 					},
 					"signature": {
 						"type": "string",
-						"pattern": "^[A-Za-z0-9_-]{86}$"
+						"pattern": "^[A-Za-z0-9_-]{4498}$"
 					}
 				}
 			},

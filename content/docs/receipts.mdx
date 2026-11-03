@@ -1,23 +1,23 @@
 ---
 title: Receipts
-description: Get a signed record of a request and its response, and check it later.
+description: Get a signed record of a request and its response, and prove either one later.
 icon: ReceiptText
 ---
 
-A receipt proves that a verified gateway received an exact request and returned an exact response.
-The gateway signs it with a key bound to its hardware evidence. Use receipts when you or an auditor
-must check a request later.
+A receipt proves that a verified gateway received a request and returned a response. The gateway
+signs it with a key bound to its hardware evidence. Use receipts when you or an auditor must check a
+request later. You can prove the response without revealing the request, or the other way round.
 
 ## Get a receipt
 
 Send this header with an inference request:
 
 ```http
-Stogas-Metadata: v1
+Stogas-Metadata: v2
 ```
 
-The response then ends with a `stogas` object. It has usage, routing and provider details, and a
-compact response receipt:
+The response then ends with a `stogas` object. It has usage, routing and provider details, a
+compact receipt and two salts:
 
 ```jsonc
 {
@@ -28,12 +28,13 @@ compact response receipt:
 		// Usage, routing and provider details.
 		"policy_versions_sha256": "6a0f...", // The policies that applied.
 		"receipt": {
-			"schema": "stogas.receipt.v1",
+			"schema": "stogas.receipt.v2",
 			"boot_sha256": "9f2c...", // The gateway boot that signed it.
-			"request_sha256": "41d7...",
-			"response_sha256": "c08e...",
+			"request_commitment": "41d7...",
+			"response_commitment": "c08e...",
 			"signature": "..."
-		}
+		},
+		"salts": { "request": "5b1e...", "response": "e73a..." } // Only you receive these.
 	}
 }
 ```
@@ -48,13 +49,41 @@ request completed. Streamed output arrives before that check.
 
 One signature covers:
 
-- the SHA-256 of the exact request body,
-- the SHA-256 of the exact response, including the endpoint's last event, and
-- the `stogas` object, without its `receipt` field.
+- a commitment to the request,
+- a commitment to the response, and
+- the `stogas` object, without its `receipt` and `salts`.
 
-Keepalive and metadata comments are not part of the response hash. The gateway hashes a stream as
-it passes through, so a receipt adds no delay. The
-[receipt format](/docs/reference/security#receipt-format) lists each field.
+Each commitment covers the meaning of its side, not its bytes, so whitespace and key order don't
+change it. A receipt covers:
+
+- the request body that you sent, without its top-level `encryption_keys`,
+- a buffered response, without its `stogas` object,
+- the `chat.completion` that a Chat Completions stream's chunks add up to, however the reply was
+  split into chunks, and
+- the `response` of a Responses stream's last event, `response.completed` or
+  `response.incomplete`.
+
+The [receipt format](/docs/reference/security#receipt-format) lists each field and how each
+commitment is computed.
+
+## Keep your content private
+
+Each commitment also covers a random salt that only you receive, in `salts`. The gateway keeps
+neither salt, and request records and [exports](/docs/export) don't have them. Without a salt,
+nobody who holds a receipt can confirm a guessed prompt or reply.
+
+To prove one side, share its content and its salt. Leave out the other side's salt, and its
+commitment reveals nothing about it. For example, to show an auditor what the model replied
+without revealing your prompt, share the response and the `stogas` object with only
+`salts.response`. The [CLI](#share-a-proof) writes such a proof for you.
+
+## Numbers in a receipt
+
+A receipt holds integers from -9007199254740991 to 9007199254740991, the range that every JSON
+parser reads exactly, and other numbers from -1.7976931348623157e308 to 1.7976931348623157e308. A
+request that sends `Stogas-Metadata` with a number outside these ranges fails with a `400` error
+before it runs. Send such numbers as strings, for example `"seed": "9007199254740993"`. Requests
+without the header are not affected.
 
 ## Check which policies applied
 
@@ -65,20 +94,33 @@ receipt stays small. To check it, hash the canonical form of that list and compa
 
 ## Check a receipt later
 
-Save the request body and the response exactly as they were sent. Reformatting the JSON changes
-their hashes. Then run:
+Save the request body, and the response with its `stogas` object. Their formatting doesn't matter.
+Then run:
 
 ```console
 stogas proof --request request.json --response response.json --json
 ```
 
-Add `--stream` for an SSE response. If you saved the `stogas` object on its own, pass it with
-`--proof metadata.json`, and pass only the signed response bytes with `--response`.
+Add `--stream` for a stream saved as it arrived. Leave out `--request` to check only the response.
+If you saved the `stogas` object on its own, pass it with `--proof metadata.json`.
 
 The command downloads the boot record named by `boot_sha256` and the evidence it was verified with,
 then checks the receipt against them. It uses the evidence that was valid when the boot was logged,
 so later key changes and expired revocation lists do not invalidate a saved receipt. The
 [Trust Center](/docs/verification#trust-center) shows the same boot records.
+
+### Share a proof
+
+To let someone else check a receipt, add `--share` with a directory:
+
+```console
+stogas proof --request request.json --response response.json --share proof/ --hide request
+```
+
+This writes `metadata.json` and `response.json` to `proof/`, and prints the command that checks
+them. `--hide request` leaves out the request and its salt, so the proof reveals nothing about your
+prompt. Without `--hide`, the proof also has `request.json`, without your `encryption_keys`. For a
+stream, `response.json` is the response that the stream adds up to.
 
 ### Check without network access
 
@@ -107,6 +149,6 @@ The SDKs offer the same offline check, for example `verify_receipt` in [Python](
 
 ## If a check fails
 
-A failed check means that the receipt cannot prove what the gateway returned. It does not mean that the
-model did not run, and the request can still be billed. Do not retry it automatically: a retry is a
-new request.
+A failed check means that the receipt cannot prove what the gateway returned. It does not mean that
+the model did not run, and the request can still be billed. Do not retry it automatically: a retry
+is a new request.

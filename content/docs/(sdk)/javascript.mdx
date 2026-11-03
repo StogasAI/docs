@@ -100,12 +100,12 @@ as [Options](/docs/sdk-overview#options) describes.
 
 ## Receipts
 
-Send `Stogas-Metadata: v1` to get a signed [receipt](/docs/receipts):
+Send `Stogas-Metadata: v2` to get a signed [receipt](/docs/receipts):
 
 ```ts
 const response = await client.responses.create(
 	{ model: 'chutes-gemma-4-31b-turbo', input: 'Say hello.' },
-	{ headers: { 'Stogas-Metadata': 'v1' } }
+	{ headers: { 'Stogas-Metadata': 'v2' } }
 );
 ```
 

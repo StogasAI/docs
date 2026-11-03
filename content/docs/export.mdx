@@ -68,7 +68,7 @@ Each record is the request record with these fields added:
 | `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if the request was rejected. |
 | `response` | The response of a buffered request, or the error that ended it.                                                                         |
 | `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.               |
-| `stogas`   | The same object that [`Stogas-Metadata: v1`](/docs/receipts) returns. Every record has it, whether or not the request sent the header.  |
+| `stogas`   | The object that [`Stogas-Metadata: v2`](/docs/receipts) returns, without its `salts`. Every record has it, whether or not the request sent the header. |
 
 - A destination with `"content": false` gets records without `request`, `response` and `events`.
 
@@ -96,8 +96,9 @@ Each record is the request record with these fields added:
   final usage.
 - The record never contains API keys, provider credentials or webhook headers. Your prompt text is
   only [redacted](/docs/pii-redaction) if a policy turns redaction on.
-- The record is processed JSON, not a copy of the bytes that the client received, so you cannot
-  check a receipt against it. Keep the original bytes for that.
+- A record has no salts, so it cannot prove a request or response, and its request is the one after
+  redaction and policy changes. To [check a receipt](/docs/receipts#check-a-receipt-later), keep
+  the request, the response and the `stogas` object that the client received.
 
 ## Delivery
 

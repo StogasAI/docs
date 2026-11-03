@@ -115,10 +115,10 @@ transport, err := stogas.NewTransport(stogas.TransportOptions{Security: "e2ee", 
 
 ## Receipts
 
-Send `Stogas-Metadata: v1` to get a signed [receipt](/docs/receipts):
+Send `Stogas-Metadata: v2` to get a signed [receipt](/docs/receipts):
 
 ```go
-response, err := client.Responses.New(ctx, params, option.WithHeader("Stogas-Metadata", "v1"))
+response, err := client.Responses.New(ctx, params, option.WithHeader("Stogas-Metadata", "v2"))
 ```
 
 The transport checks the receipt before it returns the response. If the check fails, the request
@@ -136,12 +136,21 @@ if err != nil {
 }
 defer verifier.Close()
 
-// stogasObject is the saved `stogas` object. The hashes are SHA-256 of the exact request
-// body and of the response without its `stogas` object.
-receipt, err := verifier.VerifyReceiptArchive(bootBytes, evidenceBytes, stogasObject,
-	sha256.Sum256(requestBytes), sha256.Sum256(responseBytes))
+request, err := stogas.RequestDigest(requestBytes)
+if err != nil {
+	return err
+}
+response, err := stogas.ResponseDigest(responseBytes)
+if err != nil {
+	return err
+}
+// stogasObject is the saved `stogas` object with its salts. Pass nil for a side that you
+// don't check, for example a request kept private.
+receipt, err := verifier.VerifyReceiptArchive(bootBytes, evidenceBytes, stogasObject, &request, &response)
 ```
 
-`VerifyReceiptArchive` checks the boot against the evidence that was valid when it was logged. To
-check current evidence instead, call `verifier.Refresh(evidenceBytes)`, then `VerifyLoggedBoot` or
-`VerifyReceipt` on the snapshot it returns. Close each snapshot when you finish with it.
+`VerifyReceiptArchive` checks the boot against the evidence that was valid when it was logged. For
+a stream, `Push` each event that arrived into `stogas.NewStreamContent()`, and pass its `Digest()`
+as the response's. To check current evidence instead, call `verifier.Refresh(evidenceBytes)`, then
+`VerifyLoggedBoot` or `VerifyReceipt` on the snapshot it returns. Close each snapshot and stream
+reader when you finish with it.

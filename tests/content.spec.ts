@@ -16,7 +16,7 @@ const receipts = read('receipts.mdx');
 const verification = read('verification.mdx');
 
 test('documents response receipts without legacy headers', () => {
-	expect(receipts).toContain('Stogas-Metadata: v1');
+	expect(receipts).toContain('Stogas-Metadata: v2');
 	const pages = [
 		read('security-model.mdx'),
 		verification,

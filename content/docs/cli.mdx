@@ -160,15 +160,17 @@ available, `http_status` and a fixed `error_code`, and exits with status 0 only 
 
 These commands make no network requests unless a description says so.
 
-| Command                                                     | Effect                                                                                                                                     |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `stogas verify <file> [--json]`                             | Checks saved evidence, or `-` for standard input. See [Gateway verification](/docs/verification).                                          |
-| `stogas proof --request <file> --response <file> [--json]`  | Checks a saved [receipt](/docs/receipts#check-a-receipt-later). Downloads the evidence it needs unless you pass `--boot` and `--evidence`. |
-| `stogas download-evidence --boot <sha256> [--output <dir>]` | Downloads the boot record and evidence that a receipt names                                                                                |
-| `stogas verify-release <dir> [--evidence <file>]`           | Checks a [downloaded SDK release](/docs/reproducible-builds#verify-an-sdk-download). Downloads current evidence without `--evidence`.      |
+| Command                                                      | Effect                                                                                                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `stogas verify <file> [--json]`                              | Checks saved evidence, or `-` for standard input. See [Gateway verification](/docs/verification).                                          |
+| `stogas proof [--request <file>] --response <file> [--json]` | Checks a saved [receipt](/docs/receipts#check-a-receipt-later). Downloads the evidence it needs unless you pass `--boot` and `--evidence`. |
+| `stogas download-evidence --boot <sha256> [--output <dir>]`  | Downloads the boot record and evidence that a receipt names                                                                                |
+| `stogas verify-release <dir> [--evidence <file>]`            | Checks a [downloaded SDK release](/docs/reproducible-builds#verify-an-sdk-download). Downloads current evidence without `--evidence`.      |
 
-`proof` also takes `--stream` for an SSE response, and `--proof <file>` for a `stogas` object saved
-on its own, with only the signed response bytes in `--response`.
+`proof` also takes `--stream` for an SSE response, `--proof <file>` for a `stogas` object saved on
+its own, and `--share <dir>` to write a proof that someone else can check, with `--hide request`
+or `--hide response` to leave a side out of it. Without `--request`, the request stays unchecked.
+See [Share a proof](/docs/receipts#share-a-proof).
 
 ## Encrypt secrets
 

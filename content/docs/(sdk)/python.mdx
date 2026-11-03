@@ -105,13 +105,13 @@ raises `VerificationError` with a stable `code`, such as `"evidence_unavailable"
 
 ## Receipts
 
-Send `Stogas-Metadata: v1` to get a signed [receipt](/docs/receipts):
+Send `Stogas-Metadata: v2` to get a signed [receipt](/docs/receipts):
 
 ```python
 response = client.responses.create(
     model="chutes-gemma-4-31b-turbo",
     input="Say hello.",
-    extra_headers={"Stogas-Metadata": "v1"},
+    extra_headers={"Stogas-Metadata": "v2"},
 )
 ```
 
@@ -124,21 +124,21 @@ Check a saved response later, with the boot record and evidence files from
 [Check without network access](/docs/receipts#check-without-network-access). This makes no network requests:
 
 ```python
-from hashlib import sha256
-
-from stogas import EvidenceVerifier, VerificationError
+from stogas import EvidenceVerifier, VerificationError, request_digest
 
 verifier = EvidenceVerifier()  # Trusts our built-in root key.
 try:
     # Checks the boot against the evidence that was valid when it was logged.
     boot = verifier.verify_boot_archive(boot_bytes, evidence_bytes)
     # Checks a buffered response that ends with its `stogas` object.
-    receipt = boot.verify_response(sha256(request_bytes).digest(), response_bytes)
+    receipt = boot.verify_response(request_digest(request_bytes), response_bytes)
 except VerificationError as error:
     print(error.code)  # A stable code, such as "receipt_content".
 ```
 
-`verify_receipt(stogas_bytes, request_sha256, response_sha256)` takes a `stogas` object that you
-saved on its own, with the hashes that you computed. To check current evidence instead, call
-`verifier.refresh(evidence_bytes)`, then `verify_logged_boot` on the snapshot it returns. Each method
-returns JSON bytes.
+`boot.verify_stream(request_digest(request_bytes), stream_bytes)` checks a stream saved as it
+arrived. `verify_receipt(stogas_bytes, request_digest, response_digest)` takes a `stogas` object
+that you saved on its own, with each side's digest from `request_digest` and `response_digest`, or
+from `StreamContent` for a stream. Pass `None` for a side that you don't check, for example a
+request kept private. To check current evidence instead, call `verifier.refresh(evidence_bytes)`,
+then `verify_logged_boot` on the snapshot it returns. Each method returns JSON bytes.
