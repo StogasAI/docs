@@ -7310,6 +7310,92 @@
 				}
 			}
 		},
+		"/api/{orgId}/byok/{byokId}/check-grant": {
+			"post": {
+				"operationId": "createByokCheckGrant",
+				"tags": [
+					"BYOK"
+				],
+				"summary": "Allow a gateway to check a customer-encrypted credential",
+				"description": "Only a gateway can open a customer-encrypted credential, with the key that encrypted it. Within five minutes, send the grant to the gateway's `POST /v1/byok/check` with that key under `keyLabel`, and the gateway saves the result on the credential. `stogas byok check` makes both requests.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "byokId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"encryptionKeyId": {
+											"type": "string",
+											"pattern": "^[0-9a-f]{64}$"
+										},
+										"expiresAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"grant": {
+											"type": "string",
+											"maxLength": 8192,
+											"pattern": "^stogas_byok_check_v1\\.[\\w-]+\\.[\\w-]+\\.[\\w-]+$",
+											"description": "Send it as the bearer token of the gateway check, within five minutes."
+										},
+										"keyLabel": {
+											"type": "string",
+											"pattern": "^[a-z][a-z0-9_-]{0,47}$",
+											"description": "The label that the organization policy registers the key under."
+										},
+										"provider": {
+											"type": "string",
+											"enum": [
+												"anthropic",
+												"aws",
+												"azure",
+												"chutes",
+												"google-cloud",
+												"openai"
+											]
+										}
+									},
+									"required": [
+										"encryptionKeyId",
+										"expiresAt",
+										"grant",
+										"keyLabel",
+										"provider"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/organizations": {
 			"get": {
 				"operationId": "listOrganizations",

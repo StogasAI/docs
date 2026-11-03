@@ -59,12 +59,15 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 | `key_configuration_too_large` | The key's policies and credentials are too large. Remove some of them.                                             |
 | `policy_work_limit_exceeded`  | The policies that apply need too much work for one request. Simplify them.                                         |
 | `invalid_policy`              | Only from [Validate policy](/docs/reference/policies/validatePolicy): the policies are invalid.                    |
+| `byok_key_unregistered`       | The organization policy no longer registers the key that encrypted the credential, so requests skip it.            |
+| `credential_stored`           | We store the credential you [check](/docs/reference/credentials/checkCredential); check it on the dashboard.       |
 
 ### 401 Unauthorized
 
 | Code                  | Meaning                                                                                                               |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `invalid_api_key`     | The API key is missing, wrong or deleted.                                                                             |
+| `invalid_check_grant` | The grant to [check a credential](/docs/reference/credentials/checkCredential) is invalid or expired.                 |
 | `key_secret_replaced` | The key's secret was rotated, or GitHub [found it in public](/docs/api-keys#leaked-secrets). Copy the current secret. |
 
 ### 402 Payment required
@@ -76,23 +79,31 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 
 ### 403 Forbidden
 
-| Code                      | Meaning                                                                                      |
-| ------------------------- | -------------------------------------------------------------------------------------------- |
-| `<scope>_disabled`        | That scope is disabled.                                                                      |
-| `<scope>_expired`         | That scope's access has expired.                                                             |
-| `organization_restricted` | The organization is restricted, so its requests are refused until the restriction is lifted. |
-| `schedule_denied`         | A [deny period](/docs/policies/access#deny-periods) blocks requests now.                     |
-| `dashboard_key_denied`    | Your dashboard session cannot use this key.                                                  |
-| `permission_denied`       | The key does not allow a [request policy](/docs/policies/request-policies).                  |
+| Code                      | Meaning                                                                                                                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `<scope>_disabled`        | That scope is disabled.                                                                                                                                                        |
+| `<scope>_expired`         | That scope's access has expired.                                                                                                                                               |
+| `organization_restricted` | The organization is restricted, so its requests are refused until the restriction is lifted.                                                                                   |
+| `schedule_denied`         | A [deny period](/docs/policies/access#deny-periods) blocks requests now.                                                                                                       |
+| `dashboard_key_denied`    | Your dashboard session cannot use this key.                                                                                                                                    |
+| `permission_denied`       | The key does not allow a [request policy](/docs/policies/request-policies), or you cannot manage the credential that you [check](/docs/reference/credentials/checkCredential). |
+| `organization_inactive`   | The organization of the credential that you [check](/docs/reference/credentials/checkCredential) is inactive.                                                                  |
 
 ### 404, 405, 408 and 415
 
-| Status | Code                     | Meaning                                         |
-| -----: | ------------------------ | ----------------------------------------------- |
-|  `404` | `route_not_found`        | The path does not exist.                        |
-|  `405` | `method_not_allowed`     | The path does not accept this HTTP method.      |
-|  `408` | `request_body_timeout`   | The request body took longer than five minutes. |
-|  `415` | `unsupported_media_type` | `Content-Type` is not `application/json`.       |
+| Status | Code                     | Meaning                                                                                                                 |
+| -----: | ------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+|  `404` | `route_not_found`        | The path does not exist.                                                                                                |
+|  `404` | `credential_not_found`   | The credential that you [check](/docs/reference/credentials/checkCredential) was deleted, or you left its organization. |
+|  `405` | `method_not_allowed`     | The path does not accept this HTTP method.                                                                              |
+|  `408` | `request_body_timeout`   | The request body took longer than five minutes.                                                                         |
+|  `415` | `unsupported_media_type` | `Content-Type` is not `application/json`.                                                                               |
+
+### 409 Conflict
+
+| Code                 | Meaning                                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `credential_changed` | The credential changed, or another check finished, while you [checked](/docs/reference/credentials/checkCredential) it. Check it again. |
 
 ### 413 Content too large
 

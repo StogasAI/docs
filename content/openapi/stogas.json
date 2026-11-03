@@ -30,6 +30,10 @@
 		{
 			"name": "Policies",
 			"description": "Policy checks."
+		},
+		{
+			"name": "Credentials",
+			"description": "Provider credential checks."
 		}
 	],
 	"security": [
@@ -663,6 +667,134 @@
 					}
 				}
 			}
+		},
+		"/v1/byok/check": {
+			"post": {
+				"operationId": "checkCredential",
+				"summary": "Check credential",
+				"tags": [
+					"Credentials"
+				],
+				"security": [
+					{
+						"checkGrant": []
+					}
+				],
+				"description": "Checks a customer-encrypted credential with the same free provider call as Check credential on the dashboard, and saves the result on the credential. Authenticate with a grant from `POST /api/{orgId}/byok/{byokId}/check-grant`, and send the request through a verified connection, as `stogas byok check` does.",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"additionalProperties": false,
+								"required": [
+									"encryption_keys"
+								],
+								"properties": {
+									"encryption_keys": {
+										"type": "object",
+										"writeOnly": true,
+										"minProperties": 1,
+										"propertyNames": {
+											"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+										},
+										"additionalProperties": {
+											"type": "string",
+											"minLength": 43,
+											"maxLength": 43,
+											"pattern": "^[A-Za-z0-9_-]{43}$"
+										},
+										"description": "Encryption keys by registered label, as unpadded base64url, with the key that encrypted the credential under the grant's `keyLabel`. The gateway never stores or logs them."
+									}
+								}
+							},
+							"example": {
+								"encryption_keys": {
+									"default": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE"
+								}
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "The provider answered, or could not be reached, and the result is saved.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"additionalProperties": false,
+									"required": [
+										"checkedAt",
+										"checkError"
+									],
+									"properties": {
+										"checkedAt": {
+											"type": "string",
+											"format": "date-time",
+											"description": "When the result was saved."
+										},
+										"checkError": {
+											"type": [
+												"string",
+												"null"
+											],
+											"description": "`null` when the provider accepted the credential, and otherwise why it did not, as the dashboard shows it."
+										}
+									}
+								},
+								"example": {
+									"checkedAt": "2026-11-03T12:00:00.123456Z",
+									"checkError": null
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "The body holds more than `encryption_keys` (`invalid_request`), a key is missing or wrong (`encryption_key_required`), the policy no longer registers the credential's key (`byok_key_unregistered`), or the credential is stored by Stogas (`credential_stored`). See [400 errors](/docs/reference/errors#400-bad-request)."
+					},
+					"401": {
+						"description": "The grant is missing, invalid or expired (`invalid_check_grant`).",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorResponse"
+								},
+								"example": {
+									"error": {
+										"message": "The credential check grant is invalid or expired. Run the check again.",
+										"type": "authentication_error",
+										"code": "invalid_check_grant",
+										"param": null
+									}
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "You no longer manage the credential (`permission_denied`), or the organization is inactive (`organization_inactive`). See [403 errors](/docs/reference/errors#403-forbidden)."
+					},
+					"404": {
+						"description": "The credential was deleted, or you left its organization (`credential_not_found`)."
+					},
+					"408": {
+						"$ref": "#/components/responses/RequestTimeout"
+					},
+					"409": {
+						"description": "The credential changed, or another check finished, during this check (`credential_changed`). Check it again."
+					},
+					"413": {
+						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"429": {
+						"$ref": "#/components/responses/RateLimited"
+					},
+					"503": {
+						"$ref": "#/components/responses/ServiceUnavailable"
+					}
+				}
+			}
 		}
 	},
 	"components": {
@@ -696,6 +828,12 @@
 				"in": "header",
 				"name": "x-goog-api-key",
 				"description": "Also accepted: `x-goog-api-key: <api_key>`, for SDKs that send it."
+			},
+			"checkGrant": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "Credential check grant",
+				"description": "Send the grant from `POST /api/{orgId}/byok/{byokId}/check-grant` as `Authorization: Bearer <grant>`. It lets you check that one credential for five minutes."
 			}
 		},
 		"parameters": {

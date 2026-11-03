@@ -264,6 +264,21 @@ a key, grant, member or credential copies its ID, and
   can read.
 - An editor that opens a window must wait until you close the file, as `code --wait` does.
 
+### Check a credential
+
+```console
+stogas byok check <credential-id> --organization <organization-id>
+stogas byok check <credential-id> --organization <organization-id> --key-file org.key
+```
+
+`byok check` checks a [provider credential](/docs/byok#checks) with the same free call to the
+provider as **Check credential** on the dashboard, and prints whether the provider accepted it.
+**Copy ID** in the credential's menu copies its ID. A stored credential needs nothing else. For a
+customer-encrypted credential, pass the file with the key that encrypted it, or enter the key
+when prompted. The CLI sends the key over a verified connection to a gateway, the only place that
+can open the credential, and the gateway saves the result. You need permission to manage the
+credential. Without `--organization`, the credential is in your personal organization.
+
 ### Call the dashboard API
 
 ```console

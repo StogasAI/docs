@@ -1,0 +1,32 @@
+---
+title: Allow a gateway to check a customer-encrypted credential
+description: Only a gateway can open a customer-encrypted credential, with the
+  key that encrypted it. Within five minutes, send the grant to the gateway's
+  `POST /v1/byok/check` with that key under `keyLabel`, and the gateway saves
+  the result on the credential. `stogas byok check` makes both requests.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Only a gateway can open a customer-encrypted credential, with the key
+          that encrypted it. Within five minutes, send the grant to the
+          gateway's `POST /v1/byok/check` with that key under `keyLabel`, and
+          the gateway saves the result on the credential. `stogas byok check`
+          makes both requests.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/byok/{byokId}/check-grant', method: 'post' }]} />
+    </>
+  );
+}

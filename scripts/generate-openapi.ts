@@ -83,6 +83,8 @@ async function main() {
 								'...openai-compatible',
 								'---Policies---',
 								'...policies',
+								'---Credentials---',
+								'...credentials',
 								'---API behavior---',
 								'provider-behavior',
 								'errors',
@@ -107,6 +109,10 @@ async function main() {
 					if (file.path === path.join('policies', 'meta.json')) {
 						content.title = 'Policies';
 						content.description = 'Policy check endpoint.';
+					}
+					if (file.path === path.join('credentials', 'meta.json')) {
+						content.title = 'Credentials';
+						content.description = 'Provider credential checks.';
 					}
 					if (file.path === path.join('catalog', 'meta.json')) {
 						content.title = 'Catalog';

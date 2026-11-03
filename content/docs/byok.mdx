@@ -23,7 +23,8 @@ We check a stored credential with a free call to the provider when you save it, 
 after that. A rejected credential is not saved. If a daily check fails, requests keep using the
 credential, because a provider can reject a check for a short time. We check again after an hour,
 and double the wait while the checks keep failing, up to a day. A check does not prove quota or
-access to every model. We cannot check customer-encrypted credentials.
+access to every model. A customer-encrypted credential is checked only when you
+[check it with its encryption key](#check-a-customer-encrypted-credential).
 
 ## Customer encryption
 
@@ -49,6 +50,21 @@ If a request could use the credential but doesn't send its key, the gateway reje
 `encryption_key_required` before it calls any provider, so an app that forgets the key finds out
 at once. To let such requests use the API key's other credentials instead, set
 [`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
+
+### Check a customer-encrypted credential
+
+To check a customer-encrypted credential with the same free call to the provider, choose
+**Check credential** in its menu and run the command that it shows where you keep the encryption
+key:
+
+```console
+stogas byok check CREDENTIAL_ID --organization YOUR_ORGANIZATION_ID --key-file org.key
+```
+
+Without `--key-file`, enter the key when prompted. The [CLI](/docs/cli#check-a-credential) sends
+the key over a [verified connection](/docs/connection-modes) to a gateway, which opens the
+credential, calls the provider and saves the result on the credential. The gateway uses the key
+for this check only and never stores it. You need permission to manage the credential.
 
 ## AWS and Google Cloud
 
