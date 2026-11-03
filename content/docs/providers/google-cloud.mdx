@@ -14,21 +14,15 @@ and we charge the [BYOK fee](/docs/byok#billing).
 | `-eu`                | Agent Platform, EU multi-region                   | Google, in the European Union |
 | `-anthropic-hosted`  | Claude Models on Google Cloud (Anthropic managed) | Anthropic                     |
 
-Agent Platform was called Vertex AI, and its hosts and roles keep that name.
-
 ## Create a credential
 
-A credential is a service account key. Create one and save the downloaded file in
-[BYOK](/docs/byok) as it is, or [encrypt it](/docs/byok#customer-encryption) with
-`--purpose byok/google-cloud`:
+A credential is a service account key. Save the key file in [BYOK](/docs/byok) as Google Cloud
+downloads it, or [encrypt it](/docs/byok#customer-encryption) with `--purpose byok/google-cloud`.
+The service account needs `roles/aiplatform.user` for Agent Platform, and `roles/claude.user` for
+Claude Models on Google Cloud.
 
-```bash
-gcloud iam service-accounts keys create key.json \
-  --iam-account=stogas@my-project.iam.gserviceaccount.com
-```
-
-For Claude Models on Google Cloud (Anthropic managed), add your workspace ID. This command turns
-the key file into a credential document that serves both offerings:
+Claude Models on Google Cloud also needs your workspace ID. This command turns the key file into a
+credential document with one:
 
 ```bash
 jq --arg workspace wrkspc_... '{
@@ -41,56 +35,13 @@ jq --arg workspace wrkspc_... '{
 }' key.json
 ```
 
-## Grant access
-
-For Agent Platform, enable the API and give the service account the Agent Platform User role:
-
-```bash
-gcloud services enable aiplatform.googleapis.com --project=my-project
-gcloud projects add-iam-policy-binding my-project \
-  --member=serviceAccount:stogas@my-project.iam.gserviceaccount.com \
-  --role=roles/aiplatform.user
-```
-
-Then enable each Claude model in Model Garden. For Claude Fable models, also accept Google's
-Advanced AI Safety Addendum once, and turn on sharing prompts and responses with Anthropic for each
-location.
-
-For Claude Models on Google Cloud (Anthropic managed),
-[set up the project](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/anthropic-managed#set-up-your-account)
-and give the service account `roles/claude.user`.
-
 ## Differences from Anthropic
 
-Claude Models on Google Cloud (Anthropic managed) works as on
-[Anthropic](/docs/providers/anthropic). On Agent Platform:
-
-- The gateway rejects `file_url`, image URLs and `file_id`. Send files inline.
-- The gateway rejects the `web_search` and `web_fetch` tools. Google's web search sends queries
-  to Brave, outside Google's data residency commitments.
-- Google refuses requests over 30 MB.
-
-## Data handling
-
-On Agent Platform, Google runs Claude. For Claude Fable models, Google keeps prompts and responses
-for up to 30 days to monitor abuse, and the project shares them with Anthropic. Request-response
-logging, if you turn it on, copies prompts to your BigQuery. Google states no other retention
-period, so the catalog lists retention as unknown.
-
-On Claude Models on Google Cloud (Anthropic managed), Anthropic runs Claude, and
-[Anthropic's data handling](/docs/providers/anthropic#data-handling) applies.
-
-## Troubleshooting
-
-| Problem                                | Fix                                                                                        |
-| -------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Permission denied on Agent Platform    | Enable the model in Model Garden, and check `roles/aiplatform.user` on the project.        |
-| Claude Fable refuses every request     | Accept the Advanced AI Safety Addendum and turn on sharing with Anthropic in Model Garden. |
-| Permission denied on the Anthropic API | Enable `claude.googleapis.com`, and check `roles/claude.user` on the project.              |
+Claude Models on Google Cloud works as on [Anthropic](/docs/providers/anthropic). On Agent
+Platform, send files inline, because file URLs and file IDs are rejected. `web_search` and
+`web_fetch` are not available.
 
 ## References
 
 - [Claude on Agent Platform](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/google-managed)
 - [Claude Models on Google Cloud (Anthropic managed)](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/anthropic-managed)
-- [Claude Fable 5.1 on Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/partner-models/claude/fable-5-1)
-- [Request-response logging](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/multimodal/request-response-logging)

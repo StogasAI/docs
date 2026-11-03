@@ -4,9 +4,21 @@ description: Use GPT, Claude and open models from your own Microsoft Foundry dep
 icon: logo:azure
 ---
 
-Azure deployments run GPT, Claude and open models in your Azure account through Microsoft Foundry.
-The gateway calls your Foundry deployments with a Microsoft Entra application that you create.
-Azure bills you for inference, and we charge the [BYOK fee](/docs/byok#billing).
+Azure deployments run GPT, Claude and open models from your Microsoft Foundry deployments. The
+gateway calls them with a Microsoft Entra application that you create. Azure bills you for
+inference, and we charge the [BYOK fee](/docs/byok#billing).
+
+| Deployment ID suffix | Azure deployment type           | Where inference runs                   |
+| -------------------- | ------------------------------- | -------------------------------------- |
+| None                 | Global Standard                 | Any Azure region                       |
+| `-us`                | US Data Zone Standard           | United States                          |
+| `-eu`                | EU Data Zone Standard           | Europe, under Azure's EU Data Boundary |
+| `-apac`              | Asia Pacific Data Zone Standard | Asia Pacific                           |
+| `-instant`           | Instant access                  | A Foundry project in West US 3         |
+| `-anthropic-hosted`  | Claude hosted by Anthropic      | Anthropic                              |
+
+For example, `azure-gpt-5.5-2026-04-23-us` runs GPT-5.5 only in the United States. Instant access
+needs a Foundry project in West US 3 that the credential can reach.
 
 ## Connect your account
 
@@ -19,141 +31,29 @@ az ad sp create-for-rbac --name stogas-gateway \
   --scopes /subscriptions/<subscription-id>/resourceGroups/<group>
 ```
 
-The output shows the tenant ID as `tenant`, the client ID as `appId` and the client secret as
-`password`. Enter them in [BYOK](/docs/byok) with the subscriptions to search. Each account that
-you connect becomes its own credential.
+Enter `tenant`, `appId` and `password` from the output in [BYOK](/docs/byok) as the tenant ID,
+client ID and client secret. Each account that you connect becomes its own credential. Customer
+encryption is not available, because we read your deployments with the secret.
 
-- Foundry User, which Azure used to call Azure AI User, lets us read your deployments and lets the
-  gateway run model requests. **Owner**, **Contributor** and **Reader** do not allow model
-  requests.
-- A new role can take several minutes to apply. Until it does, checks fail, and the credential
-  keeps its targets.
-- Customer encryption is not available, because we read your deployments with the secret.
+## Targets
 
-## Choose Azure targets
+You choose which of your Azure deployments serves each catalog deployment. A target is one exact
+model version, and the gateway never sends a request to a deployment that you did not choose. If a
+target stops serving, the gateway tries the next candidate that your
+[routing](/docs/policies/routing#retries-and-fallbacks) allows.
 
-Each catalog deployment matches an exact model, version, hosting and deployment type in your
-account, and you choose which of your Azure deployments serves each match. A single match is
-selected for you. New matches stay unselected.
-
-- We read your deployments through Azure Resource Manager once a day, and a gateway reads them when
-  it uses the credential. A request waits up to 5 seconds for a read older than 30 minutes, and a
-  read older than 10 minutes repeats in the background. If Azure does not answer, requests use the
-  last targets for up to 2 hours.
-- If a selected target [stops serving](#when-a-deployment-changes) or its model retires, the gateway
-  refuses this credential for it and tries the next candidate that your
-  [routing](/docs/policies/routing#retries-and-fallbacks) allows. It never sends the request to
-  another deployment in your account.
-
-## When a deployment changes
-
-Azure can [upgrade a deployment](https://learn.microsoft.com/azure/ai-foundry/openai/how-to/working-with-models)
-to a new model version on its own. A target is one exact model, version and SKU, so a request never
-reaches another version under the target's name. The target stops serving, and requests to it fail
-with `byok_target_changed`.
-
-- A stopped target serves again once a check finds its deployment serving it. We check within five
-  minutes, then after 10 minutes, and the wait doubles up to a day.
-- To keep a version, set the deployment's `versionUpgradeOption` to `NoAutoUpgrade`. The deployment
-  then stops at the version's retirement date, as its target does.
-- A check offers an upgraded deployment's new version as another target, which you can choose once
-  the catalog lists that version.
-
-## Deployment types
-
-| Deployment ID suffix | Azure deployment type           | Where inference runs                   |
-| -------------------- | ------------------------------- | -------------------------------------- |
-| None                 | Global Standard                 | Any Azure region                       |
-| `-us`                | US Data Zone Standard           | United States                          |
-| `-eu`                | EU Data Zone Standard           | Europe, under Azure's EU Data Boundary |
-| `-apac`              | Asia Pacific Data Zone Standard | Asia Pacific                           |
-| `-instant`           | Instant access                  | A Foundry project in West US 3         |
-
-For example, `azure-gpt-5.5-2026-04-23-us` runs GPT-5.5 only in the United States.
-
-Instant access uses models that Microsoft runs for a Foundry project, without a deployment of your
-own. The gateway finds them through a West US 3 project that the credential can reach. If one of
-your deployments has the same name, the gateway skips the Instant target, because Azure would send
-the request to your deployment instead.
-
-`deployment.upstream.hosting` shows who runs the model. Claude runs on Azure, or on Anthropic for
-IDs that end in `-anthropic-hosted`. Partners host some open models for Azure, and their processing
-location is unknown.
-
-## Tiers and Pro
-
-| Mode | Models          | How Azure runs it                                                            |
-| ---- | --------------- | ---------------------------------------------------------------------------- |
-| Flex | Some GPT models | A request mode of your GPT deployment                                        |
-| Fast | Some GPT models | Priority processing, a request mode of your GPT deployment                   |
-| Fast | Claude Opus 5.5 | A separate model, `claude-opus-5-5-fast`, that you deploy                    |
-| Pro  | Some GPT models | A request mode of your GPT deployment, on Responses only, at no extra charge |
-
-A GPT deployment serves all of its request modes, so it needs no other target. For Claude Opus 5.5
-Fast, deploy `claude-opus-5-5-fast` and choose it as the target. Azure runs every request to that
-deployment at Fast, and it does not share prompt caches with standard Claude Opus 5.5. See
-[Service tiers](/docs/service-tiers) and [Pro mode](/docs/reasoning#select-pro-mode).
-
-## Endpoints
-
-| Models      | Chat Completions | Responses |
-| ----------- | ---------------- | --------- |
-| GPT         | Yes              | Yes       |
-| Claude      | Yes              | Yes       |
-| Open models | Yes              | No        |
-
-- On Chat Completions, Azure rejects GPT requests that combine reasoning with function tools. Use
-  Responses for that combination.
-- GPT models accept `max` effort only on Responses. On Chat Completions, the gateway sends `xhigh`
-  instead.
-- The gateway sends `temperature`, `top_p` and `logprobs` unchanged, and Azure returns `400` when a
-  GPT model does not accept them.
-
-## Prompt caching
-
-GPT deployments use the same cache controls as [OpenAI](/docs/providers/openai#prompt-caching),
-and Claude deployments use `cache_control`, as on [Anthropic](/docs/providers/anthropic#prompt-caching).
+Azure upgrades deployments to new model versions unless their `versionUpgradeOption` is
+`NoAutoUpgrade`. After an upgrade, the target stops serving, and requests to it fail with
+`byok_target_changed` until you choose the new version.
 
 ## Claude on Azure
 
-Claude on Azure works as on [Anthropic](/docs/providers/anthropic), with these differences:
-
-- Only Claude Opus 5.5 has Fast, as a separate model. See [Tiers and Pro](#tiers-and-pro).
-- `task_budget` is rejected, because the gateway does not send it to Azure.
-- System messages after the first turn are rejected.
-- Claude Fable and Claude Mythos accept effort up to `xhigh`, which Microsoft says gives the same
-  result as `max`. The gateway sends `xhigh` when a request asks for `max`.
-- Claude Mythos 5.1 and Claude Mythos 5 need access from Anthropic, as on
-  [Anthropic](/docs/providers/anthropic#models-that-need-approval). Until Anthropic grants it, Azure
-  does not offer them for deployment.
-
-## Tools and files
-
-- GPT models accept `function` tools, and `custom` tools on Responses. They have no hosted tools.
-- GPT models read PDFs on Responses. Chat Completions accepts no documents.
-- DeepSeek models can return several tool calls in one turn, even when `parallel_tool_calls` is
-  `false`.
-- Claude reads PDFs and plain text, as on [Anthropic](/docs/providers/anthropic#files).
-
-## Data handling
-
-The gateway always sends `store: false`, and Microsoft does not train on your data. Your agreement
-with Microsoft governs your account.
-
-| Deployments                             | What Azure keeps                                                                                                                                        |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ordinary deployments                    | No inference content, but abuse monitoring can keep flagged samples for human review. The catalog therefore does not list Azure as zero data retention. |
-| Instant access, Flex and Azure previews | Microsoft's preview terms do not limit where or how long it stores data. The catalog lists storage as `world` and retention as unknown.                 |
-| Claude hosted on Azure                  | Prompts and responses stay in Azure. Anthropic receives only usage data and content that its safety systems flag.                                       |
-| Claude hosted by Anthropic              | IDs end in `-anthropic-hosted`. [Anthropic's data handling](/docs/providers/anthropic#data-handling) applies.                                           |
-
-A filter such as `deployment.dataHandling.retentionDays == 0` skips previews. Your deployment
-names, resource IDs, endpoints and locations never appear in the public catalog.
+Claude accepts the same request fields as on [Anthropic](/docs/providers/anthropic), except
+`task_budget`.
 
 ## References
 
 - [Foundry roles](https://learn.microsoft.com/en-us/azure/foundry/concepts/rbac-foundry)
 - [Foundry deployment types](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types)
 - [Foundry Instant access](https://learn.microsoft.com/en-us/azure/foundry/concepts/instant-models)
-- [Azure prompt caching](https://learn.microsoft.com/azure/foundry/openai/how-to/prompt-caching)
 - [Claude in Microsoft Foundry](https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry)

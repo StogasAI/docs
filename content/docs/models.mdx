@@ -31,7 +31,7 @@ date. A request that reaches a provider after its shutdown
 [falls back](/docs/policies/routing#retries-and-fallbacks) to the next deployment. Policies keep
 retired IDs, which match nothing.
 
-Some deployments work only for accounts that the provider has approved[^approval]. The catalog marks
+Some deployments work only for accounts that the provider has approved. The catalog marks
 them with `approvalRequired`, and the routing filter `!deployment.approvalRequired` excludes them.
 
 ### Search the catalog
@@ -166,10 +166,3 @@ To select one:
 - Set `reasoning.mode` to choose [Pro mode](/docs/reasoning#select-pro-mode) of a model ID.
 - Filter on `deployment.upstream` or `deployment.dataHandling.processingLocation` in a
   [routing policy](/docs/policies/routing).
-
-[^approval]:
-    [OpenAI](/docs/providers/openai#models-that-need-approval),
-    [Anthropic](/docs/providers/anthropic#models-that-need-approval) and
-    [Azure](/docs/providers/azure#claude-on-azure) explain how to get approval. Search the
-    [catalog](https://stogas.ai/catalog) for `deployment.approvalRequired:true` to list these
-    deployments.

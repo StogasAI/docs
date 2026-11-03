@@ -1,6 +1,6 @@
 ---
 title: Anthropic
-description: US and Fast deployments, prompt caching, task budgets, context editing and web tools for Claude.
+description: US and Fast deployments, prompt caching, task budgets and context editing for Claude.
 icon: logo:anthropic
 ---
 
@@ -8,17 +8,10 @@ Anthropic deployments run Claude models on the Anthropic Messages API with your 
 key. Add the key in [BYOK](/docs/byok). The gateway converts Chat Completions and Responses requests
 to Messages, so you can keep your OpenAI client.
 
-## Data handling
-
-Under Anthropic's standard API terms, prompts and responses are not kept after the request and are
-not used for training. This is not a contractual zero data retention agreement. Some models have
-longer retention; check `dataHandling.retentionDays` in the [catalog](/docs/models#find-a-model).
-Anthropic can keep prompts and responses that its safety systems flag for up to two years.
-
 ## US and Fast deployments
 
-Anthropic offers these options for some models. Each is a separate deployment with its own price,
-and its ID adds a suffix to the standard deployment ID:
+Each option is a separate deployment with its own price, and its ID adds a suffix to the standard
+deployment ID:
 
 | Option | Effect                              | Example ID                        |
 | ------ | ----------------------------------- | --------------------------------- |
@@ -30,15 +23,9 @@ Choose them by deployment ID, a [service tier](/docs/service-tiers) or a
 [routing filter](/docs/policies/routing). Requests that send Anthropic's `speed` or `inference_geo`
 field return `400`.
 
-Claude Opus 5.5 Fast works for every organization except those in Anthropic's Evaluation usage
-tier. Fast for Claude Opus 5 and Claude Opus 4.8 is a research preview that works only after
-Anthropic enables it for your organization: ask your Anthropic account manager or join
-[Anthropic's waitlist](https://claude.com/fast-mode). The catalog marks those deployments with
-`approvalRequired`.
-
-If your Anthropic workspace allows only US inference, turn on **Workspace allows only US
-inference** in the credential's policy. It adds this rule, so the credential serves Claude 4.6 and
-later only on their `-us` deployments, and older models, which take no location, as before:
+If your Anthropic workspace allows only US inference, add this rule to the credential's policy, or
+turn on **Workspace allows only US inference** for the credential. Claude 4.6 and later then run
+only on their `-us` deployments:
 
 ```json
 {
@@ -51,8 +38,6 @@ later only on their `-us` deployments, and older models, which take no location,
 	}
 }
 ```
-
-Anthropic's Priority Tier needs a separate contract with Anthropic and is not available.
 
 ## Prompt caching
 
@@ -67,22 +52,10 @@ prefix:
 }
 ```
 
-To choose the cache boundaries yourself, put the same object on content blocks or tools. Chat
-Completions and Responses accept it on text, image and file blocks. `ttl` is `5m`, the default, or
-`1h`.
-
-Anthropic decides how many cache entries a request can have, where they can go, and the smallest
-prompt that it caches for each model. See
-[Anthropic's guide](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) for the
-current rules.
-
-| Usage             | Price compared with input |
-| ----------------- | ------------------------- |
-| Cache read        | 0.1×                      |
-| Five-minute write | 1.25×                     |
-| One-hour write    | 2×                        |
-
-To fill the cache without generating output, send `cache_control` with an output limit of `0`.
+- To choose the cache boundaries yourself, put the same object on text, image or file blocks, or on
+  tools.
+- `ttl` is `5m`, the default, or `1h`.
+- To fill the cache without generating output, send an output limit of `0`.
 
 ## Anthropic request fields
 
@@ -109,69 +82,32 @@ These fields work only on Anthropic deployments:
 }
 ```
 
-- `task_budget` takes a `total` and an optional `remaining`. The budget guides the model and does not
-  lower the [hold](/docs/usage#how-a-request-is-charged).
+- `task_budget` guides the model and does not lower the
+  [hold](/docs/usage#how-a-request-is-charged).
 - `context_management.edits` accepts `clear_thinking_20251015`, `clear_tool_uses_20250919` and
-  `compact_20260112`, each once.
-- A compaction edit raises the hold to cover one more input pass and the summary. Each compaction
-  is billed as Anthropic reports it.
-
-Anthropic decides which models accept these fields and their limits, and returns `400` for a value
-that a model does not accept. See
-[Anthropic's context editing guide](https://platform.claude.com/docs/en/build-with-claude/context-editing).
-
-Anthropic rejects OpenAI fields such as `seed`, `logprobs`, `frequency_penalty`, `presence_penalty`,
-`prompt_cache_key` and `prompt_cache_options`. `response_format` must use `json_schema`.
-
-## System messages after the first turn
-
-Newer Claude models accept a system message later in the conversation, if it is the last message or
-comes just before an assistant message. On models that do not accept it, the request returns `400`;
-the gateway does not move the message.
+  `compact_20260112`, each once. A compaction raises the hold to cover one more input pass and the
+  summary.
 
 ## Tools
 
-| Tool         | Endpoint  | Charge                              |
-| ------------ | --------- | ----------------------------------- |
-| `function`   | Both      | Tokens only                         |
-| `web_search` | Responses | $10 per 1,000 searches, plus tokens |
-| `web_fetch`  | Responses | Tokens only                         |
-
 - A request can use one hosted tool type.
-- The gateway sends the basic tool versions, `web_search_20250305` and `web_fetch_20250910`, for any
-  version that the request names. Newer versions filter results by running code, and Anthropic keeps
-  code execution data for up to 30 days, so they are not available.
-- With reasoning on, a `required` or named `tool_choice` becomes `auto`, because Anthropic does not
-  allow a forced tool with reasoning.
-- `custom` tools are not available, because Anthropic does not keep free-form tool input.
-
-See [Tools](/docs/model-tools) for limits and holds.
+- The gateway sends `web_search_20250305` and `web_fetch_20250910`, whatever version the request
+  names.
+- With reasoning on, a `required` or named `tool_choice` becomes `auto`.
+- `custom` tools are not available.
 
 ## Files
 
-Claude reads images, PDFs and plain text. Send text files, including Markdown and CSV, with the
-`text/plain` type, for example `data:text/plain;base64,...`. File URLs work on both endpoints;
-Anthropic downloads them. See [Images and files](/docs/input-files).
+Send text files, including Markdown and CSV, as `text/plain`, for example
+`data:text/plain;base64,...`. Anthropic downloads file URLs itself.
 
 ## Refusals
 
-When Claude refuses before it writes any output, the request returns `200` with a `content_filter`
-finish reason. Anthropic charges for such a refusal only in the `bio`, `frontier_llm` and
-`reasoning_extraction` categories, at normal rates; other refusals cost nothing. Output written
-before a refusal is always billed. See Anthropic's
-[refusal categories](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback#refusal-response).
-
-## Models that need approval
-
-Claude Mythos 5.1 and Claude Mythos 5 are Claude Fable 5.1 and Claude Fable 5 for organizations
-that Anthropic has verified, for example through its Cyber Verification Program. They have the same
-prices, limits and US deployments as Fable, and work only with an API key from a verified
-organization. Without verification, Anthropic returns `404`.
+When Claude refuses before it writes any output, the request returns `200` with the finish reason
+`content_filter`.
 
 ## References
 
 - [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
 - [Anthropic context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing)
-- [Anthropic PDF support](https://platform.claude.com/docs/en/build-with-claude/pdf-support)
-- [Anthropic data retention](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention)
-- [Claude Mythos 5.1](https://platform.claude.com/docs/en/models/mythos-5-1/overview)
+- [Anthropic refusals](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback)

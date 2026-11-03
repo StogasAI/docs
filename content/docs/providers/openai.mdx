@@ -1,27 +1,19 @@
 ---
 title: OpenAI
-description: Tiers, prompt caching, tools and files for OpenAI deployments.
+description: Tiers, Pro mode and prompt caching for OpenAI deployments.
 icon: logo:openai
 ---
 
 OpenAI deployments run GPT models on the OpenAI API with your own OpenAI API key. Add the key in
 [BYOK](/docs/byok). Chat Completions and Responses requests go to OpenAI's matching endpoints.
 
-## Data handling
-
-Under OpenAI's standard API terms, OpenAI can keep prompts and responses for up to 30 days for abuse
-monitoring, and does not use them for training. The gateway always sends `store: false`, so OpenAI
-does not store responses for later retrieval. Your own agreement with OpenAI applies to requests on
-your account.
-
-API keys from projects with [data residency](https://developers.openai.com/api/docs/guides/your-data)
-don't work. OpenAI accepts them only at their region's address, such as `eu.api.openai.com`,
-and the gateway sends requests to `api.openai.com`.
+Keys from projects with [data residency](https://developers.openai.com/api/docs/guides/your-data)
+don't work, because the gateway sends requests to `api.openai.com`.
 
 ## Tiers and Pro
 
-OpenAI offers these options for some models. Each is a separate deployment with its own price, and
-its ID adds a suffix to the standard deployment ID:
+Each option is a separate deployment with its own price, and its ID adds a suffix to the standard
+deployment ID:
 
 | Option    | Effect                                              | Select it with                                    |
 | --------- | --------------------------------------------------- | ------------------------------------------------- |
@@ -30,39 +22,12 @@ its ID adds a suffix to the standard deployment ID:
 | Ultrafast | Highest price, fastest responses, on Responses only | `service_tier: "ultrafast"` or an `-ultrafast` ID |
 | Pro       | More compute per request, on Responses only         | `"reasoning": { "mode": "pro" }` or a `-pro` ID   |
 
-You can combine Pro with Flex or Fast, for example `openai-gpt-5.6-sol-pro-fast`. The
-[catalog](/docs/models#find-a-model) lists the deployments that exist for each model.
-[Service tiers](/docs/service-tiers) explains how to select a tier and check which tier ran, and
-[Reasoning](/docs/reasoning#select-pro-mode) explains Pro mode.
-
-## Output limit
-
-On Responses, OpenAI requires a `max_output_tokens` of at least 16, and the gateway returns
-`400 parameter_limit_exceeded` for a smaller value. On Chat Completions, `max_completion_tokens` can be
-as low as 1, and `max_tokens` is another name for it. The gateway sends the limit as you set it, and
-the hold covers that limit. Zero returns `400`. Azure OpenAI has the same limits.
-
-## Reasoning models
-
-OpenAI sets these limits for its reasoning models, and returns `400` for a request that breaks one:
-
-- `temperature`, `top_p`, `logprobs` and `top_logprobs` work only with effort `none`. GPT-6 Astra
-  and GPT-6.1 Sol cannot turn reasoning off, so they never accept these fields.
-- On Chat Completions, GPT-6 Astra, GPT-6.1 Sol and GPT-6.1 Terra do not accept function tools,
-  and GPT-6 Sol, GPT-6 Luna and GPT-5.6 Luna accept them only with `reasoning_effort: "none"`. Use
-  Responses for tools with reasoning.
-
-`max` effort works only on Responses. On Chat Completions, the gateway sends `xhigh` instead. See
-[Reasoning](/docs/reasoning).
+Pro combines with Flex or Fast, for example `openai-gpt-5.6-sol-pro-fast`.
 
 ## Prompt caching
 
-OpenAI caches prompts of 1,024 tokens or more automatically. Send the same `prompt_cache_key` with
-prompts that share a prefix to get more cache hits.
-
-Deployments with `explicitPromptCaching` in the catalog also let you mark where the cache ends. Add
-`"prompt_cache_breakpoint": { "mode": "explicit" }` to a content block to cache everything up to and
-including that block:
+OpenAI caches long prompts automatically. Deployments with `explicitPromptCaching` in the catalog
+also let you mark where the cache ends:
 
 ```jsonc title="Chat Completions"
 {
@@ -85,58 +50,20 @@ including that block:
 }
 ```
 
-- `prompt_cache_options.mode` is `implicit` or `explicit`. In `implicit` mode, OpenAI also adds a
-  breakpoint of its own. In `explicit` mode, OpenAI caches only at your breakpoints.
-- `prompt_cache_options.ttl` is `30m`.
-- `prompt_cache_retention` is `in_memory` or `24h`, on models that use it.
-
-OpenAI decides which blocks accept a breakpoint, how many breakpoints count, and which retention
-each model accepts. It returns `400` for a value that the model does not accept. See
-[OpenAI's guide](https://developers.openai.com/api/docs/guides/prompt-caching) for the current
-rules.
-
-Cache reads are billed at the cached-input rate, and writes at the cache-write rate where the
-catalog lists one. See [Prompt caching](/docs/prompt-caching).
+The gateway sends `prompt_cache_key`, `prompt_cache_options`, `prompt_cache_breakpoint` and
+`prompt_cache_retention` as you set them. See
+[OpenAI's guide](https://developers.openai.com/api/docs/guides/prompt-caching) for their values.
 
 ## Tools
 
-| Tool                 | Endpoint                 | Charge                                                                                |
-| -------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
-| `function`           | Both                     | Tokens only                                                                           |
-| `custom`             | Responses                | Tokens only                                                                           |
-| `web_search`         | Responses                | $10 per 1,000 searches, plus search content at model rates                            |
-| `web_search_preview` | Responses                | Reasoning models: as `web_search`. Other models: $25 per 1,000 searches, content free |
-| `web_search_options` | Chat, search models only | $10 per 1,000 requests, one search each                                               |
-
-Dated tool versions, such as `web_search_2025_08_26`, are accepted. Search models, such as
-`gpt-5-search-api`, take `web_search_options` instead of `tools`. See [Tools](/docs/model-tools) for
-limits and holds.
-
-## Files
-
-GPT models accept images on both endpoints. Chat Completions accepts PDF documents. Responses also
-accepts text, code, office documents and spreadsheets, and file URLs. The catalog lists each
-route's file types as `documentFormats`. See [Images and files](/docs/input-files).
-
-## Models that need approval
-
-GPT-5.6 Cyber (`gpt-5.6-cyber`) is for organizations that OpenAI has approved for Daybreak Red. It
-runs only on Responses, and only with an API key from a project that has Daybreak Red access.
-Without access, OpenAI returns `404`.
-
-Without `access_programs`, OpenAI chooses the program from your project's access: Daybreak Red on
-`gpt-5.6-cyber`, and Daybreak Blue on mainline models such as `gpt-6-sol` when your project has it.
-To choose, send `access_programs.cyber` on Responses as `standard`, `daybreak_blue` or
-`daybreak_red`; the gateway sends it to OpenAI unchanged. Azure OpenAI and Claude return `400` for a
-chosen program. Daybreak does not turn on zero data retention.
-
-When OpenAI's cyber safeguards block a request or suspend access, the error has code `cyber_policy`
-and status `400`. In a stream, it can arrive as an error event after output has started.
+Besides `function` tools, Responses accepts `custom` tools and `web_search`. Search models, such as
+`gpt-5-search-api`, take `web_search_options` on Chat Completions instead of `tools`.
 
 ## Not available
 
 - Audio and image output, and the `audio` request field.
-- Stored conversations: `store: true`, `previous_response_id`, `conversation` and `background`.
+- Stored conversations: `store: true`, `previous_response_id`, `conversation` and `background`. The
+  gateway always sends `store: false`.
 - Async tool calls (`async: true`) and `configuration_update` input items.
 - Hosted file search, code interpreter, shell, computer use, image generation and remote MCP.
 - WebSocket mode and the Scale tier.
@@ -146,6 +73,3 @@ and status `400`. In a stream, it can arrive as an error event after output has 
 - [OpenAI Flex processing](https://developers.openai.com/api/docs/guides/flex-processing)
 - [OpenAI Fast processing](https://developers.openai.com/api/docs/guides/priority-processing)
 - [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
-- [OpenAI file inputs](https://developers.openai.com/api/docs/guides/file-inputs)
-- [OpenAI data controls](https://developers.openai.com/api/docs/guides/your-data)
-- [OpenAI Daybreak](https://developers.openai.com/api/docs/guides/daybreak)
