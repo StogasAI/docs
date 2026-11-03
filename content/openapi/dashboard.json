@@ -5137,7 +5137,7 @@
 					"Policies"
 				],
 				"summary": "Get policy versions",
-				"description": "Returns saved versions of policies by scope, ID and revision, such as those that a request log or an Activity event names. A version is available where its policy's read would be: organization, role and member policies need permission to read every policy, and the others permission to view their resource. Once a resource is deleted, its versions need permission to read every policy, or every credential for a credential. Plaintext export header values, and export URLs after their origin, show as fingerprints, which match within one response, so read the versions you compare together.",
+				"description": "Returns saved versions of policies by scope, ID and revision, such as those that a request log or an Activity event names. A version is available where its policy's read would be: organization, role and member policies need permission to read every policy, and the others permission to view their resource. Once a resource is deleted, its versions need permission to read every policy, or every credential for a credential. An organization keeps every current version and its newest replaced ones, so an old version may read as pruned. Plaintext export header values, and export URLs after their origin, show as fingerprints, which match within one response, so read the versions you compare together.",
 				"security": [
 					{
 						"accessToken": []
@@ -5234,6 +5234,53 @@
 															"source"
 														],
 														"additionalProperties": false
+													},
+													{
+														"type": "object",
+														"properties": {
+															"scope": {
+																"type": "string",
+																"enum": [
+																	"organization",
+																	"folder",
+																	"grant",
+																	"role",
+																	"member",
+																	"credential",
+																	"key"
+																]
+															},
+															"id": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 64
+															},
+															"revision": {
+																"type": "integer",
+																"minimum": 1,
+																"maximum": 2147483647
+															},
+															"status": {
+																"type": "string",
+																"const": "pruned"
+															},
+															"name": {
+																"description": "The resource's current name: null once deleted, and for a personal organization, which has none.",
+																"type": [
+																	"string",
+																	"null"
+																]
+															}
+														},
+														"required": [
+															"scope",
+															"id",
+															"revision",
+															"status",
+															"name"
+														],
+														"additionalProperties": false,
+														"description": "The version is no longer kept. An organization keeps every current version and its newest replaced ones, up to 10,000 of them and 16 MiB of sources."
 													},
 													{
 														"type": "object",

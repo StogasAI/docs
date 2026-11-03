@@ -52,8 +52,10 @@ should see those settings, even after they change.
 Activity covers organization and member names, membership, invitations, roles, folders, grants,
 API keys, credentials, single sign-on, billing details, and saved policies. A policy edit shows the
 changed fields, their values before and after, and the policy version. Literal dictionaries and
-custom redaction expressions show only rule counts and whether the rules changed. An inherited
-change is recorded once, at the scope where it was made, not for every affected key.
+custom redaction expressions show only rule counts and whether the rules changed. An edit whose
+values pass 16 KiB is recorded without them, and its policy versions show the edit while we keep
+them. An inherited change is recorded once, at the scope where it was made, not for every affected
+key.
 
 Credential tokens, API-key secrets, invitation codes, and inference content are excluded.
 A secret rotation records the action without the secret. Export events record that an
@@ -67,6 +69,10 @@ and puts an apostrophe before text that a spreadsheet would run as a formula, su
 An export holds at most 50,000 events and 64 MiB. Narrow the filters if it is larger.
 For a change that happened, `refusal` is `null`, or empty in CSV. For a refused attempt it is
 `permission`, `policy` or `read_only_token`.
+
+We keep the current version of every policy, and your organization's 10,000 newest earlier versions
+within 16 MiB of policy text. A save past either limit removes the oldest earlier versions. An event
+or request that names one of them then says the version is no longer kept.
 
 Activity is operational history. Delivery can be delayed or interrupted, so it is not a
 guaranteed complete compliance record or a backup of every policy version.
