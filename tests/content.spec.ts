@@ -48,7 +48,8 @@ test('uses supported transport entry points without retired modes or polling con
 		'baseURL',
 		'fetch',
 		'refreshEvidence',
-		'evidenceSnapshot'
+		'evidenceSnapshot',
+		'proxied'
 	]) {
 		expect(javascript).toContain(control);
 	}
