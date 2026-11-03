@@ -187,12 +187,12 @@ and prints its public identifier. `encrypt` encrypts a file with it. `--purpose`
 ## Use your account
 
 ```console
-stogas signup
+stogas register
 stogas login
 stogas logout
 ```
 
-`signup` creates an account and prints its password once, which cannot be recovered. `login` asks
+`register` creates an account and prints its password once, which cannot be recovered. `login` asks
 for the password and, for an account with an authenticator app, a code. An account whose only
 second step is a passkey creates its token on the **Account** page.
 
@@ -202,7 +202,7 @@ keychain, or prints it where there is none, as on most servers. Signing in again
 that the new one replaces, and `logout` deletes the current one.
 
 For servers and CI, create a token on the **Account** page with only the access that the job needs,
-and set it as `STOGAS_TOKEN`. The CLI then uses it, and `signup`, `login` and `logout` refuse to
+and set it as `STOGAS_TOKEN`. The CLI then uses it, and `register`, `login` and `logout` refuse to
 run. See [Access tokens](/docs/reference/dashboard#access-tokens).
 
 ### Add credit
