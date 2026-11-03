@@ -140,6 +140,38 @@ stogas proof --boot evidence/boot.json --evidence evidence/evidence.json \
 The SDKs offer the same offline check, for example `verify_receipt` in [Python](/docs/python) and
 `VerifyReceipt` in [Go](/docs/go).
 
+## Prove a request log
+
+Each gateway boot also signs its [request records](/docs/request-records) with its receipt key. It
+signs them in batches, one batch a minute, and each record names its place in a batch in
+`log_batch`. A proof of a record shows that the attested gateway wrote exactly that record, and
+that it has not changed since.
+
+To get a proof, open the request in [Analytics](/docs/analytics) and choose **Download proof**, or
+call `GET /api/{orgId}/analytics/proof?requestId=<request_id>` with an
+[access token](/docs/reference/dashboard#access-tokens). Then run:
+
+```console
+stogas proof --proof request-<request_id>-proof.json
+```
+
+The command checks that the record belongs to its batch, downloads the boot record that the batch
+names and its evidence, and checks the batch's signature against them. It prints the record's batch
+and index, and when the batch was open. Add `--boot` and `--evidence` to check it without network
+access, as for a receipt.
+
+When the request asked for a receipt, the record's `receipt_commitments` are the receipt's
+`request_commitment` and `response_commitment`. So a proof of the record also ties it to the request
+and response that you saved.
+
+- A batch reaches Analytics a few minutes after its minute ends. Until then, its records have no
+  proof.
+- A record whose `log_batch` is `null` has no proof.
+- A proof shows how many records that gateway signed in the same minute, and nothing else about
+  them.
+- A proof covers one record. It doesn't show that Analytics holds every record that a gateway
+  signed.
+
 ## What a receipt does not prove
 
 - When the request ran.

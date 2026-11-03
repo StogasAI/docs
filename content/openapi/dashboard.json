@@ -10793,6 +10793,60 @@
 																"pattern": "^v\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$"
 															}
 														]
+													},
+													"log_batch": {
+														"default": null,
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"sequence": {
+																		"type": "integer",
+																		"minimum": 1,
+																		"maximum": 4294967295
+																	},
+																	"index": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 8191
+																	}
+																},
+																"required": [
+																	"sequence",
+																	"index"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"receipt_commitments": {
+														"default": null,
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"request": {
+																		"type": "string",
+																		"pattern": "^[0-9a-f]{64}$"
+																	},
+																	"response": {
+																		"type": "string",
+																		"pattern": "^[0-9a-f]{64}$"
+																	}
+																},
+																"required": [
+																	"request",
+																	"response"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
 													}
 												},
 												"required": [
@@ -10819,7 +10873,9 @@
 													"node_id",
 													"performance",
 													"usage",
-													"gateway_version"
+													"gateway_version",
+													"log_batch",
+													"receipt_commitments"
 												],
 												"additionalProperties": false
 											}
@@ -11002,6 +11058,134 @@
 										"items",
 										"nextCursor",
 										"records"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/analytics/proof": {
+			"get": {
+				"operationId": "proveRequestLog",
+				"tags": [
+					"Analytics"
+				],
+				"summary": "Prove a request log",
+				"description": "Returns the log of `requestId` exactly as its gateway signed it, with the signed batch that holds it and the hashes that join the log to the batch. Run `stogas proof --proof <file>` to check the proof against the evidence of the boot that signed the batch. A batch reaches analytics a few minutes after its requests end.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "requestId",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"schema": {
+											"type": "string",
+											"const": "stogas.log-proof.v1"
+										},
+										"row": {
+											"type": "object",
+											"propertyNames": {
+												"type": "string"
+											},
+											"additionalProperties": {}
+										},
+										"batch": {
+											"type": "object",
+											"properties": {
+												"schema": {
+													"type": "string",
+													"const": "stogas.log-batch.v1"
+												},
+												"node_id": {
+													"type": "string",
+													"maxLength": 80,
+													"pattern": "^[a-z]+-[a-z]+-[a-f0-9]{64}$"
+												},
+												"boot_sha256": {
+													"type": "string",
+													"pattern": "^[0-9a-f]{64}$"
+												},
+												"sequence": {
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 4294967295
+												},
+												"opened_at": {
+													"type": "string",
+													"pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+												},
+												"sealed_at": {
+													"type": "string",
+													"pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+												},
+												"leaf_count": {
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 8192
+												},
+												"root": {
+													"type": "string",
+													"pattern": "^[0-9a-f]{128}$"
+												},
+												"signature": {
+													"type": "string",
+													"pattern": "^[A-Za-z0-9_-]{4498}$"
+												}
+											},
+											"required": [
+												"schema",
+												"node_id",
+												"boot_sha256",
+												"sequence",
+												"opened_at",
+												"sealed_at",
+												"leaf_count",
+												"root",
+												"signature"
+											],
+											"additionalProperties": false
+										},
+										"path": {
+											"maxItems": 13,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"pattern": "^[0-9a-f]{128}$"
+											}
+										}
+									},
+									"required": [
+										"schema",
+										"row",
+										"batch",
+										"path"
 									],
 									"additionalProperties": false
 								}

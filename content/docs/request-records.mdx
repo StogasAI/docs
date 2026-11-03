@@ -137,7 +137,12 @@ the first call, so the gateway called Azure:
 	"plugins": {
 		"redaction": { "duration_us": 310, "items_redacted": 2 }
 	},
-	"gateway_version": "v1.5.93"
+	"gateway_version": "v1.5.93",
+	"log_batch": { "sequence": 4127, "index": 38 },
+	"receipt_commitments": {
+		"request": "41d7e3a95c0b2f86d4e1a7c3b9f05e2d8a6c4b1f9e7d3a5c2b8f6e4d1a9c7b3e",
+		"response": "c08e5b2d7f1a9c3e6b4d8f2a0c7e5b3d9f1a6c4e8b2d0f7a5c3e9b1d6f4a8c2e"
+	}
 }
 ```
 
@@ -170,6 +175,8 @@ the first call, so the gateway called Azure:
 | `plugins`                                                | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                         |
 | `gateway_error`                                          | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).               |
 | `gateway_version`                                        | The gateway release that handled the request.                                                       |
+| `log_batch`                                              | Its place in the gateway's [signed batch](/docs/receipts#prove-a-request-log), or `null`.           |
+| `receipt_commitments`                                    | The commitments of the request's [receipt](/docs/receipts), or `null` when it asked for none.       |
 
 ## Policy hashes
 
@@ -450,7 +457,9 @@ For example, 99 matching credit rejections in one minute produce five single rec
 		"meters": {},
 		"standard_text_tokens": {}
 	},
-	"gateway_version": "v1.5.93"
+	"gateway_version": "v1.5.93",
+	"log_batch": { "sequence": 4130, "index": 52 },
+	"receipt_commitments": null
 }
 ```
 
