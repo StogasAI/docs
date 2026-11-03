@@ -21,11 +21,14 @@ script.
   `GET /api/organizations` still lists it, with `allowAccessTokens` set to `false`. The dashboard
   and API keys aren't affected.
 - A token stops working when it expires, when you delete it, and when you change your password.
-  When GitHub finds a token in public, requests with it return `401 TOKEN_EXPOSED` and the place
-  where GitHub found it.
+- After you rotate a token on the **Account** page, requests with the old token return
+  `401 TOKEN_REPLACED`.
+- When GitHub finds a token in public, we replace it. Requests with the old token return
+  `401 TOKEN_EXPOSED` and the place where GitHub found it until you reveal or rotate the new one on
+  the **Account** page.
 
-Tokens cannot create tokens, change sign-in methods, delete the account or use the Playground. Use
-the dashboard for those.
+Tokens cannot create, reveal or rotate tokens, change sign-in methods, delete the account or use the
+Playground. Use the dashboard for those.
 
 ## Organizations
 
