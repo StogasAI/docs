@@ -31,8 +31,8 @@ key. Each is a scope. A request must follow every policy that applies to it, and
 | Request                       | No       | No                          | No                                    |
 
 - Every scope accepts `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`. Only
-  organization, folder, grant and key policies can
-  [set an order](/docs/policies/routing#orders-from-several-policies).
+  organization, folder, grant, key and request policies can
+  [set sort criteria](/docs/policies/routing#orders-from-several-policies).
 - Credential policies cannot set [fallbacks](/docs/policies/routing#retries-and-fallbacks) or
   `timeouts.totalSeconds`, because one fallback count and one total wait apply to the whole
   request.
@@ -44,20 +44,20 @@ key. Each is a scope. A request must follow every policy that applies to it, and
 
 ## How settings combine
 
-When several policies set the same kind of setting, they combine. Only the order depends on the
-scope that sets it:
+When several policies set the same kind of setting, they combine. Only the order of sort criteria
+depends on the scope that sets them:
 
-| Setting                                                               | Result                                                                 |
-| --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [Routing filters](/docs/policies/routing)                             | Every filter must match.                                               |
-| [Allowed catalog nodes](/docs/policies/routing#allowed-catalog-nodes) | Only nodes in every list. An empty list allows none.                   |
-| [Order](/docs/policies/routing#orders-from-several-policies)          | The broadest required order. Without one, the closest default.         |
-| [Deny periods](/docs/policies/access#deny-periods)                    | Every period applies.                                                  |
-| [Redaction](/docs/pii-redaction)                                      | Every preset, literal and pattern applies to the original text.        |
-| [ASCII-only input](/docs/pii-redaction#ascii-only-input)              | Required if any policy requires it.                                    |
-| [Retries and fallbacks](/docs/policies/routing#retries-and-fallbacks) | The smallest value of each. Without one, no retries and two fallbacks. |
-| [Timeouts](/docs/policies/timeouts)                                   | The smallest value of each. Without one, 3,600 and 300 seconds.        |
-| [Limits](/docs/policies/limits)                                       | Every limit applies. Limits cannot be defaults.                        |
+| Setting                                                               | Result                                                                      |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [Routing filters](/docs/policies/routing)                             | Every filter must match.                                                    |
+| [Allowed catalog nodes](/docs/policies/routing#allowed-catalog-nodes) | Only nodes in every list. An empty list allows none.                        |
+| [Sort](/docs/policies/routing#orders-from-several-policies)           | Required criteria from the broadest policy, then defaults from the closest. |
+| [Deny periods](/docs/policies/access#deny-periods)                    | Every period applies.                                                       |
+| [Redaction](/docs/pii-redaction)                                      | Every preset, literal and pattern applies to the original text.             |
+| [ASCII-only input](/docs/pii-redaction#ascii-only-input)              | Required if any policy requires it.                                         |
+| [Retries and fallbacks](/docs/policies/routing#retries-and-fallbacks) | The smallest value of each. Without one, no retries and two fallbacks.      |
+| [Timeouts](/docs/policies/timeouts)                                   | The smallest value of each. Without one, 3,600 and 300 seconds.             |
+| [Limits](/docs/policies/limits)                                       | Every limit applies. Limits cannot be defaults.                             |
 
 [Rules](/docs/policies/rules) apply settings only to matching requests, or as defaults that apply
 only when no policy requires the same kind of setting.

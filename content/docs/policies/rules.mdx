@@ -84,23 +84,25 @@ no policy requires a setting of the same kind:
 }
 ```
 
-A key policy with its own `routing.sort` or `routing.order` replaces this default. These are the
-kinds of setting:
+Sort criteria never replace each other. A key policy's own `routing.sort` comes first, and this
+default orders only the deployments that the key's criteria leave tied. See
+[Orders from several policies](/docs/policies/routing#orders-from-several-policies). Other settings
+replace defaults of the same kind:
 
-| Kind               | Includes                                               |
-| ------------------ | ------------------------------------------------------ |
-| Access             | All of `access`                                        |
-| Input              | All of `input`                                         |
-| Each timeout       | `totalSeconds` or `outputIdleSeconds`                  |
-| Each routing field | One field, except that `order` and `sort` are one kind |
-| Plugins            | All of `plugins`                                       |
+| Kind               | Includes                                           |
+| ------------------ | -------------------------------------------------- |
+| Access             | All of `access`                                    |
+| Input              | All of `input`                                     |
+| Each timeout       | `totalSeconds` or `outputIdleSeconds`              |
+| Each routing field | One field, except `order` and `sort`, which add up |
+| Plugins            | All of `plugins`                                   |
 
 - Plugin settings are one kind because encrypted plugin settings do not show which plugins they
   set. A required text extraction setting therefore also replaces default redaction and default
   export destinations.
 - When several policies set defaults of the same kind, they
-  [combine](/docs/policies/scopes#how-settings-combine) like required settings. For order and sort,
-  the closest default applies.
+  [combine](/docs/policies/scopes#how-settings-combine) like required settings. Default sort
+  criteria apply from the closest policy out.
 - [Limits](/docs/policies/limits) cannot be defaults.
 
 ### See which defaults apply
@@ -124,7 +126,6 @@ another policy:
 | ASCII-only input      | `"input": { "asciiOnly": false }` |
 | Deny periods          | `"access": { "deny": [] }`        |
 | Routing filter        | `"filter": "true"`                |
-| Order and sort        | `"sort": []`                      |
 | Allowed catalog nodes | `"allowedCatalogNodes": {}`       |
 | Redaction             | `"redaction": {}`                 |
 

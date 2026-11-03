@@ -28,11 +28,11 @@ sorts are [expressions](/docs/policies/expressions) over the fields in the
 
 ## When no deployment fits
 
-| Error               | Cause                                                                                                   | Fix                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `model_unavailable` | No candidate is left.                                                                                   | Check the model, the key's credentials and the key's **Combined policy**.             |
-| `model_ambiguous`   | The request names no model, or a [group](/docs/models#groups) whose newest models share a release date. | Name a model, filter to one, or add an `order` or `sort`. The error lists the models. |
-| `model_retired`     | The model or deployment retired. The error gives the date unless the provider retired it early.         | Choose another model.                                                                 |
+| Error                                     | Cause                                                                                           | Fix                                                                       |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `model_unavailable`                       | No candidate is left.                                                                           | Check the model, the key's credentials and the key's **Combined policy**. |
+| `model_ambiguous`, `deployment_ambiguous` | The [order](#ties) leaves a tie among the candidates that the request would try.                | Name a model, or add a sort criterion. The error names the tied IDs.      |
+| `model_retired`                           | The model or deployment retired. The error gives the date unless the provider retired it early. | Choose another model.                                                     |
 
 Filters and lists from every policy apply together, so an OpenAI-only policy and a Chutes-only
 policy leave no candidate. Sending the request again does not help, and a policy cannot widen the
@@ -51,33 +51,82 @@ request's `model`. To see which policy removed each candidate, run a
 
 ## Ordering
 
-The gateway tries candidates in this order:
+The gateway tries candidates in the order that `sort` gives. Each criterion orders the candidates
+that the criteria before it leave tied:
 
-1. Deployments in `order`, in list order.
-2. The rest by `sort`.
-3. Ties by the default order: newest model, model ID, the request's
-   [`provider.order`](/docs/models#how-the-gateway-chooses-a-deployment), cheapest
-   [blended price](/docs/policies/expressions#blended-price) at 3:1, and deployment ID.
-
-The credentials of one deployment stay together, in the order that the key assigns them. The
-[fallbacks](#retries-and-fallbacks) follow the same order.
-
-```json title="Prefer OpenAI, then Claude, then the cheapest"
+```json title="Prefer two deployments, then the cheapest"
 {
 	"routing": {
-		"order": ["openai-gpt-5.6-sol", "anthropic-claude-sonnet-4-6"],
-		"sort": [{ "by": "blended_price(3, 1)" }]
+		"sort": [
+			{ "deployments": ["openai-gpt-5.6-sol", "anthropic-claude-sonnet-4-6"] },
+			{ "by": "blended_price(3, 1)" }
+		]
 	}
 }
 ```
 
-`order` skips listed deployments that the request cannot use. It never adds a deployment that the
-request's `model`, filters, lists or credentials exclude.
+A criterion is one of these:
 
-### Sort
+| Criterion                                                                                                                    | Orders candidates by                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `{ "by": "<expression>", "direction": "asc" }`                                                                               | The value of an [expression](/docs/policies/expressions). `direction` is `asc` or `desc`, `asc` by default. |
+| `{ "authors": [...] }`, `{ "models": [...] }`, `{ "deployments": [...] }`, `{ "routes": [...] }` or `{ "providers": [...] }` | Their place in the list of catalog IDs. Candidates that are not listed come last.                           |
 
-A sort has up to three criteria. Each has a CEL expression in `by` and a `direction`, `asc` by
-default or `desc`:
+- A policy can have up to four criteria. Each list kind can appear once per policy, and a list takes
+  no `direction`.
+- A list skips IDs that the request cannot use. It never adds a candidate that the request's
+  `model`, filters, allowed lists or credentials exclude.
+- `order`, an older form, is a `deployments` list at the start of the policy's `sort`. It counts
+  toward the four criteria, and a policy that sets it cannot also set a `deployments` list.
+- The credentials of one deployment stay together, in the order that the key assigns them. The
+  [fallbacks](#retries-and-fallbacks) follow the same order.
+
+### Default order
+
+A new organization's policy starts with this [default rule](/docs/policies/rules#defaults):
+
+```json title="Organization policy"
+{
+	"rules": {
+		"default_order": {
+			"mode": "default",
+			"routing": {
+				"sort": [
+					{ "by": "model.releaseDate", "direction": "desc" },
+					{ "by": "blended_price(3, 1)" },
+					{ "by": "deployment.id" }
+				]
+			}
+		}
+	}
+}
+```
+
+- A [group](/docs/models#groups) such as `claude` reaches its newest model, and a request without a
+  model reaches the newest model that the key can use.
+- Among the deployments of one model, the cheapest comes first. When prices are equal, the
+  deployment whose ID sorts first comes first, so requests keep reaching the same provider and its
+  prompt cache.
+- The criteria of every other policy come before these. To change the default for the whole
+  organization, edit or remove the rule.
+
+### Ties
+
+When the criteria leave a tie that decides which candidates a request tries, or in which order, the
+request fails before any provider call:
+
+| Error                  | Tied candidates           | Fix                                                                                                                      |
+| ---------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `model_ambiguous`      | Deployments of two models | Name one model, or add a criterion that orders the models, such as `{ "by": "model.releaseDate", "direction": "desc" }`. |
+| `deployment_ambiguous` | Deployments of one model  | Add a criterion that orders them, such as a `providers` list or `{ "by": "random()" }`.                                  |
+
+The error message names up to three of the tied models or deployments. The
+[routing simulation](/docs/policies/editing#simulate-routing) lists them all. Ties among candidates
+past the [fallbacks](#retries-and-fallbacks) change nothing, so they do not fail the request.
+
+### Sort by an expression
+
+Each `by` expression reads `author`, `model`, `deployment`, `route` or `provider` fields:
 
 ```json title="Cheapest output, then largest context"
 {
@@ -90,19 +139,11 @@ default or `desc`:
 }
 ```
 
-- Each `by` expression must read an `author`, `model`, `deployment`, `route` or `provider` field.
 - Missing values sort last. Booleans sort `false` first when ascending. Lists cannot be sorted.
+- An expression that two policies use orders candidates once. A later copy is left out, in either
+  direction, because it cannot break the ties of the first.
 
-When a request names no model, a sort can choose the model:
-
-```json title="Newest OpenAI model"
-{
-	"routing": {
-		"filter": "author.id == 'openai'",
-		"sort": [{ "by": "model.releaseDate", "direction": "desc" }]
-	}
-}
-```
+When a request names no model, the criteria choose the model:
 
 ```json title="Cheapest Claude model"
 {
@@ -135,31 +176,37 @@ the other deployment is its fallback.
 - Criteria before `random()` come first:
   `[{ "by": "provider.id == 'azure'", "direction": "desc" }, { "by": "random()" }]` tries Azure
   deployments in random order, then the others in random order.
+- No two deployments tie after `random()`, so criteria after it, from other policies, change
+  nothing.
+- Requests that alternate between providers do not share a provider's prompt cache.
 - Each gateway draws on its own, without shared state.
 
 ### Orders from several policies
 
-`order` and `sort` together form one order. Organization, folder, grant, key and request policies
-can each set one order:
+Organization, folder, grant, key and request policies can each set criteria in two places:
 
-- At the top level, the order is required.
-- In one rule with `"mode": "default"` and no `when`, it is a
-  [default](/docs/policies/rules#defaults).
+- At the top level, the criteria are required.
+- In one rule with `"mode": "default"` and no `when`, they are
+  [defaults](/docs/policies/rules#defaults).
 
-One order applies to the whole request: the broadest required order, or without one, the closest
-default.
+The criteria of every policy apply, in this order:
 
-| Orders that policies set               | Order that applies |
-| -------------------------------------- | ------------------ |
-| Organization required, key required    | Organization       |
-| Organization default, key required     | Key                |
-| Organization default, grant default    | Grant              |
-| Organization default, request required | Request            |
+1. Required criteria, from the organization policy down to the request policy.
+2. The request's [`provider.order`](/docs/models#how-the-gateway-chooses-a-deployment), as a
+   `providers` list.
+3. Default criteria, from the request policy up to the organization policy.
 
-- A request policy that sets a different order than a saved required order fails.
-- On a key, **Combined policy** shows the policy whose order applies in `routing.orderFrom`.
-- To make every request use one order, set it at the top level of the organization policy.
-- To stop other policies from setting an order, remove `routing.order` and `routing.sort` from the
+| Criteria that policies set                                                                    | Combined order                                                                                   |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Key requires `[{ "providers": ["azure"] }]`. The organization has the default order.          | Azure deployments first, then the others. Within each, the default order.                        |
+| Organization requires zero data retention first. A request sets `provider.order: ["openai"]`. | Zero-retention deployments first. Among each, OpenAI first, then the default order.              |
+| Grant default `[{ "by": "blended_price(3, 1)" }]`. The organization has the default order.    | Cheapest first, then newest model, then deployment ID. The repeated price criterion is left out. |
+
+- On a key, **Combined policy** shows the combined criteria in `routing.sort`, and the policy that
+  set each run of them in `routing.sortFrom`.
+- To decide the order for every request, end the organization's required criteria with a criterion
+  that leaves no tie, such as `random()`.
+- To stop other policies from adding criteria, remove `routing.order` and `routing.sort` from the
   organization's [delegation](/docs/policies/delegation) for every resource type and for `request`.
 
 ## Retries and fallbacks

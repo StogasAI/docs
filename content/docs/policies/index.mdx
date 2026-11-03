@@ -31,11 +31,12 @@ Every policy follows these rules. The topic pages give the details.
 - **Policies only narrow.** A policy limits and configures what a key does. It cannot give a key
   credentials or permissions that the key does not already have.
 - **Every policy applies, in any order.** Filters, lists, deny periods, redaction and limits from
-  all policies apply together, so the strictest value wins. No scope outranks another, except for
-  the [order of deployments](/docs/policies/routing#orders-from-several-policies), because only one
-  order can apply to a request. See [How settings combine](/docs/policies/scopes#how-settings-combine).
+  all policies apply together, so the strictest value wins. No scope outranks another, except that
+  the [sort criteria](/docs/policies/routing#orders-from-several-policies) of broader policies come
+  first, because each criterion orders only the ties of those before it. See
+  [How settings combine](/docs/policies/scopes#how-settings-combine).
 - **Defaults give way.** A [default rule](/docs/policies/rules#defaults) applies only when no
-  policy requires the same kind of setting.
+  policy requires the same kind of setting. Default sort criteria come after the required ones.
 - **The plan is fixed before the first call.** Which deployments can serve a request, and in which
   order, depends only on what is known when the request arrives: the catalog, the key and the
   request's model, interface, time and size. Earlier calls, token estimates and provider responses

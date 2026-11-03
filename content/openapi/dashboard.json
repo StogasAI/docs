@@ -5592,7 +5592,7 @@
 															"scope"
 														],
 														"additionalProperties": false,
-														"description": "The named policy's routing.order and routing.sort apply instead of this policy's."
+														"description": "Older gateway releases: the named policy's routing.order and routing.sort apply instead of this policy's."
 													},
 													{
 														"type": "object",
@@ -10409,6 +10409,7 @@
 																			"credential_spend_limit",
 																			"credential_token_limit",
 																			"dashboard_key_denied",
+																			"deployment_ambiguous",
 																			"encrypted_content_invalid",
 																			"encryption_key_required",
 																			"folder_concurrency_limit",
@@ -16748,7 +16749,7 @@
 										"scope"
 									],
 									"additionalProperties": false,
-									"description": "The named policy's routing.order and routing.sort apply instead of this policy's."
+									"description": "Older gateway releases: the named policy's routing.order and routing.sort apply instead of this policy's."
 								},
 								{
 									"type": "object",
@@ -18402,10 +18403,10 @@
 														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 													},
 													"uniqueItems": true,
-													"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
+													"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
 												},
 												"sort": {
-													"maxItems": 3,
+													"maxItems": 4,
 													"type": "array",
 													"items": {
 														"type": "object",
@@ -18414,7 +18415,7 @@
 																"type": "string",
 																"minLength": 1,
 																"x-stogas-maxBytes": 16384,
-																"description": "A typed CEL expression. Prices use decimal(\"...\") for exact values."
+																"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
 															},
 															"direction": {
 																"type": "string",
@@ -18422,15 +18423,104 @@
 																	"asc",
 																	"desc"
 																],
-																"description": "Defaults to asc. Missing values sort last in either direction."
+																"description": "Defaults to asc. Missing values sort last in either direction. Lists take none."
+															},
+															"authors": {
+																"minItems": 1,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 128,
+																	"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+																},
+																"uniqueItems": true,
+																"description": "Author IDs in the order to try. Candidates not listed come last."
+															},
+															"models": {
+																"minItems": 1,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 128,
+																	"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+																},
+																"uniqueItems": true,
+																"description": "Model IDs in the order to try. Candidates not listed come last."
+															},
+															"deployments": {
+																"minItems": 1,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 128,
+																	"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+																},
+																"uniqueItems": true,
+																"description": "Deployment IDs in the order to try. Candidates not listed come last."
+															},
+															"routes": {
+																"minItems": 1,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 128,
+																	"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+																},
+																"uniqueItems": true,
+																"description": "Route IDs in the order to try. Candidates not listed come last."
+															},
+															"providers": {
+																"minItems": 1,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 128,
+																	"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+																},
+																"uniqueItems": true,
+																"description": "Provider IDs in the order to try. Candidates not listed come last."
 															}
 														},
-														"required": [
-															"by"
-														],
-														"additionalProperties": false
+														"additionalProperties": false,
+														"oneOf": [
+															{
+																"required": [
+																	"by"
+																]
+															},
+															{
+																"required": [
+																	"authors"
+																]
+															},
+															{
+																"required": [
+																	"models"
+																]
+															},
+															{
+																"required": [
+																	"deployments"
+																]
+															},
+															{
+																"required": [
+																	"routes"
+																]
+															},
+															{
+																"required": [
+																	"providers"
+																]
+															}
+														]
 													},
-													"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
+													"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 												}
 											},
 											"additionalProperties": false,
@@ -18688,7 +18778,7 @@
 							],
 							"additionalProperties": false
 						},
-						"description": "The policies that set each combined setting outside rules. Where the smallest value or the stricter choice wins, the first policy that sets the winning value. Where values combine, every policy that sets one. routing.orderFrom names the policy whose ordering applies."
+						"description": "The policies that set each combined setting outside rules. Where the smallest value or the stricter choice wins, the first policy that sets the winning value. Where values combine, every policy that sets one. routing.sortFrom names the policy of each sort criterion."
 					},
 					"delegation": {
 						"type": "object",
@@ -19394,6 +19484,175 @@
 								"minLength": 1,
 								"maxLength": 524288
 							},
+							"sort": {
+								"maxItems": 40,
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"by": {
+											"type": "string",
+											"minLength": 1,
+											"x-stogas-maxBytes": 16384,
+											"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
+										},
+										"direction": {
+											"type": "string",
+											"enum": [
+												"asc",
+												"desc"
+											],
+											"description": "Defaults to asc. Missing values sort last in either direction. Lists take none."
+										},
+										"authors": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Author IDs in the order to try. Candidates not listed come last."
+										},
+										"models": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Model IDs in the order to try. Candidates not listed come last."
+										},
+										"deployments": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Deployment IDs in the order to try. Candidates not listed come last."
+										},
+										"routes": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Route IDs in the order to try. Candidates not listed come last."
+										},
+										"providers": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Provider IDs in the order to try. Candidates not listed come last."
+										}
+									},
+									"additionalProperties": false,
+									"oneOf": [
+										{
+											"required": [
+												"by"
+											]
+										},
+										{
+											"required": [
+												"authors"
+											]
+										},
+										{
+											"required": [
+												"models"
+											]
+										},
+										{
+											"required": [
+												"deployments"
+											]
+										},
+										{
+											"required": [
+												"routes"
+											]
+										},
+										{
+											"required": [
+												"providers"
+											]
+										}
+									]
+								},
+								"description": "The combined criteria in the order they apply: required criteria from the organization policy down, then default criteria from the closest policy out. routing.order becomes its policy's deployments list. A criterion that repeats an earlier one, apart from its direction, is left out, since it can't break that one's ties."
+							},
+							"sortFrom": {
+								"maxItems": 40,
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"policy": {
+											"type": "object",
+											"properties": {
+												"scope": {
+													"type": "string",
+													"enum": [
+														"organization",
+														"folder",
+														"grant",
+														"role",
+														"member",
+														"credential",
+														"key"
+													]
+												},
+												"id": {
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 64
+												}
+											},
+											"required": [
+												"scope"
+											],
+											"additionalProperties": false
+										},
+										"rule": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 48,
+											"description": "The rule with mode default that sets the criteria."
+										},
+										"criteria": {
+											"type": "integer",
+											"minimum": 1,
+											"maximum": 4
+										}
+									},
+									"required": [
+										"policy",
+										"criteria"
+									],
+									"additionalProperties": false
+								},
+								"description": "The policy of each run of routing.sort criteria, in the same order: the first entry sets the first criteria many criteria, and so on."
+							},
 							"order": {
 								"minItems": 1,
 								"type": "array",
@@ -19404,35 +19663,7 @@
 									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 								},
 								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
-							},
-							"sort": {
-								"maxItems": 3,
-								"type": "array",
-								"items": {
-									"type": "object",
-									"properties": {
-										"by": {
-											"type": "string",
-											"minLength": 1,
-											"x-stogas-maxBytes": 16384,
-											"description": "A typed CEL expression. Prices use decimal(\"...\") for exact values."
-										},
-										"direction": {
-											"type": "string",
-											"enum": [
-												"asc",
-												"desc"
-											],
-											"description": "Defaults to asc. Missing values sort last in either direction."
-										}
-									},
-									"required": [
-										"by"
-									],
-									"additionalProperties": false
-								},
-								"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
+								"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
 							},
 							"orderFrom": {
 								"type": "object",
@@ -19467,7 +19698,7 @@
 									"mode"
 								],
 								"additionalProperties": false,
-								"description": "The policy whose routing.order and routing.sort apply."
+								"description": "Older gateway releases: the policy whose routing.order and routing.sort apply."
 							}
 						},
 						"additionalProperties": false
@@ -21297,10 +21528,10 @@
 									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 								},
 								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
+								"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
 							},
 							"sort": {
-								"maxItems": 3,
+								"maxItems": 4,
 								"type": "array",
 								"items": {
 									"type": "object",
@@ -21309,7 +21540,7 @@
 											"type": "string",
 											"minLength": 1,
 											"x-stogas-maxBytes": 16384,
-											"description": "A typed CEL expression. Prices use decimal(\"...\") for exact values."
+											"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
 										},
 										"direction": {
 											"type": "string",
@@ -21317,15 +21548,104 @@
 												"asc",
 												"desc"
 											],
-											"description": "Defaults to asc. Missing values sort last in either direction."
+											"description": "Defaults to asc. Missing values sort last in either direction. Lists take none."
+										},
+										"authors": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Author IDs in the order to try. Candidates not listed come last."
+										},
+										"models": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Model IDs in the order to try. Candidates not listed come last."
+										},
+										"deployments": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Deployment IDs in the order to try. Candidates not listed come last."
+										},
+										"routes": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Route IDs in the order to try. Candidates not listed come last."
+										},
+										"providers": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128,
+												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+											},
+											"uniqueItems": true,
+											"description": "Provider IDs in the order to try. Candidates not listed come last."
 										}
 									},
-									"required": [
-										"by"
-									],
-									"additionalProperties": false
+									"additionalProperties": false,
+									"oneOf": [
+										{
+											"required": [
+												"by"
+											]
+										},
+										{
+											"required": [
+												"authors"
+											]
+										},
+										{
+											"required": [
+												"models"
+											]
+										},
+										{
+											"required": [
+												"deployments"
+											]
+										},
+										{
+											"required": [
+												"routes"
+											]
+										},
+										{
+											"required": [
+												"providers"
+											]
+										}
+									]
 								},
-								"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
+								"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 							}
 						},
 						"additionalProperties": false,
@@ -21859,10 +22179,10 @@
 												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 											},
 											"uniqueItems": true,
-											"description": "Deployment IDs to try first, in this order. Deployments the request cannot use are skipped. With routing.sort it forms one order, which organization, folder, grant, key and request policies can set at the top level or in one rule with mode default and no when. The broadest required order applies, otherwise the closest default. A request policy cannot change a saved required order."
+											"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
 										},
 										"sort": {
-											"maxItems": 3,
+											"maxItems": 4,
 											"type": "array",
 											"items": {
 												"type": "object",
@@ -21871,7 +22191,7 @@
 														"type": "string",
 														"minLength": 1,
 														"x-stogas-maxBytes": 16384,
-														"description": "A typed CEL expression. Prices use decimal(\"...\") for exact values."
+														"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
 													},
 													"direction": {
 														"type": "string",
@@ -21879,15 +22199,104 @@
 															"asc",
 															"desc"
 														],
-														"description": "Defaults to asc. Missing values sort last in either direction."
+														"description": "Defaults to asc. Missing values sort last in either direction. Lists take none."
+													},
+													"authors": {
+														"minItems": 1,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 128,
+															"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+														},
+														"uniqueItems": true,
+														"description": "Author IDs in the order to try. Candidates not listed come last."
+													},
+													"models": {
+														"minItems": 1,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 128,
+															"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+														},
+														"uniqueItems": true,
+														"description": "Model IDs in the order to try. Candidates not listed come last."
+													},
+													"deployments": {
+														"minItems": 1,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 128,
+															"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+														},
+														"uniqueItems": true,
+														"description": "Deployment IDs in the order to try. Candidates not listed come last."
+													},
+													"routes": {
+														"minItems": 1,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 128,
+															"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+														},
+														"uniqueItems": true,
+														"description": "Route IDs in the order to try. Candidates not listed come last."
+													},
+													"providers": {
+														"minItems": 1,
+														"type": "array",
+														"items": {
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 128,
+															"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+														},
+														"uniqueItems": true,
+														"description": "Provider IDs in the order to try. Candidates not listed come last."
 													}
 												},
-												"required": [
-													"by"
-												],
-												"additionalProperties": false
+												"additionalProperties": false,
+												"oneOf": [
+													{
+														"required": [
+															"by"
+														]
+													},
+													{
+														"required": [
+															"authors"
+														]
+													},
+													{
+														"required": [
+															"models"
+														]
+													},
+													{
+														"required": [
+															"deployments"
+														]
+													},
+													{
+														"required": [
+															"routes"
+														]
+													},
+													{
+														"required": [
+															"providers"
+														]
+													}
+												]
 											},
-											"description": "Up to three criteria that order deployments after routing.order. Each orders the ties of the one before and must read an author, model, deployment, route or provider field. The last can be random() or random(weight), without a direction, for a weighted random order."
+											"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 										}
 									},
 									"additionalProperties": false,
