@@ -1,0 +1,33 @@
+---
+title: Get the receipt of a paid invoice
+description: Returns a PDF that lists the payments whose credit paid the
+  invoice, oldest first. The first request creates the receipt, so it needs
+  write access, and later requests return it again. If a payment that it lists
+  is taken back, the next request returns a new receipt that names the one it
+  replaces. An invoice with an amount due has no receipt.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns a PDF that lists the payments whose credit paid the invoice,
+          oldest first. The first request creates the receipt, so it needs write
+          access, and later requests return it again. If a payment that it lists
+          is taken back, the next request returns a new receipt that names the
+          one it replaces. An invoice with an amount due has no receipt.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/funding/invoices/{invoiceId}/receipt', method: 'post' }]} />
+    </>
+  );
+}

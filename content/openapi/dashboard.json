@@ -13264,6 +13264,48 @@
 				}
 			}
 		},
+		"/api/{orgId}/funding/invoices/{invoiceId}/receipt": {
+			"post": {
+				"operationId": "getInvoiceReceipt",
+				"tags": [
+					"Balance"
+				],
+				"summary": "Get the receipt of a paid invoice",
+				"description": "Returns a PDF that lists the payments whose credit paid the invoice, oldest first. The first request creates the receipt, so it needs write access, and later requests return it again. If a payment that it lists is taken back, the next request returns a new receipt that names the one it replaces. An invoice with an amount due has no receipt.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "invoiceId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/pdf": {}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/funding/wallet/{coin}/address": {
 			"post": {
 				"operationId": "getWalletAddress",
