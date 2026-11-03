@@ -12,6 +12,16 @@ account.
 
 ## Install
 
+A package manager installs a release archive and checks its SHA-256:
+
+```console
+brew install stogasai/tap/stogas                                  # macOS and Linux
+scoop bucket add stogas https://github.com/StogasAI/homebrew-tap  # Windows
+scoop install stogas/stogas
+```
+
+To check the archive yourself, install it by hand:
+
 <Steps>
 <Step>
 
@@ -52,7 +62,8 @@ sudo install stogas-v<version>-linux-amd64/stogas /usr/local/bin/
 </Step>
 </Steps>
 
-With a Rust toolchain, you can instead run `cargo install stogas-cli --locked`.
+With a Rust toolchain, `cargo install stogas-cli --locked` builds the CLI from source instead, and
+with Nix, `nix run github:StogasAI/stogas -- serve` does.
 
 ## Serve
 
