@@ -19,6 +19,34 @@ that time, new requests are blocked and requests that are running continue. The 
 expiration of every resource that applies wins, so removing a key's expiration does not remove its
 grant's.
 
+### Expiration or a rule on `request.time`
+
+A [conditional rule](/docs/policies/rules#conditional-rules) can also change requests from a set
+time, because its condition can read `request.time`. From December 1, this rule makes requests skip
+OpenAI:
+
+```json title="policy.json"
+{
+	"rules": {
+		"leave_openai": {
+			"when": "request.time >= timestamp('2026-12-01T00:00:00Z')",
+			"routing": { "filter": "provider.id != 'openai'" }
+		}
+	}
+}
+```
+
+Use an expiration when everything under a resource should stop, and a rule when only some requests
+or deployments should change:
+
+|                                         | Expiration                                  | Rule on `request.time`                                                             |
+| --------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Blocks                                  | Every request under the resource            | Only the requests and deployments that it matches                                  |
+| Shown                                   | With the resource in the dashboard          | Only in the policy                                                                 |
+| Saving                                  | Adds no policy version                      | Adds a policy version, which request logs record                                   |
+| [Delegation](/docs/policies/delegation) | Does not apply                              | The scope must be allowed to save the rule's sections, such as `routing.filter`    |
+| Error                                   | `key_expired`, `grant_expired` and the like | The error of the rule's settings, such as `schedule_denied` or `model_unavailable` |
+
 ## Deny periods
 
 This policy blocks new requests before 08:00 on weekdays in New York:
