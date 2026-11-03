@@ -111,4 +111,7 @@ The gateway sends the request, then charges the usage to the limits that held it
 - Saving does not wait for gateways to load the change. A request that reaches a gateway with an
   older version gets `503 key_configuration_changed` and costs nothing. Send it again after a
   moment.
+- A change that lets a refused request through, such as assigning a credential, choosing an Azure
+  target, registering an encryption key or removing a deny period, applies to requests that you
+  send a second or more after you save it.
 - A request keeps the limits that it held, even if a later edit changes them.
