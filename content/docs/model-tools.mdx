@@ -11,6 +11,8 @@ A request can give the model two kinds of tools:
   for tokens.
 - **Hosted tools**, such as web search, run at the provider during the request. They can have a
   price per call.
+- **Remote MCP servers** give the model the tools of a server that you choose. On OpenAI models,
+  the provider calls them during the request.
 
 ## Call a function
 
@@ -147,25 +149,130 @@ reserves for them:
 The provider does not stop at the hold. Settlement charges the calls and tokens that the provider
 reports, even when they are more than the hold.
 
+## Remote MCP servers
+
+On OpenAI models, Responses accepts `mcp` tools. OpenAI connects to each server, lists its tools for
+the model and makes the calls that the model asks for[^mcp].
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Which pull requests wait for my review?",
+	"tools": [
+		{
+			"type": "mcp",
+			"server_label": "tracker", // Each server needs its own label.
+			"server_url": "https://mcp.example.com/sse",
+			"authorization": "<the server's token>",
+			"allowed_tools": ["list_pull_requests"] // Optional. The model sees only these tools.
+		}
+	]
+}
+```
+
+`connector_id` or `tunnel_id` can name the server instead of `server_url`. Two servers can offer
+tools with the same name, because each call names its server.
+
+<Steps>
+<Step>
+
+### Read the approval request
+
+By default, each call waits for your approval. The response has an `mcp_approval_request` item
+with the tool's name and arguments, and the call has not run.
+
+</Step>
+<Step>
+
+### Send your decision
+
+Send the request again with the response's output items after your input, and an
+`mcp_approval_response` for each approval request:
+
+```jsonc
+"input": [
+	{ "role": "user", "content": "Which pull requests wait for my review?" },
+	// The output items of the response, unchanged.
+	{ "type": "mcp_list_tools", "id": "mcpl_1", "server_label": "tracker", "tools": [ /* ... */ ] },
+	{
+		"type": "mcp_approval_request",
+		"id": "mcpr_1",
+		"server_label": "tracker",
+		"name": "list_pull_requests",
+		"arguments": "{\"state\":\"open\"}"
+	},
+	{ "type": "mcp_approval_response", "approval_request_id": "mcpr_1", "approve": true }
+]
+```
+
+Keep the `mcp` tool in `tools`, with its `authorization`, because OpenAI keeps no copy of it. The
+approved call runs, and the response has its `mcp_call` item.
+
+</Step>
+</Steps>
+
+### Calls without approval
+
+`require_approval: "never"` lets OpenAI call any tool of the server without asking. To skip
+approval only for some tools, name them:
+
+```jsonc
+"require_approval": { "never": { "tool_names": ["list_pull_requests"] } }
+```
+
+A filter's `tool_names` must name at least one tool. `tool_choice` can select a server, as in
+`{ "type": "mcp", "server_label": "tracker" }`, and an `allowed_tools` choice can list servers.
+
+### Holds for MCP
+
+Each tool list and each call result is new input for another pass of the model, and a pass can read
+up to the deployment's input limit. The hold covers one pass at that limit for the tool list, and
+one more for each call that can run:
+
+- One for each `mcp_approval_response` with `approve: true`.
+- Ten more when some tool runs without approval, or `max_tool_calls` if you set it. Without
+  `max_tool_calls`, the provider gets a limit of 20 calls.
+
+`tool_choice: "none"`, or a choice of another tool, leaves the servers out of the hold. OpenAI
+charges the tokens of tool lists and calls, with no fee per call. Settlement charges what the
+provider reports.
+
+### Your data and the server
+
+- The server receives the arguments that the model writes, and what it returns goes to the model.
+  The data handling in the [catalog](https://stogas.ai/catalog) covers the provider, not the
+  server. Each server keeps your data under its own terms, so check them before you connect it.
+- The gateway sends `authorization` and `headers` to the provider unchanged.
+  [Redaction](/docs/pii-redaction) skips the server's settings, and the response and
+  [exports](/docs/export) leave out its credentials.
+- With redaction on, the arguments of an `mcp_approval_request` that you send back are redacted
+  too, so the approved call runs with the redacted arguments.
+- The gateway returns `502` instead of a response with an item from a server that the request did
+  not declare or that `tool_choice` leaves out.
+
 ## Unavailable tools
 
 These tools return `400` before the gateway calls a provider:
 
-- Remote MCP servers
+- Remote MCP servers on Azure and Anthropic models
 - File search and hosted retrieval
 - Code interpreter, hosted shell and standalone code execution
 - Local shell and patch tools
 - Computer use and image generation
 - Provider memory and tool loading
 
-Remote MCP is not available, because the gateway cannot limit a provider's MCP calls or their
-charge, and an MCP server would receive your data outside the data handling that the catalog lists.
+Anthropic's MCP connector runs every call without your approval and is not eligible for zero data
+retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
 
 [^custom]: On OpenAI models, at [OpenAI](/docs/providers/openai#tools) and [Azure](/docs/providers/azure).
 
 [^forced]: [Anthropic](/docs/providers/anthropic#tools) does, with reasoning on.
 
 [^lists]: [Anthropic](/docs/providers/anthropic#tools) returns `400` for both lists in one tool.
+
+[^mcp]: [OpenAI's MCP guide](https://developers.openai.com/api/docs/guides/tools-connectors-mcp).
+
+[^anthropic-mcp]: [Anthropic's MCP connector](https://platform.claude.com/docs/en/agents-and-tools/mcp-connector).
 
 [^content]:
     For OpenAI search, each call reserves up to 128,000 tokens or the deployment's input limit, if

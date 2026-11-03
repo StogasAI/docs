@@ -72,6 +72,9 @@ Each record is the request record with these fields added:
 
 - A destination with `"content": false` gets records without `request`, `response` and `events`.
 
+- In `request`, each tool's `authorization` and header values read `"[omitted]"`, so the
+  credentials of a [remote MCP server](/docs/model-tools#remote-mcp-servers) stay out of records.
+
 - Records don't carry file contents. Each inline file in the request, such as a base64 image,
   audio clip or PDF, is replaced by an object with its declared `media_type`, and the `size` in bytes
   and hex `sha256` of the decoded file. Use the hash to match a file that you keep. File URLs and

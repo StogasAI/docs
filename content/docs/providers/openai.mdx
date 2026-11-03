@@ -56,7 +56,8 @@ The gateway sends `prompt_cache_key`, `prompt_cache_options`, `prompt_cache_brea
 
 ## Tools
 
-Besides `function` tools, Responses accepts `custom` tools and `web_search`. Search models, such as
+Besides `function` tools, Responses accepts `custom` tools, `web_search` and
+[remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models, such as
 `gpt-5-search-api`, take `web_search_options` on Chat Completions instead of `tools`.
 
 ## Not available
@@ -65,7 +66,7 @@ Besides `function` tools, Responses accepts `custom` tools and `web_search`. Sea
 - Stored conversations: `store: true`, `previous_response_id`, `conversation` and `background`. The
   gateway always sends `store: false`.
 - Async tool calls (`async: true`) and `configuration_update` input items.
-- Hosted file search, code interpreter, shell, computer use, image generation and remote MCP.
+- Hosted file search, code interpreter, shell, computer use and image generation.
 - WebSocket mode and the Scale tier.
 
 ## References
