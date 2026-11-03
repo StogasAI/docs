@@ -61,14 +61,29 @@ type a kind and a dot, such as `deployment.`, to see its fields.
 
 ## Choose a model
 
-The `model` field accepts these forms:
+The `model` field takes an ID, as every OpenAI and Anthropic client sends it. To choose where the
+request runs as well, add terms, separated by spaces:
 
-| Form               | Example              | Sends the request to                          |
-| ------------------ | -------------------- | --------------------------------------------- |
-| Model ID           | `gpt-5.6-sol`        | Any eligible deployment of the model          |
-| Group ID           | `gpt-6`              | Any eligible deployment of the group's models |
-| Provider and model | `azure/gpt-5.6-sol`  | That provider's deployments of the model      |
-| Deployment ID      | `openai-gpt-5.6-sol` | Exactly that deployment                       |
+| Form                | Example                         | Sends the request to                          |
+| ------------------- | ------------------------------- | --------------------------------------------- |
+| Model ID            | `gpt-5.6-sol`                   | Any eligible deployment of the model          |
+| Group ID            | `gpt-6`                         | Any eligible deployment of the group's models |
+| Deployment ID       | `openai-gpt-5.6-sol`            | Exactly that deployment                       |
+| Author and model    | `openai/gpt-5.6-sol`            | Any eligible deployment of the model          |
+| Provider and model  | `provider:azure gpt-5.6-sol`    | That provider's deployments of the model      |
+| Author and provider | `author:anthropic provider:aws` | AWS's deployments of Anthropic's models       |
+
+Each term is one of these:
+
+- An ID alone. It names a model, by its ID or an alias, a group or a deployment. No two of them
+  share an ID.
+- `author/ID`, the form that OpenRouter uses. The gateway checks that the author made the model.
+- A kind and an ID: `author:`, `provider:`, `route:`, `model:`, `group:` or `deployment:`.
+
+Each kind can appear once, and the field can name one model, group or deployment. IDs ignore case,
+and a dot or an underscore matches a hyphen, so `GPT-5_6-Sol` names `gpt-5.6-sol`. The text before
+a slash is always an author: `azure/gpt-5.6-sol` returns `invalid_request` with a message that
+suggests `provider:azure gpt-5.6-sol`.
 
 A deployment ID stays fixed: the gateway never moves the request to another tier, region or
 provider.
@@ -88,14 +103,15 @@ A group ID selects among the group's models that your credentials and policies a
 [routing order](/docs/policies/routing#ordering). The
 [default order](/docs/policies/routing#default-order) puts the newest model first, by release date,
 so requests move to a new model on the day it joins the catalog. To stay on one model, send its
-model ID. A provider prefix works on groups too: `openai/gpt-6` selects among the GPT-6 models that
+model ID. Terms work on groups too: `provider:openai gpt-6` selects among the GPT-6 models that
 OpenAI serves.
 
 - When models share a release date, the next criterion decides. For example, GPT-5.6 Luna, Sol and
   Terra came out on the same day, so the default order selects the cheapest of them.
 - When the criteria leave the group's models tied, the request returns `model_ambiguous` with
   their IDs.
-- Groups leave out deployments that need approval. Send their model or deployment ID instead.
+- Groups and `author:` leave out deployments that need approval. Send their model or deployment ID
+  instead.
 
 ```json title="The cheapest model of any group, whatever its age"
 {

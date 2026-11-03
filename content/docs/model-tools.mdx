@@ -109,8 +109,8 @@ before you continue.
 hosted tool goes only to deployments that run it, even when `tool_choice` lets the model call no
 tool. When no deployment for the request runs a tool, the gateway returns `400` with
 `unsupported_tool`. For example, Claude on AWS runs `web_fetch` only where Anthropic hosts it, so a
-request for `aws/claude-fable-5-1` with `web_fetch` goes to `aws-claude-fable-5-1-anthropic-hosted`
-and never to Bedrock.
+request for `provider:aws claude-fable-5-1` with `web_fetch` goes to
+`aws-claude-fable-5-1-anthropic-hosted` and never to Bedrock.
 
 ```jsonc title="Responses"
 {

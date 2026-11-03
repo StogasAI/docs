@@ -345,7 +345,7 @@
 								"$ref": "#/components/schemas/ChatCompletionRequest"
 							},
 							"example": {
-								"model": "openai/gpt-5-mini",
+								"model": "gpt-6-sol",
 								"messages": [
 									{
 										"role": "user",
@@ -437,7 +437,7 @@
 								"$ref": "#/components/schemas/ResponsesRequest"
 							},
 							"example": {
-								"model": "openai/gpt-5-mini",
+								"model": "gpt-6-sol",
 								"input": "Say hello in one sentence."
 							}
 						}
@@ -1675,7 +1675,7 @@
 					},
 					"model": {
 						"type": "string",
-						"description": "A model ID, a provider and model such as `azure/gpt-5.6-sol`, or a deployment ID. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models).",
+						"description": "A model, group or deployment ID, or terms such as `provider:azure gpt-5.6-sol` that also choose where the request runs. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models).",
 						"minLength": 1
 					},
 					"provider": {
@@ -2470,7 +2470,7 @@
 					"model": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A model ID, a provider and model such as `azure/gpt-5.6-sol`, or a deployment ID. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models)."
+						"description": "A model, group or deployment ID, or terms such as `provider:azure gpt-5.6-sol` that also choose where the request runs. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models)."
 					},
 					"provider": {
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
