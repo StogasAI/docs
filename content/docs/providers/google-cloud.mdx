@@ -41,6 +41,10 @@ Claude Models on Google Cloud works as on [Anthropic](/docs/providers/anthropic)
 Platform, send files inline, because file URLs and file IDs are rejected. `web_search` and
 `web_fetch` are not available.
 
+On Agent Platform, a `json_schema` response format and strict tools work only once your
+organization policy allows them. Google blocks them by default; add `structured_outputs` to the
+allowed values of `constraints/vertexai.allowedPartnerModelFeatures`.
+
 ## References
 
 - [Claude on Agent Platform](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/google-managed)
