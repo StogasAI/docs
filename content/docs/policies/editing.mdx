@@ -36,11 +36,12 @@ editor, `Ctrl` + `Space` shows suggestions, and `Esc` then `Tab` leaves the edit
 The routing simulation below the editor shows where a request would go with your draft. It calls no
 model and costs nothing. Routing reads only these request fields:
 
-| Field            | Value                                                                                                                                                         |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `model`          | Any [`model` value](/docs/models#choose-a-model). Without it, the request sends no model, which needs an `order`, a `sort` or a filter that leaves one model. |
-| `service_tier`   | Any [`service_tier` value](/docs/service-tiers). Without it, the request uses the tier of the named model.                                                    |
-| `reasoning.mode` | On Responses, the [`reasoning.mode`](/docs/reasoning#select-pro-mode) to send                                                                                 |
+| Field             | Value                                                                                                                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model`           | Any [`model` value](/docs/models#choose-a-model). Without it, the request sends no model, which needs an `order`, a `sort` or a filter that leaves one model.                                                           |
+| `service_tier`    | Any [`service_tier` value](/docs/service-tiers). Without it, the request uses the tier of the named model.                                                                                                              |
+| `reasoning.mode`  | On Responses, the [`reasoning.mode`](/docs/reasoning#select-pro-mode) to send                                                                                                                                           |
+| `encryption_keys` | The labels of the [encryption keys](/docs/customer-encryption#send-the-key-with-a-request) that the request sends. Only the labels count, so use any value instead of a real key. Without it, the request sends no key. |
 
 - The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
   key uses that credential. Enabled state, expiration and other changes apply after you save.

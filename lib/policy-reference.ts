@@ -12,8 +12,7 @@ const sections = {
 	limit: policy.properties.limits.additionalProperties,
 	limitPeriod: policy.properties.limits.additionalProperties.properties.per,
 	accessPeriod: policy.properties.access.properties.deny.items,
-	literalRule:
-		policy.properties.plugins.anyOf[0].properties.redaction!.properties.literals.items
+	literalRule: policy.properties.plugins.anyOf[0].properties.redaction!.properties.literals.items
 };
 export type PolicySection = keyof typeof sections;
 

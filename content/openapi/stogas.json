@@ -4467,6 +4467,15 @@
 								"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
 								"x-stogas-default": 2
 							},
+							"missingEncryptionKeys": {
+								"type": "string",
+								"enum": [
+									"fail",
+									"skip"
+								],
+								"description": "What happens when a deployment and credential pair needs an encryption key that the request didn't send. fail, the default, fails the request. skip leaves out only that pair, so the request can use its other pairs. fail wins when policies differ.",
+								"x-stogas-default": "fail"
+							},
 							"filter": {
 								"type": "string",
 								"minLength": 1,
@@ -4898,6 +4907,15 @@
 											"maximum": 2,
 											"description": "Other deployment and credential pairs to try, in routing order, after a pair fails. Defaults to 2. The smallest value that applies wins. Credential policies, and rules whose condition reads author, model, deployment, route or provider fields, cannot set it.",
 											"x-stogas-default": 2
+										},
+										"missingEncryptionKeys": {
+											"type": "string",
+											"enum": [
+												"fail",
+												"skip"
+											],
+											"description": "What happens when a deployment and credential pair needs an encryption key that the request didn't send. fail, the default, fails the request. skip leaves out only that pair, so the request can use its other pairs. fail wins when policies differ.",
+											"x-stogas-default": "fail"
 										},
 										"filter": {
 											"type": "string",

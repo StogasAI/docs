@@ -227,6 +227,37 @@ but not `fallbacks`, because one fallback count applies to the whole request:
 [Chutes](/docs/providers/chutes#retries) also retries on another instance when it proves that the
 first did not run the request. Those calls count as retries.
 
+## Missing encryption keys
+
+A [customer-encrypted credential](/docs/byok#customer-encryption) and
+[encrypted plugin settings](/docs/customer-encryption) need their key in each request that uses
+them. By default, a request that could use such a candidate but doesn't send its key fails with
+`encryption_key_required` before any provider call. An app that forgets a key then finds out at
+once, instead of quietly using another credential that may bill you differently.
+
+To let those requests use their other candidates instead, set `missingEncryptionKeys` to `skip`:
+
+```json title="Use the key's other credentials when a request doesn't send an encryption key"
+{
+	"routing": { "missingEncryptionKeys": "skip" }
+}
+```
+
+| Value  | When a candidate needs a key that the request doesn't send                     |
+| ------ | ------------------------------------------------------------------------------ |
+| `fail` | The request fails with `encryption_key_required`. This is the default.         |
+| `skip` | The gateway leaves out that candidate, which doesn't use one of the fallbacks. |
+
+- When every candidate is left out, the request fails with `encryption_key_required`, which names
+  the keys it needs.
+- A key sent under the wrong label, or one that doesn't match its label's registered identifier,
+  still fails the request.
+- When policies differ, `fail` applies. A credential policy, or a rule whose `when` reads the
+  candidate, sets the field for its own candidates only. A credential policy with `skip` lets
+  requests without its key use the key's other credentials.
+- The [routing simulation](/docs/policies/editing#simulate-routing) leaves out the same
+  candidates when its request doesn't list their keys in `encryption_keys`.
+
 ## Field reference
 
 <PolicyFields section="routing" />

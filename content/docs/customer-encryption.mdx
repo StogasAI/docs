@@ -169,7 +169,8 @@ your API key in the `Authorization` header:
 - Send every key that the request could need: the keys of encrypted credentials it could use,
   including fallbacks, and of the encrypted policy settings that apply to it. A missing key fails
   the request with `encryption_key_required`, which names the key's label, before any provider
-  call.
+  call. To let the request use only the candidates whose keys it sends, set
+  [`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
 - Each label must match its registered identifier.
 - The gateway removes `encryption_keys` before it calls the provider, and never stores the keys.
 - Send keys through the [SDK or CLI](/docs/connection-modes), so that only the verified gateway

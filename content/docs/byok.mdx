@@ -45,9 +45,10 @@ With customer encryption, we store only ciphertext, and each request sends the k
    target. Saving does not contact the provider.
 4. [Send the key](/docs/customer-encryption#send-the-key-with-a-request) with each request.
 
-If a request could use the credential but does not send its key, the gateway rejects it with
-`encryption_key_required` before it calls any provider. It never moves the request to another
-credential. Give apps that never send the key an API key without that credential.
+If a request could use the credential but doesn't send its key, the gateway rejects it with
+`encryption_key_required` before it calls any provider, so an app that forgets the key finds out
+at once. To let such requests use the API key's other credentials instead, set
+[`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
 
 ## AWS and Google Cloud
 
@@ -67,8 +68,9 @@ under that credential's [policy](/docs/policies/scopes). A
 [fallback](/docs/policies/routing#retries-and-fallbacks) tries the deployment's next credential
 before the next deployment. An empty list turns the provider off for that key.
 
-For example, put a customer-encrypted Chutes credential before Stogas managed, and requests that
-send its key use your account.
+For example, put a customer-encrypted Chutes credential before Stogas managed, and set
+[`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
+Requests that send its key then use your account, and the others use Stogas managed.
 
 - Adding a credential to a key needs **Manage** on the key and **Use** on the credential. Reordering
   or removing needs only **Manage** on the key.
