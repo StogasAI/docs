@@ -680,7 +680,7 @@
 						"checkGrant": []
 					}
 				],
-				"description": "Checks a customer-encrypted credential with the same free provider call as Check credential on the dashboard, and saves the result on the credential. Authenticate with a grant from `POST /api/{orgId}/byok/{byokId}/check-grant`, and send the request through a verified connection, as `stogas byok check` does.",
+				"description": "Checks a customer-encrypted credential with the same free provider call as Check credential on the dashboard, and saves the result on the credential. An Azure credential's check also discovers the deployments of its account, which become its targets. Authenticate with a grant from `POST /api/{orgId}/byok/{byokId}/check-grant`, and send the request through a verified connection, as `stogas byok check` does.",
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -727,7 +727,8 @@
 									"additionalProperties": false,
 									"required": [
 										"checkedAt",
-										"checkError"
+										"checkError",
+										"azureTargets"
 									],
 									"properties": {
 										"checkedAt": {
@@ -741,12 +742,43 @@
 												"null"
 											],
 											"description": "`null` when the provider accepted the credential, and otherwise why it did not, as the dashboard shows it."
+										},
+										"azureTargets": {
+											"type": [
+												"object",
+												"null"
+											],
+											"additionalProperties": false,
+											"required": [
+												"selected",
+												"unavailable",
+												"unselected"
+											],
+											"properties": {
+												"selected": {
+													"type": "integer",
+													"minimum": 0,
+													"description": "The selected targets, at most one for each model."
+												},
+												"unavailable": {
+													"type": "integer",
+													"minimum": 0,
+													"description": "The selected targets that cannot serve now, such as a deleted deployment."
+												},
+												"unselected": {
+													"type": "integer",
+													"minimum": 0,
+													"description": "The models that have a target that can serve but none selected."
+												}
+											},
+											"description": "For an Azure credential, its targets after the check, which discovers the account's deployments, counted as the dashboard counts them. `null` for other providers."
 										}
 									}
 								},
 								"example": {
 									"checkedAt": "2026-11-03T12:00:00.123456Z",
-									"checkError": null
+									"checkError": null,
+									"azureTargets": null
 								}
 							}
 						}
