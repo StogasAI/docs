@@ -201,7 +201,8 @@ the gateway refused before it called the provider has no entry.
 
 Each provider sends `provider_request_id` in its own response header: OpenAI in `x-request-id`,
 Anthropic in `request-id`, Azure in `apim-request-id`, and AWS in `x-amzn-requestid`. A call that the
-provider answered with an error has one too, so you can ask the provider about the failure.
+provider answered with an error has one too, so you can ask the provider about the failure. Chutes
+sends none on its encrypted calls, so the field is empty for Chutes.
 
 `provider_attempts` and `gateway_error` record different failures:
 
