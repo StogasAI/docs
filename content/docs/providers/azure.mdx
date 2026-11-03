@@ -47,7 +47,7 @@ application, and only a gateway can open it with your key.
    az ad sp create-for-rbac --name stogas-gateway \
      --role 53ca6127-db72-4b80-b1b0-d745d6d5456d \
      --scopes /subscriptions/<subscription-id>/resourceGroups/<group> > app.json
-   stogas encrypt --key-file org.key --organization <organization-id> \
+   stogas encrypt --key providers --organization <organization-id> \
      --purpose byok/azure --input app.json --output application.json
    ```
 
@@ -61,7 +61,7 @@ application, and only a gateway can open it with your key.
 3. Run the command that the dashboard shows where you keep the key, such as:
 
    ```console
-   stogas byok check CREDENTIAL_ID ... --organization YOUR_ORGANIZATION_ID --key-file org.key
+   stogas byok check CREDENTIAL_ID ... --organization YOUR_ORGANIZATION_ID
    ```
 
    A gateway signs in with the application, finds each account's deployments and saves them as

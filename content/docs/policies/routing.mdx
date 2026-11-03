@@ -276,11 +276,11 @@ first did not run the request. Those calls count as retries.
 
 ## Missing encryption keys
 
-A [customer-encrypted credential](/docs/byok#customer-encryption) and
-[encrypted plugin settings](/docs/customer-encryption) need their key in each request that uses
-them. By default, a request that could use such a candidate but doesn't send its key fails with
-`encryption_key_required` before any provider call. An app that forgets a key then finds out at
-once, instead of quietly using another credential that may bill you differently.
+A [customer-encrypted credential](/docs/byok#customer-encryption) and an
+[encrypted export or redaction](/docs/customer-encryption#encrypt-plugin-settings) need their key in
+each request that uses them. By default, a request that could use such a candidate but doesn't send
+its key fails with `encryption_key_required` before any provider call. An app that forgets a key
+then finds out at once, instead of quietly using another credential that may bill you differently.
 
 To let those requests use their other candidates instead, set `missingEncryptionKeys` to `skip`:
 

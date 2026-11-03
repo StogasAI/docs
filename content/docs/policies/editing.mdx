@@ -22,8 +22,8 @@ editor, `Ctrl` + `Space` shows suggestions, and `Esc` then `Tab` leaves the edit
 
 - A save replaces the whole policy at that scope. The gateway checks it together with the other
   policies that apply there, and checks
-  [encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) only when a
-  request or a [policy check](#check-a-policy-before-saving) sends their key.
+  an [encrypted export or redaction](/docs/customer-encryption#encrypt-plugin-settings) only when
+  a request or a [policy check](#check-a-policy-before-saving) sends its key.
 - If someone else saved the policy while you edited it, your changes apply to their version. If you
   both changed the same setting, or the result is not a valid policy, nothing is saved.
 - A parent save can make a policy below it invalid. That policy stays readable so that its manager
@@ -69,23 +69,24 @@ saved version of its scope:
 		{ "scope": "role", "id": "<role ID>", "config": { "timeouts": { "totalSeconds": 120 } } },
 		{ "scope": "key", "config": null } // null is an empty policy.
 	],
-	"encryption_keys": { "default": "<key>" } // Optional. Checks encrypted plugin settings.
+	"encryption_keys": { "default": "<key>" } // Optional. Checks encrypted exports and redactions.
 }
 ```
 
 - Include exactly one organization and one key policy, plus each folder, grant, member and
   credential policy that applies. Give each role its own entry with its `id`, up to 30.
-- Encrypted plugin settings are checked only with their [key](/docs/customer-encryption#send-the-key-with-a-request).
-  Send the key the same way as with inference requests.
+- An encrypted export or redaction is checked only with its
+  [key](/docs/customer-encryption#send-the-key-with-a-request). Send the key the same way as with
+  inference requests.
 
 ```json title="Response"
-{ "status": "partial", "uncheckedPlugins": [{ "scope": "organization" }] }
+{ "status": "partial", "uncheckedPlugins": [{ "scope": "organization", "plugin": "redaction" }] }
 ```
 
 | Result                               | Meaning                                                                                     |
 | ------------------------------------ | ------------------------------------------------------------------------------------------- |
 | `"status": "valid"`                  | Every policy passed, including conditional rules that would not apply now.                  |
-| `"status": "partial"`                | The rest passed. `uncheckedPlugins` lists encrypted settings without a key.                 |
+| `"status": "partial"`                | The rest passed. `uncheckedPlugins` names each encrypted plugin whose key you didn't send.  |
 | `400` with `invalid_policy`          | A policy is invalid. The message does not say which one, to keep encrypted content private. |
 | `400` with `encryption_key_required` | A key is wrong, or does not match a registered identifier.                                  |
 
@@ -95,8 +96,8 @@ Validation counts redaction limits as if every conditional rule applied at once.
 ## Read inherited policies
 
 Anyone who can read a key can read every policy that applies to it. Plaintext settings are visible
-to them, so [encrypt plugin settings](/docs/customer-encryption#encrypt-plugin-settings) that only
-some people should read. Reading a policy does not give permission to change it.
+to them, so [encrypt the exports and redactions](/docs/customer-encryption#encrypt-plugin-settings)
+that only some people should read. Reading a policy does not give permission to change it.
 
 ## Document rules
 

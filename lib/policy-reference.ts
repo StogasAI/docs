@@ -7,12 +7,13 @@ const sections = {
 	delegation: policy.properties.delegation,
 	input: policy.properties.input,
 	timeouts: policy.properties.timeouts,
+	// Each plugin that can be encrypted takes its settings, the first form, or an envelope.
 	exportDestination:
-		policy.properties.plugins.anyOf[0].properties.export!.properties.destinations.items,
+		policy.properties.plugins.properties.export.anyOf[0]!.properties.destinations!.items,
 	limit: policy.properties.limits.additionalProperties,
 	limitPeriod: policy.properties.limits.additionalProperties.properties.per,
 	accessPeriod: policy.properties.access.properties.deny.items,
-	literalRule: policy.properties.plugins.anyOf[0].properties.redaction!.properties.literals.items
+	literalRule: policy.properties.plugins.properties.redaction.anyOf[0]!.properties.literals!.items
 };
 export type PolicySection = keyof typeof sections;
 

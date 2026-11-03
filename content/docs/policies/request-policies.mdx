@@ -25,8 +25,8 @@ scope that applies to the key:
   whole section.
 - When several policies set `delegation.request`, a section must be allowed by all of them.
 - A rule needs permission for every setting in it, whether or not its condition matches.
-- Encrypted plugin settings need permission for all of `plugins`, because they can hold any plugin
-  setting.
+- An encrypted export or redaction needs permission for that plugin and for `plugins.encrypted`,
+  which lets it hide its settings.
 
 ## Add a policy to a request
 
@@ -63,8 +63,8 @@ A request sort replaces default sorts, and must agree with every required sort.
 ## What a request policy can contain
 
 - `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`, if permitted.
-- [Encrypted plugin settings](/docs/customer-encryption#encrypt-plugin-settings) whose key the
-  organization registered. Send the key in `encryption_keys`.
+- [An encrypted export or redaction](/docs/customer-encryption#encrypt-plugin-settings) whose key
+  the organization registered. Send the key in `encryption_keys`.
 - Up to 16 KiB, as sent.
 
 `limits`, `delegation` and `encryption` are rejected, also inside rules. Save limits on a key or

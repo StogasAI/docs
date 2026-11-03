@@ -37,12 +37,12 @@ Add a destination to a [policy](/docs/policies/editing):
 <PolicyFields section="exportDestination" />
 
 - The URL must use HTTPS and reach a public address.
-- Headers go only to your webhook. To keep them private, [encrypt the plugin
-  settings](/docs/customer-encryption#encrypt-plugin-settings).
+- Headers go only to your webhook. To keep them private,
+  [encrypt the export](/docs/customer-encryption#encrypt-plugin-settings).
 - Destinations from every policy that applies to a request add together, up to eight. Destinations
   with the same URL and headers get one record, which has bodies if any of them sends bodies.
 - An empty `destinations` array replaces
-  [default plugin settings](/docs/policies/rules#defaults), but it cannot
+  [default export destinations](/docs/policies/rules#defaults), but it cannot
   remove a destination that another scope requires.
 - A [request policy](/docs/policies/request-policies) can add a destination when delegation permits
   `plugins.export` or `plugins`.

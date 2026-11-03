@@ -36,7 +36,7 @@ With customer encryption, we store only ciphertext, and each request sends the k
 2. Encrypt the credential on your machine:
 
    ```console
-   stogas encrypt --key-file org.key --organization YOUR_ORGANIZATION_ID \
+   stogas encrypt --key providers --organization YOUR_ORGANIZATION_ID \
      --purpose byok/openai --input provider-secret.txt --output credential.json
    ```
 
@@ -63,11 +63,12 @@ To check a customer-encrypted credential with the same free call to the provider
 key:
 
 ```console
-stogas byok check CREDENTIAL_ID --organization YOUR_ORGANIZATION_ID --key-file org.key
+stogas byok check CREDENTIAL_ID --organization YOUR_ORGANIZATION_ID
 ```
 
-Without `--key-file`, enter the key when prompted. One command can check several credentials, and
-asks for each key once. The [CLI](/docs/cli#check-a-credential) sends
+The CLI uses the key saved under the label that your organization registered. For a key file, add
+`--key-file org.key`; without either, enter the key when prompted. One command can check several
+credentials, and asks for each key once. The [CLI](/docs/cli#check-a-credential) sends
 the key over a [verified connection](/docs/connection-modes) to a gateway, which opens the
 credential, calls the provider and saves the result on the credential. The gateway uses the key
 for this check only and never stores it. You need permission to manage the credential.

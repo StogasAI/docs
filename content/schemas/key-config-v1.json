@@ -1148,11 +1148,11 @@
 			}
 		},
 		"plugins": {
-			"anyOf": [
-				{
-					"type": "object",
-					"properties": {
-						"export": {
+			"type": "object",
+			"properties": {
+				"export": {
+					"anyOf": [
+						{
 							"type": "object",
 							"properties": {
 								"destinations": {
@@ -1168,7 +1168,7 @@
 												"description": "Complete JSON webhook URL. No path is appended."
 											},
 											"headers": {
-												"description": "Destination authentication headers. Encrypt the plugins section to keep these private when saved.",
+												"description": "Destination authentication headers. Encrypt the export to keep them private when saved.",
 												"type": "object",
 												"propertyNames": {
 													"type": "string",
@@ -1197,11 +1197,60 @@
 							],
 							"additionalProperties": false
 						},
-						"textExtraction": {
-							"description": "Extract inline UTF-8 text attachments before input checks and redaction. Any required true setting enables extraction.",
-							"type": "boolean"
-						},
-						"redaction": {
+						{
+							"type": "object",
+							"properties": {
+								"encrypted": {
+									"type": "object",
+									"properties": {
+										"version": {
+											"type": "number",
+											"const": 1
+										},
+										"keyId": {
+											"type": "string",
+											"pattern": "^[0-9a-f]{64}$"
+										},
+										"salt": {
+											"type": "string",
+											"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+										},
+										"nonce": {
+											"type": "string",
+											"pattern": "^[A-Za-z0-9_-]{16}$"
+										},
+										"blob": {
+											"type": "string",
+											"minLength": 22,
+											"maxLength": 349547,
+											"pattern": "^[A-Za-z0-9_-]+$"
+										}
+									},
+									"required": [
+										"version",
+										"keyId",
+										"salt",
+										"nonce",
+										"blob"
+									],
+									"additionalProperties": false
+								}
+							},
+							"required": [
+								"encrypted"
+							],
+							"additionalProperties": false,
+							"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
+						}
+					]
+				},
+				"textExtraction": {
+					"description": "Extract inline UTF-8 text attachments before input checks and redaction. Any required true setting enables extraction.",
+					"type": "boolean"
+				},
+				"redaction": {
+					"anyOf": [
+						{
 							"type": "object",
 							"properties": {
 								"email_address": {
@@ -1300,57 +1349,58 @@
 							},
 							"additionalProperties": false,
 							"description": "An empty object adds no redaction and replaces redaction defaults. Required redaction from other policies still applies."
-						}
-					},
-					"additionalProperties": false,
-					"minProperties": 1
-				},
-				{
-					"type": "object",
-					"properties": {
-						"encrypted": {
+						},
+						{
 							"type": "object",
 							"properties": {
-								"version": {
-									"type": "number",
-									"const": 1
-								},
-								"keyId": {
-									"type": "string",
-									"pattern": "^[0-9a-f]{64}$"
-								},
-								"salt": {
-									"type": "string",
-									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
-								},
-								"nonce": {
-									"type": "string",
-									"pattern": "^[A-Za-z0-9_-]{16}$"
-								},
-								"blob": {
-									"type": "string",
-									"minLength": 22,
-									"maxLength": 349547,
-									"pattern": "^[A-Za-z0-9_-]+$"
+								"encrypted": {
+									"type": "object",
+									"properties": {
+										"version": {
+											"type": "number",
+											"const": 1
+										},
+										"keyId": {
+											"type": "string",
+											"pattern": "^[0-9a-f]{64}$"
+										},
+										"salt": {
+											"type": "string",
+											"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+										},
+										"nonce": {
+											"type": "string",
+											"pattern": "^[A-Za-z0-9_-]{16}$"
+										},
+										"blob": {
+											"type": "string",
+											"minLength": 22,
+											"maxLength": 349547,
+											"pattern": "^[A-Za-z0-9_-]+$"
+										}
+									},
+									"required": [
+										"version",
+										"keyId",
+										"salt",
+										"nonce",
+										"blob"
+									],
+									"additionalProperties": false
 								}
 							},
 							"required": [
-								"version",
-								"keyId",
-								"salt",
-								"nonce",
-								"blob"
+								"encrypted"
 							],
-							"additionalProperties": false
+							"additionalProperties": false,
+							"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
 						}
-					},
-					"required": [
-						"encrypted"
-					],
-					"additionalProperties": false
+					]
 				}
-			],
-			"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt their settings to keep them private."
+			},
+			"additionalProperties": false,
+			"minProperties": 1,
+			"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt the export or the redaction to keep its settings private."
 		},
 		"routing": {
 			"type": "object",
@@ -1799,11 +1849,11 @@
 						}
 					},
 					"plugins": {
-						"anyOf": [
-							{
-								"type": "object",
-								"properties": {
-									"export": {
+						"type": "object",
+						"properties": {
+							"export": {
+								"anyOf": [
+									{
 										"type": "object",
 										"properties": {
 											"destinations": {
@@ -1819,7 +1869,7 @@
 															"description": "Complete JSON webhook URL. No path is appended."
 														},
 														"headers": {
-															"description": "Destination authentication headers. Encrypt the plugins section to keep these private when saved.",
+															"description": "Destination authentication headers. Encrypt the export to keep them private when saved.",
 															"type": "object",
 															"propertyNames": {
 																"type": "string",
@@ -1848,11 +1898,60 @@
 										],
 										"additionalProperties": false
 									},
-									"textExtraction": {
-										"description": "Extract inline UTF-8 text attachments before input checks and redaction. Any required true setting enables extraction.",
-										"type": "boolean"
-									},
-									"redaction": {
+									{
+										"type": "object",
+										"properties": {
+											"encrypted": {
+												"type": "object",
+												"properties": {
+													"version": {
+														"type": "number",
+														"const": 1
+													},
+													"keyId": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"salt": {
+														"type": "string",
+														"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+													},
+													"nonce": {
+														"type": "string",
+														"pattern": "^[A-Za-z0-9_-]{16}$"
+													},
+													"blob": {
+														"type": "string",
+														"minLength": 22,
+														"maxLength": 349547,
+														"pattern": "^[A-Za-z0-9_-]+$"
+													}
+												},
+												"required": [
+													"version",
+													"keyId",
+													"salt",
+													"nonce",
+													"blob"
+												],
+												"additionalProperties": false
+											}
+										},
+										"required": [
+											"encrypted"
+										],
+										"additionalProperties": false,
+										"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
+									}
+								]
+							},
+							"textExtraction": {
+								"description": "Extract inline UTF-8 text attachments before input checks and redaction. Any required true setting enables extraction.",
+								"type": "boolean"
+							},
+							"redaction": {
+								"anyOf": [
+									{
 										"type": "object",
 										"properties": {
 											"email_address": {
@@ -1951,57 +2050,58 @@
 										},
 										"additionalProperties": false,
 										"description": "An empty object adds no redaction and replaces redaction defaults. Required redaction from other policies still applies."
-									}
-								},
-								"additionalProperties": false,
-								"minProperties": 1
-							},
-							{
-								"type": "object",
-								"properties": {
-									"encrypted": {
+									},
+									{
 										"type": "object",
 										"properties": {
-											"version": {
-												"type": "number",
-												"const": 1
-											},
-											"keyId": {
-												"type": "string",
-												"pattern": "^[0-9a-f]{64}$"
-											},
-											"salt": {
-												"type": "string",
-												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
-											},
-											"nonce": {
-												"type": "string",
-												"pattern": "^[A-Za-z0-9_-]{16}$"
-											},
-											"blob": {
-												"type": "string",
-												"minLength": 22,
-												"maxLength": 349547,
-												"pattern": "^[A-Za-z0-9_-]+$"
+											"encrypted": {
+												"type": "object",
+												"properties": {
+													"version": {
+														"type": "number",
+														"const": 1
+													},
+													"keyId": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"salt": {
+														"type": "string",
+														"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+													},
+													"nonce": {
+														"type": "string",
+														"pattern": "^[A-Za-z0-9_-]{16}$"
+													},
+													"blob": {
+														"type": "string",
+														"minLength": 22,
+														"maxLength": 349547,
+														"pattern": "^[A-Za-z0-9_-]+$"
+													}
+												},
+												"required": [
+													"version",
+													"keyId",
+													"salt",
+													"nonce",
+													"blob"
+												],
+												"additionalProperties": false
 											}
 										},
 										"required": [
-											"version",
-											"keyId",
-											"salt",
-											"nonce",
-											"blob"
+											"encrypted"
 										],
-										"additionalProperties": false
+										"additionalProperties": false,
+										"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
 									}
-								},
-								"required": [
-									"encrypted"
-								],
-								"additionalProperties": false
+								]
 							}
-						],
-						"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt their settings to keep them private."
+						},
+						"additionalProperties": false,
+						"minProperties": 1,
+						"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt the export or the redaction to keep its settings private."
 					},
 					"routing": {
 						"type": "object",
@@ -2248,5 +2348,5 @@
 	"additionalProperties": false,
 	"$id": "https://stogas.ai/schemas/key-config-v1.json",
 	"title": "Stogas policy v1",
-	"description": "Structural editor schema for saved resource policies (organization, folder, grant, role, member, credential, key). Scope controls root registration and delegation targets. Save-time validation checks readable fields, including query grammar, IANA time zones, RE2 safety and cross-field limits. Encrypted plugins are validated at execution. The 262144-byte content limit counts decoded plugin plaintext; storage allows bounded base64 overhead. Unknown properties are rejected."
+	"description": "Structural editor schema for saved resource policies (organization, folder, grant, role, member, credential, key). Scope controls root registration and delegation targets. Save-time validation checks readable fields, including query grammar, IANA time zones, RE2 safety and cross-field limits. An encrypted export or redaction is validated at execution. The 262144-byte content limit counts decoded plugin plaintext; storage allows bounded base64 overhead. Unknown properties are rejected."
 }

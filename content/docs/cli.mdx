@@ -190,14 +190,22 @@ side out of it. Without `--request`, the request stays unchecked. See
 ## Encrypt secrets
 
 ```console
-stogas encryption-key --output org.key
-stogas encrypt --key-file org.key --organization <id> --purpose byok/openai \
+stogas encryption-key create --organization <id> --label prod
+stogas encrypt --key prod --organization <id> --purpose byok/openai \
   --input secret.txt --output credential.json
 ```
 
-`encryption-key` creates an organization key for [customer encryption](/docs/customer-encryption)
-and prints its public identifier. `encrypt` encrypts a file with it. `--purpose` is `plugins` for
-[plugin settings](/docs/customer-encryption#encrypt-plugin-settings), or `byok/openai`,
+`encryption-key create` creates an organization key for
+[customer encryption](/docs/customer-encryption), saves it in the system keychain under the label
+that you register it with, and prints its public identifier. With `--output <file>`, it also
+writes the key to a new file that only you can read; where there is no keychain, use only
+`--output`. `encryption-key import` saves a key from a file, or as you type or pipe it in.
+`export` copies a saved key to a new file, or with `--output -` pipes it to another program, such
+as your secret manager. `delete` removes a saved key, and `logout` keeps them all.
+
+`encrypt` encrypts a file with the key saved under `--key`, or with the key file that `--key-file`
+names. `--purpose` is `plugins/export` or `plugins/redaction` for
+[an export or a redaction](/docs/customer-encryption#encrypt-plugin-settings), or `byok/openai`,
 `byok/anthropic`, `byok/chutes`, `byok/aws`, `byok/azure` or `byok/google-cloud` for a
 [provider credential](/docs/byok#customer-encryption). `byok/azure` takes what
 `az ad sp create-for-rbac` prints, as [Azure](/docs/providers/azure#customer-encryption) shows.
@@ -277,8 +285,9 @@ stogas byok check <credential-id>... --organization <organization-id> --key-file
 `byok check` checks [provider credentials](/docs/byok#checks) with the same free call to the
 provider as **Check credential** on the dashboard, and prints whether the provider accepted each.
 **Copy ID** in a credential's menu copies its ID. A stored credential needs nothing else. For a
-customer-encrypted credential, pass the file with the key that encrypted it, or enter the key
-when prompted, once for each key. The CLI sends the key over a verified connection to a gateway,
+customer-encrypted credential, the CLI uses the key saved for the organization under the label that
+it registered. Otherwise pass the key's file with `--key-file`, or enter the key when prompted, once
+for each key. The CLI sends the key over a verified connection to a gateway,
 the only place that can open the credential, and the gateway saves the result. An Azure
 credential's check also finds its account's deployments, and the CLI prints how many targets are
 selected, how many of those are unavailable, and how many models have none, with a link to choose
