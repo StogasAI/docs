@@ -10764,6 +10764,71 @@
 																		"type": "null"
 																	}
 																]
+															},
+															"tool_calls": {
+																"default": [],
+																"maxItems": 32,
+																"type": "array",
+																"items": {
+																	"type": "object",
+																	"properties": {
+																		"type": {
+																			"type": "string",
+																			"enum": [
+																				"function_call",
+																				"custom_tool_call",
+																				"mcp_approval_request",
+																				"web_search_call",
+																				"web_fetch_call",
+																				"mcp_list_tools",
+																				"mcp_call"
+																			]
+																		},
+																		"start_ms": {
+																			"anyOf": [
+																				{
+																					"type": "integer",
+																					"minimum": 0,
+																					"maximum": 4294967295
+																				},
+																				{
+																					"type": "null"
+																				}
+																			]
+																		},
+																		"latency_ms": {
+																			"anyOf": [
+																				{
+																					"type": "integer",
+																					"minimum": 0,
+																					"maximum": 4294967295
+																				},
+																				{
+																					"type": "null"
+																				}
+																			]
+																		},
+																		"call_id_hash": {
+																			"type": "string",
+																			"pattern": "^[0-9a-f]{16}$"
+																		}
+																	},
+																	"required": [
+																		"type",
+																		"start_ms",
+																		"latency_ms"
+																	],
+																	"additionalProperties": false
+																}
+															},
+															"answered_calls": {
+																"default": [],
+																"maxItems": 32,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"pattern": "^[0-9a-f]{16}$"
+																}
 															}
 														},
 														"required": [
@@ -10772,7 +10837,9 @@
 															"provider_start_ms",
 															"rate_limit_wait_ms",
 															"first_output_ms",
-															"ttft_ms"
+															"ttft_ms",
+															"tool_calls",
+															"answered_calls"
 														],
 														"additionalProperties": false
 													},

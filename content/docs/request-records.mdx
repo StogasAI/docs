@@ -381,6 +381,43 @@ The [example](#example) record has this timeline:
 `provider_ms` includes upstream connection setup, waits between calls and, for streams, response
 backpressure. The time outside it is gateway preparation and response processing.
 
+### Tool calls
+
+`performance.tool_calls` lists the tool calls in the response, in output order.
+`performance.answered_calls` lists the calls whose results the request sent. Records keep no tool
+names, arguments or results.
+
+| Field          | Meaning                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------- |
+| `type`         | The call's output item type in the Responses API. Chat Completions tool calls are `function_call`.         |
+| `start_ms`     | When the stream added the call, on the request clock. `null` for responses that are not streamed.          |
+| `latency_ms`   | From `start_ms` until the stream marked the call done. `null` if the response ended first.                 |
+| `call_id_hash` | For calls that your app answers, the first 16 hex digits of the SHA-256 of the call ID. Omitted otherwise. |
+
+| `type`                              | Who runs it                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------------- |
+| `function_call`, `custom_tool_call` | Your app                                                                     |
+| `mcp_approval_request`              | Your app, which approves or denies the provider's call                       |
+| `web_search_call`, `web_fetch_call` | The provider                                                                 |
+| `mcp_list_tools`, `mcp_call`        | The provider, on a [remote MCP server](/docs/model-tools#remote-mcp-servers) |
+
+For a call that your app runs, `latency_ms` is the time the model took to write the call. Your
+app's time with it runs from the end of the request until a later request sends its result, and
+that request lists the same hash in `answered_calls`. Those hashes come from the results that answer
+the latest model turn of the input: Chat Completions `tool` messages, Responses
+`function_call_output` and `custom_tool_call_output` items, and `mcp_approval_response` items, by
+the ID of the approval request.
+
+A record keeps the first 32 calls of a response and the last 32 results of a request. To find the
+hash of a call ID:
+
+```sh
+printf %s call_1 | sha256sum | cut -c1-16
+```
+
+This prints `74196fe72e4cdc13`. The analytics filter `tool_call:` takes a call ID or its hash and
+finds both the request that made the call and the one that sent its result.
+
 ## Plugin metrics
 
 | Entry       | Fields                          | Meaning                                                                                         |
