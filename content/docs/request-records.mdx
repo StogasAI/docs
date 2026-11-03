@@ -271,7 +271,7 @@ keeps only its type:
 | Reasoning        | `reasoning_enabled`, `reasoning_effort`, `reasoning_max_tokens`, `reasoning_summary`, `reasoning_display` |
 | Sampling         | `temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `repetition_penalty`, `seed`    |
 | Response content | `response_format`, `include`, `logprobs`, `top_logprobs`                                                  |
-| Tools            | `tool_choice`, `parallel_tool_calls`, `max_tool_calls`                                                    |
+| Tools            | `tool_choice`, `parallel_tool_calls`, `max_tool_calls`, `hosted_tools`                                    |
 | Context          | `truncation`                                                                                              |
 
 Other fields record the remaining settings:
@@ -282,9 +282,13 @@ Other fields record the remaining settings:
 | Service tier, speed and region | Each attempt's [catalog chain](#catalog-history)  |
 | Caching                        | The cache meters in [`usage`](/docs/usage#meters) |
 
-The record never keeps prompts, instructions, stop sequences, tools, schemas or identifiers such as
-`user`. It also leaves out a text value that is longer than 64 characters or not printable ASCII, a
-list with more than 16 entries, and an integer above 9007199254740991 or below -9007199254740991.
+`hosted_tools` lists the [hosted tools](/docs/model-tools#hosted-tools) that the request let the
+model call, such as `["web_search"]`, and is missing when there were none.
+
+The record never keeps prompts, instructions, stop sequences, tool definitions, schemas or
+identifiers such as `user`. It also leaves out a text value that is longer than 64 characters or
+not printable ASCII, a list with more than 16 entries, and an integer above 9007199254740991 or
+below -9007199254740991.
 
 ## Metadata
 

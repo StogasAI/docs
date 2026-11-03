@@ -97,7 +97,13 @@ before you continue.
 | `web_search_options` | Chat Completions, search models only |
 | `web_fetch`          | Responses                            |
 
-[Compare providers](/docs/providers) shows which providers run each tool.
+[Compare providers](/docs/providers) shows which providers run each tool, and the
+[catalog](https://stogas.ai/catalog) lists the hosted tools of each route. A request that lists a
+hosted tool goes only to deployments that run it, even when `tool_choice` lets the model call no
+tool. When no deployment for the request runs a tool, the gateway returns `400` with
+`unsupported_tool`. For example, Claude on AWS runs `web_fetch` only where Anthropic hosts it, so a
+request for `aws/claude-fable-5-1` with `web_fetch` goes to `aws-claude-fable-5-1-anthropic-hosted`
+and never to Bedrock.
 
 ```jsonc title="Responses"
 {
@@ -138,6 +144,36 @@ unknown version. Each provider's page lists its prices and versions.
 - The gateway checks every source, citation and fetched page in the response against the filters,
   and returns `502` instead of a response that breaks them.
 - A block list covers only the domains it names. Copies of a site on other domains can still appear.
+
+### Data handling of hosted tools
+
+A hosted tool can send request content to services other than the model. Anthropic's web search
+and web fetch can run anywhere, and a fetched site's owner can keep the URLs that the tool fetches.
+Your [routing policies](/docs/policies/routing) read a deployment's
+[data handling](/docs/policies/routing-fields#data-handling) joined with that of each hosted tool
+that the request lets the model call, and the catalog shows each tool's data handling with its
+route. For example, this filter keeps only deployments that process content in the US, so a request
+that lets Claude call `web_search` goes to no Claude deployment, since the search can run anywhere:
+
+```json title="policy.json"
+{
+	"routing": {
+		"filter": "'US' in deployment.dataHandling.processingWithin"
+	}
+}
+```
+
+`tool_choice: "none"` lets the model call no tool, and an `allowed_tools` choice only the tools that
+it lists, so the other tools' data handling does not count. `request.hostedTools` lists the hosted
+tools that the model may call, so a policy can also refuse a tool by name:
+
+```json title="policy.json"
+{
+	"routing": {
+		"filter": "!('web_fetch' in request.hostedTools)"
+	}
+}
+```
 
 ### Holds for hosted tools
 

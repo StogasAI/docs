@@ -72,10 +72,18 @@ provider's terms, and a provider that keeps flagged content for review does not 
 retention. A promise not to train does not establish zero retention. These facts apply to the
 selected offering and do not cover other provider services.
 
-`processingLocation` covers model inference. It does not cover where the provider's API endpoint
-receives and routes the request. `tee` and `teeVerified` describe the provider's inference
-workload; `endToEndEncrypted` describes the connection from the gateway to that workload.
-None of them is proof that every component that can read content is trustworthy.
+When a request lets the model call [hosted tools](/docs/model-tools#data-handling-of-hosted-tools),
+these fields join the deployment's data handling with each tool's. A location becomes the smallest
+place that holds both, `retentionDays` becomes the longer period, or missing when either is
+unknown, and `zeroDataRetention`, `endToEndEncrypted`, `tee` and `teeVerified` stay `true` only when
+every tool keeps them. `trainingUse` becomes `true` when a tool can train on content. For example,
+a deployment that processes in `US` with a tool that processes in `DE` reads `world`.
+
+`processingLocation` covers model inference and the hosted tools that the model may call. It does
+not cover where the provider's API endpoint receives and routes the request. `tee` and
+`teeVerified` describe the provider's inference workload; `endToEndEncrypted` describes the
+connection from the gateway to that workload. None of them is proof that every component that can
+read content is trustworthy.
 
 #### Location values
 
