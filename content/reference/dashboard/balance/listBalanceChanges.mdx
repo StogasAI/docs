@@ -1,7 +1,11 @@
 ---
 title: List balance changes
-description: Lists credited payments, refunds and manual adjustments, newest
-  first. Spending is not included.
+description: 'Lists credited payments, credit released later, credit held while
+  a payment is reviewed, refunds, sales tax and manual adjustments, newest first
+  unless the filter sorts them. Spending is not included. `filter` takes the
+  dashboard query language: `type:refund`, `amount<0`, `created>2026-01-01`,
+  `payment-id:…` or free text, and `sort:created-desc`, `created-asc`,
+  `amount-desc` or `amount-asc`.'
 full: true
 _openapi:
   preload:
@@ -12,8 +16,12 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: Lists credited payments, refunds and manual adjustments, newest first.
-          Spending is not included.
+      - content: 'Lists credited payments, credit released later, credit held while a
+          payment is reviewed, refunds, sales tax and manual adjustments, newest
+          first unless the filter sorts them. Spending is not included. `filter`
+          takes the dashboard query language: `type:refund`, `amount<0`,
+          `created>2026-01-01`, `payment-id:…` or free text, and
+          `sort:created-desc`, `created-asc`, `amount-desc` or `amount-asc`.'
 ---
 
 export default function Layout(props) {

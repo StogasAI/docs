@@ -1,6 +1,6 @@
 ---
 title: Billing
-description: Fees, payment methods, invoices, receipts and billing emails.
+description: Fees, payment methods, invoices, receipts, balance changes and billing emails.
 icon: Wallet
 ---
 
@@ -61,6 +61,23 @@ To set one up, contact [billing@stogas.ai](mailto:billing@stogas.ai).
   billing, new requests fail while its balance is below zero, and its invoices stay due.
 - Until the organization pays what it owes and the agreement ends, you cannot delete it, and its
   last member cannot leave it or delete their account.
+
+## Balance changes
+
+Balance changes are every change to your organization's credit except spending, which
+[usage](/docs/usage) covers:
+
+| Change              | When                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| **Payment**         | A payment's credit reaches the balance.                                                 |
+| **Credit released** | More of a payment's credit reaches the balance, after a limit held it back or a review. |
+| **Held for review** | A payment goes to review, and its credit leaves the balance until the review ends.      |
+| **Refund**          | We refund a payment.                                                                    |
+| **Sales tax**       | We collect tax on kept credit when invoiced billing ends, or return it when it starts.  |
+| **Adjustment**      | We correct the balance.                                                                 |
+
+**Export** downloads the changes that match your filters as CSV or NDJSON, at most 50,000 of them.
+[Activity](/docs/activity) records each export.
 
 ## Billing emails
 

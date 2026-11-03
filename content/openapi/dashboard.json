@@ -590,7 +590,8 @@
 															"credential.deleted",
 															"billing.profile.updated",
 															"activity.export.requested",
-															"requests.export.requested"
+															"requests.export.requested",
+															"balance.export.requested"
 														]
 													},
 													"refusal": {
@@ -900,7 +901,8 @@
 												"credential.deleted",
 												"billing.profile.updated",
 												"activity.export.requested",
-												"requests.export.requested"
+												"requests.export.requested",
+												"balance.export.requested"
 											]
 										},
 										"refusal": {
@@ -13870,7 +13872,7 @@
 					"Balance"
 				],
 				"summary": "List balance changes",
-				"description": "Lists credited payments, refunds and manual adjustments, newest first. Spending is not included.",
+				"description": "Lists credited payments, credit released later, credit held while a payment is reviewed, refunds, sales tax and manual adjustments, newest first unless the filter sorts them. Spending is not included. `filter` takes the dashboard query language: `type:refund`, `amount<0`, `created>2026-01-01`, `payment-id:…` or free text, and `sort:created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
 				"security": [
 					{
 						"accessToken": []
@@ -13885,7 +13887,9 @@
 						"in": "query",
 						"required": false,
 						"schema": {
-							"type": "string"
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 512
 						}
 					},
 					{
@@ -13897,6 +13901,16 @@
 							"type": "integer",
 							"minimum": 1,
 							"maximum": 100
+						}
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
 						}
 					}
 				],
@@ -13969,15 +13983,148 @@
 													"type": "null"
 												}
 											]
+										},
+										"filteredCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"total": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
 										}
 									},
 									"required": [
 										"items",
-										"nextCursor"
+										"nextCursor",
+										"filteredCount",
+										"total"
 									],
 									"additionalProperties": false
 								}
 							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/balance-events/export/preview": {
+			"get": {
+				"operationId": "previewBalanceChangesExport",
+				"tags": [
+					"Balance"
+				],
+				"summary": "Preview a balance changes export",
+				"description": "Counts the changes an export with the same filter would contain, up to one more than rowLimit. `filter` takes the dashboard query language: `type:refund`, `amount<0`, `created>2026-01-01`, `payment-id:…` or free text, and `sort:created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"rowCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 50001
+										},
+										"rowLimit": {
+											"type": "number",
+											"const": 50000
+										},
+										"byteLimit": {
+											"type": "number",
+											"const": 16777216
+										}
+									},
+									"required": [
+										"rowCount",
+										"rowLimit",
+										"byteLimit"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/balance-events/export": {
+			"get": {
+				"operationId": "exportBalanceChanges",
+				"tags": [
+					"Balance"
+				],
+				"summary": "Export balance changes",
+				"description": "Returns every matching change as CSV or NDJSON with the fields the list returns. More than 50,000 changes fail, so narrow the filter. Each export is recorded as activity. `filter` takes the dashboard query language: `type:refund`, `amount<0`, `created>2026-01-01`, `payment-id:…` or free text, and `sort:created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 4096
+						}
+					},
+					{
+						"name": "format",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "csv",
+							"type": "string",
+							"enum": [
+								"csv",
+								"ndjson"
+							]
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"text/csv": {},
+							"application/x-ndjson": {}
 						}
 					},
 					"default": {
