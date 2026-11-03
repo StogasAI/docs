@@ -27,14 +27,14 @@ compares attested TLS and E2EE, and [Gateway verification](/docs/verification) l
 Create one transport when your application starts, reuse it for every request, and close it at
 shutdown. In async native applications, start and close it away from the event loop or UI thread.
 
-| Setting                         | Native SDKs                                               | JavaScript SDKs                                |
-| ------------------------------- | --------------------------------------------------------- | ---------------------------------------------- |
-| Protection                      | `tls` (default) or `e2ee`                                 | E2EE                                           |
-| Connection maximum              | `max_connections`, default `4`                            | `maxConnections`, default `4`                  |
-| Origin                          | `base_url`: an HTTPS origin with no path                  | `baseURL`: an HTTPS address that ends in `/v1` |
-| Proxy                           | `proxy`: a SOCKS5 URL, such as `socks5h://127.0.0.1:9050` | The `fetch` function that you supply           |
-| Onion address                   | `onion`: `true` to reach Stogas at its onion address      | Not available                                  |
-| Retries, timeouts, cancellation | Your OpenAI client                                        | Your OpenAI client and `AbortSignal`           |
+| Setting                         | Native SDKs                                                             | JavaScript SDKs                                |
+| ------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
+| Protection                      | `tls` (default) or `e2ee`                                               | E2EE                                           |
+| Connection maximum              | `max_connections`, default `4`                                          | `maxConnections`, default `4`                  |
+| Origin                          | `base_url`: an HTTPS origin with no path                                | `baseURL`: an HTTPS address that ends in `/v1` |
+| Proxy                           | `proxy`: a SOCKS5 or HTTP proxy URL, such as `socks5h://127.0.0.1:9050` | The `fetch` function that you supply           |
+| Onion address                   | `onion`: `true` to reach Stogas at its onion address                    | Not available                                  |
+| Retries, timeouts, cancellation | Your OpenAI client                                                      | Your OpenAI client and `AbortSignal`           |
 
 Each language page gives the exact names. The origin setting cannot change the trusted keys or the
 evidence sources.
@@ -50,17 +50,23 @@ evidence sources.
 
 ## Connect through Tor
 
-Set `proxy` to the SOCKS port of Tor, usually `socks5h://127.0.0.1:9050`. Every connection that
-the SDK opens then goes through Tor: evidence downloads, attested TLS and E2EE. Stogas sees a Tor
-address instead of yours, and the Tor relays see only encrypted traffic. With `socks5h`, Tor looks up
-the host names, so they do not go to your DNS server. The SDK ignores proxy environment variables;
-only this setting sends its traffic through a proxy. Your own HTTP client talks only to the local
-URL, so turn off proxies for it.
+Set `proxy` to the SOCKS port of Tor, usually `socks5h://127.0.0.1:9050`, or `9150` for Tor
+Browser. Every connection that the SDK opens then goes through Tor: evidence downloads, attested
+TLS and E2EE. Stogas sees a Tor address instead of yours, and the Tor relays see only encrypted
+traffic. With `socks5h`, Tor looks up the host names, so they do not go to your DNS server. To keep
+your application's connections on Tor circuits of their own, add any username and password, as
+`socks5h://myapp:secret@127.0.0.1:9050`: Tor builds separate circuits for each pair.
+
+`proxy` also takes an HTTP proxy, such as a company network's, as `http://host:port`, with an
+optional `username:password@`. The SDK asks it to connect to each host by name, so TLS still runs
+from your application to Stogas. The SDK ignores proxy environment variables; only this setting
+sends its traffic through a proxy. Your own HTTP client talks only to the local URL, so turn off
+proxies for it.
 
 Set `onion` to `true` as well to reach Stogas at its onion address, so that your traffic does not
 leave Tor. TLS still names the usual Stogas host and checks the same certificate and attestation;
 the onion service only passes the encrypted connection on. Stogas has no production onion address
-yet, so for now `onion` reports that the environment has none.
+yet; until an environment publishes one, `onion` connections leave Tor through an exit relay.
 
 Through a proxy, each connection setup step may take four times as long, because every round trip
 crosses several relays. JavaScript SDKs send every request through the `fetch` function that you

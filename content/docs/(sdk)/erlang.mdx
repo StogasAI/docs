@@ -292,7 +292,7 @@ incomplete and do not replay automatically. At application shutdown, call
 stogas_transport:start_link(#{args => ["--security", "e2ee", "--max-connections", "4"]})
 ```
 
-CLI arguments also accept `--upstream`, and `--proxy` and `--onion` as in [Connect through Tor](/docs/cli#connect-through-tor). Configure Gun timeouts and cancellation in the caller; the supervisor owns the verifier process.
+CLI arguments also accept `--upstream`, and `--tor`, `--proxy` and `--onion` as in [Connect through Tor](/docs/cli#connect-through-tor). Configure Gun timeouts and cancellation in the caller; the supervisor owns the verifier process.
 
 Native attested TLS is the default; this example selects E2EE. See
 [Connection settings](/docs/sdk-overview#connection-settings) for limits that apply to every SDK.

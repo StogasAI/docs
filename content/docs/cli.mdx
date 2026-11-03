@@ -98,14 +98,24 @@ refresh URL. Published packages trust production gateways only.
 ## Connect through Tor
 
 ```console
-stogas --proxy socks5h://127.0.0.1:9050 serve
+stogas --tor serve
 ```
 
-`--proxy` sends every connection of any command through a SOCKS5 proxy, such as Tor's: the
-dashboard, evidence, attested TLS and E2EE. `--onion` also reaches Stogas at its onion address
-through that proxy; Stogas has no production onion address yet. `STOGAS_PROXY` and `STOGAS_ONION`
-set the same options for every command. The local endpoint itself takes connections from your
-machine only, so your client needs no proxy. See [Connect through Tor](/docs/sdk-overview#connect-through-tor).
+`--tor` sends every connection of any command through Tor: the dashboard, evidence, attested TLS
+and E2EE. The CLI finds Tor on your computer: the tor service on port 9050, or Tor Browser on
+port 9150 while it runs. If Tor listens elsewhere, give its port or address, as `--tor=9150` or
+`--tor=[::1]:9150`. Each run gets its own Tor circuits, so Tor does not mix its connections with
+those of your other programs. The CLI reaches Stogas at its onion address once Stogas publishes
+one, so that your traffic does not leave Tor. Stogas has no production onion address yet, so for
+now the traffic leaves Tor through an exit relay, still encrypted.
+
+`--proxy` sends every connection through another proxy instead: SOCKS5 as
+`socks5h://host:port`, or HTTP as `http://host:port`, either with an optional
+`username:password@`. `--onion` also reaches the onion address through that proxy. Without
+`--tor` or `--proxy`, the CLI uses the proxy that `HTTPS_PROXY` or `ALL_PROXY` names, as curl
+does, except for the hosts that `NO_PROXY` names. `STOGAS_TOR`, `STOGAS_PROXY` and `STOGAS_ONION`
+set the options for every command. The local endpoint itself takes connections from your machine
+only, so your client needs no proxy. See [Connect through Tor](/docs/sdk-overview#connect-through-tor).
 
 ## Stop
 
