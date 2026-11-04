@@ -203,6 +203,7 @@ the gateway refused before it called the provider has no entry.
 | `provider_request_id`                               | The provider's ID for the call, which its support asks for. Empty when the provider sent none.                                            |
 | `provider_response_id`                              | The ID of the provider's reply, such as `chatcmpl-…`, `resp_…` or `msg_…`. It is the `id` that you received. Empty when no reply arrived. |
 | `provider_model`                                    | The model that the provider reported serving, such as `gpt-5.5-2026-04-23`. Empty when the provider did not say.                          |
+| `provider_instance_id`                              | The Chutes instance that ran the call. Chutes finds an encrypted call by its instance and time. Absent for other providers.               |
 | `finish_reason`                                     | Why the model stopped, such as `stop` or `length`. Empty when the provider did not say.                                                   |
 | `byok`                                              | The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential.                                                      |
 | `catalog_chain_hash`, `resolved_catalog_chain_hash` | The catalog settings that the call used. See [Catalog history](#catalog-history).                                                         |
@@ -210,7 +211,8 @@ the gateway refused before it called the provider has no entry.
 Each provider sends `provider_request_id` in its own response header: OpenAI in `x-request-id`,
 Anthropic in `request-id`, Azure in `apim-request-id`, and AWS in `x-amzn-requestid`. A call that the
 provider answered with an error has one too, so you can ask the provider about the failure. Chutes
-sends none on its encrypted calls, so the field is empty for Chutes.
+sends none on its encrypted calls, so the field is empty for Chutes. Its `provider_instance_id`
+names the instance that ran the call or turned it away, which Chutes can find with the call's time.
 
 `provider_attempts` and `gateway_error` record different failures:
 

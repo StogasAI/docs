@@ -79,6 +79,10 @@ When Chutes rejects a request before the model starts, for example because an in
 capacity, the gateway calls another verified instance at once. That call is one of the candidate's
 [retries](/docs/policies/routing#retries-and-fallbacks), so it needs `routing.retries` of 1 or more.
 
+Chutes sends no request ID on encrypted calls. Each call's entry in the
+[request record](/docs/request-records#provider-attempts) names its instance in
+`provider_instance_id` instead, so Chutes can find the call by instance and time.
+
 ## References
 
 - [Chutes documentation](https://chutes.ai/docs)
