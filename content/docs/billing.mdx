@@ -1,6 +1,6 @@
 ---
 title: Billing
-description: Fees, payment methods, invoices, receipts, balance changes and billing emails.
+description: Fees, payment methods, invoiced billing, balance changes, billing emails and refunds.
 icon: Wallet
 ---
 
@@ -23,30 +23,13 @@ it.
 
 ## Payment methods
 
-We receive Bitcoin and Monero directly. Other coins and networks go through
-[CCPayment](https://ccpayment.com). A payment is credited at its price when we receive it, less
-these costs and then the 2% fee.
+**Billing** in the dashboard shows each method's fees, confirmations and smallest payment before
+you pay.
 
-| Method    | Credited after                    | Costs                                 | Smallest payment                          |
-| --------- | --------------------------------- | ------------------------------------- | ----------------------------------------- |
-| Bitcoin   | 2 confirmations, about 20 minutes | Network cost                          | More than the network cost                |
-| Monero    | 30 confirmations, about an hour   | Network cost, then 0.4% conversion    | 0.0001 XMR and more than the network cost |
-| CCPayment | CCPayment confirms it             | Processor fee, network and conversion | The processor's minimum                   |
-
-- Each member gets their own Bitcoin and Monero deposit addresses, which they can reuse.
-- If our price sources disagree by more than 3% on a payment's price, we check that price before
-  we credit it.
-- CCPayment has no payment deadline, and credits a late payment or a different amount. A payment
-  on the wrong network or without its memo may be lost.
-
-## Billing details
-
-Save your organization's billing details before you pay. Each receipt keeps the details saved when
-we received its payment. We sell only in the 50 U.S. states and the District of Columbia, as
-[Availability](/docs/availability) explains.
-
-Receipt PDFs show cents and attach a JSON record with the exact amounts and exchange rates. A
-receipt keeps its number and details when you download it again.
+- Each member has their own Bitcoin and Monero deposit addresses, which they can use again.
+- CCPayment has no payment deadline, and credits a late payment or a different amount.
+- A receipt keeps the billing details saved when we received its payment, and its PDF attaches a
+  JSON record with the exact amounts and exchange rates.
 
 ## Invoiced billing
 
@@ -57,10 +40,6 @@ To set one up, contact [billing@stogas.ai](mailto:billing@stogas.ai).
 - On the 1st of each month, we invoice the previous month's usage. Months follow UTC.
 - An invoice is due after the agreed payment terms, such as 30 days. You can pay it with any
   payment method, the usual [fees](#fees) apply, and payments go to the oldest invoice first.
-- A paid invoice has a receipt that lists the payments that paid it. A payment's receipt shows
-  what its credit paid of each invoice and of usage not invoiced yet.
-- If we take back a payment that an invoice receipt lists, such as for a review, downloading that
-  receipt again gives a new one that names the receipt it replaces.
 - If an invoice stays overdue, we can end the agreement. The organization then returns to prepaid
   billing, new requests fail while its balance is below zero, and its invoices stay due.
 - Until the organization pays what it owes and the agreement ends, you cannot delete it, and its
@@ -80,22 +59,11 @@ Balance changes are every change to your organization's credit except spending, 
 | **Sales tax**       | We collect tax on kept credit when invoiced billing ends, or return it when it starts.  |
 | **Adjustment**      | We correct the balance.                                                                 |
 
-**Export** downloads the changes that match your filters as CSV or NDJSON, at most 50,000 of them.
-[Activity](/docs/activity) records each export.
-
 ## Billing emails
 
-If a business saves a billing email, we send it only these emails, each with its PDF, from
-[billing@stogas.ai](mailto:billing@stogas.ai):
-
-| Email                | When we send it                                                             |
-| -------------------- | --------------------------------------------------------------------------- |
-| **Invoice**          | We issue an invoice.                                                        |
-| **Payment reminder** | 3 days before an unpaid invoice is due, on payment terms of 7 days or more. |
-| **Overdue notice**   | An unpaid invoice becomes overdue.                                          |
-| **Receipt**          | A payment's credit reaches your balance.                                    |
-
-Reply to any of them to reach us. To stop them, remove the billing email.
+A saved billing email gets each invoice and receipt with its PDF, a reminder 3 days before an
+unpaid invoice is due on payment terms of 7 days or more, and a notice when an invoice becomes
+overdue. Reply to any of them to reach us.
 
 ## Refunds
 
