@@ -120,9 +120,8 @@ request fails before any provider call:
 | `model_ambiguous`      | Deployments of two models | Name one model, or add a criterion that orders the models, such as `{ "by": "model.releaseDate", "direction": "desc" }`. |
 | `deployment_ambiguous` | Deployments of one model  | Add a criterion that orders them, such as a `providers` list or `{ "by": "random()" }`.                                  |
 
-The error message names up to three of the tied models or deployments. The
-[routing simulation](/docs/policies/editing#simulate-routing) lists them all. Ties among candidates
-past the [fallbacks](#retries-and-fallbacks) change nothing, so they do not fail the request.
+The error message names up to three of the tied models or deployments. Ties among candidates past
+the [fallbacks](#retries-and-fallbacks) change nothing, so they do not fail the request.
 
 ### Sort by an expression
 
@@ -302,8 +301,6 @@ To let those requests use their other candidates instead, set `missingEncryption
 - When policies differ, `fail` applies. A credential policy, or a rule whose `when` reads the
   candidate, sets the field for its own candidates only. A credential policy with `skip` lets
   requests without its key use the key's other credentials.
-- The [routing simulation](/docs/policies/editing#simulate-routing) leaves out the same
-  candidates when its request doesn't list their keys in `encryption_keys`.
 
 ## Field reference
 
