@@ -4413,13 +4413,39 @@
 							"asciiOnly": {
 								"type": "boolean",
 								"description": "Reject non-ASCII decoded text in redaction-scanned input fields before redaction. Any parent requirement wins."
+							},
+							"mediaTypes": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"maxItems": 64,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"maxLength": 255,
+											"pattern": "^[a-z0-9!#$&^_.+-]+\\/(?:\\*|[a-z0-9!#$&^_.+-]+)$"
+										},
+										"uniqueItems": true,
+										"description": "Admit only attachments of these types. An empty list admits none. Allow lists of several policies intersect."
+									},
+									"deny": {
+										"maxItems": 64,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"maxLength": 255,
+											"pattern": "^[a-z0-9!#$&^_.+-]+\\/(?:\\*|[a-z0-9!#$&^_.+-]+)$"
+										},
+										"uniqueItems": true,
+										"description": "Refuse attachments of these types. Deny lists of several policies join."
+									}
+								},
+								"additionalProperties": false,
+								"description": "Limit attachments by media type, such as `image/png`, or class, such as `image/*`. The gateway checks an inline attachment's declared type against the start of its content, and refuses a URL or file ID wherever its type could decide."
 							}
 						},
-						"required": [
-							"asciiOnly"
-						],
 						"additionalProperties": false,
-						"description": "Checks on request text before redaction."
+						"description": "Checks on request input before redaction."
 					},
 					"plugins": {
 						"type": "object",
@@ -4519,8 +4545,13 @@
 								]
 							},
 							"textExtraction": {
-								"description": "Extract inline UTF-8 text attachments before input checks and redaction. Any required true setting enables extraction.",
-								"type": "boolean"
+								"description": "Turn inline UTF-8 text files into prompt text before input checks and redaction. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, and `always` turns every one into text. The strongest required mode applies.",
+								"type": "string",
+								"enum": [
+									"off",
+									"auto",
+									"always"
+								]
 							},
 							"redaction": {
 								"anyOf": [
@@ -4993,13 +5024,39 @@
 										"asciiOnly": {
 											"type": "boolean",
 											"description": "Reject non-ASCII decoded text in redaction-scanned input fields before redaction. Any parent requirement wins."
+										},
+										"mediaTypes": {
+											"type": "object",
+											"properties": {
+												"allow": {
+													"maxItems": 64,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"maxLength": 255,
+														"pattern": "^[a-z0-9!#$&^_.+-]+\\/(?:\\*|[a-z0-9!#$&^_.+-]+)$"
+													},
+													"uniqueItems": true,
+													"description": "Admit only attachments of these types. An empty list admits none. Allow lists of several policies intersect."
+												},
+												"deny": {
+													"maxItems": 64,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"maxLength": 255,
+														"pattern": "^[a-z0-9!#$&^_.+-]+\\/(?:\\*|[a-z0-9!#$&^_.+-]+)$"
+													},
+													"uniqueItems": true,
+													"description": "Refuse attachments of these types. Deny lists of several policies join."
+												}
+											},
+											"additionalProperties": false,
+											"description": "Limit attachments by media type, such as `image/png`, or class, such as `image/*`. The gateway checks an inline attachment's declared type against the start of its content, and refuses a URL or file ID wherever its type could decide."
 										}
 									},
-									"required": [
-										"asciiOnly"
-									],
 									"additionalProperties": false,
-									"description": "Checks on request text before redaction."
+									"description": "Checks on request input before redaction."
 								},
 								"plugins": {
 									"type": "object",
@@ -5099,8 +5156,13 @@
 											]
 										},
 										"textExtraction": {
-											"description": "Extract inline UTF-8 text attachments before input checks and redaction. Any required true setting enables extraction.",
-											"type": "boolean"
+											"description": "Turn inline UTF-8 text files into prompt text before input checks and redaction. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, and `always` turns every one into text. The strongest required mode applies.",
+											"type": "string",
+											"enum": [
+												"off",
+												"auto",
+												"always"
+											]
 										},
 										"redaction": {
 											"anyOf": [

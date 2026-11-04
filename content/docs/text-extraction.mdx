@@ -10,11 +10,26 @@ text works on any deployment, even one that accepts no documents, and goes throu
 
 ```json title="Policy"
 {
-	"plugins": { "textExtraction": true }
+	"plugins": { "textExtraction": "auto" }
 }
 ```
 
-The gateway replaces each text file with a text block that starts with the filename:
+| Mode     | What happens to a text file                                                                                                                                                                                                  |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto`   | It stays a file where the deployment reads its type, and becomes text elsewhere. It always becomes text when [PII redaction](/docs/pii-redaction) or [ASCII-only input](/docs/pii-redaction#ascii-only-input) applies. |
+| `always` | It always becomes text, so every deployment and every fallback gets the same prompt.                                                                                                                                        |
+| `off`    | It stays a file. Use it to [replace a default](/docs/policies/rules#replace-a-default-without-adding-a-restriction).                                                                                                       |
+
+When several policies set a mode, the strongest applies: `always`, then `auto`, then `off`.
+
+`auto` keeps what a provider adds to a file it reads itself, such as citations. `always` gives the
+same prompt to each candidate, which keeps a [prompt cache](/docs/prompt-caching) valid across
+fallbacks.
+
+## What the provider gets
+
+The gateway replaces each text file with a text block. Its first line names the file and its media
+type:
 
 ```json tab="Request"
 {
@@ -29,17 +44,82 @@ The gateway replaces each text file with a text block that starts with the filen
 ```json tab="Sent to the provider"
 {
 	"type": "text",
-	"text": "orders.csv\nid,amount\n1,20\n2,35"
+	"text": "orders.csv (text/csv)\nid,amount\n1,20\n2,35"
 }
 ```
 
-On Responses, an `input_file` becomes `input_text`. A `cache_control` or `prompt_cache_breakpoint`
-on the file stays on the text.
+Responses names its blocks differently, so an `input_file` becomes an `input_text`. A
+`cache_control` or `prompt_cache_breakpoint` on the file moves to the text, so the provider caches
+the prompt up to the same place:
+
+```json tab="Request"
+{
+	"type": "input_file",
+	"filename": "schema.json",
+	"file_data": "data:application/json;base64,eyJ0eXBlIjoib2JqZWN0In0=",
+	"cache_control": { "type": "ephemeral" }
+}
+```
+
+```json tab="Sent to the provider"
+{
+	"type": "input_text",
+	"text": "schema.json (application/json)\n{\"type\":\"object\"}",
+	"cache_control": { "type": "ephemeral" }
+}
+```
+
+A file without a filename starts with its type alone, such as `(application/yaml)`. A file block
+with any other field fails, so nothing in the request is lost.
+
+## Examples by type
+
+| File          | Media type               | Text sent                                      |
+| ------------- | ------------------------ | ---------------------------------------------- |
+| `notes.md`    | `text/markdown`          | `notes.md (text/markdown)` then the Markdown   |
+| `orders.csv`  | `text/csv`               | `orders.csv (text/csv)` then the rows          |
+| `page.html`   | `text/html`              | `page.html (text/html)` then the markup        |
+| `main.py`     | `text/x-python`          | `main.py (text/x-python)` then the code        |
+| `app.js`      | `application/javascript` | `app.js (application/javascript)` then the code |
+| `data.json`   | `application/json`       | `data.json (application/json)` then the JSON   |
+| `events.ndjson` | `application/x-ndjson` | `events.ndjson (application/x-ndjson)` then one object a line |
+| `config.yaml` | `application/yaml`       | `config.yaml (application/yaml)` then the YAML |
+| `Cargo.toml`  | `application/toml`       | `Cargo.toml (application/toml)` then the TOML  |
+| `query.sql`   | `application/sql`        | `query.sql (application/sql)` then the query   |
+| `feed.xml`    | `application/rss+xml`    | `feed.xml (application/rss+xml)` then the XML  |
+| `logo.svg`    | `image/svg+xml`          | `logo.svg (image/svg+xml)` then the SVG source |
+
+Tables stay as they are. CSV and TSV cost fewer tokens than Markdown tables and lose nothing.
 
 ## What it extracts
 
-- `text/*`, `application/json`, `application/xml`, and media types that end in `+json` or `+xml`,
-  named in the data URL
-- Valid UTF-8 without NUL bytes, or the request fails
+- Files whose data URL or `file_type` names `text/*`, a type that ends in `+json` or `+xml`, or
+  one of these application types:
 
-PDFs, office documents, URLs and file IDs go to the provider unchanged.
+  ```txt
+  application/csv  application/ecmascript  application/graphql  application/javascript
+  application/json  application/json5  application/jsonl  application/sql  application/toml
+  application/typescript  application/x-awk  application/x-bash  application/x-diff
+  application/x-graphql  application/x-httpd-php  application/x-httpd-php-source
+  application/x-javascript  application/x-json5  application/x-latex  application/x-ndjson
+  application/x-patch  application/x-perl  application/x-php  application/x-powershell
+  application/x-ruby  application/x-rust  application/x-scala  application/x-sh
+  application/x-shellscript  application/x-sql  application/x-subrip  application/x-terraform
+  application/x-tex  application/x-toml  application/x-yaml  application/xml  application/yaml
+  ```
+
+- Valid UTF-8 without NUL bytes. Other bytes fail the request with 400.
+- Document blocks only. An SVG sent as an image stays an image.
+
+The filename never decides the type.
+
+## What stays a file
+
+| Input                                   | Why                                                                                                      |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| PDFs, office documents and other binary formats | The provider reads them. [Find a route](/docs/input-files#supported-formats) that lists the format. |
+| RTF, Protocol Buffers and email messages | They hold binary data or encoded parts, not plain text.                                                 |
+| Images and audio                        | Models read them as they are.                                                                            |
+| URLs and file IDs                       | The gateway never downloads a file.                                                                      |
+
+To refuse some file types outright, [allow or deny them](/docs/input-files#allow-or-deny-file-types).

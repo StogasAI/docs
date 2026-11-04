@@ -115,6 +115,48 @@ deployment lists its input types as `inputModalities`. Search the
 The provider can convert a document before the model reads it, so a model that reads only text can
 still accept a PDF. The [provider pages](/docs/providers) list each provider's file rules.
 
+## Allow or deny file types
+
+Set `input.mediaTypes` in a policy to refuse attachments by type, such as to keep SVG images or
+office documents away from a model:
+
+```json title="Policy"
+{
+	"input": {
+		"mediaTypes": {
+			"allow": ["image/*", "application/pdf", "text/*"],
+			"deny": ["image/svg+xml"]
+		}
+	}
+}
+```
+
+- Each entry is a lowercase media type, such as `image/png`, or a class, such as `image/*`. A list
+  holds up to 64 entries.
+- An attachment passes when `allow` names its type and `deny` does not. Without `allow`, every type
+  that `deny` does not name passes. An empty `allow` refuses every attachment.
+- When several policies set lists, an attachment must pass each of them. A [rule](/docs/policies/rules)
+  can set lists for some candidates only, and routing then leaves out the candidates that refuse an
+  attachment.
+
+The gateway reads the type from the data URL or `file_type`, and checks it against the start of the
+content. A `filename` never sets the type.
+
+| Attachment                                      | Type the lists check                                       |
+| ----------------------------------------------- | ---------------------------------------------------------- |
+| Inline data                                     | The declared type. With no type or `application/octet-stream`, the type the content shows. |
+| Inline data whose content is another type, such as a PDF declared as `text/plain` | None. The request fails.             |
+| `input_audio`                                   | `audio/mpeg` for `mp3`, otherwise `audio/` and the `format` |
+| An image URL or file ID                         | Only `image/*`, because the gateway never downloads it      |
+| A document URL or file ID                       | None                                                        |
+
+An attachment whose type the lists cannot check is refused, so a list that names `image/png`
+refuses an image URL. Send such a file inline with its media type.
+
+A refusal fails the request with `attachment_unsupported`. The error's `param` names the attachment,
+and its message gives the type, such as
+`messages[0].content[1] is image/svg+xml, which input.mediaTypes refuses`.
+
 ## When no candidate reads a file
 
 [Routing](/docs/policies/routing) leaves out each candidate that cannot read an attachment. This
@@ -124,6 +166,7 @@ an attachment when:
 - Its deployment or route does not take the input type or the [source](#send-a-document). See
   [Supported formats](#supported-formats).
 - The attachment is a `file_id`, and the candidate's credential is not [BYOK](/docs/byok).
+- Its policy [refuses the attachment's type](#allow-or-deny-file-types).
 - Its policy sets [ASCII-only input](/docs/pii-redaction#ascii-only-input) or
   [PII redaction](/docs/pii-redaction). These need text, so they refuse URLs, file IDs and files
   that the gateway does not [extract](/docs/text-extraction).
@@ -131,7 +174,7 @@ an attachment when:
 When no candidate is left that can read an attachment, the request fails at once with
 `attachment_unsupported`, and `param` names the attachment. If a candidate that can read it left
 for another reason, such as a disabled credential, the error gives that reason. If every attachment
-has a candidate but no candidate reads them all, the error names them; send them in separate
+has a candidate but no candidate reads them all, the error names them. Send them in separate
 requests.
 
 ## Limits
