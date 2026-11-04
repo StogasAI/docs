@@ -660,12 +660,22 @@
 												"type": "string",
 												"pattern": "^[0-9a-f]{16}$"
 											}
+										},
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128
+											},
+											"description": "The IDs it names whose resources have been deleted since."
 										}
 									},
 									"required": [
 										"items",
 										"nextCursor",
-										"actorPictures"
+										"actorPictures",
+										"deletedIds"
 									],
 									"additionalProperties": false
 								}
@@ -1012,6 +1022,15 @@
 												],
 												"additionalProperties": false
 											}
+										},
+										"deletedIds": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 128
+											},
+											"description": "The IDs it names whose resources have been deleted since."
 										}
 									},
 									"required": [
@@ -1027,7 +1046,8 @@
 										"targetIds",
 										"targetNames",
 										"changes",
-										"policyVersions"
+										"policyVersions",
+										"deletedIds"
 									],
 									"additionalProperties": false
 								}
