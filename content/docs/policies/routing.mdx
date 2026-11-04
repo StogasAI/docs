@@ -8,7 +8,8 @@ A **candidate** is one deployment with one of your provider credentials. For eac
 
 1. Starts with the candidates that can serve the request's `model`, interface, service tier,
    reasoning mode and output limit.
-2. Removes the candidates that `allowedCatalogNodes` or `filter` exclude.
+2. Removes the candidates that `allowedCatalogNodes` or `filter` exclude, and those that cannot
+   read the request's [images and files](/docs/input-files#when-no-candidate-reads-a-file).
 3. Puts the rest in [order](#ordering) and sends the request to the first.
 
 ```jsonc title="policy.json"
@@ -33,6 +34,7 @@ sorts are [expressions](/docs/policies/expressions) over the fields in the
 | `model_unavailable`                       | No candidate is left.                                                                           | Check the model, the key's credentials and the key's **Combined policy**. |
 | `model_ambiguous`, `deployment_ambiguous` | The [order](#ties) leaves a tie among the candidates that the request would try.                | Name a model, or add a sort criterion. The error names the tied IDs.      |
 | `model_retired`                           | The model or deployment retired. The error gives the date unless the provider retired it early. | Choose another model.                                                     |
+| `attachment_unsupported`                  | No candidate can read an attachment, named by `param`.                                          | See [Images and files](/docs/input-files#when-no-candidate-reads-a-file). |
 
 Filters and lists from every policy apply together, so an OpenAI-only policy and a Chutes-only
 policy leave no candidate. Sending the request again does not help, and a policy cannot widen the

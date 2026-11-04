@@ -4,8 +4,9 @@ description: Send images and documents to models that accept them, inline, by UR
 icon: Paperclip
 ---
 
-Add images and documents to a message as content blocks. The gateway checks that the selected
-deployment accepts the input type before it calls the provider. The provider checks the file itself.
+Add images and documents to a message as content blocks. The gateway sends the request only to
+[candidates that can read every attachment](#when-no-candidate-reads-a-file). The provider checks
+the file itself.
 
 | Input    | Chat Completions | Responses     |
 | -------- | ---------------- | ------------- |
@@ -114,13 +115,30 @@ deployment lists its input types as `inputModalities`. Search the
 The provider can convert a document before the model reads it, so a model that reads only text can
 still accept a PDF. The [provider pages](/docs/providers) list each provider's file rules.
 
+## When no candidate reads a file
+
+[Routing](/docs/policies/routing) leaves out each candidate that cannot read an attachment. This
+uses none of the [fallbacks](/docs/policies/routing#retries-and-fallbacks). A candidate cannot read
+an attachment when:
+
+- Its deployment or route does not take the input type or the [source](#send-a-document). See
+  [Supported formats](#supported-formats).
+- The attachment is a `file_id`, and the candidate's credential is not [BYOK](/docs/byok).
+- Its policy sets [ASCII-only input](/docs/pii-redaction#ascii-only-input) or
+  [PII redaction](/docs/pii-redaction). These need text, so they refuse URLs, file IDs and files
+  that the gateway does not [extract](/docs/text-extraction).
+
+When no candidate is left that can read an attachment, the request fails at once with
+`attachment_unsupported`, and `param` names the attachment. If a candidate that can read it left
+for another reason, such as a disabled credential, the error gives that reason. If every attachment
+has a candidate but no candidate reads them all, the error names them; send them in separate
+requests.
+
 ## Limits
 
-- The gateway cannot read URLs, file IDs, or files that it does not
-  [extract](/docs/text-extraction). [ASCII-only input](/docs/pii-redaction#ascii-only-input) and
-  active [PII redaction](/docs/pii-redaction) reject them.
-- Those inputs reserve the deployment's full input limit in the
-  [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their tokens.
+- URLs, file IDs and files that the gateway does not extract reserve the deployment's full input
+  limit in the [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their
+  tokens.
 - Base64 and JSON encoding count toward the [128 MiB request limit](/docs/reference/security#limits).
   The provider applies its own file, page and size limits.
 - Audio input (`input_audio` on Chat Completions) works only on deployments that list `audio` in
