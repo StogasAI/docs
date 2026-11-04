@@ -1,0 +1,32 @@
+---
+title: Get your default picture
+description: Returns the picture that organizations you create or join start
+  with, a square WebP image of at most 128 pixels a side. Your personal
+  organization names it by its version. With that version as v, a client may
+  keep the answer for good, since a changed picture has a new version.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the picture that organizations you create or join start with, a
+          square WebP image of at most 128 pixels a side. Your personal
+          organization names it by its version. With that version as v, a client
+          may keep the answer for good, since a changed picture has a new
+          version.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/account/picture', method: 'get' }]} />
+    </>
+  );
+}

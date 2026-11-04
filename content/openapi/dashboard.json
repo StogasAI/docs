@@ -197,6 +197,43 @@
 				}
 			}
 		},
+		"/api/account/picture": {
+			"get": {
+				"operationId": "getDefaultPicture",
+				"tags": [
+					"Account"
+				],
+				"summary": "Get your default picture",
+				"description": "Returns the picture that organizations you create or join start with, a square WebP image of at most 128 pixels a side. Your personal organization names it by its version. With that version as v, a client may keep the answer for good, since a changed picture has a new version.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "v",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"pattern": "^[0-9a-f]{16}$"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"image/webp": {}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/account/tokens": {
 			"get": {
 				"operationId": "listAccessTokens",
