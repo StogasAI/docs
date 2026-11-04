@@ -152,31 +152,8 @@ the first call, so the gateway called Azure:
 
 ## Fields
 
-| Field                                                    | Meaning                                                                                             |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `schema_version`                                         | Record format version, currently `1`. Check it before you read other fields.                        |
-| `request_id`                                             | The request ID. A [grouped record](#grouped-rejections) keeps the first ID.                         |
-| `created_at`                                             | Billing authorization time, or the first rejection in a group.                                      |
-| `last_request_at`                                        | The last rejection in a group. Equal to `created_at` for other requests.                            |
-| `request_count`                                          | Requests that the record stands for. `1` for every request that the gateway accepted.               |
-| `organization_id`, `api_key_id`, `grant_id`, `member_id` | The organization, key, grant and member behind the request.                                         |
-| `request_type`                                           | `chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`.     |
-| `request_settings`                                       | [Settings](#request-settings) that the gateway sent to the provider. `{}` when it sent none.        |
-| `session_id`                                             | The request's [session](#sessions). Empty when it had none.                                         |
-| `metadata`                                               | The request's [metadata](#metadata). `{}` when it had none.                                         |
-| `transport`                                              | The client's [connection mode](/docs/connection-modes): `https`, `attested_tls` or `e2ee`.          |
-| `cancelled`, `client_stop_ms`                            | Whether the client cancelled, and when, on the [request clock](#timing).                            |
-| `catalog_version`                                        | The approved catalog that routed the request. `null` in [rejection records](#grouped-rejections).   |
-| `policy_versions`                                        | Each [policy](/docs/policies/scopes) that applied: scope, ID, revision and [hash](#policy-hashes).  |
-| `provider_attempts`                                      | Each [provider call](#provider-attempts) and its result. Empty when the gateway called no provider. |
-| `node_id`                                                | The gateway VM that handled the request.                                                            |
-| `performance`                                            | [Timing](#timing).                                                                                  |
-| `usage`                                                  | [Meters, standard text tokens and cost](/docs/usage).                                               |
-| `plugins`                                                | [Plugin metrics](#plugin-metrics). Omitted when no plugin recorded metrics.                         |
-| `gateway_error`                                          | A gateway error as `{code, status}`, or `null`. See [Errors](/docs/reference/errors).               |
-| `gateway_version`                                        | The gateway release that handled the request.                                                       |
-| `log_batch`                                              | Its place in the gateway's [signed batch](/docs/receipts#prove-a-request-log), or `null`.           |
-| `receipt_commitments`                                    | The commitments of the request's [receipt](/docs/receipts), or `null` when it asked for none.       |
+The [request log reference](/docs/reference/dashboard/analytics/listRequests) describes each field.
+The sections below explain the ones that need more than a line.
 
 ## Policy hashes
 
@@ -191,22 +168,6 @@ names while we [keep it](/docs/activity#retention-and-export).
 `provider_attempts` has one entry for each provider call, including each
 [retry and fallback](/docs/policies/routing#retries-and-fallbacks), in call order. A candidate that
 the gateway refused before it called the provider has no entry.
-
-| Field                                               | Meaning                                                                                                                                   |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `provider`                                          | The provider, such as `openai`.                                                                                                           |
-| `status`                                            | The [result](#provider-results).                                                                                                          |
-| `status_code`                                       | The provider's HTTP status. `null` when there was none, such as after a lost connection.                                                  |
-| `start_ms`                                          | When the call started, on the [request clock](#timing).                                                                                   |
-| `latency_ms`                                        | How long the call took.                                                                                                                   |
-| `output_observed`                                   | Whether output from this call reached the request. Only the last call can have `true`.                                                    |
-| `provider_request_id`                               | The provider's ID for the call, which its support asks for. Empty when the provider sent none.                                            |
-| `provider_response_id`                              | The ID of the provider's reply, such as `chatcmpl-…`, `resp_…` or `msg_…`. It is the `id` that you received. Empty when no reply arrived. |
-| `provider_model`                                    | The model that the provider reported serving, such as `gpt-5.5-2026-04-23`. Empty when the provider did not say.                          |
-| `provider_instance_id`                              | The Chutes instance that ran the call. Chutes finds an encrypted call by its instance and time. Absent for other providers.               |
-| `finish_reason`                                     | Why the model stopped, such as `stop` or `length`. Empty when the provider did not say.                                                   |
-| `byok`                                              | The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential.                                                      |
-| `catalog_chain_hash`, `resolved_catalog_chain_hash` | The catalog settings that the call used. See [Catalog history](#catalog-history).                                                         |
 
 Each provider sends `provider_request_id` in its own response header: OpenAI in `x-request-id`,
 Anthropic in `request-id`, Azure in `apim-request-id`, and AWS in `x-amzn-requestid`. A call that the
@@ -364,15 +325,6 @@ The request clock starts when the gateway receives the decoded request body and 
 writes the record. It excludes connection setup, upload, final transmission and settlement, so it is
 shorter than the latency your client sees.
 
-| Field                | Meaning                                                                                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `total_ms`           | The full request on the gateway.                                                                                                                  |
-| `provider_start_ms`  | When the first provider call started. `null` if not recorded.                                                                                     |
-| `rate_limit_wait_ms` | How long the request waited before its first provider call because the organization was over its [platform rate](/docs/policies/limits#requests). |
-| `provider_ms`        | Provider calls, from the start of the first to the end of the last.                                                                               |
-| `first_output_ms`    | The first valid provider output, including output other than tokens, such as citations.                                                           |
-| `ttft_ms`            | Time to the first generated token in a stream. `null` for requests that are not streamed.                                                         |
-
 The [example](#example) record has this timeline:
 
 ```text title="Request clock of the example"
@@ -393,13 +345,6 @@ backpressure. The time outside it is gateway preparation and response processing
 `performance.tool_calls` lists the tool calls in the response, in output order.
 `performance.answered_calls` lists the calls whose results the request sent. Records keep no tool
 names, arguments or results.
-
-| Field          | Meaning                                                                                                    |
-| -------------- | ---------------------------------------------------------------------------------------------------------- |
-| `type`         | The call's output item type in the Responses API. Chat Completions tool calls are `function_call`.         |
-| `start_ms`     | When the stream added the call, on the request clock. `null` for responses that are not streamed.          |
-| `latency_ms`   | From `start_ms` until the stream marked the call done. `null` if the response ended first.                 |
-| `call_id_hash` | For calls that your app answers, the first 16 hex digits of the SHA-256 of the call ID. Omitted otherwise. |
 
 | `type`                              | Who runs it                                                                  |
 | ----------------------------------- | ---------------------------------------------------------------------------- |
@@ -426,11 +371,6 @@ This prints `74196fe72e4cdc13`. The analytics filter `tool_call:` takes a call I
 finds both the request that made the call and the one that sent its result.
 
 ## Plugin metrics
-
-| Entry       | Fields                          | Meaning                                                                                         |
-| ----------- | ------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `redaction` | `items_redacted`, `duration_us` | Replacements, and the scan time in microseconds. `0` replacements means the scan found nothing. |
-| `export`    | `duration_us`                   | Time that [Export](/docs/export) added to the request, in microseconds, mostly for attachments. |
 
 - An entry is missing when the plugin recorded nothing, for example when no scan ran.
 - Plugin times overlap the request timeline. Do not add them to `total_ms`.

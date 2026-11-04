@@ -10510,24 +10510,29 @@
 												"properties": {
 													"schema_version": {
 														"type": "number",
-														"const": 1
+														"const": 1,
+														"description": "Record format version. Check it before you read other fields."
 													},
 													"request_id": {
 														"type": "string",
-														"format": "uuid"
+														"format": "uuid",
+														"description": "The request ID. A [grouped record](/docs/request-records#grouped-rejections) keeps the first ID."
 													},
 													"created_at": {
 														"type": "string",
-														"format": "date-time"
+														"format": "date-time",
+														"description": "Billing authorization time, or the first rejection in a group."
 													},
 													"last_request_at": {
 														"type": "string",
-														"format": "date-time"
+														"format": "date-time",
+														"description": "The last rejection in a group. Equal to `created_at` for other requests."
 													},
 													"request_count": {
 														"type": "integer",
 														"minimum": 1,
-														"maximum": 4294967295
+														"maximum": 4294967295,
+														"description": "Requests that the record stands for. `1` for every request that the gateway accepted."
 													},
 													"gateway_error": {
 														"anyOf": [
@@ -10651,11 +10656,13 @@
 															{
 																"type": "null"
 															}
-														]
+														],
+														"description": "The gateway error that you received, or `null`. See [Errors](/docs/reference/errors)."
 													},
 													"api_key_id": {
 														"type": "string",
-														"format": "uuid"
+														"format": "uuid",
+														"description": "The API key that sent the request."
 													},
 													"grant_id": {
 														"anyOf": [
@@ -10666,21 +10673,26 @@
 															{
 																"type": "null"
 															}
-														]
+														],
+														"description": "The grant behind the request, or `null` when it had none."
 													},
 													"member_id": {
 														"type": "string",
-														"format": "uuid"
+														"format": "uuid",
+														"description": "The member behind the request."
 													},
 													"organization_id": {
 														"type": "string",
-														"format": "uuid"
+														"format": "uuid",
+														"description": "The organization behind the request."
 													},
 													"request_type": {
-														"type": "string"
+														"type": "string",
+														"description": "`chat_completion_request`, `chat_completion_stream`, `responses_request` or `responses_stream`."
 													},
 													"request_settings": {
 														"default": {},
+														"description": "[Settings](/docs/request-records#request-settings) that the gateway sent to the provider. `{}` when it sent none.",
 														"type": "object",
 														"properties": {
 															"max_output_tokens": {
@@ -10801,11 +10813,13 @@
 													},
 													"session_id": {
 														"default": "",
+														"description": "The request's [session](/docs/request-records#sessions). Empty when it had none.",
 														"type": "string",
 														"pattern": "^[^\\u0000-\\u001f]*$"
 													},
 													"metadata": {
 														"default": {},
+														"description": "The request's [metadata](/docs/request-records#metadata). `{}` when it had none.",
 														"type": "object",
 														"propertyNames": {
 															"type": "string",
@@ -10818,6 +10832,7 @@
 													},
 													"transport": {
 														"default": "https",
+														"description": "The client's [connection mode](/docs/connection-modes).",
 														"type": "string",
 														"enum": [
 															"https",
@@ -10826,7 +10841,8 @@
 														]
 													},
 													"cancelled": {
-														"type": "boolean"
+														"type": "boolean",
+														"description": "Whether the client cancelled the request."
 													},
 													"client_stop_ms": {
 														"anyOf": [
@@ -10838,7 +10854,8 @@
 															{
 																"type": "null"
 															}
-														]
+														],
+														"description": "When the client cancelled, on the request clock, or `null`."
 													},
 													"catalog_version": {
 														"anyOf": [
@@ -10850,10 +10867,12 @@
 															{
 																"type": "null"
 															}
-														]
+														],
+														"description": "The approved catalog that routed the request. `null` in [rejection records](/docs/request-records#grouped-rejections)."
 													},
 													"policy_versions": {
 														"default": null,
+														"description": "Each [policy](/docs/policies/scopes) that applied: scope, ID, revision and [hash](/docs/request-records#policy-hashes).",
 														"anyOf": [
 															{
 																"minItems": 2,
@@ -10909,18 +10928,22 @@
 															"type": "object",
 															"properties": {
 																"resolved_catalog_chain_hash": {
+																	"description": "The chain that the request resolved to, when the provider served another offering, such as another service tier. Omitted when both are the same.",
 																	"type": "string",
 																	"pattern": "^sha256:[a-f0-9]{64}$"
 																},
 																"catalog_chain_hash": {
 																	"type": "string",
-																	"pattern": "^sha256:[a-f0-9]{64}$"
+																	"pattern": "^sha256:[a-f0-9]{64}$",
+																	"description": "The [catalog chain](/docs/request-records#catalog-history) that the call used: its author, model, deployment, route and provider settings."
 																},
 																"provider": {
-																	"type": "string"
+																	"type": "string",
+																	"description": "The provider, such as `openai`."
 																},
 																"status": {
-																	"type": "string"
+																	"type": "string",
+																	"description": "The [result](/docs/request-records#provider-results)."
 																},
 																"status_code": {
 																	"anyOf": [
@@ -10932,38 +10955,47 @@
 																		{
 																			"type": "null"
 																		}
-																	]
+																	],
+																	"description": "The provider's HTTP status. `null` when there was none, such as after a lost connection."
 																},
 																"start_ms": {
 																	"type": "integer",
 																	"minimum": 0,
-																	"maximum": 4294967295
+																	"maximum": 4294967295,
+																	"description": "When the call started, on the request clock."
 																},
 																"latency_ms": {
 																	"type": "integer",
 																	"minimum": 0,
-																	"maximum": 4294967295
+																	"maximum": 4294967295,
+																	"description": "How long the call took."
 																},
 																"output_observed": {
 																	"default": false,
+																	"description": "Whether output from this call reached the request. Only the last call can have `true`.",
 																	"type": "boolean"
 																},
 																"provider_request_id": {
-																	"type": "string"
+																	"type": "string",
+																	"description": "The provider's ID for the call, from its response headers, which its support asks for. Empty when the provider sent none."
 																},
 																"provider_response_id": {
 																	"default": "",
+																	"description": "The ID of the provider's reply, such as `chatcmpl-…`, `resp_…` or `msg_…`. It is the `id` that you received. Empty when no reply arrived.",
 																	"type": "string"
 																},
 																"provider_model": {
 																	"default": "",
+																	"description": "The model that the provider reported serving, such as `gpt-5.5-2026-04-23`. Empty when the provider did not say.",
 																	"type": "string"
 																},
 																"provider_instance_id": {
+																	"description": "The [Chutes](/docs/providers/chutes) instance that ran the call. Absent for other providers.",
 																	"type": "string"
 																},
 																"finish_reason": {
-																	"type": "string"
+																	"type": "string",
+																	"description": "Why the model stopped, such as `stop` or `length`. Empty when the provider did not say."
 																},
 																"byok": {
 																	"anyOf": [
@@ -10974,7 +11006,8 @@
 																		{
 																			"type": "null"
 																		}
-																	]
+																	],
+																	"description": "The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential."
 																}
 															},
 															"required": [
@@ -10992,7 +11025,8 @@
 																"byok"
 															],
 															"additionalProperties": false
-														}
+														},
+														"description": "Each [provider call](/docs/request-records#provider-attempts) and its result, in call order. Empty when the gateway called no provider."
 													},
 													"node_id": {
 														"anyOf": [
@@ -11005,7 +11039,8 @@
 																"type": "string",
 																"const": ""
 															}
-														]
+														],
+														"description": "The gateway VM that handled the request."
 													},
 													"performance": {
 														"type": "object",
@@ -11013,15 +11048,18 @@
 															"total_ms": {
 																"type": "integer",
 																"minimum": 0,
-																"maximum": 4294967295
+																"maximum": 4294967295,
+																"description": "The full request on the gateway."
 															},
 															"provider_ms": {
 																"type": "integer",
 																"minimum": 0,
-																"maximum": 4294967295
+																"maximum": 4294967295,
+																"description": "Provider calls, from the start of the first to the end of the last, with the waits between them."
 															},
 															"provider_start_ms": {
 																"default": null,
+																"description": "When the first provider call started. `null` if not recorded.",
 																"anyOf": [
 																	{
 																		"type": "integer",
@@ -11035,6 +11073,7 @@
 															},
 															"rate_limit_wait_ms": {
 																"default": 0,
+																"description": "How long the request waited before its first provider call, or in all without one, because the organization was over its [platform rate](/docs/policies/limits#requests).",
 																"type": "integer",
 																"minimum": 0,
 																"maximum": 4294967295
@@ -11049,7 +11088,8 @@
 																	{
 																		"type": "null"
 																	}
-																]
+																],
+																"description": "The first valid provider output, including output other than tokens, such as citations."
 															},
 															"ttft_ms": {
 																"anyOf": [
@@ -11061,10 +11101,12 @@
 																	{
 																		"type": "null"
 																	}
-																]
+																],
+																"description": "Time to the first generated token in a stream. `null` for requests that are not streamed."
 															},
 															"tool_calls": {
 																"default": [],
+																"description": "The first 32 [tool calls](/docs/request-records#tool-calls) in the response, in output order.",
 																"maxItems": 32,
 																"type": "array",
 																"items": {
@@ -11080,7 +11122,8 @@
 																				"web_fetch_call",
 																				"mcp_list_tools",
 																				"mcp_call"
-																			]
+																			],
+																			"description": "The call's output item type in the Responses API. Chat Completions tool calls are `function_call`."
 																		},
 																		"start_ms": {
 																			"anyOf": [
@@ -11092,7 +11135,8 @@
 																				{
 																					"type": "null"
 																				}
-																			]
+																			],
+																			"description": "When the stream added the call, on the request clock. `null` for responses that are not streamed."
 																		},
 																		"latency_ms": {
 																			"anyOf": [
@@ -11104,9 +11148,11 @@
 																				{
 																					"type": "null"
 																				}
-																			]
+																			],
+																			"description": "From `start_ms` until the stream marked the call done. `null` if the response ended first."
 																		},
 																		"call_id_hash": {
+																			"description": "For calls that your app answers, the first 16 hex digits of the SHA-256 of the call ID. Omitted otherwise.",
 																			"type": "string",
 																			"pattern": "^[0-9a-f]{16}$"
 																		}
@@ -11121,6 +11167,7 @@
 															},
 															"answered_calls": {
 																"default": [],
+																"description": "Hashes of the last 32 calls whose results the request sent.",
 																"maxItems": 32,
 																"type": "array",
 																"items": {
@@ -11139,7 +11186,8 @@
 															"tool_calls",
 															"answered_calls"
 														],
-														"additionalProperties": false
+														"additionalProperties": false,
+														"description": "[Timing](/docs/request-records#timing), on the request clock."
 													},
 													"usage": {
 														"type": "object",
@@ -11223,9 +11271,11 @@
 															"meters",
 															"standard_text_tokens"
 														],
-														"additionalProperties": false
+														"additionalProperties": false,
+														"description": "[Meters, standard text tokens and cost](/docs/usage)."
 													},
 													"plugins": {
+														"description": "[Plugin metrics](/docs/request-records#plugin-metrics). Omitted when no plugin recorded any.",
 														"type": "object",
 														"properties": {
 															"export": {
@@ -11234,7 +11284,8 @@
 																	"duration_us": {
 																		"type": "integer",
 																		"minimum": 0,
-																		"maximum": 4294967295
+																		"maximum": 4294967295,
+																		"description": "Time that [Export](/docs/export) added across the request, in microseconds, mostly for attachments."
 																	}
 																},
 																"required": [
@@ -11248,12 +11299,14 @@
 																	"duration_us": {
 																		"type": "integer",
 																		"minimum": 0,
-																		"maximum": 4294967295
+																		"maximum": 4294967295,
+																		"description": "Scan time, in microseconds."
 																	},
 																	"items_redacted": {
 																		"type": "integer",
 																		"minimum": 0,
-																		"maximum": 4294967295
+																		"maximum": 4294967295,
+																		"description": "Replacements. `0` means the scan found nothing."
 																	}
 																},
 																"required": [
@@ -11275,10 +11328,12 @@
 																"type": "string",
 																"pattern": "^v\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$"
 															}
-														]
+														],
+														"description": "The gateway release that handled the request."
 													},
 													"log_batch": {
 														"default": null,
+														"description": "Its place in the gateway's [signed batch](/docs/receipts#prove-a-request-log), or `null`.",
 														"anyOf": [
 															{
 																"type": "object",
@@ -11307,6 +11362,7 @@
 													},
 													"receipt_commitments": {
 														"default": null,
+														"description": "The commitments of the request's [receipt](/docs/receipts), or `null` when it asked for none.",
 														"anyOf": [
 															{
 																"type": "object",
@@ -11522,12 +11578,22 @@
 														],
 														"additionalProperties": false
 													}
+												},
+												"deleted": {
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128
+													},
+													"description": "The keys, grants and credentials that the requests name and that have been deleted since."
 												}
 											},
 											"required": [
 												"api_keys",
 												"grants",
-												"upstream_byok"
+												"upstream_byok",
+												"deleted"
 											],
 											"additionalProperties": false
 										},
