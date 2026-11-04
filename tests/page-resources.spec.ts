@@ -13,6 +13,14 @@ function parseMarkdown(text: string) {
 	return metadata;
 }
 
+/** The route that exports a page's `.md` URL; the build copies its Markdown to that URL. */
+function exportPath(markdownPath: string, file = 'content.md') {
+	const page = markdownPath.replace(/\.md$/, '');
+	const reference = page === '/docs/reference' || page.startsWith('/docs/reference/');
+	const slug = page.slice((reference ? '/docs/reference' : '/docs').length);
+	return `/llms.mdx/${reference ? 'reference' : 'docs'}${slug}/${file}`;
+}
+
 function checkReferences(document: Record<string, unknown>) {
 	const walk = (value: unknown) => {
 		if (!value || typeof value !== 'object') return;
@@ -37,7 +45,7 @@ test('every indexed page exports readable Markdown and complete operation schema
 	const index = await request.get('/llms.txt');
 	expect(index.ok()).toBe(true);
 	const markdownLinks = Array.from(
-		(await index.text()).matchAll(/\]\((https:\/\/stogas\.ai\/llms\.mdx\/[^)]+)\)/g),
+		(await index.text()).matchAll(/\]\((https:\/\/stogas\.ai\/docs[^)]*\.md)\)/g),
 		(m) => new URL(m[1]).pathname
 	);
 	expect(markdownLinks.length).toBeGreaterThan(30);
@@ -46,10 +54,17 @@ test('every indexed page exports readable Markdown and complete operation schema
 	for (const path of markdownLinks) {
 		const response = await request.get(path);
 		expect(response.status(), path).toBe(200);
-		expect(response.headers()['content-type'], path).toContain('text/markdown');
+		expect(response.headers()['content-type'], path).toBe('text/markdown; charset=utf-8');
 		const text = await response.text();
 		const metadata = parseMarkdown(text);
+		expect(path, 'Markdown is at the page URL with .md added').toBe(
+			`${new URL(metadata.url).pathname}.md`
+		);
+		expect(response.headers().link, path).toContain(`<${metadata.url}>; rel="canonical"`);
 		canonicalUrls.add(metadata.url);
+		const exported = await request.get(exportPath(path));
+		expect(await exported.text(), path).toBe(text);
+		expect(exported.headers()['x-robots-tag'], path).toBe('noindex');
 		const html = await request.get(new URL(metadata.url).pathname);
 		expect(html.status()).toBe(200);
 		const documentHtml = await html.text();
@@ -67,7 +82,7 @@ test('every indexed page exports readable Markdown and complete operation schema
 		}
 		checkReferences(document);
 		expect(Object.keys(document.paths)).toHaveLength(1);
-		const json = await request.get(path.replace(/content\.md$/, 'openapi.json'));
+		const json = await request.get(exportPath(path, 'openapi.json'));
 		expect(json.headers()['content-type']).toContain('application/json');
 		expect(await json.json()).toEqual(document);
 	}
@@ -94,6 +109,7 @@ test('every indexed page exports readable Markdown and complete operation schema
 	expect(catalog.headers()['content-type']).toContain('application/linkset+json');
 	expect(index.headers().link).toContain('rel="service-desc"');
 	expect((await request.get('/docs/no-such-page')).status()).toBe(404);
+	expect((await request.get('/docs/no-such-page.md')).status()).toBe(404);
 	expect((await request.get('/llms.mdx/docs/no-such-page/content.md')).status()).toBe(404);
 });
 
@@ -150,7 +166,7 @@ for (const path of [
 		if (source.startsWith('openapi/')) {
 			await expect(
 				resources.getByRole('link', { name: 'View OpenAPI specification', exact: true })
-			).toHaveAttribute('href', resource.replace(/content\.md$/, 'openapi.json'));
+			).toHaveAttribute('href', exportPath(resource, 'openapi.json'));
 		}
 	});
 }
@@ -163,7 +179,7 @@ test('a failed Markdown fetch can be retried without copying an error page', asy
 	await page.goto('/docs/go');
 	await page.evaluate(() => navigator.clipboard.writeText('existing clipboard'));
 	await page.route(
-		'**/llms.mdx/docs/go/content.md',
+		'**/docs/go.md',
 		(route) => route.fulfill({ status: 503, body: 'Unavailable' }),
 		{ times: 1 }
 	);

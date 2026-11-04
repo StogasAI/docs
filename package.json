@@ -5,7 +5,7 @@
 	"scripts": {
 		"test": "playwright test",
 		"generate:openapi": "bun scripts/validate-openapi.ts && bun scripts/generate-openapi.ts",
-		"build": "bun run generate:openapi && next build",
+		"build": "bun run generate:openapi && next build && bun scripts/copy-markdown.ts",
 		"clean": "rm -rf .next .wrangler .source out next-env.d.ts tsconfig.tsbuildinfo",
 		"dev": "bun run generate:openapi && next dev",
 		"typecheck": "bun run generate:openapi && next typegen && fumadocs-mdx && tsc --noEmit",

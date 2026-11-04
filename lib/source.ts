@@ -12,7 +12,6 @@ import { languageIconPaths, type LanguageIcon } from './language-icons';
 import { providerLogos, type ProviderLogo } from './provider-logos';
 import { openapiDocuments, scopeOpenApiDocument, type OpenAPIDocumentId } from './openapi';
 import {
-	docsContentRoute,
 	docsImageRoute,
 	docsRoute,
 	referenceContentRoute,
@@ -145,14 +144,12 @@ export function getOpenApiOperationSpec(page: (typeof source)['$inferPage']) {
 	return operation && scopeOpenApiDocument(openapiDocuments[operation.document], [operation]);
 }
 
+/**
+ * A page's Markdown is at the page's URL with `.md` added, as llms.txt proposes. The export routes
+ * write it under `segments`, and the build copies it to that URL.
+ */
 export function getPageMarkdownUrl(page: (typeof source)['$inferPage']) {
-	const isReference = page.url.startsWith(referenceRoute);
-	const segments = [...page.slugs, 'content.md'];
-
-	return {
-		segments,
-		url: `${isReference ? referenceContentRoute : docsContentRoute}/${segments.join('/')}`
-	};
+	return { segments: [...page.slugs, 'content.md'], url: `${page.url}.md` };
 }
 
 export function getOpenApiJsonUrl(page: (typeof source)['$inferPage']) {

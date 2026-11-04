@@ -16,7 +16,18 @@ const createConfig = (phase) => {
 		}
 	};
 
-	if (phase !== PHASE_DEVELOPMENT_SERVER) {
+	if (phase === PHASE_DEVELOPMENT_SERVER) {
+		// The build copies each page's Markdown to its `.md` URL (scripts/copy-markdown.ts).
+		config.rewrites = async () => [
+			{ source: '/docs.md', destination: '/llms.mdx/docs/content.md' },
+			{ source: '/docs/reference.md', destination: '/llms.mdx/reference/content.md' },
+			{
+				source: '/docs/reference/:path*.md',
+				destination: '/llms.mdx/reference/:path*/content.md'
+			},
+			{ source: '/docs/:path*.md', destination: '/llms.mdx/docs/:path*/content.md' }
+		];
+	} else {
 		config.output = 'export';
 	}
 
