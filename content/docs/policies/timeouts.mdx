@@ -4,8 +4,8 @@ description: Limit how long a caller waits for a request and for each provider o
 icon: Timer
 ---
 
-Requests wait up to **60 minutes in total** and up to **five minutes for useful provider output**.
-Set shorter or longer limits in whole seconds from 1 through 3600:
+Requests wait up to **60 minutes in total**. By default no shorter limit applies while a model
+works without sending output. Set either limit in whole seconds from 1 through 3600:
 
 ```json title="policy.json"
 {
@@ -26,9 +26,13 @@ preparation uses up the time, the request fails before the gateway calls the pro
 
 Useful output is text, reasoning, tool output or media. Headers, keepalives, usage-only updates and
 empty lifecycle events do not restart `outputIdleSeconds`. A buffered request has no output until
-the full response arrives, so the limit covers the whole provider call. Raise it for models that
-reason for a long time without output. If you set it equal to `totalSeconds`, only the total limit
-applies.
+the full response arrives, so the limit covers the whole provider call. If you set it equal to
+`totalSeconds`, only the total limit applies.
+
+Many models reason for minutes without sending output. Current Claude models send no reasoning text
+unless the request asks for a summary, and some other models always hide their reasoning. A timeout
+does not stop the provider's work or its charge, so by default the gateway waits for that work. Set
+`outputIdleSeconds` for callers that should give up sooner when a provider stops sending output.
 
 ## How policies combine
 
@@ -41,12 +45,12 @@ field, and permitted [request policies](/docs/policies/request-policies) can set
 - `outputIdleSeconds` can differ by deployment. Each provider call, including a fallback, uses the
   value for its own deployment and credential:
 
-```json title="Longer output wait for Claude Opus"
+```json title="Shorter output wait for Claude Haiku"
 {
 	"rules": {
-		"slow_models": {
-			"when": "'claude-opus' in model.groupIds",
-			"timeouts": { "outputIdleSeconds": 900 }
+		"fast_models": {
+			"when": "'claude-haiku' in model.groupIds",
+			"timeouts": { "outputIdleSeconds": 120 }
 		}
 	}
 }
