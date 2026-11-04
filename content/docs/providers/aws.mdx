@@ -19,42 +19,42 @@ deployments, and only Claude Fable 5.1 has an `-anthropic-hosted` deployment so 
 
 ## Create a credential
 
-A credential is one JSON document with a commercial Region and a long-term key:
+1. Save the policy from [Grant access](#grant-access) as `policy.json`, and give it to a new IAM
+   user:
 
-```json tab="Access key"
-{
-	"schema": "stogas.aws-byok.v1",
-	"region": "us-east-1",
-	"accessKeyId": "AKIA...",
-	"secretAccessKey": "...",
-	"workspaceId": "wrkspc_..."
-}
-```
+   ```bash
+   aws iam create-user --user-name stogas-gateway
+   aws iam put-user-policy --user-name stogas-gateway \
+     --policy-name stogas-claude --policy-document file://policy.json
+   ```
 
-```json tab="API key"
-{
-	"schema": "stogas.aws-byok.v1",
-	"region": "us-east-1",
-	"apiKey": "..."
-}
-```
+2. Create the user's key:
 
-| Key                                                | Serves                                                 |
-| -------------------------------------------------- | ------------------------------------------------------ |
-| IAM access key                                     | Bedrock, and Claude Platform on AWS with `workspaceId` |
-| Bedrock API key                                    | Bedrock                                                |
-| Claude Platform on AWS API key, with `workspaceId` | Claude Platform on AWS                                 |
+   ```bash tab="Access key"
+   aws iam create-access-key --user-name stogas-gateway
+   ```
 
-- `-us` deployments use the credential only if `region` is `us-east-1`, `us-east-2`, `us-west-1`
-  or `us-west-2`.
-- `workspaceId` names a Claude Platform on AWS workspace in `region`.
+   ```bash tab="Bedrock API key"
+   aws iam create-service-specific-credential --user-name stogas-gateway \
+     --service-name bedrock.amazonaws.com --credential-age-days 365
+   ```
 
-Save the document in [BYOK](/docs/byok), or [encrypt it](/docs/byok#customer-encryption) with
-`--purpose byok/aws`.
+3. In [BYOK](/docs/byok), add an AWS credential with the key and a commercial Region, such as
+   `us-east-1`. For Claude Platform on AWS, add the ID of a workspace in that Region.
+
+| Key                                              | Serves                                               |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| IAM access key                                   | Bedrock, and Claude Platform on AWS with a workspace |
+| Bedrock API key                                  | Bedrock                                              |
+| Claude Platform on AWS API key, with a workspace | Claude Platform on AWS                               |
+
+`-us` deployments use the credential only if its Region is `us-east-1`, `us-east-2`, `us-west-1`
+or `us-west-2`. A short-term Bedrock API key expires within 12 hours, so BYOK takes only long-term
+keys.
 
 ## Grant access
 
-Attach this policy to the IAM user that owns the key:
+The IAM user that owns the key needs this policy:
 
 ```json title="IAM policy"
 {
@@ -77,8 +77,42 @@ Attach this policy to the IAM user that owns the key:
 }
 ```
 
-A Bedrock API key also needs `bedrock:ListFoundationModels`, and a Claude Platform on AWS API key
-needs `aws-external-anthropic:CallWithBearerToken`.
+A Bedrock API key also needs `bedrock:CallWithBearerToken` and `bedrock:ListFoundationModels`,
+and a Claude Platform on AWS API key needs `aws-external-anthropic:CallWithBearerToken`.
+
+## Customer encryption
+
+With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts a credential
+document that holds the same fields:
+
+```json tab="Access key"
+{
+	"schema": "stogas.aws-byok.v1",
+	"region": "us-east-1",
+	"accessKeyId": "AKIA...",
+	"secretAccessKey": "...",
+	"workspaceId": "wrkspc_..."
+}
+```
+
+```json tab="API key"
+{
+	"schema": "stogas.aws-byok.v1",
+	"region": "us-east-1",
+	"apiKey": "..."
+}
+```
+
+Leave out `workspaceId` unless the credential serves Claude Platform on AWS. Save the document as
+`aws.json`, then encrypt it and delete `aws.json`:
+
+```bash
+stogas encrypt --key providers --organization <organization-id> \
+  --purpose byok/aws --input aws.json --output credential.json
+```
+
+In [BYOK](/docs/byok), add an AWS credential, select **Customer encrypted**, and paste
+`credential.json`.
 
 ## Differences from Anthropic
 

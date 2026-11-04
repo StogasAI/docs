@@ -20,13 +20,34 @@ offers them in no multi-region. Only Claude Fable 5.1 has an `-anthropic-hosted`
 
 ## Create a credential
 
-A credential is a service account key. Save the key file in [BYOK](/docs/byok) as Google Cloud
-downloads it, or [encrypt it](/docs/byok#customer-encryption) with `--purpose byok/google-cloud`.
-The service account needs `roles/aiplatform.user` for Agent Platform, and `roles/claude.user` for
-Claude Models on Google Cloud.
+1. Create a service account with the roles it needs, and a key for it:
 
-Claude Models on Google Cloud also needs your workspace ID. This command turns the key file into a
-credential document with one:
+   ```bash
+   gcloud iam service-accounts create stogas-gateway --project=PROJECT_ID
+   gcloud projects add-iam-policy-binding PROJECT_ID \
+     --member=serviceAccount:stogas-gateway@PROJECT_ID.iam.gserviceaccount.com \
+     --role=roles/aiplatform.user
+   gcloud iam service-accounts keys create key.json \
+     --iam-account=stogas-gateway@PROJECT_ID.iam.gserviceaccount.com
+   ```
+
+   `roles/aiplatform.user` serves Agent Platform. For Claude Models on Google Cloud, grant
+   `roles/claude.user` too.
+
+2. In [BYOK](/docs/byok), add a Google Cloud credential and choose `key.json`. For Claude Models
+   on Google Cloud, add your workspace ID. Then delete `key.json`.
+
+If `keys create` fails with a policy error, your organization blocks service account keys. Google
+blocks them by default in organizations created since May 3, 2024. An organization policy
+administrator can allow them in one project: in the console, open the constraint
+`iam.disableServiceAccountKeyCreation` or `iam.managed.disableServiceAccountKeyCreation` for the
+project, choose **Override parent's policy**, and turn enforcement off.
+
+## Customer encryption
+
+With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts a credential
+document. This command makes one from the key file. Leave out `workspaceId` unless the credential
+serves Claude Models on Google Cloud.
 
 ```bash
 jq --arg workspace wrkspc_... '{
@@ -36,8 +57,13 @@ jq --arg workspace wrkspc_... '{
   privateKeyId: .private_key_id,
   privateKey: (.private_key | gsub("-----[A-Z ]+-----|\\s"; "")),
   workspaceId: $workspace
-}' key.json
+}' key.json > google.json
+stogas encrypt --key providers --organization <organization-id> \
+  --purpose byok/google-cloud --input google.json --output credential.json
 ```
+
+Delete `key.json` and `google.json`. In [BYOK](/docs/byok), add a Google Cloud credential, select
+**Customer encrypted**, and paste `credential.json`.
 
 ## Differences from Anthropic
 

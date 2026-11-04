@@ -90,8 +90,10 @@ with `409 STORED_CREDENTIALS_EXIST` and the number that remain. To move an organ
 
 ## AWS and Google Cloud
 
-An AWS or Google Cloud credential is a JSON document. The [AWS](/docs/providers/aws#create-a-credential)
-and [Google Cloud](/docs/providers/google-cloud#create-a-credential) pages show its fields.
+The dashboard asks for an AWS or Google Cloud credential's key and Region, or its key file. The
+CLI and the dashboard API take the same fields as a JSON document, which the
+[AWS](/docs/providers/aws#customer-encryption) and
+[Google Cloud](/docs/providers/google-cloud#customer-encryption) pages show.
 
 Each of these credentials has a public target: the hostings that it serves and, for AWS, its
 Region, such as `{"hosting":["anthropic","aws"],"region":"us-east-1"}`. Routing reads the target
