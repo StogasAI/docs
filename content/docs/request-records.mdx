@@ -180,14 +180,20 @@ names the instance that ran the call or turned it away, which Chutes can find wi
 | What happened                                                                                     | `provider_attempts`        | `gateway_error`             |
 | ------------------------------------------------------------------------------------------------- | -------------------------- | --------------------------- |
 | Every provider call failed                                                                        | Each failed call           | `null`                      |
+| A provider call failed, and the gateway's refusal of another candidate was the error you received | Each failed call           | The error that you received |
 | The provider succeeded, but the gateway could not finish pricing, encoding or a requested receipt | Ends with a `success` call | The gateway error           |
 | The gateway stopped before any call, such as when provider evidence did not verify                | Empty, and usage is zero   | The error that you received |
 | The gateway rejected the request before billing authorization                                     | Empty, and usage is zero   | The error that you received |
 
+When every call fails, the error that you received can be an earlier call's. See
+[Retries](/docs/reference/errors#retries).
+
 ### Provider results
 
 The gateway sets each call's `status` from the provider's structured error type, code and HTTP
-status, never from message text. An unrecognized failure is `provider_error`.
+status. Only failures that providers mark in no other way are read from the start of the message:
+Anthropic's spend limits, low credit and workspace region refusals, and prompts longer than the
+deployment's context window. An unrecognized failure is `provider_error`.
 
 | Result                                                                             | Meaning                                                                   |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |

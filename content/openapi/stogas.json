@@ -392,6 +392,9 @@
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
 					},
+					"424": {
+						"$ref": "#/components/responses/FailedDependency"
+					},
 					"429": {
 						"$ref": "#/components/responses/RateLimited"
 					},
@@ -478,6 +481,9 @@
 					},
 					"413": {
 						"$ref": "#/components/responses/PayloadTooLarge"
+					},
+					"424": {
+						"$ref": "#/components/responses/FailedDependency"
 					},
 					"429": {
 						"$ref": "#/components/responses/RateLimited"
@@ -1057,8 +1063,8 @@
 					}
 				}
 			},
-			"BadGateway": {
-				"description": "The provider failed, or rejected the gateway's request. See [502 errors](/docs/reference/errors#502-bad-gateway).",
+			"FailedDependency": {
+				"description": "The provider credential or account behind the deployment failed the request. A retry fails until it changes. See [424 errors](/docs/reference/errors#424-failed-dependency).",
 				"content": {
 					"application/json": {
 						"schema": {
@@ -1069,6 +1075,24 @@
 								"message": "The configured provider credential was rejected",
 								"type": "gateway_error",
 								"code": "upstream_authentication_failed",
+								"param": null
+							}
+						}
+					}
+				}
+			},
+			"BadGateway": {
+				"description": "The provider failed, or sent an invalid response. See [502 errors](/docs/reference/errors#502-bad-gateway).",
+				"content": {
+					"application/json": {
+						"schema": {
+							"$ref": "#/components/schemas/ErrorResponse"
+						},
+						"example": {
+							"error": {
+								"message": "Upstream provider error",
+								"type": "gateway_error",
+								"code": null,
 								"param": null
 							}
 						}

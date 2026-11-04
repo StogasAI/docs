@@ -113,12 +113,24 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `request_too_large` | The body is above a [request limit](/docs/reference/security#limits), or [redaction](/docs/pii-redaction#errors) reached a scan limit. |
 
+### 424 Failed dependency
+
+The provider credential or account behind the deployment failed the request. A retry fails until
+the credential or account changes, so these responses carry `X-Should-Retry: false`, and no client
+retries a `424` by itself.
+
+| Code                             | Meaning                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------ |
+| `upstream_authentication_failed` | The provider rejected the credential.                                                      |
+| `upstream_quota_exceeded`        | The provider account has no quota left.                                                    |
+| `upstream_access_denied`         | The credential cannot use the requested model, or the provider refuses the gateway region. |
+
 ### 429 Too many requests
 
 Wait for the number of seconds in `Retry-After` when it is present. Requests that a limit blocks
 at the same moment get waits up to a second apart, so their retries do not all arrive together. A
-gateway `429` has `X-Should-Retry: false` when waiting will not help, such as a request larger than
-its token limit, or when the wait is longer than a minute.
+`429` has `X-Should-Retry: false` when waiting will not help, such as a request larger than its
+token limit, or when the wait is longer than a minute.
 
 | Code                        | Meaning                                                                                                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -147,13 +159,10 @@ its token limit, or when the wait is longer than a minute.
 
 ### 502 Bad gateway
 
-| Code                             | Meaning                                                                        |
-| -------------------------------- | ------------------------------------------------------------------------------ |
-| `upstream_authentication_failed` | The provider rejected the credential.                                          |
-| `upstream_quota_exceeded`        | The provider account has no quota left.                                        |
-| `upstream_access_denied`         | The credential cannot use the requested model.                                 |
-| `upstream_protocol_error`        | The provider sent an invalid response over its confidential connection.        |
-| `null`                           | Another provider failure, such as a dropped connection or an invalid response. |
+| Code                      | Meaning                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| `upstream_protocol_error` | The provider sent an invalid response over its confidential connection.        |
+| `null`                    | Another provider failure, such as a dropped connection or an invalid response. |
 
 ### 503 Service unavailable
 
@@ -184,16 +193,21 @@ A `503` with `"code": null` comes from the provider, and the request may have re
 
 The gateway retries and tries other deployments as your
 [routing policy](/docs/policies/routing#retries-and-fallbacks) allows. If every call fails, the
-response has the error of the last provider call, or the gateway's own error when no call reached
-a provider.
+response has the error that ended the request, such as an invalid request or a content filter.
+Otherwise it has the first deployment's error, unless a later error passes sooner when you wait:
+a rate limit with a shorter wait, or a server error that a retry can pass. An error that says a
+deployment no longer serves the model gives way to any other error. Each deployment counts with its
+last call, and a refusal by the gateway, such as a limit, counts like a call. A deployment that the
+gateway passes over while its provider's wait lasts counts with that provider error.
 
 A retry from your client is a new request, billed on its own. If the connection drops after the
 request was sent, the model may already have run. Check the request in [Analytics](/docs/analytics)
 before you send it again.
 
-When a provider answers `429`, `503` or `529` with a wait, the gateway passes it on in
-`Retry-After` as it does its own waits: in whole seconds, and up to a second apart for requests
-refused together. Responses with `upstream_authentication_failed`, `upstream_quota_exceeded` or
-`upstream_access_denied` carry `X-Should-Retry: false`, because a retry fails until the provider
-credential or account changes. The OpenAI and Anthropic SDKs read both headers, and E2EE responses
-carry them too.
+When a provider answers `429`, `503` or `529` with a wait, the gateway passes on what remains of
+it in `Retry-After`, as it does its own waits: in whole seconds, and up to a second apart for
+requests refused together. A response that a retry cannot pass has `X-Should-Retry: false`: a
+`424`, an error that only another deployment avoids, or a wait longer than a minute. A response
+that a retry can pass, although its status is one that clients do not retry, has
+`X-Should-Retry: true`. The OpenAI and Anthropic SDKs read both headers, and E2EE responses carry
+them too.

@@ -231,12 +231,12 @@ candidate in routing order, a **fallback**:
 
 The failure decides the next step:
 
-| Failure                                | Examples                                                                                                                                                                                  | Next step                                  |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Another call can succeed               | A lost connection, or a `408`, `409`, `429` or `5xx` response                                                                                                                             | A retry. With no retries left, a fallback. |
-| The candidate cannot serve the request | A `401`, `402`, `403`, `404` or `410` response, a retired model, a provider account out of credit or past its spend limit, or an Anthropic workspace that refuses the deployment's region | A fallback.                                |
-| The gateway refuses the candidate      | A [limit](/docs/policies/limits), your balance, or a credential that is disabled, expired or unavailable                                                                                  | A fallback, which can cost less.           |
-| The request cannot succeed             | Other `4xx` responses, such as an invalid request, a prompt that is too long, or a content filter                                                                                         | The request ends with the error.           |
+| Failure                                | Examples                                                                                                                                                                                                                                                                       | Next step                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| Another call can succeed               | A lost connection, or a `408`, `409`, `429` or `5xx` response                                                                                                                                                                                                                  | A retry. With no retries left, a fallback. |
+| The candidate cannot serve the request | A `401`, `402`, `403`, `404` or `410` response, a retired model, a provider account out of credit or past its spend limit, a provider or Anthropic workspace that refuses the deployment's region, or a prompt, body or image beyond the deployment's context window or limits | A fallback.                                |
+| The gateway refuses the candidate      | A [limit](/docs/policies/limits), your balance, or a credential that is disabled, expired or unavailable                                                                                                                                                                       | A fallback, which can cost less.           |
+| The request cannot succeed             | Other `4xx` responses, such as an invalid request or a content filter                                                                                                                                                                                                          | The request ends with the error.           |
 
 - Before a retry, the gateway waits about half a second, doubled for each retry up to 8 seconds,
   or longer when the provider asks with `Retry-After`. If the provider asks for more than 8
@@ -248,6 +248,13 @@ The failure decides the next step:
   provider starts a successful response or reports usage. A failure in the gateway also ends the
   request.
 - A candidate that the gateway refuses before its call counts as a fallback.
+- When a provider asks for more than 8 seconds on your own credential, the gateway node that got
+  the answer passes over that credential and deployment for later requests until the wait ends,
+  without a call, while another candidate remains. The candidate still counts as a fallback, a
+  request's last candidate still gets its call, and a successful call ends the wait early.
+- When no candidate succeeds, the response has the error that ended the request, or the first
+  candidate's error unless a later one passes sooner when you wait. See
+  [Retries](/docs/reference/errors#retries).
 - Each call is one of the request's [provider attempts](/docs/request-records), with its start
   time and duration. A request makes at most twelve calls: three candidates with four calls each.
 
