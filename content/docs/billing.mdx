@@ -23,11 +23,15 @@ it.
 
 ## Payment methods
 
-**Billing** in the dashboard shows each method's fees, confirmations and smallest payment before
-you pay.
+**Billing** in the dashboard shows each method's fees and confirmations, and CCPayment's smallest
+payment, before you pay.
 
+- A Bitcoin or Monero payment smaller than the fees to receive it is not credited.
 - Each member has their own Bitcoin and Monero deposit addresses, which they can use again.
-- CCPayment has no payment deadline, and credits a late payment or a different amount.
+- If our price sources disagree by more than 3% on a payment's price, we check that price before
+  we credit it.
+- CCPayment has no payment deadline, and credits a late payment or a different amount. A payment
+  on the wrong network or without its memo may be lost.
 - A receipt keeps the billing details saved when we received its payment, and its PDF attaches a
   JSON record with the exact amounts and exchange rates.
 
@@ -36,14 +40,9 @@ you pay.
 An organization with a signed agreement can pay for its usage by invoice, with no prepaid limits.
 To set one up, contact [billing@stogas.ai](mailto:billing@stogas.ai).
 
-- Requests can spend until the balance reaches minus the agreed credit limit.
-- On the 1st of each month, we invoice the previous month's usage. Months follow UTC.
-- An invoice is due after the agreed payment terms, such as 30 days. You can pay it with any
-  payment method, the usual [fees](#fees) apply, and payments go to the oldest invoice first.
+- You can pay invoices with any payment method, and the usual [fees](#fees) apply.
 - If an invoice stays overdue, we can end the agreement. The organization then returns to prepaid
   billing, new requests fail while its balance is below zero, and its invoices stay due.
-- Until the organization pays what it owes and the agreement ends, you cannot delete it, and its
-  last member cannot leave it or delete their account.
 
 ## Balance changes
 

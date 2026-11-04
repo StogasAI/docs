@@ -110,9 +110,9 @@ overwrites an existing output file. The `--purpose` decides which input it accep
 | `byok/openai`       | The exact OpenAI credential, without a trailing newline.                                                      |
 | `byok/anthropic`    | The exact Anthropic credential, without a trailing newline.                                                   |
 | `byok/chutes`       | The exact Chutes credential, without a trailing newline.                                                      |
-| `byok/aws`          | An [AWS credential document](/docs/providers/aws#create-a-credential).                                        |
+| `byok/aws`          | An [AWS credential document](/docs/providers/aws#customer-encryption).                                        |
 | `byok/azure`        | An [Azure application](/docs/providers/azure#customer-encryption), as `az ad sp create-for-rbac` prints it.   |
-| `byok/google-cloud` | A Google service account key file or [credential document](/docs/providers/google-cloud#create-a-credential). |
+| `byok/google-cloud` | A Google service account key file or [credential document](/docs/providers/google-cloud#customer-encryption). |
 
 For a plugin, the output is the plugin's new value: the envelope in `encrypted`. For a credential,
 it is the envelope in `encryptedSecret`, with the `preview` except for Azure, and for AWS and Google
@@ -208,9 +208,8 @@ Keep the original policies and provider credentials so you can encrypt them agai
    credentials you can view, such as `plugins.redaction` or `rules.night.plugins.export`.
 4. When the old key is no longer used, remove its registration, then stop sending it.
 
-Each step is a separate save that checks the current policy revision. A key that something still
-uses after you remove its registration appears there as not registered, and requests that need it
-fail.
+Each step is a separate save that checks the current policy revision. Requests that still need a
+key after you remove its registration fail.
 
 ## Encryption details
 

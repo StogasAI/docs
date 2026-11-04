@@ -10,25 +10,20 @@ pick a deployment, or a deployment to send every request there.
 
 - Each message sends the conversation's files again, so they count toward the input of every
   request.
-- A request reaches [Analytics](/docs/analytics) within a minute or two. Until then, **Details**
-  shows what the gateway signed in the response's [receipt](/docs/receipts), and it also checks the
-  receipt's request and response hashes against what your browser sent and received.
+- **Details** shows what the gateway signed in the response's [receipt](/docs/receipts), and checks
+  the receipt's request and response hashes against what your browser sent and received.
 
 ## Assistant
 
 The assistant answers questions about Stogas and your organization from these docs and the
 [dashboard API](/docs/reference/dashboard), and makes changes when you allow them.
 
-- It runs on the model, key, reasoning, output limit and system prompt that you chose. The model
-  must accept function tools. An answer makes at most 12 requests.
+- It runs on the model and key that you chose, and the model must accept function tools.
 - It acts as you, so it can read and change only what your roles allow. What it reads goes to the
   model in its next request.
-- It reads at once, and every change waits for you to allow it. **Stop** ends the answer, and a
-  waiting change does not run.
 - It never sees the secret of a new key or the code of an invitation. It cannot reveal a key's
   secret, get the grants that `stogas encrypt` and `stogas byok check` send to a gateway, add or
   change a [BYOK](/docs/byok) credential, or leave the organization.
 
-An external organization allows the assistant once a member who can manage the organization turns
-on **Allow the assistant** in **Settings**. [Activity](/docs/activity) records the change. Personal
-organizations always allow it.
+Personal organizations always allow the assistant, and an external organization allows it once it
+is turned on in **Settings**.

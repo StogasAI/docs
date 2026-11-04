@@ -28,7 +28,7 @@ Settings at the top level of a policy apply to every request. Put settings in a 
 ```
 
 The first rule redacts email addresses only in requests to OpenAI. The second tries the cheapest
-deployment first, unless another policy sets an order.
+deployment first among those that the orders of other policies leave tied.
 
 ## Conditional rules
 
@@ -106,14 +106,9 @@ replace defaults of the same kind:
 
 ### See which defaults apply
 
-Above the editor, the policy page names each other policy whose required settings replace this
-policy's defaults, with the settings they replace. A required rule with a `when` replaces them only
-on the requests that it matches, so the page names those rules as well.
-
-In **Combined policy**, each default rule lists its replaced settings in `replaced`, with the policy
-that requires each one and, for a required rule, its name. The editor strikes those settings
-through. A dashed line marks a setting that a rule replaces only on the requests that its `when`
-matches. `others` counts further requirements that replace the same setting.
+In a **Combined policy**, each default rule lists the settings that required settings replace in
+`replaced`, with the policy that requires each one and, for a required rule, its name. `others`
+counts further requirements that replace the same setting.
 
 ### Replace a default without adding a restriction
 

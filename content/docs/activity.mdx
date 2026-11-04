@@ -11,21 +11,17 @@ Each event keeps the names it had, so renaming or deleting a resource does not e
 
 ## Refused attempts
 
-Activity also records a member's attempt that was refused and changed nothing, when:
-
-- the member's roles do not allow it,
-- a parent policy does not let the policy set a section, or
-- the access token can only read.
-
-The event names the change that was attempted, marks it **Refused** and gives the reason. It names
-the resources that the request named, even IDs that do not exist in the organization. Attempts that
-fail for other reasons, such as invalid input or a missing resource, are not recorded. Neither are
-attempts by people outside the organization, or with an access token that does not cover it.
+Activity also records an attempt that the member's roles, a parent policy or a read-only access
+token refused. The event names the resources that the request named, even IDs that do not exist in
+the organization. Attempts that fail for other reasons, such as invalid input or a missing resource,
+are not recorded. Neither are attempts by people outside the organization, or with an access token
+that does not cover it.
 
 ## Filters
 
-Text in the query bar matches member, access token and resource names and IDs, and event names.
-Combine filters with spaces, `OR`, `NOT` and parentheses, and quote values that contain spaces.
+The dashboard suggests these filters, and the API's `filter` parameter takes the same syntax. Text
+without a field matches member, access token and resource names and IDs, and event names. Combine
+filters with spaces, `OR`, `NOT` and parentheses, and quote values that contain spaces.
 
 | Filter      | Matches                                                                                                          |
 | ----------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -41,11 +37,8 @@ Combine filters with spaces, `OR`, `NOT` and parentheses, and quote values that 
 
 ## Access
 
-The `activity.read` permission allows viewing and exporting the organization's Activity.
-Request-log access does not grant it. Assign it through your organization's roles.
-
-Activity includes historical setting values. Give this permission only to people who
-should see those settings, even after they change.
+Activity includes historical setting values. Give **Activity → Read** only to people who should
+see those settings, even after they change.
 
 ## Recorded changes
 
@@ -63,12 +56,9 @@ export was requested, not whether the file was saved.
 
 ## Retention and export
 
-Events are kept for one year. **Export** counts the events that match your filters, then
-downloads them as CSV or NDJSON with every change. CSV keeps lists, names and changes as JSON text,
-and puts an apostrophe before text that a spreadsheet would run as a formula, such as `=SUM(A1)`.
-An export holds at most 50,000 events and 64 MiB. Narrow the filters if it is larger.
-For a change that happened, `refusal` is `null`, or empty in CSV. For a refused attempt it is
-`permission`, `policy` or `read_only_token`.
+CSV exports keep lists, names and changes as JSON text, and put an apostrophe before text that a
+spreadsheet would run as a formula, such as `=SUM(A1)`. For a change that happened, `refusal` is
+`null`, or empty in CSV. For a refused attempt it is `permission`, `policy` or `read_only_token`.
 
 We keep the current version of every policy, and your organization's 10,000 newest earlier versions
 within 16 MiB of policy text. A save past either limit removes the oldest earlier versions. An event

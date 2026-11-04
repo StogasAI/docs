@@ -32,8 +32,7 @@ az ad sp create-for-rbac --name stogas-gateway \
 ```
 
 Enter `tenant`, `appId` and `password` from the output in [BYOK](/docs/byok) as the tenant ID,
-client ID and client secret. Each account that you connect becomes its own credential. To connect
-more accounts with the same application later, choose **Add accounts** in a credential's menu.
+client ID and client secret.
 
 ## Customer encryption
 
@@ -53,23 +52,12 @@ application, and only a gateway can open it with your key.
 
    Then delete `app.json`, which holds the secret.
 
-2. In [BYOK](/docs/byok), add an Azure credential, select **Customer encrypted**, and paste
-   `application.json`. Enter the resource ID of each account to connect, which
-   `az cognitiveservices account list --query "[].id" --output tsv` lists. Each account becomes
-   its own credential, and **Add accounts** in a credential's menu connects more with the same
-   application.
-3. Run the command that the dashboard shows where you keep the key, such as:
+2. Add `application.json` in [BYOK](/docs/byok) as a customer-encrypted credential, and run the
+   check that the dashboard shows where you keep the key. The check signs in with the application
+   and saves each account's deployments as targets.
 
-   ```console
-   stogas byok check CREDENTIAL_ID ... --organization YOUR_ORGANIZATION_ID
-   ```
-
-   A gateway signs in with the application, finds each account's deployments and saves them as
-   targets, as for a stored credential. The CLI prints the targets that it found.
-
-Until its first check, a credential has no targets, so no request uses it. After that, gateways
-look for new deployments once a day while requests use the credential, and each check looks at
-once. A replaced application keeps its targets until the next check.
+Gateways look for new deployments once a day while requests use the credential, and each check
+looks at once. A replaced application keeps its targets until the next check.
 
 ## Targets
 
@@ -78,9 +66,8 @@ model version, and the gateway never sends a request to a deployment that you di
 target stops serving, the gateway tries the next candidate that your
 [routing](/docs/policies/routing#retries-and-fallbacks) allows.
 
-Azure upgrades deployments to new model versions unless their `versionUpgradeOption` is
-`NoAutoUpgrade`. After an upgrade, the target stops serving, and requests to it fail with
-`byok_target_changed` until you choose the new version.
+Azure can upgrade a deployment to a new model version, as its `versionUpgradeOption` allows.
+Requests to an upgraded target fail with `byok_target_changed` until you choose the new version.
 
 ## Claude on Azure
 

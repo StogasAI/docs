@@ -43,32 +43,24 @@ removes them. Request policies have their
 ## Leaked secrets
 
 GitHub reports API key secrets that it finds in public repositories and other public GitHub
-content. If the secret still belongs to a key, we replace it at once. The key keeps its ID, settings
-and history, and requests with the old secret fail with `key_secret_replaced`. Reveal the new
-secret and update your apps. [Activity](/docs/activity) keeps the report.
-
-An organization with keys that are meant to be public can turn off **Replace secrets that GitHub
-finds in public** in Settings. A found secret then keeps working, and only Activity records the
-report. Personal organizations always replace found secrets.
+content, and we replace them at once. The key keeps its ID, settings and history, and requests with
+the old secret fail with `key_secret_replaced`. Personal organizations always replace found
+secrets. An external organization can turn this off in **Settings**, and
+[Activity](/docs/activity) then only records the report.
 
 ## Policies and credentials
 
 Every request must pass the key's policy, the policies above it and the organization balance. See
-[Scopes and inheritance](/docs/policies/scopes) for how the levels combine.
-
-New keys start with Stogas-managed credentials for providers that offer them, which today is
-Chutes. Other providers start with an empty credential list, which turns them off for the key until
-you [add a credential](/docs/byok).
+[Scopes and inheritance](/docs/policies/scopes) for how the levels combine, and
+[BYOK](/docs/byok) for the providers that a new key can use.
 
 ## Folders
 
 Folders group service keys and grants. Member keys follow their grant's folder. Folder policies,
 permissions and shared limits apply to everything inside.
 
-- An organization can have up to 50 folders, or as many as we agreed for it. Folder names are
-  unique regardless of case, and folders cannot contain other folders.
+- Folder names are unique regardless of case, and folders cannot contain other folders.
 - Moving a key or grant needs Admin on both folders, or organization-wide Admin for the
-  organization root. A move changes the inherited policies, permissions and shared limits.
-- Deleting a folder moves its keys and grants to the organization root.
-- A move or deletion deletes a member's keys under a grant if the member loses their last **Use**
-  on that grant. Other keys keep their IDs and secrets.
+  organization root. A move changes the inherited policies, permissions and shared limits, and keys
+  keep their IDs and secrets. A member who loses their last **Use** on a grant loses their keys
+  under it, as [Grants](/docs/grants) explains.

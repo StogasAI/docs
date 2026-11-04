@@ -5,8 +5,7 @@ icon: ChartLine
 ---
 
 Analytics shows each request's usage, cost, timing and outcome. It never stores prompts, responses
-or credentials. **Analytics → Read own** shows your own requests, view access to a folder, grant or
-API key adds its requests, and **Read all** shows every request in the organization.
+or credentials. View access to a folder, grant or API key also shows its requests.
 
 ## Metrics
 
@@ -31,8 +30,6 @@ output. Generation speed divides generated tokens by the full request duration.
 ## Groups
 
 - Model groups combine revisions of the same model.
-- A request counts in every role that its key's member held, so role groups can add up to more
-  than the total.
 - These counts are analytics, not the counters that enforce [limits](/docs/policies/limits).
 
 ## Requests
@@ -46,9 +43,9 @@ output. Generation speed divides generated tokens by the full request duration.
 
 ### Filters
 
-Type words to search request, API key, grant and provider credential IDs, model IDs and names,
-providers, provider results, request types, error codes and HTTP statuses, or filter with
-`field:value`. A space between filters means `AND`, and you can also use `OR`, `NOT` and parentheses.
+The dashboard suggests these filters, and the API's `filter` parameter takes the same syntax. Text
+without a field searches IDs, names, providers, results, request types, error codes and HTTP
+statuses. A space between filters means `AND`, and you can also use `OR`, `NOT` and parentheses.
 Quote values that contain spaces, and the words `and`, `or` and `not` when you search for them.
 
 | Filter              | Matches                                                                                                                                                                                           |
@@ -75,8 +72,8 @@ Quote values that contain spaces, and the words `and`, `or` and `not` when you s
 values check every provider attempt, including earlier failed ones.
 
 `none` selects requests without a value in `grant:`, `role:`, `model:`, `final_provider:`,
-`final_byok:`, `error:`, `metadata.<key>:` and `session:`. For example, `error:none` selects requests without a
-gateway error.
+`final_byok:`, `error:`, `metadata.<key>:` and `session:`. For example, `error:none` selects
+requests without a gateway error.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
 

@@ -30,15 +30,8 @@ Each entry in `limits` has a name and counts one thing:
 }
 ```
 
-| Field                                        | Counts                                                                     |
-| -------------------------------------------- | -------------------------------------------------------------------------- |
-| [`usd`](#spending)                           | Full provider cost at catalog rates, including [BYOK](/docs/byok) requests |
-| [`tokens`](#tokens-and-input-text)           | Provider tokens, input and output                                          |
-| [`stt`](#tokens-and-input-text)              | [Standard text tokens](/docs/usage#standard-text-tokens) of input          |
-| [`requests`](#requests)                      | Requests, when the gateway admits them                                     |
-| [`concurrentRequests`](#concurrent-requests) | Requests running at the same time                                          |
-
-- Each limit sets exactly one of these fields.
+- Each limit sets exactly one field: [`usd`](#spending), [`tokens` or `stt`](#tokens-and-input-text),
+  [`requests`](#requests) or [`concurrentRequests`](#concurrent-requests).
 - Names such as `monthly` use 1–48 lowercase letters, digits, `_` or `-`, and start with a letter.
 - A policy can have up to **8 limits**, counting the limits in its rules.
 - Limits always apply, so a rule with limits cannot use `mode: "default"`.
@@ -136,10 +129,9 @@ provider reports usage or cost, and is released when the request fails.
 
 - A request that a limit blocks takes nothing. A failed provider call does not give its request
   back.
-- Every organization also has a platform limit, shared by all its keys, grants, Playground requests
-  and BYOK requests. It allows 120 requests a second, given back steadily, or the rate we agreed for
-  your organization. More keys do not add capacity. When it is used up, a request waits up to two
-  seconds to start, and a request that would wait longer gets `429 platform_rate_limited`. Contact
+- Every organization also has a platform limit, which **Settings** shows. Playground and BYOK
+  requests count toward it, more keys add no capacity, and it comes back steadily. A request that
+  would wait for it longer than two seconds gets `429 platform_rate_limited`. Contact
   [ops@stogas.ai](mailto:ops@stogas.ai) for a higher rate.
 
 ## Concurrent requests

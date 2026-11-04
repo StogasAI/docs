@@ -23,9 +23,8 @@ Choose them by deployment ID, a [service tier](/docs/service-tiers) or a
 [routing filter](/docs/policies/routing). Requests that send Anthropic's `speed` or `inference_geo`
 field return `400`.
 
-If your Anthropic workspace allows only US inference, add this rule to the credential's policy, or
-turn on **Workspace allows only US inference** for the credential. Claude 4.6 and later then run
-only on their `-us` deployments:
+If your Anthropic workspace allows only US inference, turn on **Workspace allows only US inference**
+for the credential, which saves this rule in its policy:
 
 ```json
 {

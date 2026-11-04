@@ -88,8 +88,9 @@ charge:
 | `input_file_count`, `input_file_url_count`, `input_inline_file_bytes` | Attachments, attachments sent as URLs, and decoded inline bytes                                                       |
 
 Some models charge more for every token of a request whose prompt is over a size. The prompt counts
-cache reads and writes. For example, a GPT-6 Sol request with a 300,000-token prompt prices each
-token meter at its `per_mill_context_gt_272k` rate instead of `per_mill_tokens`.
+cache reads and writes. For example, a 300,000-token prompt to a model that charges more over
+272,000 tokens prices each token meter at its `per_mill_context_gt_272k` rate instead of
+`per_mill_tokens`.
 
 Priced tool meters name the provider and the tool, such as `anthropic_web_search_calls` with the
 rate `per_1k_calls`. They can be lower than `hosted_tool_calls`, because a provider does not charge

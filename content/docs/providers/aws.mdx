@@ -14,33 +14,12 @@ AWS deployments run Claude in your AWS account. AWS bills you for inference, and
 | `-anthropic-hosted`  | Claude Platform on AWS         | Anthropic                  |
 
 For example, `aws-claude-fable-5-1-us` runs Claude Fable 5.1 on Bedrock only in US Regions.
-Bedrock serves Claude Opus 4.6 and Opus 4.5 only through its older APIs, so they have no AWS
-deployments, and only Claude Fable 5.1 has an `-anthropic-hosted` deployment so far.
 
 ## Create a credential
 
-1. Save the policy from [Grant access](#grant-access) as `policy.json`, and give it to a new IAM
-   user:
-
-   ```bash
-   aws iam create-user --user-name stogas-gateway
-   aws iam put-user-policy --user-name stogas-gateway \
-     --policy-name stogas-claude --policy-document file://policy.json
-   ```
-
-2. Create the user's key:
-
-   ```bash tab="Access key"
-   aws iam create-access-key --user-name stogas-gateway
-   ```
-
-   ```bash tab="Bedrock API key"
-   aws iam create-service-specific-credential --user-name stogas-gateway \
-     --service-name bedrock.amazonaws.com --credential-age-days 365
-   ```
-
-3. In [BYOK](/docs/byok), add an AWS credential with the key and a commercial Region, such as
-   `us-east-1`. For Claude Platform on AWS, add the ID of a workspace in that Region.
+Give an IAM user the policy in [Grant access](#grant-access), and add one of its keys in
+[BYOK](/docs/byok) with a commercial Region, such as `us-east-1`. A Claude Platform on AWS workspace
+must be in that Region.
 
 | Key                                              | Serves                                               |
 | ------------------------------------------------ | ---------------------------------------------------- |
@@ -49,8 +28,7 @@ deployments, and only Claude Fable 5.1 has an `-anthropic-hosted` deployment so 
 | Claude Platform on AWS API key, with a workspace | Claude Platform on AWS                               |
 
 `-us` deployments use the credential only if its Region is `us-east-1`, `us-east-2`, `us-west-1`
-or `us-west-2`. A short-term Bedrock API key expires within 12 hours, so BYOK takes only long-term
-keys.
+or `us-west-2`.
 
 ## Grant access
 
@@ -104,15 +82,14 @@ document that holds the same fields:
 ```
 
 Leave out `workspaceId` unless the credential serves Claude Platform on AWS. Save the document as
-`aws.json`, then encrypt it and delete `aws.json`:
+`aws.json`, then encrypt it:
 
 ```bash
 stogas encrypt --key providers --organization <organization-id> \
   --purpose byok/aws --input aws.json --output credential.json
 ```
 
-In [BYOK](/docs/byok), add an AWS credential, select **Customer encrypted**, and paste
-`credential.json`.
+Delete `aws.json`, and add `credential.json` in [BYOK](/docs/byok).
 
 ## Differences from Anthropic
 

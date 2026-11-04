@@ -29,8 +29,8 @@ empty lifecycle events do not restart `outputIdleSeconds`. A buffered request ha
 the full response arrives, so the limit covers the whole provider call. If you set it equal to
 `totalSeconds`, only the total limit applies.
 
-Many models reason for minutes without sending output. Current Claude models send no reasoning text
-unless the request asks for a summary, and some other models always hide their reasoning. A timeout
+Many models reason for minutes without sending output, because some send reasoning text only on
+request and others never do. A timeout
 does not stop the provider's work or its charge, so by default the gateway waits for that work. Set
 `outputIdleSeconds` for callers that should give up sooner when a provider stops sending output.
 

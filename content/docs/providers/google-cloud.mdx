@@ -15,39 +15,23 @@ Vertex AI until April 2026.
 | `-eu`                | Agent Platform, EU multi-region                   | Google, in the European Union |
 | `-anthropic-hosted`  | Claude Models on Google Cloud (Anthropic managed) | Anthropic                     |
 
-Claude Sonnet 4.6, Opus 4.6, Opus 4.5 and Haiku 4.5 have only the global endpoint, because Google
-offers them in no multi-region. Only Claude Fable 5.1 has an `-anthropic-hosted` deployment so far.
-
 ## Create a credential
 
-1. Create a service account with the roles it needs, and a key for it:
-
-   ```bash
-   gcloud iam service-accounts create stogas-gateway --project=PROJECT_ID
-   gcloud projects add-iam-policy-binding PROJECT_ID \
-     --member=serviceAccount:stogas-gateway@PROJECT_ID.iam.gserviceaccount.com \
-     --role=roles/aiplatform.user
-   gcloud iam service-accounts keys create key.json \
-     --iam-account=stogas-gateway@PROJECT_ID.iam.gserviceaccount.com
-   ```
-
-   `roles/aiplatform.user` serves Agent Platform. For Claude Models on Google Cloud, grant
-   `roles/claude.user` too.
-
-2. In [BYOK](/docs/byok), add a Google Cloud credential and choose `key.json`. For Claude Models
-   on Google Cloud, add your workspace ID. Then delete `key.json`.
-
-If `keys create` fails with a policy error, your organization blocks service account keys. Google
-blocks them by default in organizations created since May 3, 2024. An organization policy
-administrator can allow them in one project: in the console, open the constraint
-`iam.disableServiceAccountKeyCreation` or `iam.managed.disableServiceAccountKeyCreation` for the
-project, choose **Override parent's policy**, and turn enforcement off.
+Give a service account `roles/aiplatform.user` for Agent Platform, and also `roles/claude.user`
+for Claude Models on Google Cloud. Add its JSON key in [BYOK](/docs/byok), then delete the key
+file. Google blocks service account keys by default in organizations created since May 3, 2024, so
+an organization policy administrator may have to allow them in your project.
 
 ## Customer encryption
 
-With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts a credential
-document. This command makes one from the key file. Leave out `workspaceId` unless the credential
-serves Claude Models on Google Cloud.
+With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts the key file:
+
+```bash
+stogas encrypt --key providers --organization <organization-id> \
+  --purpose byok/google-cloud --input key.json --output credential.json
+```
+
+For Claude Models on Google Cloud, encrypt a credential document with your workspace ID instead:
 
 ```bash
 jq --arg workspace wrkspc_... '{
@@ -62,8 +46,7 @@ stogas encrypt --key providers --organization <organization-id> \
   --purpose byok/google-cloud --input google.json --output credential.json
 ```
 
-Delete `key.json` and `google.json`. In [BYOK](/docs/byok), add a Google Cloud credential, select
-**Customer encrypted**, and paste `credential.json`.
+Then delete `key.json` and `google.json`, and add `credential.json` in [BYOK](/docs/byok).
 
 ## Differences from Anthropic
 
@@ -71,9 +54,9 @@ Claude Models on Google Cloud works as on [Anthropic](/docs/providers/anthropic)
 Platform, send files inline, because file URLs and file IDs are rejected. `web_search` and
 `web_fetch` are not available.
 
-On Agent Platform, a `json_schema` response format and strict tools work only once your
-organization policy allows them. Google blocks them by default; add `structured_outputs` to the
-allowed values of `constraints/vertexai.allowedPartnerModelFeatures`.
+On Agent Platform, a `json_schema` response format and strict tools work only once
+`structured_outputs` is an allowed value of your organization's
+`constraints/vertexai.allowedPartnerModelFeatures` policy, which Google blocks by default.
 
 ## References
 

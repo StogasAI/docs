@@ -24,12 +24,11 @@ and the member cannot create another key until they are below it.
 	back.
 </Callout>
 
-Disabling a grant rejects new requests from all its keys at once and keeps the keys. Deleting a
-grant deletes every key under it.
+Disabling a grant rejects new requests from all its keys at once and keeps the keys.
 
 ## Policies and shared limits
 
-A member-key request must pass the policies of the organization, folder, grant, owning member, each
-of that member's roles, the key and the selected provider credential. A grant's shared limits count
-requests from all its keys, and each key can also have its own limits. See
-[Scopes and inheritance](/docs/policies/scopes) and [Limits](/docs/policies/limits).
+A grant's policy applies to every key under it, together with the
+[other policies](/docs/policies/scopes#which-policies-apply) of a member key. A grant's shared
+limits count requests from all its keys, and each key can also have its own
+[limits](/docs/policies/limits).

@@ -304,13 +304,8 @@ The [request record](/docs/request-records) shows what redaction did:
 ```
 
 The record has no original values, positions or counts for each preset. To find requests in
-[Analytics](/docs/analytics#filters), filter on `redaction:`:
-
-| Filter                   | Requests                                                        |
-| ------------------------ | --------------------------------------------------------------- |
-| `redaction:redacted`     | One or more values were replaced                                |
-| `redaction:no_matches`   | Redaction ran and replaced nothing                              |
-| `redaction:not_recorded` | The record has no redaction data. Redaction may still have run. |
+[Analytics](/docs/analytics#filters), filter on `redaction:`. A request with `not_recorded` has no
+redaction data in its record, but redaction may still have run.
 
 ## What redaction does not detect
 

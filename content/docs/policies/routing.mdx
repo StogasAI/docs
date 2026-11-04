@@ -38,8 +38,8 @@ sorts are [expressions](/docs/policies/expressions) over the fields in the
 
 Filters and lists from every policy apply together, so an OpenAI-only policy and a Chutes-only
 policy leave no candidate. Sending the request again does not help, and a policy cannot widen the
-request's `model`. To see which policy removed each candidate, run a
-[routing simulation](/docs/policies/editing#simulate-routing).
+request's `model`. A [routing simulation](/docs/policies/editing#simulate-routing) shows the
+candidates that remain with a draft.
 
 ## Allowed catalog nodes
 
@@ -224,19 +224,14 @@ candidate in routing order, a **fallback**:
 }
 ```
 
-| Field       | Values | Default | Meaning                                                |
-| ----------- | ------ | ------- | ------------------------------------------------------ |
-| `retries`   | 0–3    | 0       | Calls to the same candidate after its first call fails |
-| `fallbacks` | 0–2    | 2       | Other candidates to try, in routing order              |
+By default, the gateway makes no retries and up to 2 fallbacks. The failure decides the next step:
 
-The failure decides the next step:
-
-| Failure                                | Examples                                                                                                                                                                                                                                                                       | Next step                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
-| Another call can succeed               | A lost connection, or a `408`, `409`, `429` or `5xx` response                                                                                                                                                                                                                  | A retry. With no retries left, a fallback. |
-| The candidate cannot serve the request | A `401`, `402`, `403`, `404` or `410` response, a retired model, a provider account out of credit or past its spend limit, a provider or Anthropic workspace that refuses the deployment's region, or a prompt, body or image beyond the deployment's context window or limits | A fallback.                                |
-| The gateway refuses the candidate      | A [limit](/docs/policies/limits), your balance, or a credential that is disabled, expired or unavailable                                                                                                                                                                       | A fallback, which can cost less.           |
-| The request cannot succeed             | Other `4xx` responses, such as an invalid request or a content filter                                                                                                                                                                                                          | The request ends with the error.           |
+| Failure                                | Examples                                                                                                                                                                                                                                                        | Next step                                  |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| Another call can succeed               | A lost connection, or a `408`, `409`, `429` or `5xx` response                                                                                                                                                                                                   | A retry. With no retries left, a fallback. |
+| The candidate cannot serve the request | A `401`, `402`, `403`, `404` or `410` response, a retired model, a provider account out of credit or past its spend limit, a provider account that refuses the deployment's region, or a prompt, body or image beyond the deployment's context window or limits | A fallback.                                |
+| The gateway refuses the candidate      | A [limit](/docs/policies/limits), your balance, or a credential that is disabled, expired or unavailable                                                                                                                                                        | A fallback, which can cost less.           |
+| The request cannot succeed             | Other `4xx` responses, such as an invalid request or a content filter                                                                                                                                                                                           | The request ends with the error.           |
 
 - Before a retry, the gateway waits about half a second, doubled for each retry up to 8 seconds,
   or longer when the provider asks with `Retry-After`. If the provider asks for more than 8
@@ -290,18 +285,15 @@ each request that uses them. By default, a request that could use such a candida
 its key fails with `encryption_key_required` before any provider call. An app that forgets a key
 then finds out at once, instead of quietly using another credential that may bill you differently.
 
-To let those requests use their other candidates instead, set `missingEncryptionKeys` to `skip`:
+To let those requests use their other candidates instead, set `missingEncryptionKeys` to `skip`.
+The gateway then leaves out each candidate whose key the request doesn't send, which doesn't use one
+of the fallbacks:
 
 ```json title="Use the key's other credentials when a request doesn't send an encryption key"
 {
 	"routing": { "missingEncryptionKeys": "skip" }
 }
 ```
-
-| Value  | When a candidate needs a key that the request doesn't send                     |
-| ------ | ------------------------------------------------------------------------------ |
-| `fail` | The request fails with `encryption_key_required`. This is the default.         |
-| `skip` | The gateway leaves out that candidate, which doesn't use one of the fallbacks. |
 
 - When every candidate is left out, the request fails with `encryption_key_required`, which names
   the keys it needs.

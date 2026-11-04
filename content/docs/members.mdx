@@ -23,17 +23,14 @@ also needs **Admin** on that grant, its folder or the organization. Creating or 
 
 ## Invitations
 
-Joining assigns the organization's current default role, so creating an invitation also needs the
-permissions to assign that role. Deleting an invitation stops further joins, and members who
-already joined stay. A [single sign-on](/docs/single-sign-on) invite has no link: people at your
-verified domains join through it when they sign in through your identity provider.
+Deleting an invitation stops further joins, and members who already joined stay. A
+[single sign-on](/docs/single-sign-on) invite has no link: people at your verified domains join
+through it when they sign in through your identity provider.
 
 ## Pictures
 
-Each member can have a picture in each external organization. Members upload their own, or it comes
-from your [identity provider](/docs/single-sign-on) when they sign in through it. An upload replaces
-the provider's picture, and a removed picture stays removed until the member uploads another.
-**Members → Manage** can remove anyone's picture.
+A member's picture comes from your [identity provider](/docs/single-sign-on) until they upload one,
+and a removed picture stays removed until the member uploads another.
 
 Stogas keeps only a square image of at most 128 pixels a side, encoded again from the image's
 pixels, so no metadata such as a camera's location stays with it.
@@ -41,29 +38,22 @@ pixels, so no metadata such as a camera's location stays with it.
 ## Roles
 
 - A member gets the combined access of all their roles.
-- A role with no organization-wide permissions can still give access to the resources it lists.
 - Members can assign organization-wide permissions they hold. Giving new access to API keys or
   credentials also needs **Admin** on the matching resource.
 - Taking a role from someone, or removing them, needs the same permissions as assigning that role.
   You can drop your own roles.
 - **Roles → Manage** can create roles with permissions the manager does not hold, so give it only
   to people you trust with full control.
-- The last role manager cannot leave or be removed while other members remain.
 
 ## Remove access
 
-<Callout type="warn">
-	Removing a member's last **Use** on a grant deletes their keys under that grant. Use from another
-	role, the folder or the organization keeps them. Assigning the role again does not bring deleted
-	keys back.
-</Callout>
+Removing a member's last **Use** on a grant deletes their keys under it, as
+[Grants](/docs/grants) explains. To pause access without deleting anything, disable the grant or
+the key instead. Removing someone's access to a service key keeps the key; rotate its secret to
+stop copies they may hold.
 
-To pause access without deleting anything, disable the grant or the key instead. Removing someone's
-access to a service key keeps the key; rotate its secret to stop copies they may hold.
-
-When a member leaves, their invitations stay valid. When an administrator removes a member, that
-member's invitations are revoked. When the last member leaves, the organization and its active
-resources are deleted; financial history is kept.
+A member's invitations stay valid after they leave. When the last member leaves, the organization
+is deleted, and its financial history is kept.
 
 ## Permission reference
 
@@ -81,39 +71,13 @@ Add a folder, grant, service key or provider credential to a role and choose:
 Use and Manage can be combined as **Use and manage**. Manage alone cannot reveal a secret or give
 access to someone else.
 
-- Folder permissions cover the grants and keys in the folder. Grant permissions cover its member-key
-  settings.
 - Only the owner can see a member key's secret and send requests with it. Managers can change its
   settings.
-- Credentials are not in folders. Adding a credential to a key needs **Use** on the credential and
-  **Manage** on the key; removing or reordering needs only key **Manage**.
-- A choice the role already has, through an organization permission or the resource's folder, shows
-  where it comes from and can't be picked. A new resource starts at the narrowest choice that adds
-  something.
+- Credentials are not in folders. To add one to a key, see
+  [Order credentials](/docs/byok#order-credentials).
 
-### Organization permissions
-
-| Area         | Permission | Allows                                                                                                     |
-| ------------ | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| Activity     | Read       | Read organization audit events.                                                                            |
-| API keys     | Read all   | Read all key, grant, and folder settings and usage.                                                        |
-| API keys     | Use all    | Retrieve service-key secrets and create own keys from any grant.                                           |
-| API keys     | Manage all | Create and manage keys, grants, folders, and their policies; edit organization, member, and role policies. |
-| API keys     | Admin all  | Use and manage all API resources, and assign access within that scope.                                     |
-| Analytics    | Read own   | Read own request logs and usage.                                                                           |
-| Analytics    | Read all   | Read all organization request logs and usage.                                                              |
-| Billing      | Read       | Read balance, payment history, and receipts.                                                               |
-| Billing      | Manage     | Save billing details and create payment instructions.                                                      |
-| BYOK         | Read all   | Read all provider credential metadata and policies.                                                        |
-| BYOK         | Use all    | Assign any provider credential to keys you manage.                                                         |
-| BYOK         | Manage all | Create, edit, replace, disable, or delete provider credentials.                                            |
-| BYOK         | Admin all  | Use and manage all provider credentials, and assign access within that scope.                              |
-| Members      | Read       | Read members, roles, and invitations.                                                                      |
-| Members      | Manage     | Invite or remove members and assign existing roles, subject to assignment authority.                       |
-| Organization | Manage     | Change organization settings.                                                                              |
-| Roles        | Manage     | Create, edit, or delete roles, including roles with permissions you do not hold.                           |
-
-The editor adds the read permissions that a management permission needs. Permissions decide what a
-member can do; [policies](/docs/policies/scopes) on their roles can still narrow their requests.
+Organization permissions, such as **Members → Manage**, work across the organization, and the role
+editor describes each one. Permissions decide what a member can do;
+[policies](/docs/policies/scopes) on their roles can still narrow their requests.
 [Who can edit each policy](/docs/policies/editing#who-can-edit) also depends on the parent
 policy's delegation settings.

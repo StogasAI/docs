@@ -12,9 +12,8 @@ supported. Set it up in **Settings → Single sign-on**, which needs **Organizat
 ## Register Stogas with your provider
 
 Create a web application that uses the authorization code flow, with the redirect URI that
-**Settings** shows, `https://app.stogas.ai/auth/sso/callback`. Sign-in asks for the `openid`, `email`
-and `profile` scopes, or only the first two when the provider's discovery document lists its scopes
-without `profile`.
+**Settings** shows. Sign-in asks for the `openid`, `email` and `profile` scopes, or only the first
+two when the provider's discovery document lists its scopes without `profile`.
 
 The issuer's OpenID Connect discovery document must name exactly that issuer. A multi-tenant
 endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refused. For Microsoft
@@ -32,14 +31,12 @@ including accounts created through single sign-on. Leaving the organization or d
 provider therefore never locks anyone out.
 
 An account links to its person by the provider's subject identifier, never the email, which some
-providers let people change. A new issuer unlinks every member, because its people are not the old
-provider's. A provider that gives each client its own identifiers keeps the links only while the
-client ID stays the same.
+providers let people change. A provider that gives each client its own identifiers keeps the links
+only while the client ID stays the same.
 
-A member's [picture](/docs/members#pictures) comes from the provider's `picture` claim, in the ID
-token or in its UserInfo answer, when it names a JPEG or WebP image over HTTPS and the member has
-not uploaded or removed one. Microsoft Entra ID keeps photos in Microsoft Graph instead, so its
-members upload their own.
+A member's [picture](/docs/members#pictures) comes from the provider's `picture` claim when it
+names a JPEG or WebP image over HTTPS. Microsoft Entra ID sends none, so its members upload their
+own.
 
 Stogas stores the issuer, the client ID, the client secret encrypted, and each linked member's
 subject identifier, last sign-in and any picture taken from the provider. [Activity](/docs/activity)

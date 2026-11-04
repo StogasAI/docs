@@ -23,10 +23,10 @@ We check a stored credential with a free call to the provider when you save it, 
 after that. A rejected credential is not saved. If a daily check fails, requests keep using the
 credential, because a provider can reject a check for a short time. We check again after an hour,
 and double the wait while the checks keep failing, up to a day. A check does not prove quota or
-access to every model. A customer-encrypted credential is checked only when you
-[check it with its encryption key](#check-a-customer-encrypted-credential). An Azure credential's
-check also finds its account's deployments, which become its
-[targets](/docs/providers/azure#targets).
+access to every model. A customer-encrypted credential is checked only when you run
+[`stogas byok check`](/docs/cli#check-a-credential) with its encryption key, which the gateway uses
+for that check only and never stores. An Azure credential's check also finds its account's
+deployments, which become its [targets](/docs/providers/azure#targets).
 
 ## Customer encryption
 
@@ -45,44 +45,18 @@ With customer encryption, we store only ciphertext, and each request sends the k
    [application](/docs/providers/azure#customer-encryption), which the CLI checks before it
    encrypts them.
 
-3. Save `credential.json` as a customer-encrypted credential. It holds the ciphertext, a preview
-   of the secret's last four characters that you can edit, and, for AWS and Google Cloud, the
-   target. An Azure credential takes the resource IDs of the accounts that it connects instead of
-   a preview. Saving does not contact the provider.
+3. Add `credential.json` as a customer-encrypted credential. Saving does not contact the provider.
 4. [Send the key](/docs/customer-encryption#send-the-key-with-a-request) with each request.
 
-If a request could use the credential but doesn't send its key, the gateway rejects it with
-`encryption_key_required` before it calls any provider, so an app that forgets the key finds out
-at once. To let such requests use the API key's other credentials instead, set
+A request that could use the credential but doesn't send its key fails with
+`encryption_key_required`. To let it use the key's other credentials instead, set
 [`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
-
-### Check a customer-encrypted credential
-
-To check a customer-encrypted credential with the same free call to the provider, choose
-**Check credential** in its menu and run the command that it shows where you keep the encryption
-key:
-
-```console
-stogas byok check CREDENTIAL_ID --organization YOUR_ORGANIZATION_ID
-```
-
-The CLI uses the key saved under the label that your organization registered. For a key file, add
-`--key-file org.key`; without either, enter the key when prompted. One command can check several
-credentials, and asks for each key once. The [CLI](/docs/cli#check-a-credential) sends
-the key over a [verified connection](/docs/connection-modes) to a gateway, which opens the
-credential, calls the provider and saves the result on the credential. The gateway uses the key
-for this check only and never stores it. You need permission to manage the credential.
 
 ### Require customer encryption
 
 To keep every provider secret of an external organization unreadable to us, turn off **Allow
-stored credentials** in **Settings**. Members can then save only customer-encrypted credentials,
-and saving a stored one fails with `409 STORED_CREDENTIALS_NOT_ALLOWED`. You need permission to
-manage the organization, and [Activity](/docs/activity) records the change. Personal organizations
-always allow stored credentials.
-
-The setting turns off only once the organization has no stored credentials; until then, it fails
-with `409 STORED_CREDENTIALS_EXIST` and the number that remain. To move an organization over:
+stored credentials** in **Settings**. Personal organizations always allow them. The setting turns
+off only once the organization has no stored credentials. To move an organization over:
 
 1. Save each account again as a customer-encrypted credential.
 2. Put it in place of the stored credential in each key's [list](#order-credentials).
@@ -90,8 +64,7 @@ with `409 STORED_CREDENTIALS_EXIST` and the number that remain. To move an organ
 
 ## AWS and Google Cloud
 
-The dashboard asks for an AWS or Google Cloud credential's key and Region, or its key file. The
-CLI and the dashboard API take the same fields as a JSON document, which the
+The CLI and the dashboard API take an AWS or Google Cloud credential as a JSON document, which the
 [AWS](/docs/providers/aws#customer-encryption) and
 [Google Cloud](/docs/providers/google-cloud#customer-encryption) pages show.
 
@@ -123,8 +96,7 @@ Requests that send its key then use your account, and the others use Stogas mana
 
 - A replaced secret keeps the credential's ID, assignments and history.
 - A disabled credential rejects new requests. Requests that already started finish.
-- A deleted credential leaves every key, and each key keeps its other credentials in order.
-  Requests through a key left with no credential for that provider fail with `byok_required`.
+- Requests through a key that has no credential left for a provider fail with `byok_required`.
 
 For routine rotation, keep the old secret valid until running requests finish. To revoke a key
 urgently, disable the credential, then revoke the key with the provider.

@@ -15,8 +15,7 @@ icon: FilePenLine
 | Credential     | Members who manage credentials                                                                   |
 | API key        | The key's owner and managers, its folder and grant managers, and members who manage all API keys |
 
-A parent policy can [limit which sections](/docs/policies/delegation) anyone can save. In the
-editor, `Ctrl` + `Space` shows suggestions, and `Esc` then `Tab` leaves the editor.
+A parent policy can [limit which sections](/docs/policies/delegation) anyone can save.
 
 ## Save a policy
 
@@ -24,8 +23,8 @@ editor, `Ctrl` + `Space` shows suggestions, and `Esc` then `Tab` leaves the edit
   policies that apply there, and checks
   an [encrypted export or redaction](/docs/customer-encryption#encrypt-plugin-settings) only when
   a request or a [policy check](#check-a-policy-before-saving) sends its key.
-- If someone else saved the policy while you edited it, your changes apply to their version. If you
-  both changed the same setting, or the result is not a valid policy, nothing is saved.
+- A save names the revision that you edited, and fails with `409 POLICY_CHANGED` if someone saved
+  a newer one. The dashboard and the CLI then merge your changes into it for you to review.
 - A parent save can make a policy below it invalid. That policy stays readable so that its manager
   can fix it.
 - Enabled state and expiration are settings of the resource, not of its policy.
@@ -33,10 +32,8 @@ editor, `Ctrl` + `Space` shows suggestions, and `Esc` then `Tab` leaves the edit
 
 ## Simulate routing
 
-**Routing simulation** below the editor lists the deployments and credentials that a request would
-try with your draft, in order. Choose a key, and a model if the request should name one. Without a
-model, your policies choose, as they do for a request that sends none. The simulation calls no model
-and costs nothing.
+**Routing simulation** lists the deployments and credentials that a request would try with your
+draft, in order. It calls no model and costs nothing.
 
 - The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
   key uses that credential. Enabled state, expiration and other changes apply after you save.
