@@ -650,11 +650,22 @@
 												"string",
 												"null"
 											]
+										},
+										"actorPictures": {
+											"type": "object",
+											"propertyNames": {
+												"type": "string"
+											},
+											"additionalProperties": {
+												"type": "string",
+												"pattern": "^[0-9a-f]{16}$"
+											}
 										}
 									},
 									"required": [
 										"items",
-										"nextCursor"
+										"nextCursor",
+										"actorPictures"
 									],
 									"additionalProperties": false
 								}
@@ -2814,6 +2825,17 @@
 														"minimum": 0,
 														"maximum": 9007199254740991
 													},
+													"picture": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[0-9a-f]{16}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"userId": {
 														"type": "string",
 														"format": "uuid"
@@ -2823,6 +2845,7 @@
 													"access",
 													"displayName",
 													"keyCount",
+													"picture",
 													"userId"
 												],
 												"additionalProperties": false
@@ -4965,6 +4988,56 @@
 									"$ref": "#/components/schemas/ApiKey"
 								}
 							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/members/{userId}/picture": {
+			"get": {
+				"operationId": "getMemberPicture",
+				"tags": [
+					"Members"
+				],
+				"summary": "Get a member's picture",
+				"description": "Returns the member's picture in this organization, a square WebP image of at most 128 pixels a side. Member lists name each picture by its version. With that version as v, a client may keep the answer for good, since a changed picture has a new version.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "userId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 128
+						}
+					},
+					{
+						"name": "v",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"pattern": "^[0-9a-f]{16}$"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"image/webp": {}
 						}
 					},
 					"default": {
@@ -7992,6 +8065,17 @@
 															"external"
 														]
 													},
+													"picture": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[0-9a-f]{16}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"roles": {
 														"maxItems": 30,
 														"type": "array",
@@ -8033,6 +8117,7 @@
 													"organizationId",
 													"organizationName",
 													"organizationType",
+													"picture",
 													"roles",
 													"ssoRequired"
 												],
@@ -15071,6 +15156,17 @@
 															"null"
 														]
 													},
+													"picture": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[0-9a-f]{16}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"roles": {
 														"maxItems": 30,
 														"type": "array",
@@ -15111,6 +15207,7 @@
 													"displayName",
 													"id",
 													"invitedByUserId",
+													"picture",
 													"roles",
 													"singleSignOn",
 													"userId"
