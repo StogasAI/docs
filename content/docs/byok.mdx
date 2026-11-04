@@ -73,6 +73,21 @@ the key over a [verified connection](/docs/connection-modes) to a gateway, which
 credential, calls the provider and saves the result on the credential. The gateway uses the key
 for this check only and never stores it. You need permission to manage the credential.
 
+### Require customer encryption
+
+To keep every provider secret of an external organization unreadable to us, turn off **Allow
+stored credentials** in **Settings**. Members can then save only customer-encrypted credentials,
+and saving a stored one fails with `409 STORED_CREDENTIALS_NOT_ALLOWED`. You need permission to
+manage the organization, and [Activity](/docs/activity) records the change. Personal organizations
+always allow stored credentials.
+
+The setting turns off only once the organization has no stored credentials; until then, it fails
+with `409 STORED_CREDENTIALS_EXIST` and the number that remain. To move an organization over:
+
+1. Save each account again as a customer-encrypted credential.
+2. Put it in place of the stored credential in each key's [list](#order-credentials).
+3. Delete the stored credentials, then turn off **Allow stored credentials**.
+
 ## AWS and Google Cloud
 
 An AWS or Google Cloud credential is a JSON document. The [AWS](/docs/providers/aws#create-a-credential)
