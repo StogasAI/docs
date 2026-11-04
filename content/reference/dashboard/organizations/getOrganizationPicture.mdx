@@ -1,0 +1,31 @@
+---
+title: Get the organization's picture
+description: Returns the organization's picture, a square WebP image of at most
+  128 pixels a side. Organization lists name it by its version. With that
+  version as v, a client may keep the answer for good, since a changed picture
+  has a new version.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the organization's picture, a square WebP image of at most 128
+          pixels a side. Organization lists name it by its version. With that
+          version as v, a client may keep the answer for good, since a changed
+          picture has a new version.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/picture', method: 'get' }]} />
+    </>
+  );
+}

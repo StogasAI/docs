@@ -5010,6 +5010,46 @@
 				}
 			}
 		},
+		"/api/{orgId}/picture": {
+			"get": {
+				"operationId": "getOrganizationPicture",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Get the organization's picture",
+				"description": "Returns the organization's picture, a square WebP image of at most 128 pixels a side. Organization lists name it by its version. With that version as v, a client may keep the answer for good, since a changed picture has a new version.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "v",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"pattern": "^[0-9a-f]{16}$"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"image/webp": {}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/policies/encryption-keys": {
 			"get": {
 				"operationId": "listEncryptionKeys",
@@ -7712,6 +7752,17 @@
 															}
 														]
 													},
+													"organizationPicture": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[0-9a-f]{16}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"organizationType": {
 														"type": "string",
 														"enum": [
@@ -7752,6 +7803,7 @@
 													"isActive",
 													"organizationId",
 													"organizationName",
+													"organizationPicture",
 													"organizationType",
 													"roles"
 												],
@@ -8033,6 +8085,17 @@
 															"external"
 														]
 													},
+													"organizationPicture": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[0-9a-f]{16}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"picture": {
 														"anyOf": [
 															{
@@ -8086,6 +8149,7 @@
 													"organizationId",
 													"organizationName",
 													"organizationType",
+													"organizationPicture",
 													"picture",
 													"roles",
 													"ssoRequired"
@@ -8173,6 +8237,18 @@
 												"null"
 											]
 										},
+										"organizationPicture": {
+											"anyOf": [
+												{
+													"type": "string",
+													"maxLength": 22000,
+													"pattern": "^data:image\\/webp;base64,[A-Za-z0-9+/]+={0,2}$"
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
 										"inviterName": {
 											"type": [
 												"string",
@@ -8186,6 +8262,7 @@
 									"required": [
 										"organizationId",
 										"organizationName",
+										"organizationPicture",
 										"inviterName",
 										"member"
 									],
