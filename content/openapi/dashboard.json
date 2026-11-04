@@ -306,16 +306,12 @@
 																				"type": "null"
 																			}
 																		]
-																	},
-																	"replaced": {
-																		"type": "boolean"
 																	}
 																},
 																"required": [
 																	"reportedAt",
 																	"source",
-																	"url",
-																	"replaced"
+																	"url"
 																],
 																"additionalProperties": false
 															},
@@ -584,7 +580,6 @@
 															"key.secret.rotated",
 															"key.secret.revealed",
 															"key.secret.exposed",
-															"key.secret.exposure_dismissed",
 															"credential.created",
 															"credential.updated",
 															"credential.deleted",
@@ -916,7 +911,6 @@
 												"key.secret.rotated",
 												"key.secret.revealed",
 												"key.secret.exposed",
-												"key.secret.exposure_dismissed",
 												"credential.created",
 												"credential.updated",
 												"credential.deleted",
@@ -3283,16 +3277,12 @@
 																				"type": "null"
 																			}
 																		]
-																	},
-																	"replaced": {
-																		"type": "boolean"
 																	}
 																},
 																"required": [
 																	"reportedAt",
 																	"source",
-																	"url",
-																	"replaced"
+																	"url"
 																],
 																"additionalProperties": false
 															},
@@ -4820,52 +4810,6 @@
 										"record"
 									],
 									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
-		"/api/{orgId}/keys/{keyId}/exposure": {
-			"delete": {
-				"operationId": "dismissApiKeyExposure",
-				"tags": [
-					"API keys"
-				],
-				"summary": "Dismiss a leak notice",
-				"description": "Ends the notice of a secret that GitHub found in public and that the organization kept working, as for a key meant to be public. A replaced secret’s notice ends when someone reveals or rotates the new secret instead, so dismissing it answers 409.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					},
-					{
-						"name": "keyId",
-						"in": "path",
-						"required": true,
-						"schema": {
-							"type": "string",
-							"format": "uuid"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ApiKey"
 								}
 							}
 						}
@@ -14981,7 +14925,7 @@
 					"Organizations"
 				],
 				"summary": "Change organization settings",
-				"description": "Changing name, allowAccessTokens, allowPlaygroundAssistant, allowStoredCredentials or replaceExposedKeys needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key. With allowStoredCredentials false, the organization keeps only provider credentials that its own encryption keys encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains. With replaceExposedKeys false, a key secret that GitHub finds in public keeps working, and the key shows a notice until someone rotates the secret or dismisses the notice.",
+				"description": "Changing name, allowAccessTokens, allowPlaygroundAssistant, allowStoredCredentials or replaceExposedKeys needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key. With allowStoredCredentials false, the organization keeps only provider credentials that its own encryption keys encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains. With replaceExposedKeys false, a key secret that GitHub finds in public keeps working, and only Activity records the report.",
 				"security": [
 					{
 						"accessToken": [
@@ -17208,16 +17152,12 @@
 												"type": "null"
 											}
 										]
-									},
-									"replaced": {
-										"type": "boolean"
 									}
 								},
 								"required": [
 									"reportedAt",
 									"source",
-									"url",
-									"replaced"
+									"url"
 								],
 								"additionalProperties": false
 							},

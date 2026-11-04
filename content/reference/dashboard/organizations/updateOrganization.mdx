@@ -11,8 +11,7 @@ description: "Changing name, allowAccessTokens, allowPlaygroundAssistant,
   encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED,
   and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored
   credential remains. With replaceExposedKeys false, a key secret that GitHub
-  finds in public keeps working, and the key shows a notice until someone
-  rotates the secret or dismisses the notice."
+  finds in public keeps working, and only Activity records the report."
 full: true
 _openapi:
   preload:
@@ -36,8 +35,7 @@ _openapi:
           credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off
           gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains.
           With replaceExposedKeys false, a key secret that GitHub finds in
-          public keeps working, and the key shows a notice until someone rotates
-          the secret or dismisses the notice."
+          public keeps working, and only Activity records the report."
 ---
 
 export default function Layout(props) {
