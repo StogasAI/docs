@@ -196,9 +196,10 @@ html.light {
 	scrollbar-color: var(--color-fd-muted-foreground) var(--color-fd-card);
 }
 
-/* The dashboard sidebar's width. */
+/* The dashboard sidebar's width. A direct child, like Fumadocs' `layout:` variant, so changes
+   deeper in the page do not re-check the whole layout. */
 @media (width >= 48rem) {
-	#nd-docs-layout:has([data-sidebar-placeholder]) {
+	#nd-docs-layout:has(> [data-sidebar-placeholder]) {
 		--fd-sidebar-width: 16rem;
 	}
 }
