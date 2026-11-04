@@ -8,14 +8,14 @@ share, and each provider's page lists its own setup, limits and data handling. T
 your prompt and handles it under its own terms, as the [security model](/docs/security-model)
 explains.
 
-| Provider                                     | Credential            | Responses      | Service tiers         | Prompt caching                  | Hosted tools                      | Connection             |
-| -------------------------------------------- | --------------------- | -------------- | --------------------- | ------------------------------- | --------------------------------- | ---------------------- |
-| [OpenAI](/docs/providers/openai)             | API key               | Yes            | Flex, Fast, Ultrafast | Automatic, optional breakpoints | Web search, remote MCP            | Post-quantum TLS       |
-| [Anthropic](/docs/providers/anthropic)       | API key               | Yes            | Fast                  | `cache_control`                 | Web search, web fetch             | Post-quantum TLS       |
-| [Azure](/docs/providers/azure)               | Entra application     | GPT and Claude | Flex, Fast            | As OpenAI or Anthropic          | Web search, web fetch for Claude  | TLS 1.3                |
-| [AWS](/docs/providers/aws)                   | Access key or API key | Yes            | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | TLS 1.3                |
-| [Google Cloud](/docs/providers/google-cloud) | Service account key   | Yes            | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | Post-quantum TLS       |
-| [Chutes](/docs/providers/chutes)             | Ours, or your API key | No             | None                  | Automatic                       | None                              | E2EE to a verified TEE |
+| Provider                                     | Credential            | Responses        | Service tiers         | Prompt caching                  | Hosted tools                      | Connection             |
+| -------------------------------------------- | --------------------- | ---------------- | --------------------- | ------------------------------- | --------------------------------- | ---------------------- |
+| [OpenAI](/docs/providers/openai)             | API key               | Yes              | Flex, Fast, Ultrafast | Automatic, optional breakpoints | Web search, remote MCP            | Post-quantum TLS       |
+| [Anthropic](/docs/providers/anthropic)       | API key               | Yes              | Fast                  | `cache_control`                 | Web search, web fetch             | Post-quantum TLS       |
+| [Azure](/docs/providers/azure)               | Entra application     | Yes[^translated] | Flex, Fast            | As OpenAI or Anthropic          | Web search, web fetch for Claude  | TLS 1.3                |
+| [AWS](/docs/providers/aws)                   | Access key or API key | Yes              | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | TLS 1.3                |
+| [Google Cloud](/docs/providers/google-cloud) | Service account key   | Yes              | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | Post-quantum TLS       |
+| [Chutes](/docs/providers/chutes)             | Ours, or your API key | Yes[^translated] | None                  | Automatic                       | None                              | E2EE to a verified TEE |
 
 Every provider serves Chat Completions. The [catalog](https://stogas.ai/catalog) shows each
 deployment's price, context window, input types, reasoning levels and data handling, and
@@ -29,4 +29,28 @@ field that the provider cannot accept, or that the gateway cannot price, returns
 charge, and so does an unknown top-level field. The
 [compatibility notes](/docs/reference/provider-behavior) list fields that the gateway never accepts.
 
+## Responses through Chat Completions
+
+Azure and Chutes deployments that take only Chat Completions also take Responses requests. The
+gateway translates the request to Chat Completions, and returns the reply, or each streamed event,
+as Responses. The request record's `request_type` shows the API that you called, and each attempt's
+[catalog chain](/docs/request-records#catalog-history) names the route that the gateway called. A
+deployment that takes Responses itself always gets Responses, unless `model` names its Chat
+Completions route.
+
+A translated request returns `400` for what Chat Completions cannot carry:
+
+- `include`, `text.verbosity` and `stream_options.include_obfuscation`
+- hosted tools, such as `web_search`, and tool choices that name them
+- a `reasoning.summary` other than `auto` or `none`
+- input items other than messages, function calls, their outputs and reasoning
+- file URLs and image file IDs
+- earlier reasoning items on Azure. Chutes takes back their reasoning text, without
+  `encrypted_content` or a summary.
+
+Routing leaves out a translated deployment that cannot take the request, so another deployment can
+serve it.
+
 [^anthropic]: Only on deployments that Anthropic runs, whose IDs end in `-anthropic-hosted`.
+
+[^translated]: Partly [through Chat Completions](#responses-through-chat-completions).
