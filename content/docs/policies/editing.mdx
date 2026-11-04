@@ -51,6 +51,8 @@ model and costs nothing. Routing reads only these request fields:
   [request policy](/docs/policies/request-policies) or `provider` preference.
 - It uses the current catalog and time, so `access.deny` periods and rules that read
   `request.time` apply as they would now.
+- Each deployment that the request tries lists the default settings that a requirement replaces
+  there. See [See which defaults apply](/docs/policies/rules#see-which-defaults-apply).
 - It does not check [limits](/docs/policies/limits), your balance or provider errors. Retries and
   fallbacks after a failed call happen only on real requests.
 
