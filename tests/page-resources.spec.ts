@@ -64,6 +64,7 @@ test('every indexed page exports readable Markdown and complete operation schema
 		canonicalUrls.add(metadata.url);
 		const exported = await request.get(exportPath(path));
 		expect(await exported.text(), path).toBe(text);
+		expect(exported.headers()['content-type'], path).toBe('text/markdown; charset=utf-8');
 		expect(exported.headers()['x-robots-tag'], path).toBe('noindex');
 		const html = await request.get(new URL(metadata.url).pathname);
 		expect(html.status()).toBe(200);
@@ -109,10 +110,7 @@ test('every indexed page exports readable Markdown and complete operation schema
 	expect(catalog.headers()['content-type']).toContain('application/linkset+json');
 	expect(index.headers().link).toContain('rel="service-desc"');
 	expect((await request.get('/docs/no-such-page')).status()).toBe(404);
-	// The asset server types Markdown itself; a header rule would also label this HTML page.
-	const missing = await request.get('/docs/no-such-page.md');
-	expect(missing.status()).toBe(404);
-	expect(missing.headers()['content-type']).toBe('text/html; charset=utf-8');
+	expect((await request.get('/docs/no-such-page.md')).status()).toBe(404);
 	expect((await request.get('/llms.mdx/docs/no-such-page/content.md')).status()).toBe(404);
 });
 

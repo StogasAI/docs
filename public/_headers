@@ -5,13 +5,18 @@
   X-Frame-Options: DENY
 
 /docs.md
+  Content-Type: text/markdown; charset=utf-8
   Link: <https://stogas.ai/docs>; rel="canonical"
 
 /docs/*.md
+  Content-Type: text/markdown; charset=utf-8
   Link: <https://stogas.ai/docs/:splat>; rel="canonical"
 
 /llms.mdx/*
   X-Robots-Tag: noindex
+
+/llms.mdx/*/content.md
+  Content-Type: text/markdown; charset=utf-8
 
 /.well-known/api-catalog
   Content-Type: application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"
