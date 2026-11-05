@@ -51,24 +51,31 @@ or `stogas/worker`.
 
 ## Cloudflare Workers
 
-The Worker entrypoint loads its bundled WebAssembly module itself:
+The Worker entrypoint loads its bundled WebAssembly module itself. Workers make network requests
+only while they handle an event, so create the transport in the handler:
 
 ```ts
 import OpenAI from 'openai';
 import { StogasTransport } from 'stogas/worker';
 
-const transport = await StogasTransport.create();
-try {
-	const client = new OpenAI(transport.openAIOptions(apiKey));
-	const response = await client.responses.create({
-		model: 'chutes-gemma-4-31b-turbo',
-		input: 'Say hello.'
-	});
-	console.log(response.output_text);
-} finally {
-	await transport.close();
-}
+export default {
+	async fetch(request: Request, env: { STOGAS_API_KEY: string }): Promise<Response> {
+		const transport = await StogasTransport.create();
+		try {
+			const client = new OpenAI(transport.openAIOptions(env.STOGAS_API_KEY));
+			const response = await client.responses.create({
+				model: 'chutes-gemma-4-31b-turbo',
+				input: 'Say hello.'
+			});
+			return new Response(response.output_text);
+		} finally {
+			await transport.close();
+		}
+	}
+};
 ```
+
+Store the key with `wrangler secret put STOGAS_API_KEY`.
 
 In a browser Web Worker, use the browser entrypoint and call `await init()` in the worker. A runtime
 can suspend or discard a worker at any time, so keep a transport only while the worker runs.
