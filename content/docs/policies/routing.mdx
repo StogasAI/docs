@@ -31,7 +31,7 @@ sorts are [expressions](/docs/policies/expressions) over the fields in the
 
 | Error                                     | Cause                                                                                                  | Fix                                                                       |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `model_unavailable`                       | No candidate is left.                                                                                  | Check the model, the key's credentials and the key's **Combined policy**. |
+| `model_unavailable`                       | No candidate is left, or Stogas does not serve what the `model` field selects; the message says why.   | Check the model, the key's credentials and the key's **Combined policy**. |
 | `model_ambiguous`, `deployment_ambiguous` | The [order](#ties) leaves a tie among the candidates that the request would try.                       | Name a model, or add a sort criterion. The error names the tied IDs.      |
 | `model_retired`                           | What the `model` field selects retired. The error gives the date unless the provider retired it early. | Choose another model.                                                     |
 | `attachment_unsupported`                  | No candidate can read an attachment, named by `param`.                                                 | See [Images and files](/docs/input-files#when-no-candidate-reads-a-file). |

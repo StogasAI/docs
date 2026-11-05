@@ -78,24 +78,28 @@
 											"digest": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 											"locations": {
 												"DE": {
+													"kind": "country",
 													"name": "Germany",
 													"parentIds": [
 														"eu"
 													]
 												},
 												"eu": {
+													"kind": "union",
 													"name": "European Union",
 													"parentIds": [
 														"europe"
 													]
 												},
 												"europe": {
+													"kind": "continent",
 													"name": "Europe",
 													"parentIds": [
 														"world"
 													]
 												},
 												"world": {
+													"kind": "world",
 													"name": "World",
 													"parentIds": []
 												}
@@ -104,12 +108,14 @@
 												{
 													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
 													"size": 236710,
-													"through": null
+													"through": null,
+													"stogasUnsupported": false
 												},
 												{
 													"sha256": "76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98",
 													"size": 182340,
-													"through": "2027-03-31"
+													"through": "2027-03-31",
+													"stogasUnsupported": false
 												}
 											],
 											"periods": [
@@ -131,7 +137,7 @@
 													"summaries": {}
 												}
 											],
-											"schema": "stogas.catalog.v10",
+											"schema": "stogas.catalog.v11",
 											"summaries": {
 												"authors": {},
 												"deployments": {
@@ -254,7 +260,7 @@
 													}
 												}
 											],
-											"schema": "stogas.catalog.part.v10"
+											"schema": "stogas.catalog.part.v11"
 										}
 									}
 								}
@@ -1181,15 +1187,32 @@
 					},
 					"locations": {
 						"type": "object",
-						"description": "The places that data handling names, by ID: `world`; regions, such as `eu` and `europe`; countries, by ISO 3166-1 alpha-2 code; and subdivisions, by ISO 3166-2 code. Every place but `world` lists the places that directly contain it, and lies in every place that contains those. A deployment's `processingLocation` and `storageLocation` are places, `unknown`, or, for storage only, `none`.",
+						"description": "The places that records name, by ID: `world`; continents, such as `europe`; regions, such as `apac`; unions, such as `eu`; countries, by ISO 3166-1 alpha-2 code; and subdivisions, by ISO 3166-2 code. Every place but `world` lists the places that directly contain it, and lies in every place that contains those. A deployment's `processingLocation` and `storageLocation` are places, `unknown`, or, for storage only, `none`.",
 						"additionalProperties": {
 							"type": "object",
 							"required": [
+								"kind",
 								"name",
 								"parentIds"
 							],
 							"additionalProperties": false,
 							"properties": {
+								"description": {
+									"type": "string",
+									"description": "What the place covers, when its name does not say."
+								},
+								"kind": {
+									"type": "string",
+									"enum": [
+										"world",
+										"continent",
+										"region",
+										"union",
+										"country",
+										"subdivision"
+									],
+									"description": "What kind of place it is."
+								},
 								"name": {
 									"type": "string"
 								},
@@ -1205,13 +1228,14 @@
 					},
 					"parts": {
 						"type": "array",
-						"description": "The parts that hold models, routes and deployments in full. Parts hold the records without a retirement date first and then the others by date. Fetch each from `/v1/catalog/parts/{sha256}`, and check that its bytes have this SHA-256 and size.",
+						"description": "The parts that hold models, routes and deployments in full. Parts hold the records without a retirement date first and then the others by date, and the records that Stogas does not serve last, in parts of their own. Fetch each from `/v1/catalog/parts/{sha256}`, and check that its bytes have this SHA-256 and size.",
 						"items": {
 							"type": "object",
 							"required": [
 								"sha256",
 								"size",
-								"through"
+								"through",
+								"stogasUnsupported"
 							],
 							"additionalProperties": false,
 							"properties": {
@@ -1232,6 +1256,10 @@
 									],
 									"format": "date",
 									"description": "The latest retirement date of a record in the part, or `null` when a record in it has none. Every record in the part has retired once this date has."
+								},
+								"stogasUnsupported": {
+									"type": "boolean",
+									"description": "Whether the part holds records that Stogas does not serve. The gateway never reads such a part, and a reader that shows only what Stogas serves can skip it."
 								}
 							}
 						}
@@ -1306,7 +1334,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.v10"
+						"const": "stogas.catalog.v11"
 					},
 					"summaries": {
 						"type": "object",
@@ -1332,6 +1360,9 @@
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
+										},
+										"stogasUnsupported": {
+											"$ref": "#/components/schemas/CatalogUnsupportedReason"
 										}
 									},
 									"additionalProperties": true
@@ -1354,6 +1385,9 @@
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
+										},
+										"stogasUnsupported": {
+											"$ref": "#/components/schemas/CatalogUnsupportedReason"
 										}
 									},
 									"additionalProperties": true
@@ -1376,6 +1410,9 @@
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
+										},
+										"stogasUnsupported": {
+											"$ref": "#/components/schemas/CatalogUnsupportedReason"
 										}
 									},
 									"additionalProperties": true
@@ -1449,6 +1486,9 @@
 					},
 					"retirementDate": {
 						"$ref": "#/components/schemas/CatalogRetirementDate"
+					},
+					"stogasUnsupported": {
+						"$ref": "#/components/schemas/CatalogUnsupportedReason"
 					}
 				}
 			},
@@ -1479,6 +1519,9 @@
 					},
 					"retirementDate": {
 						"$ref": "#/components/schemas/CatalogRetirementDate"
+					},
+					"stogasUnsupported": {
+						"$ref": "#/components/schemas/CatalogUnsupportedReason"
 					}
 				}
 			},
@@ -1510,6 +1553,9 @@
 						"items": {
 							"type": "string"
 						}
+					},
+					"stogasUnsupported": {
+						"$ref": "#/components/schemas/CatalogUnsupportedReason"
 					}
 				}
 			},
@@ -1566,7 +1612,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.part.v10"
+						"const": "stogas.catalog.part.v11"
 					}
 				}
 			},
@@ -5560,6 +5606,10 @@
 						}
 					}
 				}
+			},
+			"CatalogUnsupportedReason": {
+				"type": "string",
+				"description": "Why Stogas does not serve the record, in one sentence. The catalog lists the whole market, so it also lists what Stogas does not serve. A provider's reason passes to its routes, and a route's to its deployments. A model, provider, author or group has one once Stogas serves none of its deployments, routes or models: their shared reason, or one that says that Stogas serves none of them. A record that Stogas serves has none, and a request that names only records that Stogas does not serve fails with `model_unavailable` and the reason."
 			}
 		}
 	}
