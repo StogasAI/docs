@@ -6,7 +6,7 @@ icon: logo:rust
 
 ## Install
 
-Use Rust 1.97.1 or later, `stogas` for the protected connection, and `async-openai` for request and response types.
+Use Rust 1.94.1 or later, `stogas` for the protected connection, and `async-openai` for request and response types.
 Add these dependencies to your application:
 
 ```toml
@@ -142,6 +142,48 @@ deadlines on the HTTP or OpenAI client.
 - `close()` waits up to five seconds for active work. Dropping the transport starts the same cleanup
   without waiting.
 
-Send `Stogas-Metadata: v2` to request the final `stogas` metadata and automatic receipt
-verification. The [complete example](https://github.com/StogasAI/stogas/tree/main/examples/rust-openai)
-includes client integration tests.
+The [complete example](https://github.com/StogasAI/stogas/tree/main/examples/rust-openai) includes
+client integration tests.
+
+## Receipts
+
+Send `Stogas-Metadata: v2` to get a signed [receipt](/docs/receipts). Add the header to the client's
+configuration:
+
+```rust
+let config = OpenAIConfig::new()
+    .with_api_base(base_url)
+    .with_api_key(api_key)
+    .with_header("Stogas-Metadata", "v2")?;
+```
+
+The transport checks the receipt before it returns the response. For a stream, read it to the end;
+the receipt comes last. A failed check fails the request, and the transport does not send it again.
+
+## Check evidence offline
+
+Check a saved response later, with the boot record and evidence files from
+[Check without network access](/docs/receipts#check-without-network-access). Offline checks need only
+`stogas-core = "0.1.0-alpha.1"`, which makes no network requests:
+
+```rust
+use stogas_core::{
+    authority::Environment,
+    evidence::Verifier,
+    receipt::{VerifiedMetadata, request_digest, verify_buffered},
+};
+
+fn check(boot: &[u8], evidence: &[u8], request: &[u8], response: &[u8]) -> anyhow::Result<VerifiedMetadata> {
+    let now_unix_ms = i64::try_from(std::time::UNIX_EPOCH.elapsed()?.as_millis())?;
+    let verifier = Verifier::stogas(Environment::Production)?; // Trusts our built-in root key.
+    // Checks the boot against the evidence that was valid when it was logged.
+    let boot = verifier.verify_boot_archive(boot, evidence, now_unix_ms)?;
+    // Checks a buffered response that ends with its `stogas` object.
+    Ok(verify_buffered(&boot, &request_digest(request)?, response)?)
+}
+```
+
+`receipt::Stream` checks a stream saved as it arrived, and `receipt::verify_metadata` a `stogas`
+object saved on its own, with each side's digest from `request_digest` and `response_digest`. Pass
+`None` for a side that you don't check, for example a request kept private. To check current evidence
+instead, call `verifier.refresh(evidence, now_unix_ms)`.
