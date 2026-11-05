@@ -12,21 +12,21 @@ Install libcurl and json-c development packages, then unpack the verifier archiv
 platform. Save the example below as `main.c`. On Linux, from the archive directory:
 
 ```sh
-cc -std=c11 -Wall -Wextra -Werror main.c -Iinclude -L. \
+cc -std=c11 -Wall -Wextra -Werror main.c -I. -L. \
   -lstogas_ffi $(pkg-config --cflags --libs libcurl json-c) \
   -Wl,-rpath,'$ORIGIN' -o request
 ./request
 ./request --stream
 ```
 
-Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment first. Use the archive's actual
-header/library directories if you unpack them elsewhere. macOS uses `@loader_path` in
-place of `$ORIGIN`; Windows needs its matching native library and HTTP dependencies.
+Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment first. The archive holds `stogas.h`
+and the libraries side by side. macOS uses `@loader_path` in place of `$ORIGIN`; Windows needs its
+matching native library and HTTP dependencies.
 
 ## Complete request example
 
-This program starts the verifier, checks its result, sends a Responses request and releases
-all owned resources. `--stream` writes incremental SSE; Ctrl+C cancels the request. The empty
+This program checks that the library matches its header, starts the verifier, checks its
+result, sends a Responses request and releases all owned resources. `--stream` writes incremental SSE; Ctrl+C cancels the request. The empty
 configuration selects production, native attested TLS and the default connection limit.
 The example limits each JSON response or SSE event to 8 MiB, checks streamed errors, and
 requires a completed stream. Set `STOGAS_BASE_URL` only when using a separately managed verifier
@@ -136,6 +136,10 @@ static size_t receive(char *data, size_t size, size_t count, void *context) {
 }
 
 int main(int argc, char **argv) {
+    if (stogas_abi_version() != STOGAS_ABI_VERSION) {
+        fputs("Unsupported Stogas native ABI.\n", stderr);
+        return 1;
+    }
     const char *key = getenv("STOGAS_API_KEY"), *model = getenv("STOGAS_MODEL");
     if (!key || !*key || !model || !*model || strpbrk(key, "\r\n")) {
         fputs("Set STOGAS_API_KEY and STOGAS_MODEL.\n", stderr);
@@ -240,8 +244,10 @@ must not be reported as successful delivery. Any retry policy must account for p
 ## Ownership
 
 Every C result is an owned JSON envelope. Check `ok`, read `value` on success or `error` and
-`code` on failure, then call `stogas_string_free`. Free each transport exactly once,
-after concurrent calls finish. Explicit free waits for bounded graceful cleanup.
+`code` on failure, then call `stogas_string_free`. To dispose of a transport, call
+`stogas_transport_close`, which waits up to five seconds for active work, then
+`stogas_transport_free` exactly once, after concurrent calls finish. Free alone releases it without
+waiting, as a finalizer must.
 The header includes C++ linkage guards and opaque types suitable for RAII wrappers.
 
 Send `Stogas-Metadata: v2` to request final metadata and automatic content-receipt verification.
