@@ -39,7 +39,7 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 | `invalid_request`             | A field is unknown or invalid, or the selected deployment cannot accept it. `param` names the field when known.                                  |
 | `unsupported_request`         | The endpoint does not support this kind of request.                                                                                              |
 | `model_unavailable`           | No deployment can serve the request. Check the model ID, credentials and routing policies.                                                       |
-| `model_retired`               | The model or deployment retired; the message gives the date. Choose another [model](/docs/models).                                               |
+| `model_retired`               | Everything that the `model` field selects retired; the message gives the date. Choose another [model](/docs/models).                             |
 | `model_ambiguous`             | The routing order ties models that the request would try. Name one, or add a [sort criterion](/docs/policies/routing#ties).                      |
 | `deployment_ambiguous`        | The routing order ties deployments of one model that the request would try. Add a [sort criterion](/docs/policies/routing#ties).                 |
 | `provider_not_allowed`        | The model is not available from the requested provider.                                                                                          |

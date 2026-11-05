@@ -26,8 +26,9 @@ prices. These endpoints are public.
 A deployment, a route or a provider can have a retirement date, which the provider names for the
 shutdown of a model, an API or its whole service. Requests continue until that date has ended in
 every time zone, at 12:00 UTC the next day. A deployment retires with its last route, and a model
-with its last deployment. A request that names a retired deployment gets `model_retired` with the
-date. A request that reaches a provider after its shutdown
+with its last deployment. A request whose `model` field selects only what has retired, such as a
+retired deployment, a group whose models have all retired, or `provider:azure` with a model that
+Azure no longer serves, gets `model_retired` with the date. A request that reaches a provider after its shutdown
 [falls back](/docs/policies/routing#retries-and-fallbacks) to the next deployment. Policies keep
 retired IDs, which match nothing.
 
