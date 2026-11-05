@@ -20,8 +20,8 @@ cc -std=c11 -Wall -Wextra -Werror main.c -I. -L. \
 ```
 
 Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment first. The archive holds `stogas.h`
-and the libraries side by side. macOS uses `@loader_path` in place of `$ORIGIN`; Windows needs its
-matching native library and HTTP dependencies.
+and the libraries side by side. macOS uses `@loader_path` in place of `$ORIGIN`. On Windows, link
+`stogas_ffi.dll.lib` with Visual Studio or MinGW clang, and keep `stogas_ffi.dll` beside the program.
 
 ## Complete request example
 
