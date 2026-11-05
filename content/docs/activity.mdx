@@ -19,18 +19,18 @@ that does not cover it.
 
 ## Filters
 
-The dashboard suggests these filters, and the API's `filter` parameter takes the same syntax. Text
-without a field matches member, access token and resource names and IDs, and event names. Combine
-filters with spaces, `OR`, `NOT` and parentheses, and quote values that contain spaces.
+The dashboard suggests these filters, and the API's `filter` parameter takes the same
+[syntax](/docs/reference/filters). Text without a field matches member, access token and resource
+names and IDs, and event names.
 
-| Filter      | Matches                                                                                                          |
-| ----------- | ---------------------------------------------------------------------------------------------------------------- |
-| `action:`   | Events whose name contains the value, such as `action:key`. `action=key.deleted` matches one event.              |
-| `actor:`    | The member who made the change, by part of their name or by their ID. `actor=` matches the whole name.           |
-| `token:`    | The access token used, by part of its name or by its ID. `token=` matches the whole name.                        |
-| `resource:` | A changed resource, by part of its name or by its ID. `resource=` matches the whole name.                        |
-| `outcome:`  | `outcome:refused` matches refused attempts, and `outcome:succeeded` matches changes that happened.               |
-| `time`      | A UTC time compared with `>`, `>=`, `<` or `<=`, such as `time>=2026-10-01`. `time:2026-10-01` matches that day. |
+| Filter      | Matches                                                                                                                |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `action:`   | Events whose name contains the value, such as `action:key`. `action=key.deleted` matches one event.                    |
+| `actor:`    | The member who made the change, by part of their name or by their ID. `actor=` matches the whole name.                 |
+| `token:`    | The access token used, by part of its name or by its ID. `token=` matches the whole name.                              |
+| `resource:` | A changed resource, by part of its name or by its ID. `resource=` matches the whole name.                              |
+| `outcome:`  | `outcome:refused` matches refused attempts, and `outcome:succeeded` matches changes that happened.                     |
+| `time`      | A [date or time](/docs/reference/filters#dates-and-times), such as `time>=2026-10-01`. `time:2026-10` matches October. |
 
 `!=` excludes a value, such as `action!=key.updated`. Names match in any case. For example,
 `action:key actor="Alex Smith" time>=2026-10-01` shows Alex Smith's API key changes since October 1.

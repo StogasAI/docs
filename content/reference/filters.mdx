@@ -1,0 +1,104 @@
+---
+title: Filters
+description: The syntax that dashboard searches and the API's filter parameter share.
+---
+
+Every search field in the dashboard and every `filter` parameter in the API take this syntax. Each
+page lists the fields it takes: [Analytics](/docs/analytics#filters),
+[Activity](/docs/activity#filters) and the [model catalog](/docs/models#search-the-catalog). In
+other lists, such as API keys, grants and members, the search suggests the fields.
+
+| Filter                                | Matches                                         |
+| ------------------------------------- | ----------------------------------------------- |
+| `provider:openai latency>2s`          | Both filters. A space means `AND`.              |
+| `outcome:failed OR outcome:cancelled` | Either filter.                                  |
+| `-error:none`                         | Requests with a gateway error. `-` means `NOT`. |
+| `actor:"Alex Smith" time>=2026-11`    | A name with a space, and November 2026 onward.  |
+| `checkout`                            | Text without a field, which each page searches. |
+
+## Terms
+
+A term is a field, an operator and a value, such as `status:500`, or text without a field.
+
+| Operator     | Meaning                                                                   |
+| ------------ | ------------------------------------------------------------------------- |
+| `:`          | Matches the value. Text fields match text that contains it, unless noted. |
+| `=`          | Matches the whole value.                                                  |
+| `!=`         | Matches anything except the value.                                        |
+| `>` and `>=` | After, or more than, the value. `>=` includes the value.                  |
+| `<` and `<=` | Before, or less than, the value. `<=` includes the value.                 |
+
+`latency:>2s` means `latency>2s`, and spaces around the operator are allowed, as in `latency > 2s`.
+Field names ignore case. Whether values do depends on the field.
+
+Some fields take `none` to select records without a value, such as `error:none`. To search for the
+word, quote it: `session:"none"`.
+
+## Combine terms
+
+| Syntax                | Meaning                  |
+| --------------------- | ------------------------ |
+| `a b` or `a AND b`    | Both match.              |
+| `a OR b`              | Either matches.          |
+| `NOT a`, `-a` or `!a` | `a` does not match.      |
+| `(a OR b) c`          | Parentheses group terms. |
+
+`NOT` applies first, then `AND`, then `OR`, so `a OR b c` means `a OR (b AND c)`. `AND`, `OR` and
+`NOT` can be in any case. `-` and `!` also negate quoted text and groups, as in `-"a b"` and
+`!(a OR b)`.
+
+## Quotes
+
+Quote a value or text that contains a space, a parenthesis, a quote or a backslash, that starts with
+`:`, `<`, `>`, `=`, `!` or `-`, or that is the word `and`, `or`, `not` or `none`:
+
+```text
+name:"Support bot"
+"order (2)"
+session:"none"
+```
+
+Inside quotes, `\"` is a quote and `\\` is a backslash. Quoted text is never a field, so `"12:30"`
+searches for 12:30. Typographic quotes, `“` and `”`, work like `"`. Fields that compare exact
+values, such as session IDs and metadata values, keep the spaces inside quotes; other fields treat a
+run of spaces as one.
+
+## Dates and times
+
+Dates are in UTC. A date names a whole year, month or day, and a time needs `Z` or a UTC offset:
+
+| Value                       | Names                               |
+| --------------------------- | ----------------------------------- |
+| `2026`                      | The year 2026                       |
+| `2026-11`                   | November 2026                       |
+| `2026-11-04`                | November 4, 2026                    |
+| `2026-11-04T10:00Z`         | The minute 10:00 UTC on that day    |
+| `2026-11-04T10:00:30+02:00` | The second 08:00:30 UTC on that day |
+
+A comparison takes the whole period into account:
+
+| Filter             | Matches                                     |
+| ------------------ | ------------------------------------------- |
+| `time:2026-11`     | Any time in November 2026. `=` is the same. |
+| `time!=2026-11-04` | Any time outside November 4.                |
+| `time>2026-11-04`  | November 5 onward.                          |
+| `time>=2026-11-04` | November 4 onward.                          |
+| `time<2026-11`     | Before November.                            |
+| `time<=2026-11`    | Through the end of November.                |
+
+Times must fall in the years 1 to 9999. A record without the time, such as an API key without an
+expiry, matches no comparison, not even `!=`, but `NOT` selects it: `-expires<2027` includes keys
+that never expire.
+
+## Limits
+
+A filter can have up to 1,024 characters, 64 terms and 12 levels of parentheses.
+
+Analytics and Activity expand each filter into alternatives joined by `OR`, so
+`(a OR b) (c OR d)` becomes four alternatives of two terms each. A filter can expand to up to 32
+alternatives and 128 terms across them.
+
+## Errors
+
+The API answers a filter it cannot read with status `400` and a message that says what to change.
+The dashboard shows the same message under the search field.

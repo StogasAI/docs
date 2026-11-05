@@ -88,6 +88,7 @@ async function main() {
 								'---API behavior---',
 								'provider-behavior',
 								'errors',
+								'filters',
 								'security',
 								'---Dashboard API---',
 								'...dashboard',
