@@ -85,6 +85,35 @@
 													]
 												},
 												"eu": {
+													"countries": [
+														"AT",
+														"BE",
+														"BG",
+														"CY",
+														"CZ",
+														"DE",
+														"DK",
+														"EE",
+														"ES",
+														"FI",
+														"FR",
+														"GR",
+														"HR",
+														"HU",
+														"IE",
+														"IT",
+														"LT",
+														"LU",
+														"LV",
+														"MT",
+														"NL",
+														"PL",
+														"PT",
+														"RO",
+														"SE",
+														"SI",
+														"SK"
+													],
 													"kind": "union",
 													"name": "European Union",
 													"parentIds": [
@@ -92,6 +121,60 @@
 													]
 												},
 												"europe": {
+													"countries": [
+														"AD",
+														"AL",
+														"AT",
+														"AX",
+														"BA",
+														"BE",
+														"BG",
+														"BY",
+														"CH",
+														"CY",
+														"CZ",
+														"DE",
+														"DK",
+														"EE",
+														"ES",
+														"FI",
+														"FO",
+														"FR",
+														"GB",
+														"GG",
+														"GI",
+														"GR",
+														"HR",
+														"HU",
+														"IE",
+														"IM",
+														"IS",
+														"IT",
+														"JE",
+														"LI",
+														"LT",
+														"LU",
+														"LV",
+														"MC",
+														"MD",
+														"ME",
+														"MK",
+														"MT",
+														"NL",
+														"NO",
+														"PL",
+														"PT",
+														"RO",
+														"RS",
+														"RU",
+														"SE",
+														"SI",
+														"SJ",
+														"SK",
+														"SM",
+														"UA",
+														"VA"
+													],
 													"kind": "continent",
 													"name": "Europe",
 													"parentIds": [
@@ -1187,7 +1270,7 @@
 					},
 					"locations": {
 						"type": "object",
-						"description": "The places that records name, by ID: `world`; continents, such as `europe`; regions, such as `apac`; unions, such as `eu`; countries, by ISO 3166-1 alpha-2 code; and subdivisions, by ISO 3166-2 code. Every place but `world` lists the places that directly contain it, and lies in every place that contains those. A deployment's `processingLocation` and `storageLocation` are places, `unknown`, or, for storage only, `none`.",
+						"description": "The places that records name, by ID: `world`; continents, such as `europe`; regions, such as `apac`; unions, such as `eu`; countries, by ISO 3166-1 alpha-2 code; and subdivisions, by ISO 3166-2 code. A continent, region or union lists every country that it covers, and every place but `world` lists the places that directly contain it: a country lies in each smallest region that lists it, a region in each smallest region that lists all of its countries, and a subdivision in its country. A deployment's `processingLocation` and `storageLocation` are places, `unknown`, or, for storage only, `none`.",
 						"additionalProperties": {
 							"type": "object",
 							"required": [
@@ -1197,6 +1280,14 @@
 							],
 							"additionalProperties": false,
 							"properties": {
+								"countries": {
+									"type": "array",
+									"items": {
+										"type": "string",
+										"pattern": "^[A-Z]{2}$"
+									},
+									"description": "Continents, regions and unions only: every country that the place covers, by ISO 3166-1 alpha-2 code and in order, including countries that the catalog does not list."
+								},
 								"description": {
 									"type": "string",
 									"description": "What the place covers, when its name does not say."
