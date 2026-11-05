@@ -8,12 +8,17 @@ Google Cloud deployments run Claude in your Google Cloud project. Google bills y
 and we charge the [BYOK fee](/docs/byok#billing). Agent Platform is the service that Google called
 Vertex AI until April 2026.
 
-| Deployment ID suffix | Offering                                          | Who runs Claude, and where    |
-| -------------------- | ------------------------------------------------- | ----------------------------- |
-| None                 | Agent Platform, global endpoint                   | Google, in any region         |
-| `-us`                | Agent Platform, US multi-region                   | Google, in the United States  |
-| `-eu`                | Agent Platform, EU multi-region                   | Google, in the European Union |
-| `-anthropic-hosted`  | Claude Models on Google Cloud (Anthropic managed) | Anthropic                     |
+| Deployment ID suffix   | Offering                                                        | Who runs Claude, and where      |
+| ---------------------- | --------------------------------------------------------------- | ------------------------------- |
+| None                   | Agent Platform, global endpoint                                 | Google, in any region           |
+| `-us`                  | Agent Platform, US multi-region                                 | Google, in the United States    |
+| `-eu`                  | Agent Platform, EU multi-region                                 | Google, in the European Union   |
+| `-anthropic-hosted`    | Claude Models on Google Cloud (Anthropic managed)               | Anthropic, in any country       |
+| `-anthropic-hosted-us` | Claude Models on Google Cloud (Anthropic managed), US inference | Anthropic, in the United States |
+
+Claude Models on Google Cloud (Anthropic managed) serves the same models as Anthropic's own API. We
+list it without Claude Mythos and the Fast tier for now. Models before Claude 4.6 have no US-only
+inference there.
 
 ## Create a credential
 

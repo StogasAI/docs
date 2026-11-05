@@ -7,18 +7,21 @@ icon: logo:aws
 AWS deployments run Claude in your AWS account. AWS bills you for inference, and we charge the
 [BYOK fee](/docs/byok#billing).
 
-| Deployment ID suffix | Offering                          | Who runs Claude, and where   |
-| -------------------- | --------------------------------- | ---------------------------- |
-| None                 | Amazon Bedrock, global profile    | AWS, in any Region           |
-| `-us`                | Amazon Bedrock, US profile        | AWS, in US Regions           |
-| `-eu`                | Amazon Bedrock, EU profile        | AWS, in EU Regions           |
-| `-jp`                | Amazon Bedrock, Japan profile     | AWS, in Tokyo and Osaka      |
-| `-au`                | Amazon Bedrock, Australia profile | AWS, in Sydney and Melbourne |
-| `-in`                | Amazon Bedrock, India profile     | AWS, in Mumbai and Hyderabad |
-| `-ca`                | Amazon Bedrock, Canada profile    | AWS, in Montreal and Calgary |
-| `-anthropic-hosted`  | Claude Platform on AWS            | Anthropic                    |
+| Deployment ID suffix   | Offering                             | Who runs Claude, and where      |
+| ---------------------- | ------------------------------------ | ------------------------------- |
+| None                   | Amazon Bedrock, global profile       | AWS, in any Region              |
+| `-us`                  | Amazon Bedrock, US profile           | AWS, in US Regions              |
+| `-eu`                  | Amazon Bedrock, EU profile           | AWS, in EU Regions              |
+| `-jp`                  | Amazon Bedrock, Japan profile        | AWS, in Tokyo and Osaka         |
+| `-au`                  | Amazon Bedrock, Australia profile    | AWS, in Sydney and Melbourne    |
+| `-in`                  | Amazon Bedrock, India profile        | AWS, in Mumbai and Hyderabad    |
+| `-ca`                  | Amazon Bedrock, Canada profile       | AWS, in Montreal and Calgary    |
+| `-anthropic-hosted`    | Claude Platform on AWS               | Anthropic, in any country       |
+| `-anthropic-hosted-us` | Claude Platform on AWS, US inference | Anthropic, in the United States |
 
 For example, `aws-claude-fable-5-1-us` runs Claude Fable 5.1 on Bedrock only in US Regions.
+Claude Platform on AWS serves the same models as Anthropic's own API, except Claude Mythos, and has
+no Fast tier. Models before Claude 4.6 have no US-only inference there.
 
 ## Create a credential
 
