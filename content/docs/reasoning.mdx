@@ -55,14 +55,18 @@ Responses, set `reasoning.mode`:
 
 ## How the gateway converts an effort
 
-| The deployment                       | The gateway                                              |
-| ------------------------------------ | -------------------------------------------------------- |
-| Lists the effort                     | Sends it unchanged.                                      |
-| Lists other levels                   | Sends the nearest level. A tie goes to the higher level. |
-| Has reasoning on or off only         | Turns reasoning on for any effort, and off for `none`.   |
-| Requires reasoning                   | Rejects `none`.                                          |
-| Requires reasoning but has no levels | Rejects any effort.                                      |
-| Accepts only a token budget          | Converts the effort to a budget, as described below.     |
+| The deployment                       | The gateway                                                      |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| Lists the effort                     | Sends it unchanged.                                              |
+| Lists other levels                   | Sends the nearest level. A tie goes to the higher level.         |
+| Has reasoning on or off only         | Turns reasoning on for any effort, and off for `none`.           |
+| Accepts only a token budget          | Converts the effort to a budget, as described below.             |
+| Does not reason                      | Accepts `none`, and leaves the deployment out for other efforts. |
+| Requires reasoning                   | Leaves the deployment out for `none`.                            |
+| Requires reasoning but has no levels | Leaves the deployment out for any effort.                        |
+
+The request uses its other candidates. When the effort leaves out every candidate, the request fails
+with `400`.
 
 For example, `minimal` on a deployment with `low`, `medium` and `high` becomes `low`.
 
@@ -107,8 +111,9 @@ deployment's `minimum` and the output limit:
 | `xhigh`   | 92%      |
 | `max`     | 100%     |
 
-The budget is `minimum + floor(position × (output limit − minimum))`. `none` becomes `0`. If the
-provider requires the budget to be below the output limit, `max` uses one token less.
+The budget is `minimum + floor(position × (output limit − minimum))`, and at most the
+deployment's `maximum`. `max` stays one token below the output limit, which Anthropic requires, so
+every provider gets the same budget. `none` turns reasoning off.
 
 ## Show or hide the reasoning summary
 
