@@ -1,11 +1,12 @@
 ---
 title: Swift
-description: Send requests from macOS through verified transport.
+description: Send requests from Swift on macOS, iOS and Linux through verified transport.
 icon: logo:swift
 ---
 
-The Swift package links our Rust transport directly. Use Swift 6.2 or later; this
-streaming example uses macOS Foundation. Set `STOGAS_API_KEY` and `STOGAS_MODEL`.
+The Swift package links our Rust transport directly on macOS 13 or later, iOS 15 or later and
+Linux. Use Swift 6.2 or later; this streaming example is a macOS command-line program. Set
+`STOGAS_API_KEY` and `STOGAS_MODEL`.
 
 ## Install
 
@@ -21,8 +22,8 @@ dependencies: [.package(path: "Vendor/Stogas")],
 dependencies: [.product(name: "Stogas", package: "Stogas")]
 ```
 
-The archive includes the native library as an XCFramework on Apple platforms and
-a static artifact bundle on Linux; no Rust toolchain is required.
+The archive includes the native library as an XCFramework for macOS, iOS devices and the iOS
+Simulator, and as a static artifact bundle on Linux; no Rust toolchain is required.
 
 ## Stream a response
 
