@@ -360,10 +360,11 @@ names, arguments or results.
 
 For a call that your app runs, `latency_ms` is the time the model took to write the call. Your
 app's time with it runs from the end of the request until a later request sends its result, and
-that request lists the same hash in `answered_calls`. Those hashes come from the results that answer
-the latest model turn of the input: Chat Completions `tool` messages, Responses
-`function_call_output` and `custom_tool_call_output` items, and `mcp_approval_response` items, by
-the ID of the approval request.
+that request lists the same hash in `answered_calls`. Those hashes come from the results in the
+latest turn of the input: Chat Completions `tool` messages, Responses `function_call_output` and
+`custom_tool_call_output` items, and `mcp_approval_response` items, by the ID of the approval
+request. A turn ends at an assistant message or reasoning item, and at a message that your app adds
+after results.
 
 A record keeps the first 32 calls of a response and the last 32 results of a request. To find the
 hash of a call ID:
