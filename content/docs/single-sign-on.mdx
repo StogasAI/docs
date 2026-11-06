@@ -17,9 +17,14 @@ two when the provider's discovery document lists its scopes without `profile`.
 
 The issuer's OpenID Connect discovery document must name exactly that issuer. A multi-tenant
 endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refused. For Microsoft
-Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0`.
+Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0` and add the `xms_edov` optional
+claim to the ID token, because Entra ID doesn't send `email_verified`.
 
 ## Domains
+
+People join with the email address that your provider sends, which must be at a verified domain.
+They can't join with an address that the provider marks unverified in its `email_verified` or
+`xms_edov` claim.
 
 A domain stays verified, so you can remove its TXT record once it is. When another organization
 verifies the same domain with its own record, the domain moves to that organization.
