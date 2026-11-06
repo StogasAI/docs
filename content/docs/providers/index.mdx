@@ -40,13 +40,19 @@ Completions route.
 
 A translated request returns `400` for what Chat Completions cannot carry:
 
-- `include`, `text.verbosity` and `stream_options.include_obfuscation`
-- hosted tools, such as `web_search`, and tool choices that name them
+- `include` values other than `message.output_text.logprobs`, `max_tool_calls`, and `truncation`
+  set to `auto`
+- hosted and custom tools, such as `web_search`, and tool choices that name them
 - a `reasoning.summary` other than `auto` or `none`
 - input items other than messages, function calls, their outputs and reasoning
 - file URLs and image file IDs
+- `stream_options.include_obfuscation` set to `true`
 - earlier reasoning items on Azure. Chutes takes back their reasoning text, without
   `encrypted_content` or a summary.
+
+The deployment's Chat Completions limits apply as well, so Chutes returns `400` for log
+probabilities and `text.verbosity`. A streamed reply sends reasoning as `response.reasoning_text`
+events, and its function calls arrive whole when the reply ends.
 
 Routing leaves out a translated deployment that cannot take the request, so another deployment can
 serve it.
