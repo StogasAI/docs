@@ -40,8 +40,8 @@ key to a file with `--output org.key` instead. Keep a secure backup, such as a c
 
 ### Register the identifier
 
-Add the identifier under a label in the organization policy's `encryption.keys`, and keep the
-policy's other settings:
+Register the identifier under a label in the dashboard, which adds it to the organization policy's
+`encryption.keys`. Through the API, add it there yourself and keep the policy's other settings:
 
 ```json title="Organization policy"
 {
@@ -204,8 +204,8 @@ Keep the original policies and provider credentials so you can encrypt them agai
 1. Generate a new key and register it under a new label.
 2. Update your clients to send both keys.
 3. Encrypt the exports, redactions and provider credentials again with the new key, and save
-   them. **Settings → Encryption keys** lists where each key is still used in the policies and
-   credentials you can view, such as `plugins.redaction` or `rules.night.plugins.export`.
+   them. The dashboard lists where each key is still used in the policies and credentials you can
+   view, such as `plugins.redaction` or `rules.night.plugins.export`.
 4. When the old key is no longer used, remove its registration, then stop sending it.
 
 Each step is a separate save that checks the current policy revision. Requests that still need a
