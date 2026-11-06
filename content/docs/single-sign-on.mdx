@@ -20,6 +20,18 @@ endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refuse
 Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0` and add the `xms_edov` optional
 claim to the ID token, because Entra ID doesn't send `email_verified`.
 
+## Require single sign-on
+
+Once a test sign-in succeeds, you can require single sign-on. Each member then signs in through
+your provider to open the organization, and a sign-in counts for 24 hours unless you choose another
+length from 15 minutes to 30 days. A new length also applies to current sign-ins, and signing out
+all members ends every sign-in at once. Saving another issuer or client ID turns the requirement
+off until the next test.
+
+Members who can manage the organization never need a sign-in, so a broken connection can't lock
+everyone out. Access tokens and API keys don't use single sign-on. To refuse access tokens, turn off
+**Allow access tokens**.
+
 ## Domains
 
 People join with the email address that your provider sends, which must be at a verified domain.
