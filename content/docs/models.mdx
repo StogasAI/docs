@@ -33,9 +33,10 @@ Azure no longer serves, gets `model_retired` with the date. A request that reach
 retired IDs, which match nothing.
 
 The catalog lists the whole market, so it also lists deployments, routes and providers that
-Stogas does not serve, such as batch APIs. Each one gives the reason in `stogasUnsupported`, and the
-catalog's **Include what Stogas does not serve** toggle shows them. A request whose `model` field
-selects only such records gets `model_unavailable` with the reason.
+Stogas does not serve, such as batch APIs. Each one gives the reason in `stogasUnsupported`. The
+catalog's **Include unavailable** toggle shows them with the retired records, greyed and marked
+with an archive icon. A request whose `model` field selects only such records gets
+`model_unavailable` with the reason.
 
 Some deployments work only for accounts that the provider has approved. The catalog marks
 them with `approvalRequired`, and the routing filter `!deployment.approvalRequired` excludes them.
