@@ -376,7 +376,7 @@
 					"Catalog"
 				],
 				"summary": "List models",
-				"description": "Lists the model IDs that the API accepts, in the OpenAI format.",
+				"description": "Lists the IDs that the `model` field accepts, in the OpenAI format.",
 				"security": [],
 				"responses": {
 					"200": {
@@ -392,10 +392,16 @@
 											"object": "list",
 											"data": [
 												{
-													"id": "gpt-5.5-latest",
+													"id": "gpt-5.6-sol",
 													"object": "model",
-													"created": 1,
-													"owned_by": "stogas"
+													"created": 1783555200,
+													"owned_by": "openai"
+												},
+												{
+													"id": "group:gpt-6",
+													"object": "model",
+													"created": 1792972800,
+													"owned_by": "openai"
 												}
 											]
 										}
@@ -1737,7 +1743,7 @@
 				"properties": {
 					"id": {
 						"type": "string",
-						"description": "Model ID or alias accepted by the gateway."
+						"description": "A model ID, alias or deployment ID, or a group in the form `group:claude`."
 					},
 					"object": {
 						"type": "string",
@@ -1745,11 +1751,12 @@
 					},
 					"created": {
 						"type": "integer",
-						"description": "A fixed timestamp, for OpenAI compatibility."
+						"description": "The release date of the model that the ID names, as a Unix time. A group shows its newest model's."
 					},
 					"owned_by": {
 						"type": "string",
-						"example": "stogas"
+						"description": "The author of the model that the ID names. A group shows its newest model's.",
+						"example": "openai"
 					}
 				}
 			},
@@ -1854,7 +1861,7 @@
 					},
 					"model": {
 						"type": "string",
-						"description": "A model, group or deployment ID, or terms such as `provider:azure gpt-5.6-sol` that also choose where the request runs. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models).",
+						"description": "A model ID, alias or deployment ID, or terms such as `group:gpt-6` or `provider:azure gpt-5.6-sol` that select a group or also choose where the request runs. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models).",
 						"minLength": 1
 					},
 					"provider": {
@@ -2263,7 +2270,7 @@
 					}
 				},
 				"example": {
-					"model": "gpt-5.5-latest",
+					"model": "gpt-5.6-sol",
 					"messages": [
 						{
 							"role": "user",
@@ -2649,7 +2656,7 @@
 					"model": {
 						"type": "string",
 						"minLength": 1,
-						"description": "A model, group or deployment ID, or terms such as `provider:azure gpt-5.6-sol` that also choose where the request runs. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models)."
+						"description": "A model ID, alias or deployment ID, or terms such as `group:gpt-6` or `provider:azure gpt-5.6-sol` that select a group or also choose where the request runs. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models)."
 					},
 					"provider": {
 						"$ref": "#/components/schemas/ProviderRoutingPreference",
@@ -3009,7 +3016,7 @@
 					}
 				},
 				"example": {
-					"model": "gpt-5.5-latest",
+					"model": "gpt-5.6-sol",
 					"input": "Reflect on the issue of trusting trust",
 					"temperature": 0.7
 				}
