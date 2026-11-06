@@ -14978,198 +14978,6 @@
 				}
 			}
 		},
-		"/api/{orgId}/settings": {
-			"get": {
-				"operationId": "getOrganizationSettings",
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Get organization settings",
-				"description": "Returns what Change organization settings changes. A personal organization has none of them.",
-				"security": [
-					{
-						"accessToken": []
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"allowAccessTokens": {
-											"type": "boolean"
-										},
-										"allowPlaygroundAssistant": {
-											"type": "boolean"
-										},
-										"allowStoredCredentials": {
-											"type": "boolean"
-										},
-										"displayName": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 100
-										},
-										"name": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"replaceExposedKeys": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"allowAccessTokens",
-										"allowPlaygroundAssistant",
-										"allowStoredCredentials",
-										"displayName",
-										"name",
-										"replaceExposedKeys"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			},
-			"patch": {
-				"operationId": "updateOrganization",
-				"tags": [
-					"Organizations"
-				],
-				"summary": "Change organization settings",
-				"description": "Changing name, allowAccessTokens, allowPlaygroundAssistant, allowStoredCredentials or replaceExposedKeys needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key. With allowStoredCredentials false, the organization keeps only provider credentials that its own encryption keys encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains. With replaceExposedKeys false, a key secret that GitHub finds in public keeps working, and only Activity records the report.",
-				"security": [
-					{
-						"accessToken": [
-							"write"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"type": "object",
-								"properties": {
-									"allowAccessTokens": {
-										"type": "boolean"
-									},
-									"allowPlaygroundAssistant": {
-										"type": "boolean"
-									},
-									"allowStoredCredentials": {
-										"type": "boolean"
-									},
-									"displayName": {
-										"type": "string",
-										"minLength": 1,
-										"maxLength": 100
-									},
-									"name": {
-										"anyOf": [
-											{
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 100
-											},
-											{
-												"type": "null"
-											}
-										]
-									},
-									"replaceExposedKeys": {
-										"type": "boolean"
-									}
-								},
-								"additionalProperties": false
-							}
-						}
-					}
-				},
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"allowAccessTokens": {
-											"type": "boolean"
-										},
-										"allowPlaygroundAssistant": {
-											"type": "boolean"
-										},
-										"allowStoredCredentials": {
-											"type": "boolean"
-										},
-										"displayName": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 100
-										},
-										"name": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 100
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"replaceExposedKeys": {
-											"type": "boolean"
-										}
-									},
-									"required": [
-										"allowAccessTokens",
-										"allowPlaygroundAssistant",
-										"allowStoredCredentials",
-										"displayName",
-										"name",
-										"replaceExposedKeys"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
 		"/api/{orgId}/limits": {
 			"get": {
 				"operationId": "getOrganizationLimits",
@@ -15258,6 +15066,118 @@
 									},
 									"required": [
 										"limits"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/settings": {
+			"patch": {
+				"operationId": "updateOrganization",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Change organization settings",
+				"description": "Changing name, allowAccessTokens, allowPlaygroundAssistant or allowStoredCredentials needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key. With allowStoredCredentials false, the organization keeps only provider credentials that its own encryption keys encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"allowAccessTokens": {
+										"type": "boolean"
+									},
+									"allowPlaygroundAssistant": {
+										"type": "boolean"
+									},
+									"allowStoredCredentials": {
+										"type": "boolean"
+									},
+									"displayName": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 100
+									},
+									"name": {
+										"anyOf": [
+											{
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 100
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"allowAccessTokens": {
+											"type": "boolean"
+										},
+										"allowPlaygroundAssistant": {
+											"type": "boolean"
+										},
+										"allowStoredCredentials": {
+											"type": "boolean"
+										},
+										"displayName": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 100
+										},
+										"name": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 100
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"allowAccessTokens",
+										"allowPlaygroundAssistant",
+										"allowStoredCredentials",
+										"displayName",
+										"name"
 									],
 									"additionalProperties": false
 								}

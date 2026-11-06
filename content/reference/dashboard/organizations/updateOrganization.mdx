@@ -1,17 +1,15 @@
 ---
 title: Change organization settings
-description: "Changing name, allowAccessTokens, allowPlaygroundAssistant,
-  allowStoredCredentials or replaceExposedKeys needs organization management.
-  displayName is your name in this organization. With allowAccessTokens false,
-  members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization
-  at once. allowPlaygroundAssistant lets members turn on the Playground
-  assistant, which reads the organization as them and sends what it reads to the
-  model through their own API key. With allowStoredCredentials false, the
-  organization keeps only provider credentials that its own encryption keys
-  encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED,
-  and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored
-  credential remains. With replaceExposedKeys false, a key secret that GitHub
-  finds in public keeps working, and only Activity records the report."
+description: "Changing name, allowAccessTokens, allowPlaygroundAssistant or
+  allowStoredCredentials needs organization management. displayName is your name
+  in this organization. With allowAccessTokens false, members' access tokens get
+  403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once.
+  allowPlaygroundAssistant lets members turn on the Playground assistant, which
+  reads the organization as them and sends what it reads to the model through
+  their own API key. With allowStoredCredentials false, the organization keeps
+  only provider credentials that its own encryption keys encrypt: adding a
+  stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off
+  gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains."
 full: true
 _openapi:
   preload:
@@ -22,20 +20,18 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: "Changing name, allowAccessTokens, allowPlaygroundAssistant,
-          allowStoredCredentials or replaceExposedKeys needs organization
-          management. displayName is your name in this organization. With
-          allowAccessTokens false, members' access tokens get 403
-          ACCESS_TOKENS_NOT_ALLOWED for this organization at once.
-          allowPlaygroundAssistant lets members turn on the Playground
+      - content: "Changing name, allowAccessTokens, allowPlaygroundAssistant or
+          allowStoredCredentials needs organization management. displayName is
+          your name in this organization. With allowAccessTokens false, members'
+          access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization
+          at once. allowPlaygroundAssistant lets members turn on the Playground
           assistant, which reads the organization as them and sends what it
           reads to the model through their own API key. With
           allowStoredCredentials false, the organization keeps only provider
           credentials that its own encryption keys encrypt: adding a stored
           credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off
-          gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains.
-          With replaceExposedKeys false, a key secret that GitHub finds in
-          public keeps working, and only Activity records the report."
+          gets 409 STORED_CREDENTIALS_EXIST while any stored credential
+          remains."
 ---
 
 export default function Layout(props) {
