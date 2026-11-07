@@ -75,6 +75,9 @@ target stops serving, the gateway tries the next candidate that your
 Azure can upgrade a deployment to a new model version, as its `versionUpgradeOption` allows.
 Requests to an upgraded target fail with `byok_target_changed` until you choose the new version.
 
+A check fails when an account has more than 20,000 targets. Requests through an API key whose Azure
+credentials have more than 20,000 chosen targets together fail with `key_configuration_too_large`.
+
 ## Claude on Azure
 
 Claude accepts the same request fields as on [Anthropic](/docs/providers/anthropic), except
