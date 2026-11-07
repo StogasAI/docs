@@ -375,6 +375,12 @@ The [example](#example) record has this timeline:
 `provider_ms` includes upstream connection setup, waits between calls and, for streams, response
 backpressure. The time outside it is gateway preparation and response processing.
 
+`first_output_ms` is when the provider's first output reached the gateway, and `ttft_ms` is when the
+gateway passed the first generated token on to your client, so `ttft_ms` is never earlier. Output
+other than tokens, such as citations, can make them differ by more than the gateway's own handling.
+A response that is not streamed arrives whole, so its `first_output_ms` is when the provider call
+ended, and it has no `ttft_ms`.
+
 ### Tool calls
 
 `performance.tool_calls` lists the tool calls in the response, in output order.
