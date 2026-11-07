@@ -301,28 +301,29 @@ your personal organization.
 stogas api /api/account
 stogas api {org}/keys --paginate --slurp
 stogas api POST {org}/keys --input key.json
-stogas api {org}/analytics -f filter='outcome:failed' -F limit=20
+stogas api GET {org}/analytics -f filter='outcome:failed' -F limit=20
 ```
 
-The CLI sends the request with your token and prints the response: formatted JSON on a terminal,
-and the exact bytes otherwise, ready for `jq` or a file. The path is under `/api/`, which you can
-leave out. `{org}` in the path or in a `-F` value becomes the ID of the organization that
-`--organization` or `STOGAS_ORG` names, or of your personal organization without either. A
-refused request prints the response and the error, and exits with status 1. The
-[Dashboard API](/docs/reference/dashboard) lists every operation.
+The CLI sends the request with your token and prints the response: formatted JSON or text on a
+terminal, and the exact bytes otherwise, ready for `jq` or a file. A binary response, such as a
+Parquet export, needs a file. The path is under `/api/`, which you can leave out. `{org}` in the
+path or in a `-F` value becomes the ID of the organization that `--organization` or `STOGAS_ORG`
+names, or of your personal organization without either. A refused request prints the response and
+the error, and exits with status 1. The [Dashboard API](/docs/reference/dashboard) lists every
+operation.
 
-| Option                          | Effect                                                                                                                                               |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-X`, `--method`                | `GET`, `POST`, `PUT`, `PATCH` or `DELETE`, which can also come before the path. The default is `GET`, or `POST` when fields or `--input` add a body. |
-| `-f`, `--raw-field <key=value>` | A string field                                                                                                                                       |
-| `-F`, `--field <key=value>`     | A typed field. `true`, `false`, `null` and whole numbers become JSON values, `@file` reads a file and `@-` reads standard input.                     |
-| `--input <file>`                | The JSON body, from a file or from standard input with `-`. Fields then go in the query.                                                             |
-| `-H`, `--header "Name: value"`  | A request header. The CLI keeps its own token and content type.                                                                                      |
-| `--paginate`                    | Gets every page of a list, following each page's next cursor                                                                                         |
-| `--slurp`                       | With `--paginate`, prints one JSON array of the pages, and only when every page arrives                                                              |
-| `-i`, `--include`               | Prints the status and the response headers before the body                                                                                           |
-| `--silent`                      | Prints no body                                                                                                                                       |
+| Option                          | Effect                                                                                                                                                                   |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-X`, `--method`                | `GET`, `POST`, `PUT`, `PATCH` or `DELETE`, which can also come before the path. The default is `GET`, or `POST` when fields or `--input` add a body.                     |
+| `-f`, `--raw-field <key=value>` | A string field                                                                                                                                                           |
+| `-F`, `--field <key=value>`     | A typed field. `true`, `false`, `null` and integers such as `42` become JSON values, while `007` and `+1` stay text. `@file` reads a file and `@-` reads standard input. |
+| `--input <file>`                | The JSON body, from a file or from standard input with `-`. Fields then go in the query.                                                                                 |
+| `-H`, `--header "Name: value"`  | A request header. The CLI keeps its own token, content type and `Accept-Encoding`.                                                                                       |
+| `--paginate`                    | Gets every page of a list, following each page's next cursor                                                                                                             |
+| `--slurp`                       | With `--paginate`, prints one JSON array of the pages, and only when every page arrives                                                                                  |
+| `-i`, `--include`               | Prints the status and the response headers before the body                                                                                                               |
+| `--silent`                      | Prints no body                                                                                                                                                           |
 
 Fields go in the query of a `GET` request and in the JSON body of any other. A key can nest as in
 `gh api`: `limits[requests]=10` sets a field of an object, `models[]=a` adds to a list, and
-`rules[][name]=a` adds an object to a list.
+`rules[][name]=a` adds an object to a list. `rules[][tags][]=x` adds to the list in that object.
