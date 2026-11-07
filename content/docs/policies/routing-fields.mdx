@@ -61,8 +61,8 @@ These fields describe what the provider can do with request and response content
 the worst case across every configuration and optional feature that the offering allows: a
 persistent cache that the offering allows counts even when your request does not use it. A more
 private configuration gets a stronger value only when the gateway enforces it on every request. A
-location that the provider does not disclose is `unknown`, and an undisclosed retention period is
-missing.
+location that the provider does not disclose is `unknown`, and an undisclosed retention period or
+training use is missing.
 
 <RoutingFields group="data-handling" />
 
@@ -88,13 +88,13 @@ read content is trustworthy.
 
 #### Location values
 
-| Value                     | Meaning                                                                                            |
-| ------------------------- | -------------------------------------------------------------------------------------------------- |
-| `US`, `DE`, …             | One country, by uppercase ISO 3166-1 alpha-2 code.                                                 |
-| `eu`, `europe`, `apac`, … | A region, such as the European Union, Europe or Asia-Pacific.                                      |
-| `world`                   | No narrower boundary. Content can be processed or stored in any country.                           |
-| `unknown`                 | The provider does not disclose a usable boundary. Treat it as `world`.                             |
-| `none`                    | `storageLocation` only. The provider does not keep request or response content after the response. |
+| Value                     | Meaning                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `US`, `DE`, …             | One country, by uppercase ISO 3166-1 alpha-2 code.                                                     |
+| `eu`, `europe`, `apac`, … | A region, such as the European Union, Europe or Asia-Pacific.                                          |
+| `world`                   | No narrower boundary. Content can be processed or stored in any country.                               |
+| `unknown`                 | The provider does not disclose a usable boundary. Policies match it only as `unknown`, not as `world`. |
+| `none`                    | `storageLocation` only. The provider does not keep request or response content after the response.     |
 
 A value names the widest area where the activity can happen. The catalog lists the places where
 data can be: those that deployments, headquarters and provider accounts name, with the places that

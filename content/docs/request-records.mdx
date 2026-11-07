@@ -170,9 +170,8 @@ names while we [keep it](/docs/activity#retention-and-export).
 the gateway refused before it called the provider has no entry.
 
 `provider_request_id` is the ID that the provider gave the call, also when it answered with an
-error, so you can ask the provider about the call. Chutes sends none on its encrypted calls, so the
-field is empty for Chutes. Its `provider_instance_id` names the instance that ran the call or turned
-it away, which Chutes can find with the call's time.
+error, so you can ask the provider about the call. Some providers give none, and then the field is
+empty.[^no-request-id]
 
 `provider_attempts` and `gateway_error` record different failures:
 
@@ -470,3 +469,8 @@ Records are delivered asynchronously. A gateway crash, a burst larger than the g
 a storage failure can lose rejection records, so grouped history is not a complete audit of every
 request. Requests that fail before the gateway can identify the key, such as with an invalid key,
 do not appear.
+
+[^no-request-id]:
+    [Chutes](/docs/providers/chutes) sends none on its encrypted calls. Its
+    `provider_instance_id` names the instance that ran the call or turned it away, which Chutes can
+    find with the call's time.

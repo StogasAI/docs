@@ -1,17 +1,18 @@
 ---
 title: Chutes
-description: Open models in Intel TDX and NVIDIA confidential GPUs, reached with end-to-end encryption.
+description: Open models in Intel TDX and NVIDIA confidential GPUs, reached with end-to-end encryption, and Standard models that Chutes relays to an operator it does not name.
 icon: logo:chutes
 ---
 
-Chutes runs open models such as Kimi, Qwen, GLM and DeepSeek in trusted execution environments
-(TEEs) built on Intel TDX and NVIDIA confidential GPUs. Every new API key can use Chutes through our
-account. To use your own Chutes account instead, add a key in [BYOK](/docs/byok).
+Chutes runs open models such as Kimi, Qwen, GLM and DeepSeek. Most of them run in trusted execution
+environments (TEEs) built on Intel TDX and NVIDIA confidential GPUs, which the gateway reaches with
+end-to-end encryption. The rest are [Standard models](#standard-models). Every new API key can use
+Chutes through our account. To use your own Chutes account instead, add a key in [BYOK](/docs/byok).
 
 ## End-to-end encryption
 
-The gateway encrypts every Chutes request to the TEE that runs the model. Chutes' relay forwards the
-ciphertext and cannot read the prompt or the response.
+For a TEE deployment, the gateway encrypts each request for the TEE instance that runs the model.
+Chutes' relay forwards the ciphertext and cannot read the prompt or the response.
 
 <Steps>
 <Step>
@@ -42,18 +43,46 @@ output and usage.
 </Step>
 </Steps>
 
-If no verified instance is available, the request fails. There is no plaintext fallback.
+If no verified instance is available, the request fails. A TEE deployment never falls back to
+plaintext.
 
 - Chutes' relay sees the model and instance, timing, sizes and usage.
-- The Chutes API key and that metadata travel only under the outer TLS connection, which uses a
-  classical key exchange.
+- The Chutes API key and that metadata travel only under the outer TLS connection, which prefers
+  the post-quantum X25519MLKEM768 key exchange but accepts a classical one.
 
 ### What the evidence does not prove
 
 Chutes decides which TEE measurements are acceptable, and no independent party checks them against
 Chutes' published source code yet. The measurements cover Chutes' runtime, which starts only
 containers signed with keys that Chutes controls, so the quote does not identify the container image
-or the model weights. The catalog therefore lists Chutes with `tee: true` and `teeVerified: false`.
+or the model weights. The catalog therefore lists TEE deployments with `tee: true` and `teeVerified: false`.
+
+## Standard models
+
+Chutes' terms call some of its models Standard models. They do not run in a Chutes TEE, so the
+gateway sends their requests without end-to-end encryption, to Chutes' OpenAI-compatible API at
+`https://llm.chutes.ai/v1/chat/completions` over post-quantum TLS, with the same API key. Chutes
+relays each request to a third-party operator that it does not name.
+
+Their data handling comes from Chutes' [privacy policy](https://chutes.ai/privacy) and differs from
+TEE deployments in these fields:
+
+| Field                            | TEE deployments | Standard deployments |
+| -------------------------------- | --------------- | -------------------- |
+| `dataHandling.endToEndEncrypted` | `true`          | `false`              |
+| `dataHandling.tee`               | `true`          | `false`              |
+| `dataHandling.storageLocation`   | `none`          | `world`              |
+| `dataHandling.retentionDays`     | `0`             | `30`                 |
+| `dataHandling.zeroDataRetention` | `true`          | `false`              |
+| `upstream.hosting`               | missing         | `unknown`            |
+
+The operators may process and store content in the United States and other countries, including in
+Asia. They keep it for up to 30 days, or longer where the law or their security requires, and keep
+content that their safety systems flag for up to two years. Chutes' agreements forbid them to train
+on it. To keep requests on TEE deployments, filter on `deployment.dataHandling.endToEndEncrypted`.
+
+A Standard model can reply with its own name for the model, so the `model` field of the reply may
+differ from the catalog's name.
 
 ## Supported requests
 
@@ -63,9 +92,9 @@ their Responses equivalents:
 
 - `stream` and `stream_options`
 - `max_completion_tokens` or `max_tokens`
-- `tools` with `function` tools, and `tool_choice`
+- `tools` with `function` tools, and `tool_choice`, where the deployment supports them
 - `response_format` with `json_object` or `json_schema`, where the deployment supports it
-- `reasoning_effort` and `reasoning`
+- `reasoning_effort` and `reasoning`, on TEE deployments that support them
 - `temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `repetition_penalty`,
   `seed` and `stop`
 
@@ -77,9 +106,10 @@ reasoning.
 
 ## Retries
 
-When Chutes rejects a request before the model starts, for example because an instance is at
-capacity, the gateway calls another verified instance at once. That call is one of the candidate's
+When Chutes rejects an encrypted request before the model starts, for example because an instance is
+at capacity, the gateway calls another verified instance at once. That call is one of the candidate's
 [retries](/docs/policies/routing#retries-and-fallbacks), so it needs `routing.retries` of 1 or more.
+Standard models have no instances, so this retry does not apply to them.
 
 Chutes sends no request ID on encrypted calls. Each call's entry in the
 [request record](/docs/request-records#provider-attempts) names its instance in

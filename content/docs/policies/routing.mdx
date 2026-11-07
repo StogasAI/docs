@@ -276,8 +276,8 @@ but not `fallbacks`, because one fallback count applies to the whole request:
 }
 ```
 
-[Chutes](/docs/providers/chutes#retries) also retries on another instance when it proves that the
-first did not run the request. Those calls count as retries.
+Some providers also retry on another instance when they prove that the first did not run the
+request. Those calls count as retries.[^instance-retries]
 
 ## Missing encryption keys
 
@@ -308,3 +308,7 @@ of the fallbacks:
 ## Field reference
 
 <PolicyFields section="routing" />
+
+[^instance-retries]:
+    [Chutes](/docs/providers/chutes#retries) does this on its end-to-end encrypted
+    deployments.
