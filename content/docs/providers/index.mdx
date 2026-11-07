@@ -40,11 +40,17 @@ on the other API, and returns the reply, or each streamed event, on the API that
 | Responses        | Azure and Chutes deployments that take only Chat Completions | Chat Completions  |
 | Chat Completions | OpenAI and Azure deployments that take only Responses        | Responses         |
 
+OpenAI and Azure deployments that take both APIs also get a Chat Completions request through
+Responses when it has `tools` or `reasoning_details`, because OpenAI's Chat Completions refuse
+function tools while the model reasons, and only Responses take back earlier reasoning. A request
+that Responses cannot carry keeps Chat Completions. Otherwise a deployment that takes the API that
+you call gets it. A route in `model` chooses the API, as in
+`route:openai-chat-completions gpt-6-luna`.
+
 The request record's `request_type` shows the API that you called, and each attempt's
-[catalog chain](/docs/request-records#catalog-history) names the route that the gateway called. A
-deployment that takes the API that you call always gets it, unless `model` names its route for the
-other API. Routing leaves out a translated deployment that cannot take the request, so another
-deployment can serve it.
+[catalog chain](/docs/request-records#catalog-history) names the route that the gateway called.
+Routing leaves out a deployment that takes only the other API when it cannot take the request, so
+another deployment can serve it.
 
 ### Responses through Chat Completions
 
@@ -73,6 +79,7 @@ A translated request returns `400` for what Responses cannot carry:
 
 - `seed`, `stop`, `logit_bias` and `prediction`
 - message `name`
+- `prompt_cache_breakpoint` in a tool message
 - earlier `reasoning_details` on Azure
 
 OpenAI deployments return their reasoning encrypted in `reasoning_details`. Send it back unchanged

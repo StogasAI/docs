@@ -2366,7 +2366,7 @@
 					},
 					"reasoning_details": {
 						"type": "array",
-						"description": "Reasoning from an earlier reply. Send it back unchanged. Anthropic-format deployments take it, and so do OpenAI deployments that take only [Responses](/docs/providers#chat-completions-through-responses).",
+						"description": "Reasoning from an earlier reply. Send it back unchanged. Anthropic-format deployments take it, and so do OpenAI deployments, which get the request [through Responses](/docs/providers#chat-completions-through-responses).",
 						"items": {
 							"type": "object"
 						}
@@ -2503,7 +2503,7 @@
 					"index": {
 						"type": "integer",
 						"minimum": 0,
-						"description": "When present, this must match the call's array position."
+						"description": "The call's position in a reply. You can send it back, and no provider receives it."
 					},
 					"id": {
 						"type": "string"
@@ -3466,6 +3466,14 @@
 							"system",
 							"developer"
 						]
+					},
+					"phase": {
+						"type": "string",
+						"enum": [
+							"commentary",
+							"final_answer"
+						],
+						"description": "The label that OpenAI gives each assistant message of a reply. You can send it back."
 					},
 					"content": {
 						"$ref": "#/components/schemas/ResponsesRequestMessageContent"
