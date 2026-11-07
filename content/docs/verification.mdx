@@ -80,6 +80,9 @@ with the same verifier.
   this build happened. To check a release yourself, see
   [Reproducible builds](/docs/reproducible-builds).
 - AMD signs its own certificates and revocation lists, so they need no Rekor entry.
+- History lists each release, catalog and key manifest at the evidence revision that first listed
+  it, and the hardware policy at each revision that changed it, including a change back to an
+  earlier policy.
 - Past boots stay checkable after keys rotate or AMD lists expire, because we keep the original
   evidence and the verifier checks it as of the time Rekor logged the boot. New connections always
   need current evidence.
