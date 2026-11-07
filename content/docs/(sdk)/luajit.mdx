@@ -26,8 +26,8 @@ and `STOGAS_MODEL` in your environment.
 ## Start the transport
 
 Save this as `transport.lua`. It starts the verifier and owns its native handle.
-Call `close()` after your requests finish. The default uses native attested TLS;
-pass `{ security = "e2ee" }` as the second argument to select E2EE.
+Call `close()` after your requests finish. The default uses native attested TLS.
+Pass `{ security = "e2ee" }` as the second argument to select E2EE.
 
 ```lua
 local ffi = require "ffi"
@@ -172,7 +172,7 @@ luajit main.lua
 
 Reuse the transport in a long-running application. Close its active HTTP streams
 before closing the transport. Stopping early is cancellation, not successful
-completion; do not replay a request whose delivery is uncertain.
+completion. Do not replay a request whose delivery is uncertain.
 
 To request metadata and automatic receipt verification, add the following string
 to the `httpheader` list:

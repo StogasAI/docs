@@ -4,7 +4,7 @@ description: Use the OpenAI .NET client and verified transport from F#.
 icon: logo:fsharp
 ---
 
-Our .NET package manages verified connections; OpenAI's .NET client provides typed
+Our .NET package manages verified connections, and OpenAI's .NET client provides typed
 requests and responses. This example uses .NET 10. Set `STOGAS_API_KEY` and `STOGAS_MODEL`
 before running it.
 
@@ -68,9 +68,10 @@ let main _ =
 ```
 
 Reuse the HTTP client and `ChatClient` between requests. Use `CompleteChatAsync` for a buffered
-response. Ctrl-C cancels this example; in a service, pass your request's cancellation token.
-A cancelled or failed stream is incomplete. The example disables retries; your application decides when to retry and must allow for a request that ran twice.
-The `use` bindings close the response enumerator and HTTP client before the transport.
+response. Ctrl-C cancels this example. In a service, pass your request's cancellation token. A
+cancelled or failed stream is incomplete. The example disables retries, so your application decides
+when to retry and must allow for a request that ran twice. The `use` bindings close the response
+enumerator and HTTP client before the transport.
 
 The [complete F# example](https://github.com/StogasAI/stogas/tree/main/examples/fsharp-openai)
 pins its dependencies and is tested against HTTP failures, streamed errors and truncated

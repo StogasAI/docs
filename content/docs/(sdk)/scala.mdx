@@ -4,7 +4,7 @@ description: Use the OpenAI Java client and verified transport from Scala.
 icon: logo:scala
 ---
 
-Use Scala 3 on Java 17 or later. Our Java package manages verified connections;
+Use Scala 3 on Java 17 or later. Our Java package manages verified connections, and
 OpenAI's Java client provides typed requests and responses. Set `STOGAS_API_KEY`
 and `STOGAS_MODEL` before running the example.
 
@@ -88,7 +88,7 @@ Reuse the client between requests. For a buffered response, replace
 `createStreaming(request)` with `create(request)` and read the returned completion.
 `Using.Manager` closes the stream, HTTP client and transport in that order, even on failure.
 The `Releasable` definition lets Scala manage the OpenAI client's `close()` method.
-Early cancellation is incomplete delivery; do not treat it as a successful response or retry
+Early cancellation is incomplete delivery, so do not treat it as a successful response or retry
 it automatically.
 
 The [complete example](https://github.com/StogasAI/stogas/tree/main/examples/scala-openai)

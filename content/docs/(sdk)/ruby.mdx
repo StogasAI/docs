@@ -4,7 +4,7 @@ description: Use the OpenAI Ruby client through verified transport.
 icon: logo:ruby
 ---
 
-The Stogas gem makes the protected connections; the official OpenAI gem provides the API
+The Stogas gem makes the protected connections, and the official OpenAI gem provides the API
 client. Set `STOGAS_API_KEY` and `STOGAS_MODEL` before running the example.
 
 ## Install
@@ -69,7 +69,7 @@ SDK retries and ambient HTTP proxies. `ignore_eof = false` makes truncated HTTP 
 raise an error. The transport shares reusable protected connections across requests.
 
 Ctrl-C interrupts this program and runs cleanup. If you stop reading a stream early,
-close it and treat the result as incomplete; do not automatically send the request again.
+close it and treat the result as incomplete. Do not automatically send the request again.
 Close the HTTP client before closing the transport, as shown above.
 
 The [complete example](https://github.com/StogasAI/stogas/tree/main/examples/ruby-openai)

@@ -5,8 +5,7 @@ description: The syntax that dashboard searches and the API's filter parameter s
 
 Every search field in the dashboard and every `filter` parameter in the API take this syntax. Each
 page lists the fields it takes: [Analytics](/docs/analytics#filters),
-[Activity](/docs/activity#filters) and the [model catalog](/docs/models#search-the-catalog). In
-other lists, such as API keys, grants and members, the search suggests the fields.
+[Activity](/docs/activity#filters) and the [model catalog](/docs/models#search-the-catalog).
 
 | Filter                                | Matches                                         |
 | ------------------------------------- | ----------------------------------------------- |
@@ -89,6 +88,13 @@ A comparison takes the whole period into account:
 Times must fall in the years 1 to 9999. A record without the time, such as an API key without an
 expiry, matches no comparison, not even `!=`, but `NOT` selects it: `-expires<2027` includes keys
 that never expire.
+
+## Sort
+
+Lists other than Analytics and Activity take a `sort:` term that orders the rows, as in
+`type:refund sort:amount-desc`. Its value is a field and a direction, `asc` or `desc`, and the
+dashboard search suggests the fields that each list sorts by. A filter can have one `sort:` term,
+and it cannot be inside `OR` or `NOT`.
 
 ## Limits
 

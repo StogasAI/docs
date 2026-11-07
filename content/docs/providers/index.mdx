@@ -40,8 +40,8 @@ Completions route.
 
 A translated request returns `400` for what Chat Completions cannot carry:
 
-- `include` values other than `message.output_text.logprobs`, `max_tool_calls`, and `truncation`
-  set to `auto`
+- `include` values other than `message.output_text.logprobs` and `reasoning.encrypted_content`
+- `max_tool_calls`, and `truncation` set to `auto`
 - hosted and custom tools, such as `web_search`, and tool choices that name them
 - a `reasoning.summary` other than `auto` or `none`
 - input items other than messages, function calls, their outputs and reasoning
@@ -51,8 +51,11 @@ A translated request returns `400` for what Chat Completions cannot carry:
   `encrypted_content` or a summary.
 
 The deployment's Chat Completions limits apply as well, so Chutes returns `400` for log
-probabilities and `text.verbosity`. A streamed reply sends reasoning as `response.reasoning_text`
-events, and its function calls arrive whole when the reply ends.
+probabilities and `text.verbosity`. Reasoning comes back as text, which `reasoning.encrypted_content`
+does not change. A streamed reply sends reasoning as `response.reasoning_text` events, and its
+function calls arrive whole when the reply ends. Log probabilities cover only the output text, so
+a reply that also has reasoning or tool calls has none when the provider's tokens do not join into
+exactly that text.
 
 Routing leaves out a translated deployment that cannot take the request, so another deployment can
 serve it.

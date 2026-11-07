@@ -168,7 +168,7 @@ end
 
 ## Send a request
 
-Save this as `main.jl` beside the other files. It streams by default; `--no-stream`
+Save this as `main.jl` beside the other files. It streams by default, and `--no-stream`
 uses the OpenAI client's ordinary request method. Ctrl+C cancels the request and
 closes the transport.
 
@@ -218,7 +218,7 @@ julia --project=. main.jl --no-stream
 ```
 
 Reuse the transport in a long-running application and close it after its active
-requests finish. A failure can follow partial output; do not replay inference
+requests finish. A failure can follow partial output, so do not replay inference
 automatically. The verifier checks encrypted stream completion before releasing
 the final application event.
 

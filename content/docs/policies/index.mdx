@@ -42,9 +42,9 @@ Every policy follows these rules. The topic pages give the details.
   request's model, interface, time and size. Earlier calls, token estimates and provider responses
   never change it, so a [routing simulation](/docs/policies/editing#simulate-routing) shows what
   will run.
-- **Settings for one deployment can depend on it; settings for the whole request cannot.** A rule
-  for Chutes can raise retries for Chutes. Fallbacks, the order and the total timeout cover the
-  whole request, so a rule that reads deployment fields cannot set them. See
+- **Settings for one deployment can depend on it, but settings for the whole request cannot.** A
+  rule for Chutes can raise retries for Chutes. Fallbacks, the order and the total timeout cover
+  the whole request, so a rule that reads deployment fields cannot set them. See
   [Conditional rules](/docs/policies/rules#conditional-rules).
 - **A missing value skips one deployment.** When a deployment does not state a field that a filter
   or condition reads, the gateway skips that deployment and tries the others. See

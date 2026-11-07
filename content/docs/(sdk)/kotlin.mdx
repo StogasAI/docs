@@ -5,7 +5,7 @@ icon: logo:kotlin
 ---
 
 Kotlin/JVM uses our Java transport package and the official OpenAI Java client. The transport
-verifies protected connections; the OpenAI client supplies request and response types.
+verifies protected connections, and the OpenAI client supplies request and response types.
 Use Java 17 or later and set `STOGAS_API_KEY` and `STOGAS_MODEL`.
 
 ## Install
@@ -81,8 +81,8 @@ fun main() {
 ```
 
 Use `create(request)` for a buffered response. Reuse the client between calls.
-Closing the stream cancels delivery; cancellation must not become a successful completion
-or an automatic retry. Close the HTTP client before the transport; `use` releases the
+Closing the stream cancels delivery, and cancellation must not become a successful completion
+or an automatic retry. Close the HTTP client before the transport. `use` releases the
 transport even if a request fails.
 
 The [complete Maven example](https://github.com/StogasAI/stogas/tree/main/examples/kotlin-openai)

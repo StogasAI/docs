@@ -236,7 +236,7 @@ dart run main.dart --no-stream
 ```
 
 Reuse the transport and client in a long-running application. An error or
-cancellation can happen after some output arrives; do not replay that request
+cancellation can happen after some output arrives, so do not replay that request
 automatically. The verifier checks encrypted stream completion before releasing
 the final application event.
 
@@ -255,8 +255,8 @@ does not start an embedded transport.
 The native bridge can be embedded in a Flutter desktop application on a supported
 native platform. Package the verifier library with the application and close the
 transport after its requests finish. This example does not provide Android or iOS
-binaries. Flutter Web cannot use `dart:ffi`; use the [browser transport](/docs/browser-workers)
-through JavaScript interoperability.
+binaries. Flutter Web cannot use `dart:ffi`, so use the
+[browser transport](/docs/browser-workers) through JavaScript interoperability.
 
 ## Options
 

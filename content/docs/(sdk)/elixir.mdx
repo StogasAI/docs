@@ -118,7 +118,7 @@ end
 The default uses native attested TLS. Start with
 `StogasTransport.start_link(args: ["--security", "e2ee"])` for E2EE.
 In an OTP application, place this module in `lib/` and add it to your supervision
-tree. Reuse its transport across requests; restart the transport after an exit,
+tree. Reuse its transport across requests. Restart the transport after an exit,
 but do not automatically replay an interrupted inference.
 
 ## Send a request
@@ -211,7 +211,7 @@ application event.
 ## Cancel and close
 
 Run a request in a supervised task when the application needs to cancel it.
-Shut down that task with `Task.shutdown/2`; partial output is incomplete delivery,
+Shut down that task with `Task.shutdown/2`. Partial output is incomplete delivery,
 not a successful result. Never retry it automatically. Keep the shared transport
 alive for other requests and close it after those requests finish.
 

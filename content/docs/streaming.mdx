@@ -94,7 +94,7 @@ a comment every 15 seconds so the connection stays open:
 ```
 
 OpenAI clients and SSE parsers ignore comments. Do not count them as output or show them as chat
-content. Keepalives are automatic; no header or option turns them on. Proxies can delay them. If
+content. Keepalives are automatic and need no header or option. Proxies can delay them. If
 you forward a stream to another client, pass keepalives on or send your own while no output is
 available. Buffered requests over HTTPS or attested TLS get no keepalives.
 

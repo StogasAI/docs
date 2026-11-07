@@ -6,7 +6,7 @@ icon: logo:ocaml
 
 Use OCurl for OpenAI-compatible HTTP requests and `ctypes` for the native verifier.
 This example uses OCaml 5.4 and Dune on Linux. Keep one transport alive for your
-application; it reuses protected gateway connections.
+application so that it reuses protected gateway connections.
 
 ## Install
 
@@ -210,7 +210,7 @@ opam exec -- dune exec ./main.exe -- --no-stream
 
 The empty transport configuration selects native attested TLS. Replace
 ``(`Assoc [])`` with ``(`Assoc ["security", `String "e2ee"])`` to use encrypted sessions
-over HTTPS. `STOGAS_BASE_URL` is only for an already running local verifier; it is not
+over HTTPS. `STOGAS_BASE_URL` is only for an already running local verifier, not
 a gateway URL. See [verification and receipts](/docs/verification) for checking
 saved responses.
 

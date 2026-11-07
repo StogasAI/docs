@@ -102,7 +102,7 @@ around your application's requests.
 ## Send requests and streams
 
 Save this as `Main.hs`. It disables HTTP retries, redirects and ambient proxies.
-Streaming requires the completion marker and complete HTTP delivery; malformed
+Streaming requires the completion marker and complete HTTP delivery. Malformed
 events and error events fail the request.
 
 ```haskell
@@ -261,7 +261,7 @@ application can read the returned `stogas` object for those details.
 
 Ctrl+C unwinds `withResponse` and `withTransport`, closing both resources. In a
 concurrent application, cancelling the Haskell request thread follows the same
-cleanup path. Treat cancellation or partial output as incomplete; do not replay
+cleanup path. Treat cancellation or partial output as incomplete, and do not replay
 a request automatically.
 
 The example limits buffered responses to 32 MiB and individual stream events to

@@ -231,9 +231,9 @@ Each sign-in creates an access token named `Stogas CLI on <host>` unless you nam
 CLI keeps it in the system keychain, or prints it where there is none, as on most servers. Signing
 in again deletes the token that the new one replaces, and `logout` deletes the current one.
 
-For servers and CI, create a token on the **Account** page with only the access that the job needs,
-and set it as `STOGAS_TOKEN`. The CLI then uses it, and `register`, `login` and `logout` refuse to
-run. See [Access tokens](/docs/reference/dashboard#access-tokens).
+For servers and CI, create an access token with only the access that the job needs, and set it as
+`STOGAS_TOKEN`. The CLI then uses it, and `register`, `login` and `logout` refuse to run. See
+[Access tokens](/docs/reference/dashboard#access-tokens).
 
 ### Add credit
 
@@ -259,11 +259,10 @@ stogas policy edit organization --organization <organization-id>
 
 `policy edit` opens a [policy](/docs/policies) as JSON in your `$VISUAL` or `$EDITOR`, or in `vi`
 (`notepad` on Windows) without either, and saves it when you close the file. The scope is
-`organization`, `folder`, `grant`, `role`, `member`, `credential` or `key`. **Copy ID** in the menu of
-a key, grant, member or credential copies its ID, and
-[List folders](/docs/reference/dashboard/folders/listFolders) and
-[List roles](/docs/reference/dashboard/roles/listRoles) return the others. Without
-`--organization`, the policy is in your personal organization.
+`organization`, `folder`, `grant`, `role`, `member`, `credential` or `key`, and the ID is the
+resource's `id` in its [Dashboard API](/docs/reference/dashboard) list, such as
+`stogas api {org}/keys` for keys. Without `--organization`, the policy is in your personal
+organization.
 
 - The file starts with the [schema link](/docs/policies/editing#use-an-external-editor), so
   editors such as VS Code complete and check fields. Close the file unchanged to keep the policy,
@@ -284,18 +283,17 @@ stogas byok check <credential-id> --organization <organization-id>
 stogas byok check <credential-id>... --organization <organization-id> --key-file org.key
 ```
 
-`byok check` checks [provider credentials](/docs/byok#checks) with the same free call to the
-provider as **Check credential** on the dashboard, and prints whether the provider accepted each.
-**Copy ID** in a credential's menu copies its ID. A stored credential needs nothing else. For a
-customer-encrypted credential, the CLI uses the key saved for the organization under the label that
-it registered. Otherwise pass the key's file with `--key-file`, or enter the key when prompted, once
-for each key. The CLI sends the key over a verified connection to a gateway,
-the only place that can open the credential, and the gateway saves the result. An Azure
-credential's check also finds its account's deployments, and the CLI prints how many targets are
-selected, how many of those are unavailable, and how many models have none, with a link to choose
-them. You need permission to manage the credentials. A failed check leaves the others to run, and
-the command then exits with status 1. Without `--organization`, the credentials are in your
-personal organization.
+`byok check` checks [provider credentials](/docs/byok#checks) with a free call to the provider, and
+prints whether the provider accepted each. `stogas api {org}/byok` lists the credentials with their
+IDs. A stored credential needs nothing else. For a customer-encrypted credential, the CLI uses the
+key saved for the organization under the label that it registered. Otherwise pass the key's file
+with `--key-file`, or enter the key when prompted, once for each key. The CLI sends the key over a
+verified connection to a gateway, the only place that can open the credential, and the gateway saves
+the result. An Azure credential's check also finds its account's deployments, and the CLI prints how
+many targets are selected, how many of those are unavailable, and how many models have none, with a
+link to choose them. You need permission to manage the credentials. A failed check leaves the others
+to run, and the command then exits with status 1. Without `--organization`, the credentials are in
+your personal organization.
 
 ### Call the dashboard API
 

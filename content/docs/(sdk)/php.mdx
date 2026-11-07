@@ -24,7 +24,7 @@ Set `STOGAS_API_KEY` and `STOGAS_MODEL` in your environment.
 ## Start the transport
 
 Save this as `Transport.php`. It owns the native handle and provides the local base URL
-for your HTTP client. The default configuration selects native attested TLS; pass
+for your HTTP client. The default configuration selects native attested TLS. Pass
 `['security' => 'e2ee']` to select E2EE.
 
 ```php
@@ -90,7 +90,7 @@ final class Transport
 
 Save this as `main.php`, alongside `Transport.php` and Composer's `vendor` directory.
 The OpenAI client formats requests and parses responses. Symfony checks HTTP stream
-completion; redirects and automatic retries are disabled.
+completion. Redirects and automatic retries are disabled.
 
 ```php
 <?php
@@ -147,7 +147,7 @@ php -d ffi.enable=true main.php
 ```
 
 Reuse the transport and client in a long-running application, then close them when
-its work finishes. If you stop reading a stream early, treat it as cancelled; partial
+its work finishes. If you stop reading a stream early, treat it as cancelled. Partial
 text does not establish successful completion. Do not automatically retry a request
 whose delivery is uncertain.
 

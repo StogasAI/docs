@@ -5,7 +5,7 @@ icon: logo:javascript
 ---
 
 The `stogas` package gives the OpenAI client a verified, encrypted `fetch`. The examples are
-TypeScript; in JavaScript, leave out the type annotations. For browsers and edge Workers, see
+TypeScript. In JavaScript, leave out the type annotations. For browsers and edge Workers, see
 [Browser and Workers](/docs/browser-workers).
 
 ## Install
@@ -43,7 +43,7 @@ try {
 
 `openAIOptions` supplies the base URL, the API key and the `fetch` adapter. Requests go as binary
 encrypted records to `https://e2ee.stogas.ai/v1/session`. The transport supports Chat Completions
-and Responses; other paths fail before credentials are sent.
+and Responses. Other paths fail before credentials are sent.
 
 ## Stream and cancel
 
@@ -109,8 +109,8 @@ const response = await client.responses.create(
 );
 ```
 
-The transport checks the receipt automatically. For a stream, read it to the end; the receipt comes
-last. A failed check throws an error and does not send the request again.
+The transport checks the receipt automatically. For a stream, read it to the end, because the
+receipt comes last. A failed check throws an error and does not send the request again.
 
 ## Check evidence offline
 

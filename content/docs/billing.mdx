@@ -40,9 +40,15 @@ An organization with a signed agreement can pay for its usage by invoice, with n
 To set one up, contact [billing@stogas.ai](mailto:billing@stogas.ai).
 
 - Requests can spend until the balance reaches minus the agreed credit limit.
-- You can pay invoices with any payment method, and the usual [fees](#fees) apply.
+- On the 1st of each month, we invoice the previous month's usage. Months follow UTC.
+- An invoice is due after the payment terms in your agreement, such as 30 days after we issue it.
+- You can pay invoices with any payment method, and the usual [fees](#fees) apply. A payment pays
+  the oldest unpaid invoice first.
 - If an invoice stays overdue, we can end the agreement. The organization then returns to prepaid
   billing, new requests fail while its balance is below zero, and its invoices stay due.
+- Until the agreement ends and you pay every invoice, you cannot delete the organization, and its
+  last member cannot leave it or delete their account. Leaving fails with
+  `409 ORG_INVOICED_BILLING`. We issue the last invoice on the 1st after the agreement ends.
 
 ## Balance changes
 
