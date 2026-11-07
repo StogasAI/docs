@@ -17,10 +17,11 @@ the same tier names for every provider and converts them to each provider's own 
 Each tier of a model is a separate deployment with its own price. Search the
 [catalog](/docs/models#find-a-model) for a model to see its tiers.
 
-The catalog also lists batch APIs as deployments of the `batch` tier, with IDs that contain
-`-batch`. A batch API runs a file of requests as one job, later and at about half the Standard
-price. Stogas does not serve batch deployments, because the gateway answers each request as
-it arrives, so a request that names one returns `model_unavailable`.
+The catalog also lists batch APIs, each as a route of its own with `batch: true`, whose
+deployments have IDs that contain `-batch`. A batch API runs a file of requests as one job, later
+and at about half the Standard price. Stogas does not serve batch deployments, because the
+gateway answers each request as it arrives, so a request that names one returns
+`model_unavailable`.
 
 ## Select a tier
 
