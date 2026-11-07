@@ -30,6 +30,9 @@
 			"name": "BYOK"
 		},
 		{
+			"name": "Encryption keys"
+		},
+		{
 			"name": "Folders"
 		},
 		{
@@ -596,6 +599,8 @@
 															"domain.created",
 															"domain.verified",
 															"domain.deleted",
+															"encryption_key.registered",
+															"encryption_key.removed",
 															"member.joined",
 															"member.left",
 															"member.removed",
@@ -934,6 +939,8 @@
 												"domain.created",
 												"domain.verified",
 												"domain.deleted",
+												"encryption_key.registered",
+												"encryption_key.removed",
 												"member.joined",
 												"member.left",
 												"member.removed",
@@ -5109,163 +5116,6 @@
 				}
 			}
 		},
-		"/api/{orgId}/policies/encryption-keys": {
-			"get": {
-				"operationId": "listEncryptionKeys",
-				"tags": [
-					"Policies"
-				],
-				"summary": "List encryption keys",
-				"description": "Returns each customer encryption key that a policy or credential you can view uses: the policies with an export or redaction that it encrypts, and where each holds them, and the credentials whose secrets it encrypts. With permission to read the organization policy, it also returns every key that the policy registers. A key that is used without a registration has a null label, because requests that need it fail.",
-				"security": [
-					{
-						"accessToken": []
-					}
-				],
-				"parameters": [
-					{
-						"$ref": "#/components/parameters/orgId"
-					}
-				],
-				"responses": {
-					"200": {
-						"description": "OK",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "object",
-									"properties": {
-										"keys": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"label": {
-														"type": [
-															"string",
-															"null"
-														]
-													},
-													"keyId": {
-														"type": "string",
-														"pattern": "^[0-9a-f]{64}$"
-													},
-													"policyCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													},
-													"policies": {
-														"maxItems": 100,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"scope": {
-																	"type": "string",
-																	"enum": [
-																		"organization",
-																		"folder",
-																		"grant",
-																		"role",
-																		"member",
-																		"credential",
-																		"key"
-																	]
-																},
-																"id": {
-																	"type": "string",
-																	"minLength": 1
-																},
-																"name": {
-																	"type": [
-																		"string",
-																		"null"
-																	]
-																},
-																"paths": {
-																	"minItems": 1,
-																	"type": "array",
-																	"items": {
-																		"type": "string",
-																		"minLength": 1
-																	}
-																}
-															},
-															"required": [
-																"scope",
-																"id",
-																"name",
-																"paths"
-															],
-															"additionalProperties": false
-														}
-													},
-													"credentialCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													},
-													"credentials": {
-														"maxItems": 100,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"id": {
-																	"type": "string",
-																	"format": "uuid"
-																},
-																"name": {
-																	"type": "string"
-																},
-																"provider": {
-																	"type": "string",
-																	"enum": [
-																		"anthropic",
-																		"aws",
-																		"azure",
-																		"chutes",
-																		"google-cloud",
-																		"openai"
-																	]
-																}
-															},
-															"required": [
-																"id",
-																"name",
-																"provider"
-															],
-															"additionalProperties": false
-														}
-													}
-												},
-												"required": [
-													"label",
-													"keyId",
-													"policyCount",
-													"policies",
-													"credentialCount",
-													"credentials"
-												],
-												"additionalProperties": false
-											}
-										}
-									},
-									"required": [
-										"keys"
-									],
-									"additionalProperties": false
-								}
-							}
-						}
-					},
-					"default": {
-						"$ref": "#/components/responses/Error"
-					}
-				}
-			}
-		},
 		"/api/{orgId}/policies/check-grant": {
 			"post": {
 				"operationId": "createPolicyCheckGrant",
@@ -5712,7 +5562,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 21,
+																"maxItems": 20,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5736,8 +5586,7 @@
 																		"routing.retries",
 																		"routing.fallbacks",
 																		"routing.missingEncryptionKeys",
-																		"delegation",
-																		"encryption"
+																		"delegation"
 																	]
 																}
 															}
@@ -5840,7 +5689,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 21,
+																"maxItems": 20,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5864,8 +5713,7 @@
 																		"routing.retries",
 																		"routing.fallbacks",
 																		"routing.missingEncryptionKeys",
-																		"delegation",
-																		"encryption"
+																		"delegation"
 																	]
 																}
 															},
@@ -6046,6 +5894,536 @@
 										"revision",
 										"enabled",
 										"expiresAt"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/encryption-keys": {
+			"get": {
+				"operationId": "listEncryptionKeys",
+				"tags": [
+					"Encryption keys"
+				],
+				"summary": "List encryption keys",
+				"description": "Returns every customer encryption key that the organization registers, and each key that a policy or credential you can view uses: the policies with an export or redaction that it encrypts, and where each holds them, and the credentials whose secrets it encrypts. A key that is used without a registration has a null label, because requests that need it fail.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"keys": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"label": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"keyId": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"policyCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"policies": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"scope": {
+																	"type": "string",
+																	"enum": [
+																		"organization",
+																		"folder",
+																		"grant",
+																		"role",
+																		"member",
+																		"credential",
+																		"key"
+																	]
+																},
+																"id": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"name": {
+																	"type": [
+																		"string",
+																		"null"
+																	]
+																},
+																"paths": {
+																	"minItems": 1,
+																	"type": "array",
+																	"items": {
+																		"type": "string",
+																		"minLength": 1
+																	}
+																}
+															},
+															"required": [
+																"scope",
+																"id",
+																"name",
+																"paths"
+															],
+															"additionalProperties": false
+														}
+													},
+													"credentialCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"credentials": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"id": {
+																	"type": "string",
+																	"format": "uuid"
+																},
+																"name": {
+																	"type": "string"
+																},
+																"provider": {
+																	"type": "string",
+																	"enum": [
+																		"anthropic",
+																		"aws",
+																		"azure",
+																		"chutes",
+																		"google-cloud",
+																		"openai"
+																	]
+																}
+															},
+															"required": [
+																"id",
+																"name",
+																"provider"
+															],
+															"additionalProperties": false
+														}
+													}
+												},
+												"required": [
+													"label",
+													"keyId",
+													"policyCount",
+													"policies",
+													"credentialCount",
+													"credentials"
+												],
+												"additionalProperties": false
+											},
+											"description": "Keys that something uses without a registration first, then registered keys by label."
+										}
+									},
+									"required": [
+										"keys"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/encryption-keys/{keyId}": {
+			"put": {
+				"operationId": "registerEncryptionKey",
+				"tags": [
+					"Encryption keys"
+				],
+				"summary": "Register an encryption key",
+				"description": "Needs organization management. Requests send the key under its label, and only registered keys can encrypt credentials and policies. Registering a key again under its label changes nothing. A key registered under another label gets 409 ENCRYPTION_KEY_REGISTERED, a label that another key has gets 409 ENCRYPTION_KEY_LABEL_TAKEN, and an organization can register up to 32 keys.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"pattern": "^[0-9a-f]{64}$"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"label": {
+										"type": "string",
+										"pattern": "^[a-z][a-z0-9_-]{0,47}$",
+										"description": "The name that requests send the key under."
+									}
+								},
+								"required": [
+									"label"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"keys": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"label": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"keyId": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"policyCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"policies": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"scope": {
+																	"type": "string",
+																	"enum": [
+																		"organization",
+																		"folder",
+																		"grant",
+																		"role",
+																		"member",
+																		"credential",
+																		"key"
+																	]
+																},
+																"id": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"name": {
+																	"type": [
+																		"string",
+																		"null"
+																	]
+																},
+																"paths": {
+																	"minItems": 1,
+																	"type": "array",
+																	"items": {
+																		"type": "string",
+																		"minLength": 1
+																	}
+																}
+															},
+															"required": [
+																"scope",
+																"id",
+																"name",
+																"paths"
+															],
+															"additionalProperties": false
+														}
+													},
+													"credentialCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"credentials": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"id": {
+																	"type": "string",
+																	"format": "uuid"
+																},
+																"name": {
+																	"type": "string"
+																},
+																"provider": {
+																	"type": "string",
+																	"enum": [
+																		"anthropic",
+																		"aws",
+																		"azure",
+																		"chutes",
+																		"google-cloud",
+																		"openai"
+																	]
+																}
+															},
+															"required": [
+																"id",
+																"name",
+																"provider"
+															],
+															"additionalProperties": false
+														}
+													}
+												},
+												"required": [
+													"label",
+													"keyId",
+													"policyCount",
+													"policies",
+													"credentialCount",
+													"credentials"
+												],
+												"additionalProperties": false
+											},
+											"description": "Keys that something uses without a registration first, then registered keys by label."
+										}
+									},
+									"required": [
+										"keys"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"delete": {
+				"operationId": "removeEncryptionKey",
+				"tags": [
+					"Encryption keys"
+				],
+				"summary": "Remove an encryption key",
+				"description": "Needs organization management. Until you register the key again, requests skip the credentials that it encrypts, and requests that need policy settings that it encrypts fail.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"pattern": "^[0-9a-f]{64}$"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"keys": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"label": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"keyId": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"policyCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"policies": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"scope": {
+																	"type": "string",
+																	"enum": [
+																		"organization",
+																		"folder",
+																		"grant",
+																		"role",
+																		"member",
+																		"credential",
+																		"key"
+																	]
+																},
+																"id": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"name": {
+																	"type": [
+																		"string",
+																		"null"
+																	]
+																},
+																"paths": {
+																	"minItems": 1,
+																	"type": "array",
+																	"items": {
+																		"type": "string",
+																		"minLength": 1
+																	}
+																}
+															},
+															"required": [
+																"scope",
+																"id",
+																"name",
+																"paths"
+															],
+															"additionalProperties": false
+														}
+													},
+													"credentialCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"credentials": {
+														"maxItems": 100,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"id": {
+																	"type": "string",
+																	"format": "uuid"
+																},
+																"name": {
+																	"type": "string"
+																},
+																"provider": {
+																	"type": "string",
+																	"enum": [
+																		"anthropic",
+																		"aws",
+																		"azure",
+																		"chutes",
+																		"google-cloud",
+																		"openai"
+																	]
+																}
+															},
+															"required": [
+																"id",
+																"name",
+																"provider"
+															],
+															"additionalProperties": false
+														}
+													}
+												},
+												"required": [
+													"label",
+													"keyId",
+													"policyCount",
+													"policies",
+													"credentialCount",
+													"credentials"
+												],
+												"additionalProperties": false
+											},
+											"description": "Keys that something uses without a registration first, then registered keys by label."
+										}
+									},
+									"required": [
+										"keys"
 									],
 									"additionalProperties": false
 								}
@@ -6244,7 +6622,7 @@
 					"BYOK"
 				],
 				"summary": "Add a BYOK credential",
-				"description": "In an organization whose allowStoredCredentials setting is false, a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, so save it customer-encrypted instead.",
+				"description": "In an organization whose allowStoredCredentials setting is false, a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, so save it customer-encrypted instead. A credential encrypted with a key that the organization has not registered gets 409 ENCRYPTION_KEY_UNREGISTERED.",
 				"security": [
 					{
 						"accessToken": [
@@ -7382,6 +7760,7 @@
 					"BYOK"
 				],
 				"summary": "Update a BYOK credential",
+				"description": "A credential encrypted with a key that the organization has not registered gets 409 ENCRYPTION_KEY_UNREGISTERED.",
 				"security": [
 					{
 						"accessToken": [
@@ -7642,7 +8021,7 @@
 					"BYOK"
 				],
 				"summary": "Allow a gateway to check a customer-encrypted credential",
-				"description": "Only a gateway can open a customer-encrypted credential, with the key that encrypted it. Within five minutes, send the grant to the gateway's `POST /v1/byok/check` with that key under `keyLabel`, and the gateway saves the result on the credential. `stogas byok check` makes both requests.",
+				"description": "Only a gateway can open a customer-encrypted credential, with the key that encrypted it. Within five minutes, send the grant to the gateway's `POST /v1/byok/check` with that key under `keyLabel`, and the gateway saves the result on the credential. `stogas byok check` makes both requests. A credential whose key the organization has not registered gets 409 ENCRYPTION_KEY_UNREGISTERED.",
 				"security": [
 					{
 						"accessToken": [
@@ -7689,7 +8068,7 @@
 										"keyLabel": {
 											"type": "string",
 											"pattern": "^[a-z][a-z0-9_-]{0,47}$",
-											"description": "The label that the organization policy registers the key under."
+											"description": "The label that the organization registers the key under."
 										},
 										"provider": {
 											"type": "string",
@@ -16949,7 +17328,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -16973,8 +17352,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											}
 										}
@@ -17077,7 +17455,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -17101,8 +17479,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											}
 										},
@@ -18060,28 +18437,6 @@
 						"type": "string",
 						"const": "https://stogas.ai/schemas/key-config-v1.json"
 					},
-					"encryption": {
-						"type": "object",
-						"properties": {
-							"keys": {
-								"minProperties": 1,
-								"type": "object",
-								"propertyNames": {
-									"type": "string",
-									"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-								},
-								"additionalProperties": {
-									"type": "string",
-									"pattern": "^[0-9a-f]{64}$"
-								}
-							}
-						},
-						"required": [
-							"keys"
-						],
-						"additionalProperties": false,
-						"description": "Customer encryption key identifiers by label. Organization scope only. Never include the keys themselves."
-					},
 					"input": {
 						"type": "object",
 						"properties": {
@@ -18917,7 +19272,7 @@
 								},
 								"replaced": {
 									"minItems": 1,
-									"maxItems": 21,
+									"maxItems": 20,
 									"type": "array",
 									"items": {
 										"type": "object",
@@ -18944,8 +19299,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											},
 											"policy": {
@@ -19094,7 +19448,7 @@
 					},
 					"setBy": {
 						"minItems": 1,
-						"maxItems": 756,
+						"maxItems": 720,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -19121,8 +19475,7 @@
 										"routing.retries",
 										"routing.fallbacks",
 										"routing.missingEncryptionKeys",
-										"delegation",
-										"encryption"
+										"delegation"
 									]
 								},
 								"policy": {
@@ -19169,7 +19522,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19193,8 +19546,7 @@
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
-												"delegation",
-												"encryption"
+												"delegation"
 											]
 										},
 										"uniqueItems": true
@@ -19207,7 +19559,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19231,8 +19583,7 @@
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
-												"delegation",
-												"encryption"
+												"delegation"
 											]
 										},
 										"uniqueItems": true
@@ -19245,7 +19596,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19269,8 +19620,7 @@
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
-												"delegation",
-												"encryption"
+												"delegation"
 											]
 										},
 										"uniqueItems": true
@@ -19283,7 +19633,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19307,8 +19657,7 @@
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
-												"delegation",
-												"encryption"
+												"delegation"
 											]
 										},
 										"uniqueItems": true
@@ -19321,7 +19670,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19345,8 +19694,7 @@
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
-												"delegation",
-												"encryption"
+												"delegation"
 											]
 										},
 										"uniqueItems": true
@@ -19359,7 +19707,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19383,8 +19731,7 @@
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
-												"delegation",
-												"encryption"
+												"delegation"
 											]
 										},
 										"uniqueItems": true
@@ -19397,7 +19744,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -20468,28 +20815,6 @@
 						"type": "string",
 						"const": "https://stogas.ai/schemas/key-config-v1.json"
 					},
-					"encryption": {
-						"type": "object",
-						"properties": {
-							"keys": {
-								"minProperties": 1,
-								"type": "object",
-								"propertyNames": {
-									"type": "string",
-									"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-								},
-								"additionalProperties": {
-									"type": "string",
-									"pattern": "^[0-9a-f]{64}$"
-								}
-							}
-						},
-						"required": [
-							"keys"
-						],
-						"additionalProperties": false,
-						"description": "Customer encryption key identifiers by label. Organization scope only. Never include the keys themselves."
-					},
 					"delegation": {
 						"type": "object",
 						"properties": {
@@ -20501,7 +20826,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20525,8 +20850,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -20542,7 +20866,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -20566,8 +20890,7 @@
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
-																"delegation",
-																"encryption"
+																"delegation"
 															]
 														},
 														"uniqueItems": true
@@ -20595,7 +20918,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -20619,8 +20942,7 @@
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
-																	"delegation",
-																	"encryption"
+																	"delegation"
 																]
 															},
 															"uniqueItems": true
@@ -20645,7 +20967,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20669,8 +20991,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -20686,7 +21007,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -20710,8 +21031,7 @@
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
-																"delegation",
-																"encryption"
+																"delegation"
 															]
 														},
 														"uniqueItems": true
@@ -20739,7 +21059,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -20763,8 +21083,7 @@
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
-																	"delegation",
-																	"encryption"
+																	"delegation"
 																]
 															},
 															"uniqueItems": true
@@ -20789,7 +21108,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20813,8 +21132,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -20830,7 +21148,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -20854,8 +21172,7 @@
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
-																"delegation",
-																"encryption"
+																"delegation"
 															]
 														},
 														"uniqueItems": true
@@ -20883,7 +21200,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -20907,8 +21224,7 @@
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
-																	"delegation",
-																	"encryption"
+																	"delegation"
 																]
 															},
 															"uniqueItems": true
@@ -20933,7 +21249,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20957,8 +21273,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -20974,7 +21289,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -20998,8 +21313,7 @@
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
-																"delegation",
-																"encryption"
+																"delegation"
 															]
 														},
 														"uniqueItems": true
@@ -21027,7 +21341,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21051,8 +21365,7 @@
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
-																	"delegation",
-																	"encryption"
+																	"delegation"
 																]
 															},
 															"uniqueItems": true
@@ -21077,7 +21390,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21101,8 +21414,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -21118,7 +21430,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21142,8 +21454,7 @@
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
-																"delegation",
-																"encryption"
+																"delegation"
 															]
 														},
 														"uniqueItems": true
@@ -21171,7 +21482,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21195,8 +21506,7 @@
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
-																	"delegation",
-																	"encryption"
+																	"delegation"
 																]
 															},
 															"uniqueItems": true
@@ -21221,7 +21531,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21245,8 +21555,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -21262,7 +21571,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 20,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21286,8 +21595,7 @@
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
-																"delegation",
-																"encryption"
+																"delegation"
 															]
 														},
 														"uniqueItems": true
@@ -21315,7 +21623,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 20,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21339,8 +21647,7 @@
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
-																	"delegation",
-																	"encryption"
+																	"delegation"
 																]
 															},
 															"uniqueItems": true
@@ -21363,7 +21670,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 20,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -22871,7 +23178,7 @@
 				},
 				"additionalProperties": false,
 				"title": "Stogas policy v1",
-				"description": "Structural editor schema for saved resource policies (organization, folder, grant, role, member, credential, key). Scope controls root registration and delegation targets. Save-time validation checks readable fields, including query grammar, IANA time zones, RE2 safety and cross-field limits. An encrypted export or redaction is validated at execution. The 262144-byte content limit counts decoded plugin plaintext, and storage allows bounded base64 overhead. Unknown properties are rejected."
+				"description": "Structural editor schema for saved resource policies (organization, folder, grant, role, member, credential, key). Scope controls delegation targets. Save-time validation checks readable fields, including query grammar, IANA time zones, RE2 safety and cross-field limits. An encrypted export or redaction is validated at execution. The 262144-byte content limit counts decoded plugin plaintext, and storage allows bounded base64 overhead. Unknown properties are rejected."
 			}
 		}
 	}

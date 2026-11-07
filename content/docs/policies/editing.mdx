@@ -79,7 +79,7 @@ saved version of its scope:
 | `"status": "valid"`                  | Every policy passed, including conditional rules that would not apply now.                  |
 | `"status": "partial"`                | The rest passed. `uncheckedPlugins` names each encrypted plugin whose key you didn't send.  |
 | `400` with `invalid_policy`          | A policy is invalid. The message does not say which one, to keep encrypted content private. |
-| `400` with `encryption_key_required` | A key is wrong, or does not match a registered identifier.                                  |
+| `400` with `encryption_key_required` | A key or label has the wrong format.                                                        |
 
 Saving also checks spending and rate limits, editing permissions and conflicts with other edits.
 Validation counts redaction limits as if every conditional rule applied at once.

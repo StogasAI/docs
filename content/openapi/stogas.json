@@ -672,7 +672,7 @@
 											"maxLength": 43,
 											"pattern": "^[A-Za-z0-9_-]{43}$"
 										},
-										"description": "Encryption keys by registered label, as unpadded base64url. Send the keys of encrypted exports and redactions to check them too. The gateway never stores or logs them."
+										"description": "Encryption keys by label, as unpadded base64url. Send the keys of encrypted exports and redactions to check them too. The gateway never stores or logs them."
 									}
 								}
 							}
@@ -891,7 +891,7 @@
 						}
 					},
 					"400": {
-						"description": "The body holds more than `encryption_keys` (`invalid_request`), a key is missing or wrong (`encryption_key_required`), the policy no longer registers the credential's key (`byok_key_unregistered`), or the credential is stored by Stogas (`credential_stored`). See [400 errors](/docs/reference/errors#400-bad-request)."
+						"description": "The body holds more than `encryption_keys` (`invalid_request`), a key is missing or wrong (`encryption_key_required`), the organization no longer registers the credential's key (`byok_key_unregistered`), or the credential is stored by Stogas (`credential_stored`). See [400 errors](/docs/reference/errors#400-bad-request)."
 					},
 					"401": {
 						"description": "The grant is missing, invalid or expired (`invalid_check_grant`).",
@@ -4460,7 +4460,7 @@
 			"RequestPolicy": {
 				"type": "object",
 				"additionalProperties": false,
-				"description": "Optional request policy, at most 16 KiB. Requires saved delegation.request permission. Required settings intersect saved policies; defaults can be replaced. Shared limits, delegation and encryption-key registration are forbidden. Consumed by the gateway and never forwarded upstream.",
+				"description": "Optional request policy, at most 16 KiB. Requires saved delegation.request permission. Required settings intersect saved policies; defaults can be replaced. Shared limits and delegation are forbidden. Consumed by the gateway and never forwarded upstream.",
 				"properties": {
 					"$schema": {
 						"type": "string",

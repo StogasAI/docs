@@ -3,7 +3,9 @@ title: Allow a gateway to check a customer-encrypted credential
 description: Only a gateway can open a customer-encrypted credential, with the
   key that encrypted it. Within five minutes, send the grant to the gateway's
   `POST /v1/byok/check` with that key under `keyLabel`, and the gateway saves
-  the result on the credential. `stogas byok check` makes both requests.
+  the result on the credential. `stogas byok check` makes both requests. A
+  credential whose key the organization has not registered gets 409
+  ENCRYPTION_KEY_UNREGISTERED.
 full: true
 _openapi:
   preload:
@@ -18,7 +20,8 @@ _openapi:
           that encrypted it. Within five minutes, send the grant to the
           gateway's `POST /v1/byok/check` with that key under `keyLabel`, and
           the gateway saves the result on the credential. `stogas byok check`
-          makes both requests.
+          makes both requests. A credential whose key the organization has not
+          registered gets 409 ENCRYPTION_KEY_UNREGISTERED.
 ---
 
 export default function Layout(props) {

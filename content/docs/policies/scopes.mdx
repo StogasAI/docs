@@ -23,12 +23,11 @@ key. Each is a scope. A request must follow every policy that applies to it, and
 
 ## Scope differences
 
-| Scope                         | `limits` | Registers `encryption.keys` | Sets `delegation` for resources below |
-| ----------------------------- | -------- | --------------------------- | ------------------------------------- |
-| Organization                  | Yes      | Yes                         | Yes                                   |
-| Folder, grant                 | Yes      | No                          | Yes                                   |
-| Role, member, credential, key | Yes      | No                          | No                                    |
-| Request                       | No       | No                          | No                                    |
+| Scope                         | `limits` | Sets `delegation` for resources below |
+| ----------------------------- | -------- | ------------------------------------- |
+| Organization, folder, grant   | Yes      | Yes                                   |
+| Role, member, credential, key | Yes      | No                                    |
+| Request                       | No       | No                                    |
 
 - Every scope accepts `access`, `input`, `timeouts`, `routing`, `plugins` and `rules`. Only
   organization, folder, grant, key and request policies can

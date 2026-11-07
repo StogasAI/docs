@@ -6,28 +6,6 @@
 			"type": "string",
 			"const": "https://stogas.ai/schemas/key-config-v1.json"
 		},
-		"encryption": {
-			"type": "object",
-			"properties": {
-				"keys": {
-					"minProperties": 1,
-					"type": "object",
-					"propertyNames": {
-						"type": "string",
-						"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-					},
-					"additionalProperties": {
-						"type": "string",
-						"pattern": "^[0-9a-f]{64}$"
-					}
-				}
-			},
-			"required": [
-				"keys"
-			],
-			"additionalProperties": false,
-			"description": "Customer encryption key identifiers by label. Organization scope only. Never include the keys themselves."
-		},
 		"delegation": {
 			"type": "object",
 			"properties": {
@@ -39,7 +17,7 @@
 									"type": "boolean"
 								},
 								{
-									"maxItems": 21,
+									"maxItems": 20,
 									"type": "array",
 									"items": {
 										"type": "string",
@@ -63,8 +41,7 @@
 											"routing.retries",
 											"routing.fallbacks",
 											"routing.missingEncryptionKeys",
-											"delegation",
-											"encryption"
+											"delegation"
 										]
 									},
 									"uniqueItems": true
@@ -80,7 +57,7 @@
 											"type": "boolean"
 										},
 										{
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -104,8 +81,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											},
 											"uniqueItems": true
@@ -133,7 +109,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -157,8 +133,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -183,7 +158,7 @@
 									"type": "boolean"
 								},
 								{
-									"maxItems": 21,
+									"maxItems": 20,
 									"type": "array",
 									"items": {
 										"type": "string",
@@ -207,8 +182,7 @@
 											"routing.retries",
 											"routing.fallbacks",
 											"routing.missingEncryptionKeys",
-											"delegation",
-											"encryption"
+											"delegation"
 										]
 									},
 									"uniqueItems": true
@@ -224,7 +198,7 @@
 											"type": "boolean"
 										},
 										{
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -248,8 +222,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											},
 											"uniqueItems": true
@@ -277,7 +250,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -301,8 +274,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -327,7 +299,7 @@
 									"type": "boolean"
 								},
 								{
-									"maxItems": 21,
+									"maxItems": 20,
 									"type": "array",
 									"items": {
 										"type": "string",
@@ -351,8 +323,7 @@
 											"routing.retries",
 											"routing.fallbacks",
 											"routing.missingEncryptionKeys",
-											"delegation",
-											"encryption"
+											"delegation"
 										]
 									},
 									"uniqueItems": true
@@ -368,7 +339,7 @@
 											"type": "boolean"
 										},
 										{
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -392,8 +363,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											},
 											"uniqueItems": true
@@ -421,7 +391,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -445,8 +415,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -471,7 +440,7 @@
 									"type": "boolean"
 								},
 								{
-									"maxItems": 21,
+									"maxItems": 20,
 									"type": "array",
 									"items": {
 										"type": "string",
@@ -495,8 +464,7 @@
 											"routing.retries",
 											"routing.fallbacks",
 											"routing.missingEncryptionKeys",
-											"delegation",
-											"encryption"
+											"delegation"
 										]
 									},
 									"uniqueItems": true
@@ -512,7 +480,7 @@
 											"type": "boolean"
 										},
 										{
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -536,8 +504,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											},
 											"uniqueItems": true
@@ -565,7 +532,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -589,8 +556,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -615,7 +581,7 @@
 									"type": "boolean"
 								},
 								{
-									"maxItems": 21,
+									"maxItems": 20,
 									"type": "array",
 									"items": {
 										"type": "string",
@@ -639,8 +605,7 @@
 											"routing.retries",
 											"routing.fallbacks",
 											"routing.missingEncryptionKeys",
-											"delegation",
-											"encryption"
+											"delegation"
 										]
 									},
 									"uniqueItems": true
@@ -656,7 +621,7 @@
 											"type": "boolean"
 										},
 										{
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -680,8 +645,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											},
 											"uniqueItems": true
@@ -709,7 +673,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -733,8 +697,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -759,7 +722,7 @@
 									"type": "boolean"
 								},
 								{
-									"maxItems": 21,
+									"maxItems": 20,
 									"type": "array",
 									"items": {
 										"type": "string",
@@ -783,8 +746,7 @@
 											"routing.retries",
 											"routing.fallbacks",
 											"routing.missingEncryptionKeys",
-											"delegation",
-											"encryption"
+											"delegation"
 										]
 									},
 									"uniqueItems": true
@@ -800,7 +762,7 @@
 											"type": "boolean"
 										},
 										{
-											"maxItems": 21,
+											"maxItems": 20,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -824,8 +786,7 @@
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
-													"delegation",
-													"encryption"
+													"delegation"
 												]
 											},
 											"uniqueItems": true
@@ -853,7 +814,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 20,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -877,8 +838,7 @@
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
-														"delegation",
-														"encryption"
+														"delegation"
 													]
 												},
 												"uniqueItems": true
@@ -901,7 +861,7 @@
 							"type": "boolean"
 						},
 						{
-							"maxItems": 21,
+							"maxItems": 20,
 							"type": "array",
 							"items": {
 								"type": "string",
@@ -2410,5 +2370,5 @@
 	"additionalProperties": false,
 	"$id": "https://stogas.ai/schemas/key-config-v1.json",
 	"title": "Stogas policy v1",
-	"description": "Structural editor schema for saved resource policies (organization, folder, grant, role, member, credential, key). Scope controls root registration and delegation targets. Save-time validation checks readable fields, including query grammar, IANA time zones, RE2 safety and cross-field limits. An encrypted export or redaction is validated at execution. The 262144-byte content limit counts decoded plugin plaintext, and storage allows bounded base64 overhead. Unknown properties are rejected."
+	"description": "Structural editor schema for saved resource policies (organization, folder, grant, role, member, credential, key). Scope controls delegation targets. Save-time validation checks readable fields, including query grammar, IANA time zones, RE2 safety and cross-field limits. An encrypted export or redaction is validated at execution. The 262144-byte content limit counts decoded plugin plaintext, and storage allows bounded base64 overhead. Unknown properties are rejected."
 }

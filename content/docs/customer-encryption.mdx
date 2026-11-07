@@ -40,18 +40,15 @@ key to a file with `--output org.key` instead. Keep a secure backup, such as a c
 
 ### Register the identifier
 
-Register the identifier under a label in the dashboard, which adds it to the organization policy's
-`encryption.keys`. Through the API, add it there yourself and keep the policy's other settings:
+Register the identifier under the same label in the dashboard, or with
+[Register an encryption key](/docs/reference/dashboard/encryption-keys/registerEncryptionKey).
+Requests send the key under this label, and credentials and policies can use only registered keys.
+Registering and removing keys needs organization management. The key works in requests
+[within three minutes](/docs/policies/scopes#when-changes-take-effect).
 
-```json title="Organization policy"
-{
-	"encryption": { "keys": { "providers": "THE_PRINTED_IDENTIFIER" } }
-}
-```
-
-Only the organization policy registers keys. A label is a lowercase letter followed by up to 47
-lowercase letters, digits, underscores or hyphens. Register each identifier once. Use separate keys
-when credentials, exports and redactions need different access.
+A label is a lowercase letter followed by up to 47 lowercase letters, digits, underscores or
+hyphens. Each identifier has one label, and an organization can register up to 32 keys. Use
+separate keys when credentials, exports and redactions need different access.
 
 </Step>
 </Steps>
@@ -143,8 +140,8 @@ Replace the plugin's value with the output, and keep the policy's other settings
 ```
 
 A rule's plugins take the output the same way, as in `rules.night.plugins.export`.
-[Save the policy](/docs/policies/editing). `keyId` selects the registered key. Saving checks only
-the readable settings and the envelope format.
+[Save the policy](/docs/policies/editing). `keyId` selects the registered key. Saving checks the
+readable settings, the envelope format and that the organization registers the key.
 
 </Step>
 <Step>
@@ -208,8 +205,9 @@ Keep the original policies and provider credentials so you can encrypt them agai
    view, such as `plugins.redaction` or `rules.night.plugins.export`.
 4. When the old key is no longer used, remove its registration, then stop sending it.
 
-Each step is a separate save that checks the current policy revision. Requests that still need a
-key after you remove its registration fail.
+After you remove a registration, requests skip the credentials that the key encrypts, and requests
+that need policy settings that it encrypts fail. You can still save a policy that uses the key, but
+no policy can start to use it until you register it again.
 
 ## Encryption details
 

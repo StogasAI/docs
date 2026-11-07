@@ -33,10 +33,6 @@ export const policySectionNames: Record<PolicySection, string> = {
 
 // The order follows the document's controls, then its groups of restrictions.
 const documentFields = {
-	encryption: {
-		description: 'Register customer encryption key identifiers by label on an organization policy.',
-		href: '/docs/customer-encryption#create-a-key'
-	},
 	$schema: {
 		description: 'Optional JSON Schema URL for editor completion. It does not change enforcement.',
 		href: '/docs/policies/editing#use-an-external-editor'

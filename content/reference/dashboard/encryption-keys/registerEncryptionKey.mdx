@@ -1,0 +1,35 @@
+---
+title: Register an encryption key
+description: Needs organization management. Requests send the key under its
+  label, and only registered keys can encrypt credentials and policies.
+  Registering a key again under its label changes nothing. A key registered
+  under another label gets 409 ENCRYPTION_KEY_REGISTERED, a label that another
+  key has gets 409 ENCRYPTION_KEY_LABEL_TAKEN, and an organization can register
+  up to 32 keys.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PUT
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Needs organization management. Requests send the key under its label,
+          and only registered keys can encrypt credentials and policies.
+          Registering a key again under its label changes nothing. A key
+          registered under another label gets 409 ENCRYPTION_KEY_REGISTERED, a
+          label that another key has gets 409 ENCRYPTION_KEY_LABEL_TAKEN, and an
+          organization can register up to 32 keys.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/encryption-keys/{keyId}', method: 'put' }]} />
+    </>
+  );
+}
