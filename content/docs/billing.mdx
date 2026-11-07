@@ -23,7 +23,8 @@ it.
 
 ## Payment methods
 
-We receive Bitcoin and Monero directly, and other coins through [CCPayment](https://ccpayment.com).
+We receive Bitcoin and Monero directly, other coins through [CCPayment](https://ccpayment.com), and
+cards through [Stripe](https://stripe.com).
 
 - A Bitcoin or Monero payment smaller than the fees to receive it is not credited.
 - Each member has their own Bitcoin and Monero deposit addresses, which they can use again.
@@ -33,6 +34,28 @@ We receive Bitcoin and Monero directly, and other coins through [CCPayment](http
   on the wrong network or without its memo may be lost.
 - A receipt keeps the billing details saved when we received its payment, and its PDF attaches a
   JSON record with the exact amounts and exchange rates.
+
+### Cards
+
+| Credit  | Total before sales tax | Stripe's fee | Our fee |
+| ------- | ---------------------- | ------------ | ------- |
+| $1.00   | $1.36                  | $0.34        | $0.02   |
+| $10.00  | $10.80                 | $0.61        | $0.19   |
+| $100.00 | $105.40                | $3.36        | $2.04   |
+
+- A card pays the credit, Stripe's 2.9% and 30¢ of the total, our 2% of what Stripe's fee leaves
+  and any sales tax, rounded up to the cent. The fees never exceed 5.5% of the credit, or $0.80 when
+  that is more, and the total must be at least $0.50.
+- Every card payment needs 3D Secure, so your bank may ask you to confirm it. Link, Apple Pay and
+  Google Pay are not available.
+- A card payment can add only the credit that the prepaid limits allow when you start it, less
+  credit that is still pending. If other payments use that room before your bank approves the
+  payment, or the organization is deleted or restricted, we cancel it and your card isn't charged.
+- Each account can start 10 card payments in any 24 hours, and one card can add at most $10,000 of
+  credit in any 24 hours across all accounts.
+- The payment page closes after 31 minutes.
+- Your bank holds the amount on your card until we take the payment. We check some payments first,
+  and if we decline one or don't take it within 7 days, your bank releases the hold.
 
 ## Invoiced billing
 
@@ -74,4 +97,4 @@ overdue. Reply to any of them to reach us.
 
 You cannot withdraw prepaid credit. Refunds follow the [Terms of Service](https://stogas.ai/tos)
 and the law. Contact [billing@stogas.ai](mailto:billing@stogas.ai) about a refund or a missing
-payment, with its coin and transaction ID.
+payment, with its transaction ID, and its coin for a crypto payment.

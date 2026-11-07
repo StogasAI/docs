@@ -12791,6 +12791,27 @@
 												"regtest"
 											]
 										},
+										"card": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"allowedUsd": {
+															"type": "string",
+															"maxLength": 78,
+															"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+														}
+													},
+													"required": [
+														"allowedUsd"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
 										"taxRate": {
 											"anyOf": [
 												{
@@ -12841,6 +12862,7 @@
 										"pendingPayments",
 										"estimates",
 										"walletNetwork",
+										"card",
 										"taxRate",
 										"retrievedAt"
 									],
@@ -13369,7 +13391,7 @@
 						"name": "filter",
 						"in": "query",
 						"required": false,
-						"description": "Payments that match this [filter](/docs/reference/filters). Fields: `state` (`confirming`, `crediting`, `pending`, `credited`, `review`, `failed`, `not_credited` or `too_small`), `currency`, `processor` (`ccpayment`, `manual` or `wallet`), `amount` in the payment's currency, `credit` in USD, which a payment has once it is credited, `received` and `id`. Free text matches the ID, state, currency, method and processor. A `sort:` term takes `received-desc`, `received-asc`, `credit-desc` or `credit-asc`.",
+						"description": "Payments that match this [filter](/docs/reference/filters). Fields: `state` (`confirming`, `crediting`, `pending`, `credited`, `review`, `failed`, `not_credited` or `too_small`), `currency`, `processor` (`ccpayment`, `manual`, `stripe` or `wallet`), `amount` in the payment's currency, `credit` in USD, which a payment has once it is credited, `received` and `id`. Free text matches the ID, state, currency, method and processor. A `sort:` term takes `received-desc`, `received-asc`, `credit-desc` or `credit-asc`.",
 						"schema": {
 							"default": "",
 							"type": "string",
@@ -13453,6 +13475,7 @@
 														"enum": [
 															"ccpayment",
 															"manual",
+															"stripe",
 															"wallet"
 														]
 													},
@@ -13461,6 +13484,69 @@
 													},
 													"providerHold": {
 														"type": "boolean"
+													},
+													"card": {
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"brand": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"minLength": 1,
+																				"maxLength": 32
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	},
+																	"last4": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"pattern": "^\\d{4}$"
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	},
+																	"canceledReason": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"enum": [
+																					"authorization_expired",
+																					"canceled_at_stripe",
+																					"card_limit",
+																					"card_not_authenticated",
+																					"high_risk",
+																					"operator",
+																					"organization_deleted",
+																					"organization_restricted",
+																					"prepaid_limit",
+																					"risk_unknown"
+																				]
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	}
+																},
+																"required": [
+																	"brand",
+																	"last4",
+																	"canceledReason"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"receipt": {
 														"type": "boolean"
@@ -13544,6 +13630,7 @@
 													"provider",
 													"payerIsViewer",
 													"providerHold",
+													"card",
 													"receipt",
 													"receivedAt",
 													"settledAt",
@@ -14033,6 +14120,74 @@
 										"coin",
 										"estimate",
 										"testnet"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/funding/card/checkout": {
+			"post": {
+				"operationId": "startCardPayment",
+				"tags": [
+					"Balance"
+				],
+				"summary": "Start a card payment",
+				"description": "Opens Stripe's payment page for a credit and returns its address, which stays open for 31 minutes. The total adds the funding fees and sales tax to the credit and must be at least $0.50. The credit can be at most what the prepaid limits allow now, less credit that is pending and credit that other card payments will add. Each account can start 10 card payments in any 24 hours.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"creditUsd": {
+										"type": "string",
+										"maxLength": 78,
+										"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
+									}
+								},
+								"required": [
+									"creditUsd"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"url": {
+											"type": "string",
+											"format": "uri"
+										}
+									},
+									"required": [
+										"url"
 									],
 									"additionalProperties": false
 								}
