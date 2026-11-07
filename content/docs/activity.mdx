@@ -46,9 +46,8 @@ Activity covers organization and member names, membership, invitations, roles, f
 API keys, credentials, single sign-on, billing details, and saved policies. A policy edit shows the
 changed fields, their values before and after, and the policy version. Literal dictionaries and
 custom redaction expressions show only rule counts and whether the rules changed. An edit whose
-values pass 16 KiB is recorded without them, and its policy versions show the edit while we keep
-them. An inherited change is recorded once, at the scope where it was made, not for every affected
-key.
+values pass 16 KiB is recorded without them, and its policy versions show the edit. An inherited
+change is recorded once, at the scope where it was made, not for every affected key.
 
 Activity records when a member creates, rotates or deletes an access token, and where GitHub found
 one in public. Each event appears in every organization that the token can act in, and names none of
@@ -66,9 +65,8 @@ CSV exports keep lists, names and changes as JSON text, and put an apostrophe be
 spreadsheet would run as a formula, such as `=SUM(A1)`. For a change that happened, `refusal` is
 `null`, or empty in CSV. For a refused attempt it is `permission`, `policy` or `read_only_token`.
 
-We keep the current version of every policy, and your organization's 10,000 newest earlier versions
-within 16 MiB of policy text. A save past either limit removes the oldest earlier versions. An event
-or request that names one of them then says the version is no longer kept.
+We keep every version of every policy while your organization exists, so an event or a request
+record always shows the policies that it names.
 
 Activity is operational history. Delivery can be delayed or interrupted, so it is not a
-guaranteed complete compliance record or a backup of every policy version.
+guaranteed complete compliance record.
