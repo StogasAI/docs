@@ -8105,6 +8105,18 @@
 								"false"
 							]
 						}
+					},
+					{
+						"name": "ssoRequired",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"true",
+								"false"
+							]
+						}
 					}
 				],
 				"responses": {
@@ -8186,6 +8198,9 @@
 															],
 															"additionalProperties": false
 														}
+													},
+													"ssoRequired": {
+														"type": "boolean"
 													}
 												},
 												"required": [
@@ -8195,7 +8210,8 @@
 													"organizationName",
 													"organizationPicture",
 													"organizationType",
-													"roles"
+													"roles",
+													"ssoRequired"
 												],
 												"additionalProperties": false
 											}

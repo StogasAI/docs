@@ -20,6 +20,9 @@ script.
   `403 ACCESS_TOKENS_NOT_ALLOWED` to every token at once, and a token can't select it.
   `GET /api/organizations` still lists it, with `allowAccessTokens` set to `false`. The dashboard
   and API keys aren't affected.
+- An organization that [requires single sign-on](/docs/single-sign-on#access-tokens) returns
+  `403 SSO_REQUIRED` to a token unless you created it after signing in through its provider.
+  `GET /api/organizations` then lists the organization with `ssoRequired` set to `true`.
 - A token stops working when it expires, when you delete it, and when you change your password.
 - After you rotate a token on the **Account** page, requests with the old token return
   `401 TOKEN_REPLACED`.

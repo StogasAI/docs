@@ -30,8 +30,16 @@ all members ends every sign-in at once. Saving another issuer or client ID turns
 off until the next test.
 
 Members who can manage the organization never need a sign-in, so a broken connection can't lock
-everyone out. Access tokens and API keys don't use single sign-on. To refuse access tokens, turn off
-**Allow access tokens**.
+everyone out. API keys don't use single sign-on.
+
+## Access tokens
+
+While single sign-on is required, an access token can act in the organization only if you created
+it, or approved its `stogas login`, after signing in through the provider. The token keeps working
+when that sign-in's length ends, until a manager signs out all members or saves another issuer, or
+you leave the organization. Other tokens get `403 SSO_REQUIRED`, and tokens of members who can
+manage the organization need no sign-in. To refuse every access token, turn off **Allow access
+tokens**.
 
 ## Domains
 
