@@ -79,9 +79,8 @@ func main() {
 }
 ```
 
-The local URL accepts Chat Completions, Responses and the policy check endpoint. Requests through it
-can run for up to one hour. Set a shorter deadline with the request `context.Context` or
-`http.Client.Timeout`.
+Requests through the local URL follow the [SDK limits](/docs/sdk-overview#limits). Set a shorter
+deadline with the request `context.Context` or `http.Client.Timeout`.
 
 ## Stream and cancel
 
