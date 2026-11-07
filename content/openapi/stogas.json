@@ -2027,6 +2027,14 @@
 								"type": "integer",
 								"minimum": 1,
 								"description": "The most reasoning tokens. Each deployment sets its own range."
+							},
+							"mode": {
+								"type": "string",
+								"description": "`pro` selects the model's [Pro deployment](/docs/reasoning#select-pro-mode), and `standard` its standard deployment.",
+								"enum": [
+									"standard",
+									"pro"
+								]
 							}
 						},
 						"additionalProperties": false
@@ -2358,7 +2366,7 @@
 					},
 					"reasoning_details": {
 						"type": "array",
-						"description": "Signed reasoning from an earlier Anthropic response. Send it back unchanged.",
+						"description": "Reasoning from an earlier reply. Send it back unchanged. Anthropic-format deployments take it, and so do OpenAI deployments that take only [Responses](/docs/providers#chat-completions-through-responses).",
 						"items": {
 							"type": "object"
 						}
@@ -2761,6 +2769,14 @@
 								"type": "integer",
 								"minimum": 1,
 								"description": "The most reasoning tokens. Each deployment sets its own range."
+							},
+							"mode": {
+								"type": "string",
+								"description": "`pro` selects the model's [Pro deployment](/docs/reasoning#select-pro-mode), and `standard` its standard deployment.",
+								"enum": [
+									"standard",
+									"pro"
+								]
 							}
 						},
 						"additionalProperties": false

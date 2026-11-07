@@ -17,8 +17,9 @@ explains.
 | [Google Cloud](/docs/providers/google-cloud) | Service account key   | Yes              | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | Post-quantum TLS                            |
 | [Chutes](/docs/providers/chutes)             | Ours, or your API key | Yes[^translated] | None                  | Automatic                       | None                              | E2EE to a verified TEE, or post-quantum TLS |
 
-Every provider serves Chat Completions. The [catalog](https://stogas.ai/catalog) shows each
-deployment's price, context window, input types, reasoning levels and data handling, and
+Every provider serves Chat Completions, some OpenAI and Azure deployments
+[through Responses](#chat-completions-through-responses). The [catalog](https://stogas.ai/catalog)
+shows each deployment's price, context window, input types, reasoning levels and data handling, and
 [routing policies](/docs/policies/routing) can filter on them, for example to allow only zero data
 retention deployments.
 
@@ -29,14 +30,23 @@ field that the provider cannot accept, or that the gateway cannot price, returns
 charge, and so does an unknown top-level field. The
 [compatibility notes](/docs/reference/provider-behavior) list fields that the gateway never accepts.
 
-## Responses through Chat Completions
+## Translated requests
 
-Azure and Chutes deployments that take only Chat Completions also take Responses requests. The
-gateway translates the request to Chat Completions, and returns the reply, or each streamed event,
-as Responses. The request record's `request_type` shows the API that you called, and each attempt's
+Some deployments take only one of Chat Completions and Responses. The gateway translates a request
+on the other API, and returns the reply, or each streamed event, on the API that you called:
+
+| You call         | Deployments                                                  | The gateway calls |
+| ---------------- | ------------------------------------------------------------ | ----------------- |
+| Responses        | Azure and Chutes deployments that take only Chat Completions | Chat Completions  |
+| Chat Completions | OpenAI and Azure deployments that take only Responses        | Responses         |
+
+The request record's `request_type` shows the API that you called, and each attempt's
 [catalog chain](/docs/request-records#catalog-history) names the route that the gateway called. A
-deployment that takes Responses itself always gets Responses, unless `model` names its Chat
-Completions route.
+deployment that takes the API that you call always gets it, unless `model` names its route for the
+other API. Routing leaves out a translated deployment that cannot take the request, so another
+deployment can serve it.
+
+### Responses through Chat Completions
 
 A translated request returns `400` for what Chat Completions cannot carry:
 
@@ -57,8 +67,16 @@ function calls arrive whole when the reply ends. Log probabilities cover only th
 a reply that also has reasoning or tool calls has none when the provider's tokens do not join into
 exactly that text.
 
-Routing leaves out a translated deployment that cannot take the request, so another deployment can
-serve it.
+### Chat Completions through Responses
+
+A translated request returns `400` for what Responses cannot carry:
+
+- `seed`, `stop`, `logit_bias` and `prediction`
+- message `name`
+- earlier `reasoning_details` on Azure
+
+OpenAI deployments return their reasoning encrypted in `reasoning_details`. Send it back unchanged
+in the assistant message, and the model continues from that reasoning.
 
 [^anthropic]: Only on deployments that Anthropic runs, whose IDs end in `-anthropic-hosted`.
 

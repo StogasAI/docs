@@ -34,10 +34,18 @@ to `medium`. `false` means `none`, and a value that conflicts with the effort is
 
 ## Select Pro mode
 
-Some models also have a Pro deployment[^pro], which does more work per request at its own price. On
-Responses, set `reasoning.mode`:
+Some models also have a Pro deployment[^pro], which does more work per request at its own price. Set
+`reasoning.mode`:
 
-```json
+```json tab="Chat Completions"
+{
+	"model": "gpt-5.6-sol",
+	"messages": [{ "role": "user", "content": "Review this migration plan." }],
+	"reasoning": { "mode": "pro", "effort": "high" }
+}
+```
+
+```json tab="Responses"
 {
 	"model": "gpt-5.6-sol",
 	"input": "Review this migration plan.",
@@ -50,7 +58,8 @@ Responses, set `reasoning.mode`:
   `openai-gpt-5.6-sol-pro` keeps its own mode.
 - A mode that your key cannot use returns `reasoning_mode_unavailable`, also when you name a
   deployment in that mode. Other values return `unsupported_reasoning_mode`.
-- Chat Completions rejects `reasoning.mode`.
+- Pro deployments take only Responses, so the gateway translates a Chat Completions request
+  [through Responses](/docs/providers#chat-completions-through-responses).
 - Pro combines with a [service tier](/docs/service-tiers), such as Pro at Flex.
 
 ## How the gateway converts an effort
