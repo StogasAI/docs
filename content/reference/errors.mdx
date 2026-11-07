@@ -16,9 +16,11 @@ Errors use the OpenAI error object:
 }
 ```
 
-Every gateway error has a code from the lists below. A provider error keeps the provider's code and
-message when they help you fix the request, and otherwise has `"code": null`. Provider credentials
-and internal details are never shown.
+Every gateway error has a code from the lists below. A provider's refusal keeps the provider's
+status, such as `404` or `422`, except that a credential or account failure becomes a
+[`424`](#424-failed-dependency). It keeps the provider's code and message when they help you fix
+the request, and otherwise has `"code": null`. Provider credentials and internal details are never
+shown.
 
 After a stream starts, its HTTP status cannot change, and an error arrives as an event in the
 stream. See [Streaming](/docs/streaming#handle-errors).
@@ -159,55 +161,58 @@ token limit, or when the wait is longer than a minute.
 
 ### 502 Bad gateway
 
-| Code                      | Meaning                                                                        |
-| ------------------------- | ------------------------------------------------------------------------------ |
-| `upstream_protocol_error` | The provider sent an invalid response over its confidential connection.        |
-| `null`                    | Another provider failure, such as a dropped connection or an invalid response. |
+| Code                       | Meaning                                                                                                                                                                |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `upstream_outcome_unknown` | A provider call failed after the gateway sent the request, so the provider may have run it. The message names the attempt and its deployment. See [Retries](#retries). |
+| `upstream_protocol_error`  | The provider sent an invalid response over its confidential connection.                                                                                                |
+| `null`                     | Another provider failure.                                                                                                                                              |
 
 ### 503 Service unavailable
 
 Send the request again later. The gateway did not send these requests to a model.
 
-| Code                            | Meaning                                                                                       |
-| ------------------------------- | --------------------------------------------------------------------------------------------- |
-| `gateway_unavailable`           | The gateway is temporarily unavailable.                                                       |
-| `gateway_draining`              | The gateway is shutting down for an update. Send new work on a new connection.                |
-| `gateway_capacity_exceeded`     | The gateway is too busy to accept the request now, or needed the memory a slow upload held.   |
-| `ip_admission_unavailable`      | The gateway cannot track new IP addresses now.                                                |
-| `key_configuration_changed`     | The key changed, and the gateway is loading the new version.                                  |
-| `byok_unavailable`              | Your provider credential is unavailable.                                                      |
-| `upstream_capacity_unavailable` | The provider has no capacity now.                                                             |
-| `upstream_verification_failed`  | The provider's confidential evidence did not verify, so the gateway did not send the request. |
-| `upstream_configuration_error`  | Our provider configuration is unavailable.                                                    |
+| Code                            | Meaning                                                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `gateway_unavailable`           | The gateway is temporarily unavailable.                                                                            |
+| `gateway_draining`              | The gateway is shutting down for an update. Send new work on a new connection.                                     |
+| `gateway_capacity_exceeded`     | The gateway is too busy to accept the request now, or needed the memory a slow upload held.                        |
+| `ip_admission_unavailable`      | The gateway cannot track new IP addresses now.                                                                     |
+| `key_configuration_changed`     | The key changed, and the gateway is loading the new version.                                                       |
+| `byok_unavailable`              | Your provider credential is unavailable.                                                                           |
+| `upstream_capacity_unavailable` | The provider has no capacity now.                                                                                  |
+| `upstream_unreachable`          | A provider call failed before the provider received the request. The message names the attempt and its deployment. |
+| `upstream_verification_failed`  | The provider's confidential evidence did not verify, so the gateway did not send the request.                      |
+| `upstream_configuration_error`  | Our provider configuration is unavailable.                                                                         |
 
-A `503` with `"code": null` comes from the provider, and the request may have reached it.
+### 504 Gateway timeout
 
-### 504 and 529
-
-| Status | Code              | Meaning                                                                              |
-| -----: | ----------------- | ------------------------------------------------------------------------------------ |
-|  `504` | `request_timeout` | A [timeout](/docs/policies/timeouts) expired. Generation may continue and be billed. |
-|  `529` | `null`            | The provider is overloaded.                                                          |
+| Code                       | Meaning                                                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `request_timeout`          | A [timeout](/docs/policies/timeouts) expired. Generation may continue and be billed.                                    |
+| `upstream_outcome_unknown` | A provider call timed out after the gateway sent the request, so the provider may have run it. See [Retries](#retries). |
 
 ## Retries
 
 The gateway retries and tries other deployments as your
 [routing policy](/docs/policies/routing#retries-and-fallbacks) allows. If every call fails, the
-response has the error that ended the request, such as an invalid request or a content filter.
-Otherwise it has the first deployment's error, unless a later error passes sooner when you wait:
-a rate limit with a shorter wait, or a server error that a retry can pass. An error that says a
-deployment no longer serves the model gives way to any other error. Each deployment counts with its
-last call, and a refusal by the gateway, such as a limit, counts like a call. A deployment that the
-gateway passes over while its provider's wait lasts counts with that provider error.
+response has the error that ended the request, such as an invalid request, a content filter or
+`upstream_outcome_unknown`. Otherwise it has the first deployment's error, unless a later error
+passes sooner when you wait: a rate limit with a shorter wait, or a call that never reached its
+provider. An error that says a deployment no longer serves the model gives way to any other error.
+Each deployment counts with its last call, and a refusal by the gateway, such as a limit, counts
+like a call. A deployment that the gateway passes over while its provider's wait lasts counts with
+that provider error.
 
-A retry from your client is a new request, billed on its own. If the connection drops after the
-request was sent, the model may already have run. Check the request in [Analytics](/docs/analytics)
-before you send it again.
+A retry from your client is a new request, billed on its own. When a request ends with
+`upstream_outcome_unknown`, or your connection to the gateway drops, the model may already have
+run. Check the request in [Analytics](/docs/analytics), and send it again only if a second run is
+acceptable.
 
 When a provider answers `429`, `503` or `529` with a wait, the gateway passes on what remains of
 it in `Retry-After`, as it does its own waits: in whole seconds, and up to a second apart for
-requests refused together. A response that a retry cannot pass has `X-Should-Retry: false`: a
-`424`, an error that only another deployment avoids, or a wait longer than a minute. A response
-that a retry can pass, although its status is one that clients do not retry, has
-`X-Should-Retry: true`. The OpenAI and Anthropic SDKs read both headers, and E2EE responses carry
-them too.
+requests refused together. A response that a retry cannot pass, or that a retry could run twice,
+has `X-Should-Retry: false`: a `424`, an error that only another deployment avoids, a wait longer
+than a minute, and any error after a provider may have run the request, such as
+`upstream_outcome_unknown` or a `request_timeout` while generation continues. A response that a
+retry can pass, although its status is one that clients do not retry, has `X-Should-Retry: true`. The OpenAI and Anthropic SDKs read
+both headers, and E2EE responses carry them too.

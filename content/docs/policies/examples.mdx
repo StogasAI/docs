@@ -113,8 +113,9 @@ so this accepts deployments in Europe, in the EU or in one European country. See
 
 ### Try OpenAI first, then Azure
 
-A request for `gpt-5.6-sol` goes to OpenAI first. If OpenAI fails, for example with a `5xx`
-response, the gateway tries your Azure deployment. The key needs an OpenAI and an Azure credential.
+A request for `gpt-5.6-sol` goes to OpenAI first. If OpenAI refuses the request, for example with a
+`429` rate limit, the gateway tries your Azure deployment. The key needs an OpenAI and an Azure
+credential.
 
 ```json title="Key policy"
 {
@@ -133,20 +134,6 @@ a model uses its cheapest deployment first. A request without a model uses the c
 {
 	"routing": {
 		"sort": [{ "by": "blended_price(3, 1)" }]
-	}
-}
-```
-
-### Never send a request twice
-
-After a lost connection or a `5xx` response, the provider may have run the request. With these
-values, the gateway does not call a provider again for the same request.
-
-```json title="Key policy"
-{
-	"routing": {
-		"retries": 0,
-		"fallbacks": 0
 	}
 }
 ```

@@ -60,14 +60,15 @@ field, and permitted [request policies](/docs/policies/request-policies) can set
 
 The response ends with `request_timeout`: HTTP 504 before the response starts, or an error event
 in a stream that has started. The gateway does not retry or try another deployment. A provider's
-own `408` or `504` response is a provider failure, which the gateway can
-[retry](/docs/policies/routing#retries-and-fallbacks).
+own `408` or `504` response also ends the request, with
+[`upstream_outcome_unknown`](/docs/reference/errors#504-gateway-timeout), because the provider may
+have run it.
 
 A timeout ends only your wait. Once the gateway has called the provider, the provider work continues up
 to 60 minutes. The gateway keeps reading the response and bills the usage, including usage that arrives
 after your response ended, so a short timeout does not limit the cost of a request that was sent.
-Set your client's retries so it does not send a timed-out request again when its outcome is
-unknown.
+The response then has `X-Should-Retry: false`, which the OpenAI and Anthropic SDKs follow. Set
+other clients so they do not send a timed-out request again when its outcome is unknown.
 
 ## Fields
 

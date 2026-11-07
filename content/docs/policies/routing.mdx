@@ -226,19 +226,20 @@ candidate in routing order, a **fallback**:
 
 By default, the gateway makes no retries and up to 2 fallbacks. The failure decides the next step:
 
-| Failure                                | Examples                                                                                                                                                                                                                                                        | Next step                                  |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Another call can succeed               | A lost connection, or a `408`, `409`, `429` or `5xx` response                                                                                                                                                                                                   | A retry. With no retries left, a fallback. |
-| The candidate cannot serve the request | A `401`, `402`, `403`, `404` or `410` response, a retired model, a provider account out of credit or past its spend limit, a provider account that refuses the deployment's region, or a prompt, body or image beyond the deployment's context window or limits | A fallback.                                |
-| The gateway refuses the candidate      | A [limit](/docs/policies/limits), your balance, or a credential that is disabled, expired or unavailable                                                                                                                                                        | A fallback, which can cost less.           |
-| The request cannot succeed             | Other `4xx` responses, such as an invalid request or a content filter                                                                                                                                                                                           | The request ends with the error.           |
+| Failure                                | Examples                                                                                                                                                                                                                                                        | Next step                                         |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| The provider refuses the call for now  | A `409` or `429` response, or a connection that fails before the provider receives the request                                                                                                                                                                  | A retry. With no retries left, a fallback.        |
+| The candidate cannot serve the request | A `401`, `402`, `403`, `404` or `410` response, a retired model, a provider account out of credit or past its spend limit, a provider account that refuses the deployment's region, or a prompt, body or image beyond the deployment's context window or limits | A fallback.                                       |
+| The gateway refuses the candidate      | A [limit](/docs/policies/limits), your balance, or a credential that is disabled, expired or unavailable                                                                                                                                                        | A fallback, which can cost less.                  |
+| The provider may have run the request  | A lost connection, a timeout, or a `408` or `5xx` response after the gateway sent the request                                                                                                                                                                   | The request ends with `upstream_outcome_unknown`. |
+| The request cannot succeed             | Other `4xx` responses, such as an invalid request or a content filter                                                                                                                                                                                           | The request ends with the error.                  |
 
 - Before a retry, the gateway waits about half a second, doubled for each retry up to 8 seconds,
   or longer when the provider asks with `Retry-After`. If the provider asks for more than 8
   seconds, or the wait would pass a [timeout](/docs/policies/timeouts), the gateway uses a
   fallback at once.
-- When the provider sends an `x-should-retry` header, it decides whether the gateway retries. A
-  fallback can still follow.
+- When a refusal carries an `x-should-retry` header, the header decides whether the gateway
+  retries, and a fallback can still follow.
 - The gateway makes no further call after you disconnect, after a timeout expires, or after a
   provider starts a successful response or reports usage. A failure in the gateway also ends the
   request.
@@ -254,9 +255,10 @@ By default, the gateway makes no retries and up to 2 fallbacks. The failure deci
   time and duration. A request makes at most twelve calls: three candidates with four calls each.
 
 <Callout type="warn">
-	After a lost connection or a `408` or `5xx` response, the provider may have run the request. A
-	retry or fallback then runs it again, and the provider can bill your own credential for both
-	calls. We bill only the usage we measure. To prevent this, set both fields to 0.
+	When the provider may have run the request, the gateway makes no retry or fallback, because a
+	second call could run it twice and the provider can bill your own credential for both. The
+	[error](/docs/reference/errors#502-bad-gateway) names the attempt and its deployment. Send the
+	request again only if a second run is acceptable.
 </Callout>
 
 When several policies set a field, the smallest value applies. Credential policies, and rules
