@@ -72,14 +72,16 @@ TEE deployments in these fields:
 | `dataHandling.endToEndEncrypted` | `true`          | `false`              |
 | `dataHandling.tee`               | `true`          | `false`              |
 | `dataHandling.storageLocation`   | `none`          | `world`              |
-| `dataHandling.retentionDays`     | `0`             | `30`                 |
+| `dataHandling.retentionDays`     | `0`             | missing              |
 | `dataHandling.zeroDataRetention` | `true`          | `false`              |
 | `upstream.hosting`               | missing         | `unknown`            |
 
 The operators may process and store content in the United States and other countries, including in
-Asia. They keep it for up to 30 days, or longer where the law or their security requires, and keep
-content that their safety systems flag for up to two years. Chutes' agreements forbid them to train
-on it. To keep requests on TEE deployments, filter on `deployment.dataHandling.endToEndEncrypted`.
+Asia. An operator that offers zero data retention for a model keeps nothing, and the others keep
+content generally for up to 30 days, or longer where the law or their security requires. Chutes does
+not say which applies to each model, so `retentionDays` is missing. Operators keep content that
+their safety systems flag for up to two years. Chutes' agreements forbid them to train on it. To keep
+requests on TEE deployments, filter on `deployment.dataHandling.endToEndEncrypted`.
 
 ## Supported requests
 
