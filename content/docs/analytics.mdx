@@ -5,7 +5,9 @@ icon: ChartLine
 ---
 
 Analytics shows each request's usage, cost, timing and outcome. It never stores prompts, responses
-or credentials. View access to a folder, grant or API key also shows its requests.
+or credentials. **Analytics → Read own** shows the requests of your own member keys, **View** on a
+folder, grant or API key shows its requests, and **Analytics → Read all** or **API keys → Read
+all** shows every request in the organization.
 
 ## Metrics
 
@@ -43,10 +45,10 @@ output. Generation speed divides generated tokens by the full request duration.
 
 ### Filters
 
-The dashboard suggests these filters, and the API's `filter` parameter takes the same
-[syntax](/docs/reference/filters). Text without a field searches IDs, names, providers, results,
-request types, error codes and HTTP statuses. Filters match whole values, so `:` and `=` are the
-same, and names and the listed values ignore case.
+The search and the API's `filter` parameter take these fields in the
+[filter syntax](/docs/reference/filters). Text without a field searches IDs, names, providers,
+results, request types, error codes and HTTP statuses. Filters match whole values, so `:` and `=`
+are the same, and names and the listed values ignore case.
 
 | Filter              | Matches                                                                                                                                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -92,7 +94,7 @@ filters.
 ## Download records
 
 Download the filtered requests as NDJSON, CSV or Parquet. NDJSON uses the same record as the raw
-request view; CSV and Parquet keep nested objects as JSON strings. The
+request view, and CSV and Parquet keep nested objects as JSON strings. The
 [request record reference](/docs/request-records) describes every field.
 
 To send each record to your own service as requests finish, use the [Export plugin](/docs/export).

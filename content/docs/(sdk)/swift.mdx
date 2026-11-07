@@ -5,7 +5,7 @@ icon: logo:swift
 ---
 
 The Swift package links our Rust transport directly on macOS 13 or later, iOS 15 or later and
-Linux. Use Swift 6.2 or later; this streaming example is a macOS command-line program. Set
+Linux. Use Swift 6.2 or later. This streaming example is a macOS command-line program. Set
 `STOGAS_API_KEY` and `STOGAS_MODEL`.
 
 ## Install
@@ -23,7 +23,7 @@ dependencies: [.product(name: "Stogas", package: "Stogas")]
 ```
 
 The archive includes the native library as an XCFramework for macOS, iOS devices and the iOS
-Simulator, and as a static artifact bundle on Linux; no Rust toolchain is required.
+Simulator, and as a static artifact bundle on Linux, so you need no Rust toolchain.
 
 ## Stream a response
 
@@ -99,11 +99,11 @@ uses the native transport.
 It prints SSE text, including comments and terminal events, and requires the verified
 `[DONE]` marker before reporting completion. URLSession can treat an interrupted chunked
 body as ordinary EOF, so checking EOF alone is insufficient. Use an SSE parser when consuming
-individual events in an application; comments beginning with `:` are not JSON.
+individual events in an application, because comments beginning with `:` are not JSON.
 For a buffered response, omit `stream` and use `session.data(for: request)`.
 
 A Swift task's cancellation stops its pending request. Keep cancellation and transport errors
-visible to callers; incomplete delivery must not become success or an automatic replay.
+visible to callers, so that incomplete delivery never becomes success or an automatic replay.
 Reuse one session in a long-running application and invalidate it before closing the transport. The release manifest lists the package’s supported targets. Use `STOGAS_BASE_URL` only when
 connecting through a separately running [verifier CLI](/docs/cli).
 

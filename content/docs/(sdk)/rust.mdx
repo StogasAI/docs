@@ -108,7 +108,7 @@ redirects and system proxies. Keep these settings: a lost response does not prov
 never ran. Choose the timeout to suit your application.
 
 The transport withholds stream completion until its required verification succeeds. Text can arrive
-earlier; cancellation or a verification error means delivery is incomplete.
+earlier, but cancellation or a verification error means delivery is incomplete.
 
 ## Buffered responses
 
@@ -157,8 +157,9 @@ let config = OpenAIConfig::new()
     .with_header("Stogas-Metadata", "v2")?;
 ```
 
-The transport checks the receipt before it returns the response. For a stream, read it to the end;
-the receipt comes last. A failed check fails the request, and the transport does not send it again.
+The transport checks the receipt before it returns the response. For a stream, read it to the end,
+because the receipt comes last. A failed check fails the request, and the transport does not send
+it again.
 
 ## Check evidence offline
 

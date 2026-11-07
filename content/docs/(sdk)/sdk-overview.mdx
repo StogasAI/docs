@@ -116,7 +116,8 @@ safe, or `execution_unknown` when the model may already have run. JavaScript thr
 
 The SDK's own calls, such as starting the transport or checking evidence offline, fail with the same
 codes: `code()` in Rust and Java, `code` in Python, Ruby, JavaScript and C, `Code` in Go and .NET,
-and `VerificationError.native(code:message:)` in Swift. Handle errors by code; messages can change.
+and `VerificationError.native(code:message:)` in Swift. Handle errors by code, because messages can
+change.
 
 | Code                        | Meaning                                                                                                 |
 | --------------------------- | ------------------------------------------------------------------------------------------------------- |

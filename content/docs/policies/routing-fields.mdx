@@ -25,7 +25,8 @@ fields.
 
 - IDs and strings are case sensitive.
 - Dates are `YYYY-MM-DD` strings, so `<` and `>` compare them in date order.
-- A field can be missing on a candidate; see [Missing values](/docs/policies/expressions#missing-values).
+- A field can be missing on a candidate, as
+  [Missing values](/docs/policies/expressions#missing-values) explains.
   `has(field)` checks presence. On a group such as `deployment.pricing`, `has` is true when any field
   in the group is present.
 - Unknown fields, wrong types and strings that a field can never hold, such as `'EU'` for a
@@ -81,7 +82,7 @@ a deployment that processes in `US` with a tool that processes in `DE` reads `wo
 
 `processingLocation` covers model inference and the hosted tools that the model may call. It does
 not cover where the provider's API endpoint receives and routes the request. `tee` and
-`teeVerified` describe the provider's inference workload; `endToEndEncrypted` describes the
+`teeVerified` describe the provider's inference workload, and `endToEndEncrypted` describes the
 connection from the gateway to that workload. None of them is proof that every component that can
 read content is trustworthy.
 
@@ -132,8 +133,8 @@ A route connects a provider to the interfaces that it serves. A route ID is not 
 
 <RoutingFields group="request" />
 
-Token estimates and costs are not available; see
-[Request facts](/docs/policies/expressions#request-facts).
+Token estimates and costs are not available, as
+[Request facts](/docs/policies/expressions#request-facts) explains.
 
 ## Pricing
 

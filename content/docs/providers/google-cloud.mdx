@@ -22,10 +22,28 @@ inference there.
 
 ## Create a credential
 
-Give a service account `roles/aiplatform.user` for Agent Platform, and also `roles/claude.user`
-for Claude Models on Google Cloud. Add its JSON key in [BYOK](/docs/byok), then delete the key
-file. Google blocks service account keys by default in organizations created since May 3, 2024, so
-an organization policy administrator may have to allow them in your project.
+1. Create a service account with the roles it needs, and a key for it:
+
+   ```bash
+   gcloud iam service-accounts create stogas-gateway --project=PROJECT_ID
+   gcloud projects add-iam-policy-binding PROJECT_ID \
+     --member=serviceAccount:stogas-gateway@PROJECT_ID.iam.gserviceaccount.com \
+     --role=roles/aiplatform.user
+   gcloud iam service-accounts keys create key.json \
+     --iam-account=stogas-gateway@PROJECT_ID.iam.gserviceaccount.com
+   ```
+
+   `roles/aiplatform.user` serves Agent Platform. For Claude Models on Google Cloud, grant
+   `roles/claude.user` too.
+
+2. Add `key.json` in [BYOK](/docs/byok), with your workspace ID for Claude Models on Google Cloud,
+   then delete `key.json`.
+
+If `keys create` fails with a policy error, your organization blocks service account keys. Google
+blocks them by default in organizations created since May 3, 2024. An organization policy
+administrator can allow them in one project: override the parent's policy for the constraint that
+blocks them, `iam.disableServiceAccountKeyCreation` or
+`iam.managed.disableServiceAccountKeyCreation`, and turn enforcement off.
 
 ## Customer encryption
 

@@ -23,9 +23,10 @@ also needs **Admin** on that grant, its folder or the organization. Creating or 
 
 ## Invitations
 
-Deleting an invitation stops further joins, and members who already joined stay. A
-[single sign-on](/docs/single-sign-on) invite has no link: people at your verified domains join
-through it when they sign in through your identity provider.
+Joining assigns the organization's current default role, so creating an invitation also needs the
+permissions to assign that role. Deleting an invitation stops further joins, and members who
+already joined stay. A [single sign-on](/docs/single-sign-on) invite has no link: people at your
+verified domains join through it when they sign in through your identity provider.
 
 ## Pictures
 
@@ -38,35 +39,44 @@ pixels, so no metadata such as a camera's location stays with it.
 ## Roles
 
 - A member gets the combined access of all their roles.
+- A role with no organization-wide permissions can still give access to the resources it lists.
 - Members can assign organization-wide permissions they hold. Giving new access to API keys or
   credentials also needs **Admin** on the matching resource.
 - Taking a role from someone, or removing them, needs the same permissions as assigning that role.
   You can drop your own roles.
 - **Roles → Manage** can create roles with permissions the manager does not hold, so give it only
   to people you trust with full control.
+- At least one member always holds **Roles → Manage**. A change that would leave none fails with
+  `409 ORG_LAST_ROLE_MANAGER`, so the last member who holds it cannot leave or be removed while
+  other members remain.
 
 ## Remove access
 
 Removing a member's last **Use** on a grant deletes their keys under it, as
 [Grants](/docs/grants) explains. To pause access without deleting anything, disable the grant or
-the key instead. Removing someone's access to a service key keeps the key; rotate its secret to
+the key instead. Removing someone's access to a service key keeps the key, so rotate its secret to
 stop copies they may hold.
 
-A member's invitations stay valid after they leave. When the last member leaves, the organization
-is deleted, and its financial history is kept.
+A member's invitations stay valid after they leave, and removing a member revokes the invitations
+they created. When the last member leaves, the organization is deleted, and its financial history
+is kept.
 
 ## Permission reference
+
+Permissions decide what a member can do, and [policies](/docs/policies/scopes) on their roles can
+still narrow their requests. [Who can edit each policy](/docs/policies/editing#who-can-edit) also
+depends on the parent policy's delegation settings.
 
 ### Resource permissions
 
 Add a folder, grant, service key or provider credential to a role and choose:
 
-| Permission | Allows                                                                                           |
-| ---------- | ------------------------------------------------------------------------------------------------ |
-| **View**   | Read settings, policies and usage.                                                               |
-| **Use**    | View, plus reveal a service-key secret, create member keys from a grant, or assign a credential. |
-| **Manage** | View, plus configure, rotate, disable or delete the resource.                                    |
-| **Admin**  | Use and Manage, plus give others access within that resource.                                    |
+| Permission | Dashboard | Allows                                                                                           |
+| ---------- | --------- | ------------------------------------------------------------------------------------------------ |
+| `view`     | View      | Read settings, policies and usage.                                                               |
+| `use`      | Use       | View, plus reveal a service-key secret, create member keys from a grant, or assign a credential. |
+| `manage`   | Manage    | View, plus configure, rotate, disable or delete the resource.                                    |
+| `access`   | Admin     | Use and Manage, plus give others access within that resource.                                    |
 
 Use and Manage can be combined as **Use and manage**. Manage alone cannot reveal a secret or give
 access to someone else.
@@ -76,8 +86,29 @@ access to someone else.
 - Credentials are not in folders. To add one to a key, see
   [Order credentials](/docs/byok#order-credentials).
 
-Organization permissions, such as **Members → Manage**, work across the organization, and the role
-editor describes each one. Permissions decide what a member can do;
-[policies](/docs/policies/scopes) on their roles can still narrow their requests.
-[Who can edit each policy](/docs/policies/editing#who-can-edit) also depends on the parent
-policy's delegation settings.
+### Organization permissions
+
+| Permission               | Dashboard             | Allows                                                                                                                                                             |
+| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `activity.read`          | Activity → Read       | Read and export [Activity](/docs/activity).                                                                                                                        |
+| `analytics.read_own`     | Analytics → Read own  | Read the requests of your own member keys.                                                                                                                         |
+| `analytics.read_all`     | Analytics → Read all  | Read every request in the organization.                                                                                                                            |
+| `api_keys.read_all`      | API keys → Read all   | Read every API key, grant and folder, every policy except credential policies, and every request.                                                                  |
+| `api_keys.use_all`       | API keys → Use all    | Reveal every service-key secret, and create your own keys from any grant.                                                                                          |
+| `api_keys.manage_all`    | API keys → Manage all | Create, edit and delete every API key, grant and folder, and edit every policy except credential policies.                                                         |
+| `api_keys.manage_access` | API keys → Admin all  | Use and manage every API key, grant and folder, and give others access to them.                                                                                    |
+| `billing.read`           | Billing → Read        | Read the balance, payments, invoices, receipts and billing details.                                                                                                |
+| `billing.manage`         | Billing → Manage      | Save billing details, and get the payment addresses that add credit.                                                                                               |
+| `byok.read_all`          | BYOK → Read all       | Read every provider credential and its policy.                                                                                                                     |
+| `byok.use_all`           | BYOK → Use all        | Assign any provider credential to the keys you manage.                                                                                                             |
+| `byok.manage_all`        | BYOK → Manage all     | Create, edit, replace, disable and delete every provider credential, and edit its policy.                                                                          |
+| `byok.manage_access`     | BYOK → Admin all      | Use and manage every provider credential, and give others access to it.                                                                                            |
+| `members.read`           | Members → Read        | Read members and roles.                                                                                                                                            |
+| `members.manage`         | Members → Manage      | Invite and remove members, read and delete invitations, assign the roles that the [rules](#roles) allow, and remove any member's picture.                          |
+| `organization.manage`    | Organization → Manage | Change the organization's name, picture and settings, and set up single sign-on. Members with it open the organization without single sign-on when it is required. |
+| `roles.manage`           | Roles → Manage        | Create, edit and delete roles, including roles with permissions you do not hold. With `members.manage`, assign any role.                                           |
+
+A role also gets the permissions that its permissions include. In API keys and BYOK, Admin all
+includes Use all and Manage all, and each of those includes Read all. Billing → Manage includes
+Billing → Read, Analytics → Read all includes Read own, and Members → Manage and Roles → Manage
+include Members → Read.

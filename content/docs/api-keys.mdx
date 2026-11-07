@@ -58,8 +58,12 @@ Every request must pass the key's policy, the policies above it and the organiza
 Folders group service keys and grants. Member keys follow their grant's folder. Folder policies,
 permissions and shared limits apply to everything inside.
 
-- Folder names are unique regardless of case, and folders cannot contain other folders.
+- An organization can have up to 50 folders, unless we agreed on more. Folder names are unique
+  regardless of case, and folders cannot contain other folders.
 - Moving a key or grant needs Admin on both folders, or organization-wide Admin for the
   organization root. A move changes the inherited policies, permissions and shared limits, and keys
-  keep their IDs and secrets. A member who loses their last **Use** on a grant loses their keys
+  keep their IDs and secrets.
+- Deleting a folder moves its keys and grants to the organization root, so deleting a folder that
+  holds any needs organization-wide Admin.
+- A member who loses their last **Use** on a grant through a move or deletion loses their keys
   under it, as [Grants](/docs/grants) explains.

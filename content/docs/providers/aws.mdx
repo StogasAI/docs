@@ -25,9 +25,28 @@ no Fast tier. Models before Claude 4.6 have no US-only inference there.
 
 ## Create a credential
 
-Give an IAM user the policy in [Grant access](#grant-access), and add one of its keys in
-[BYOK](/docs/byok) with a commercial Region, such as `us-east-1`. A Claude Platform on AWS workspace
-must be in that Region.
+1. Save the policy from [Grant access](#grant-access) as `policy.json`, and give it to a new IAM
+   user:
+
+   ```bash
+   aws iam create-user --user-name stogas-gateway
+   aws iam put-user-policy --user-name stogas-gateway \
+     --policy-name stogas-claude --policy-document file://policy.json
+   ```
+
+2. Create the user's key:
+
+   ```bash tab="Access key"
+   aws iam create-access-key --user-name stogas-gateway
+   ```
+
+   ```bash tab="Bedrock API key"
+   aws iam create-service-specific-credential --user-name stogas-gateway \
+     --service-name bedrock.amazonaws.com --credential-age-days 365
+   ```
+
+3. Add the key in [BYOK](/docs/byok) with a commercial Region, such as `us-east-1`. A Claude
+   Platform on AWS workspace must be in that Region.
 
 | Key                                              | Serves                                               |
 | ------------------------------------------------ | ---------------------------------------------------- |

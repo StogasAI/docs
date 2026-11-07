@@ -71,7 +71,8 @@ one more each second. A new gradual limit starts full.
 }
 ```
 
-- `anchor` is when a period starts; the others follow on the calendar. They are not rolling windows.
+- `anchor` is when a period starts, and the others follow on the calendar. They are not rolling
+  windows.
 - If you save a limit without an anchor, we set it to the start of the current unit in its time
   zone, such as midnight on the 1st for a month or Monday for a week. Later saves keep it while the
   limit's name, field and unit stay the same.
@@ -103,7 +104,8 @@ can spend only $2 more that month, even though its own limit allows $10 a day.
 `usd` limits count the full provider cost at catalog rates, including BYOK requests, where your
 balance pays only the BYOK fee. Write amounts as USD decimal strings from `"0"` to
 `"1000000000000"`, with up to 36 decimal places, in their shortest form: `"1.5"`, not `"1.50"`,
-`"01.5"` or `1.5`. `"0"` blocks every request that has a cost; a gradual limit needs more than `"0"`.
+`"01.5"` or `1.5`. `"0"` blocks every request that has a cost, and a gradual limit needs more than
+`"0"`.
 
 The provider can report more usage than the hold, so a request can go past a limit. A lower output
 limit keeps holds, and the possible overrun, small.
@@ -129,9 +131,9 @@ provider reports usage or cost, and is released when the request fails.
 
 - A request that a limit blocks takes nothing. A failed provider call does not give its request
   back.
-- Every organization also has a platform limit, which **Settings** shows. Playground and BYOK
-  requests count toward it, more keys add no capacity, and it comes back steadily. A request that
-  would wait for it longer than two seconds gets `429 platform_rate_limited`. Contact
+- Every organization also has a platform limit of 120 requests a second, which comes back steadily.
+  Playground and BYOK requests count toward it, and more keys add no capacity. A request that would
+  wait for it longer than two seconds gets `429 platform_rate_limited`. Contact
   [ops@stogas.ai](mailto:ops@stogas.ai) for a higher rate.
 
 ## Concurrent requests
@@ -180,8 +182,7 @@ match it:
 | Rename or remove a limit                                | Deleted. Adding it back starts from zero.                                                                          |
 | Add a limit                                             | Starts from zero. A key, grant or organization concurrent-request limit also counts the requests that are running. |
 
-A limit below current usage blocks new requests until usage falls under it. The key's **Overview**
-page shows each limit that applies, with its scope and usage.
+A limit below current usage blocks new requests until usage falls under it.
 
 ## Blocked requests
 

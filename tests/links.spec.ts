@@ -6,7 +6,7 @@ const out = join(__dirname, '../out');
 
 // Website pages that Docs links to. Web serves them on the same host, so the build does not hold
 // them.
-const WEBSITE_PATHS = new Set(['/catalog', '/tos', '/trust']);
+const WEBSITE_PATHS = new Set(['/catalog', '/locations/apac', '/tos', '/trust']);
 
 const ENTITIES: Record<string, string> = {
 	'&quot;': '"',

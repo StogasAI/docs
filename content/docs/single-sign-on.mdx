@@ -11,9 +11,10 @@ supported. Set it up in **Settings → Single sign-on**, which needs **Organizat
 
 ## Register Stogas with your provider
 
-Create a web application that uses the authorization code flow, with the redirect URI that
-**Settings** shows. Sign-in asks for the `openid`, `email` and `profile` scopes, or only the first
-two when the provider's discovery document lists its scopes without `profile`.
+Create a web application that uses the authorization code flow, with the redirect URI
+`https://app.stogas.ai/auth/sso/callback`. Sign-in asks for the `openid`, `email` and `profile`
+scopes, or only the first two when the provider's discovery document lists its scopes without
+`profile`.
 
 The issuer's OpenID Connect discovery document must name exactly that issuer. A multi-tenant
 endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refused. For Microsoft

@@ -52,9 +52,15 @@ application, and only a gateway can open it with your key.
 
    Then delete `app.json`, which holds the secret.
 
-2. Add `application.json` in [BYOK](/docs/byok) as a customer-encrypted credential, and run the
-   check that the dashboard shows where you keep the key. The check signs in with the application
-   and saves each account's deployments as targets.
+2. Add `application.json` in [BYOK](/docs/byok) as a customer-encrypted credential. Each account
+   that you connect becomes its own credential.
+3. [Check the credentials](/docs/cli#check-a-credential) where you keep the key:
+
+   ```bash
+   stogas byok check <credential-id>... --organization <organization-id>
+   ```
+
+   The check signs in with the application and saves each account's deployments as targets.
 
 Gateways look for new deployments once a day while requests use the credential, and each check
 looks at once. A replaced application keeps its targets until the next check.

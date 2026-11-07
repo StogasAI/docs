@@ -19,9 +19,9 @@ that does not cover it.
 
 ## Filters
 
-The dashboard suggests these filters, and the API's `filter` parameter takes the same
-[syntax](/docs/reference/filters). Text without a field matches member, access token and resource
-names and IDs, and event names.
+The search and the API's `filter` parameter take these fields in the
+[filter syntax](/docs/reference/filters). Text without a field matches member, access token and
+resource names and IDs, and event names.
 
 | Filter      | Matches                                                                                                                |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
@@ -59,6 +59,8 @@ A secret rotation records the action without the secret. Export events record th
 export was requested, not whether the file was saved.
 
 ## Retention and export
+
+Events are kept for 365 days.
 
 CSV exports keep lists, names and changes as JSON text, and put an apostrophe before text that a
 spreadsheet would run as a formula, such as `=SUM(A1)`. For a change that happened, `refusal` is

@@ -5,7 +5,7 @@ icon: Terminal
 ---
 
 The `stogas` CLI runs a local endpoint that verifies the gateway and protects each request. Point
-any OpenAI-compatible client at it; only the base URL changes. Use it from languages without an
+any OpenAI-compatible client at it by changing only the base URL. Use it from languages without an
 [SDK](/docs/sdk-overview), or from tools you cannot change. It also checks evidence and receipts
 offline, encrypts secrets for [customer encryption](/docs/customer-encryption), edits policies in
 your own editor, and manages your account.
@@ -108,8 +108,8 @@ stogas serve --browser-origin https://app.example.com
 ```
 
 The CLI answers CORS and local-network preflight requests, and the browser can ask the user for
-local-network permission. Local applications can use an HTTP loopback origin; public origins need
-HTTPS.
+local-network permission. Local applications can use an HTTP loopback origin, and public origins
+need HTTPS.
 
 ```js
 import OpenAI from 'openai';
@@ -198,7 +198,7 @@ stogas encrypt --key prod --organization <id> --purpose byok/openai \
 `encryption-key create` creates an organization key for
 [customer encryption](/docs/customer-encryption), saves it in the system keychain under the label
 that you register it with, and prints its public identifier. With `--output <file>`, it also
-writes the key to a new file that only you can read; where there is no keychain, use only
+writes the key to a new file that only you can read. Where there is no keychain, use only
 `--output`. `encryption-key import` saves a key from a file, or as you type or pipe it in.
 `export` copies a saved key to a new file, or with `--output -` pipes it to another program, such
 as your secret manager. `delete` removes a saved key, and `logout` keeps them all.

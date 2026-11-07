@@ -26,11 +26,11 @@ and the libraries side by side. macOS uses `@loader_path` in place of `$ORIGIN`.
 ## Complete request example
 
 This program checks that the library matches its header, starts the verifier, checks its
-result, sends a Responses request and releases all owned resources. `--stream` writes incremental SSE; Ctrl+C cancels the request. The empty
-configuration selects production, native attested TLS and the default connection limit.
-The example limits each JSON response or SSE event to 8 MiB, checks streamed errors, and
-requires a completed stream. Set `STOGAS_BASE_URL` only when using a separately managed verifier
-proxy; that URL bypasses startup of the embedded transport.
+result, sends a Responses request and releases all owned resources. `--stream` writes incremental
+SSE, and Ctrl+C cancels the request. The empty configuration selects production, native attested
+TLS and the default connection limit. The example limits each JSON response or SSE event to 8 MiB,
+checks streamed errors, and requires a completed stream. Set `STOGAS_BASE_URL` only when using a
+separately managed verifier proxy, because that URL bypasses startup of the embedded transport.
 
 ```c
 #include "stogas.h"

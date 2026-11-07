@@ -33,10 +33,8 @@ Azure no longer serves, gets `model_retired` with the date. A request that reach
 retired IDs, which match nothing.
 
 The catalog lists the whole market, so it also lists deployments, routes and providers that
-Stogas does not serve, such as batch APIs. Each one gives the reason in `stogasUnsupported`. The
-catalog's **Include unavailable** toggle shows them with the retired records, greyed and marked
-with an archive icon. A request whose `model` field selects only such records gets
-`model_unavailable` with the reason.
+Stogas does not serve, such as batch APIs. Each one gives the reason in `stogasUnsupported`. A
+request whose `model` field selects only such records gets `model_unavailable` with the reason.
 
 Some deployments work only for accounts that the provider has approved. The catalog marks
 them with `approvalRequired`, and the routing filter `!deployment.approvalRequired` excludes them.
@@ -54,11 +52,12 @@ Type words to search names, IDs and aliases, or filter on a field that the searc
 | `deployment.pricing.input_tokens.per_mill_tokens<1` | Input under $1 per million tokens            |
 | `model.groupIds=claude NOT provider:anthropic`      | Claude models from other providers           |
 
-- `:` finds text that contains the value, and numbers or `true`/`false` that equal it. `=`, `!=`,
+- `:` finds text that contains the value, and numbers, `true` or `false` that equal it. `=`, `!=`,
   `<`, `<=`, `>` and `>=` compare. Text ignores case.
 - A list, such as `deployment.inputModalities`, matches when one of its entries matches.
-- `!=` also matches deployments that do not state the field; other comparisons do not. Routing
-  policies treat these values differently; see [Missing values](/docs/policies/expressions#missing-values).
+- `!=` also matches deployments that do not state the field, and other comparisons do not. Routing
+  policies treat these values differently, as
+  [Missing values](/docs/policies/expressions#missing-values) explains.
 
 ## Choose a model
 

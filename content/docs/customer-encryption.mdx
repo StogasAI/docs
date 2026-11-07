@@ -96,7 +96,7 @@ stogas encrypt --key providers --organization YOUR_ORGANIZATION_ID \
   --purpose plugins/redaction --input redaction.json --output redaction.encrypted.json
 ```
 
-`--key` names the label of a key in your keychain; for a key file, pass `--key-file org.key`
+`--key` names the label of a key in your keychain. For a key file, pass `--key-file org.key`
 instead. Before it encrypts a plugin's settings, the command has a gateway check them over a
 verified connection, so a mistake shows now, by name, instead of in the requests that need them.
 Only the gateway sees the settings, and the check needs you signed in with `stogas login` or
@@ -196,8 +196,8 @@ your API key in the `Authorization` header:
 ## Key sharing and rotation
 
 Anyone with both a key and its ciphertext can decrypt that content. Only separate keys give
-separate access; labels do not. Removing a member does not make them forget a key they had. Each
-caller must hold every key that the encrypted exports and redactions of their requests need.
+separate access, not separate labels. Removing a member does not make them forget a key they had.
+Each caller must hold every key that the encrypted exports and redactions of their requests need.
 
 Keep the original policies and provider credentials so you can encrypt them again. To rotate a key:
 
