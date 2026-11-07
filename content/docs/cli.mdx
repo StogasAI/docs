@@ -228,8 +228,9 @@ display or with `--device-code`, it prints a code to enter on any device instead
 code that your own `stogas login` printed, since approving a code signs in the CLI that printed it.
 
 Each sign-in creates an access token named `Stogas CLI on <host>` unless you name it otherwise. The
-CLI keeps it in the system keychain, or prints it where there is none, as on most servers. Signing
-in again deletes the token that the new one replaces, and `logout` deletes the current one.
+CLI keeps it in the system keychain, where signing in again replaces it and `logout` deletes it.
+Where there is no keychain, as on most servers, the CLI prints the token for you to set as
+`STOGAS_TOKEN`, and the token stays valid until it expires or you delete it.
 
 For servers and CI, create an access token with only the access that the job needs, and set it as
 `STOGAS_TOKEN`. The CLI then uses it, and `register`, `login` and `logout` refuse to run. See
@@ -327,3 +328,11 @@ operation.
 Fields go in the query of a `GET` request and in the JSON body of any other. A key can nest as in
 `gh api`: `limits[requests]=10` sets a field of an object, `models[]=a` adds to a list, and
 `rules[][name]=a` adds an object to a list. `rules[][tags][]=x` adds to the list in that object.
+
+## Exit status
+
+| Status | When                                                                                    |
+| ------ | --------------------------------------------------------------------------------------- |
+| `0`    | The command succeeded                                                                   |
+| `1`    | The command failed, `api` got a refused request, or `probe` found the gateway not ready |
+| `2`    | An option or argument is wrong                                                          |
