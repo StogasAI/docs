@@ -11865,7 +11865,7 @@
 					"Balance"
 				],
 				"summary": "Get the balance and top-up options",
-				"description": "Includes the latest payments and current price estimates for each payment method.",
+				"description": "Includes the balance, the prepaid limits, payment credit that is not in the balance yet and current price estimates for each payment method.",
 				"security": [
 					{
 						"accessToken": []
@@ -12426,239 +12426,6 @@
 												}
 											]
 										},
-										"invoices": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"amountDueUsd": {
-														"type": "string",
-														"maxLength": 78,
-														"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-													},
-													"dueOn": {
-														"type": "string",
-														"format": "date"
-													},
-													"id": {
-														"type": "string",
-														"format": "uuid"
-													},
-													"issuedAt": {
-														"type": "string",
-														"format": "date-time"
-													},
-													"number": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128
-													},
-													"periodStart": {
-														"type": "string",
-														"format": "date"
-													},
-													"status": {
-														"type": "string",
-														"enum": [
-															"open",
-															"partly_paid",
-															"overdue",
-															"paid"
-														]
-													},
-													"totalUsd": {
-														"type": "string",
-														"maxLength": 78,
-														"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-													}
-												},
-												"required": [
-													"amountDueUsd",
-													"dueOn",
-													"id",
-													"issuedAt",
-													"number",
-													"periodStart",
-													"status",
-													"totalUsd"
-												],
-												"additionalProperties": false
-											}
-										},
-										"invoicesNextCursor": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"recentPaymentsNextCursor": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1
-												},
-												{
-													"type": "null"
-												}
-											]
-										},
-										"recentPayments": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"amount": {
-														"type": "string",
-														"maxLength": 97,
-														"pattern": "^(?:0|[1-9]\\d{0,59})(?:\\.\\d{1,36})?$"
-													},
-													"confirmations": {
-														"anyOf": [
-															{
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 9007199254740991
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"createdAt": {
-														"type": "string",
-														"format": "date-time"
-													},
-													"creditStatus": {
-														"type": "string",
-														"enum": [
-															"waiting_settlement",
-															"settled_pending_credit",
-															"credited",
-															"not_creditable",
-															"review_required"
-														]
-													},
-													"creditUsd": {
-														"anyOf": [
-															{
-																"type": "string",
-																"maxLength": 78,
-																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"currency": {
-														"type": "string",
-														"minLength": 2,
-														"maxLength": 16,
-														"pattern": "^[A-Z0-9]+$"
-													},
-													"id": {
-														"type": "string",
-														"minLength": 1
-													},
-													"method": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
-													},
-													"provider": {
-														"type": "string",
-														"enum": [
-															"ccpayment",
-															"manual",
-															"wallet"
-														]
-													},
-													"payerIsViewer": {
-														"type": "boolean"
-													},
-													"providerHold": {
-														"type": "boolean"
-													},
-													"receivedAt": {
-														"type": "string",
-														"format": "date-time"
-													},
-													"settledAt": {
-														"anyOf": [
-															{
-																"type": "string",
-																"format": "date-time"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"status": {
-														"type": "string",
-														"enum": [
-															"pending",
-															"settled",
-															"failed"
-														]
-													},
-													"pendingUsd": {
-														"anyOf": [
-															{
-																"type": "string",
-																"maxLength": 78,
-																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"suspendedUsd": {
-														"anyOf": [
-															{
-																"type": "string",
-																"maxLength": 78,
-																"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-															},
-															{
-																"type": "null"
-															}
-														]
-													},
-													"taxUsd": {
-														"type": "string",
-														"maxLength": 78,
-														"pattern": "^-?(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$"
-													}
-												},
-												"required": [
-													"amount",
-													"confirmations",
-													"createdAt",
-													"creditStatus",
-													"creditUsd",
-													"currency",
-													"id",
-													"method",
-													"provider",
-													"payerIsViewer",
-													"providerHold",
-													"receivedAt",
-													"settledAt",
-													"status",
-													"pendingUsd",
-													"suspendedUsd",
-													"taxUsd"
-												],
-												"additionalProperties": false
-											}
-										},
 										"retrievedAt": {
 											"type": "string",
 											"format": "date-time"
@@ -12673,10 +12440,6 @@
 										"estimates",
 										"walletNetwork",
 										"taxRate",
-										"invoices",
-										"invoicesNextCursor",
-										"recentPaymentsNextCursor",
-										"recentPayments",
 										"retrievedAt"
 									],
 									"additionalProperties": false
@@ -13169,6 +12932,7 @@
 					"Balance"
 				],
 				"summary": "List payments",
+				"description": "Newest first unless the filter sorts them.",
 				"security": [
 					{
 						"accessToken": []
@@ -13193,9 +12957,21 @@
 						"in": "query",
 						"required": false,
 						"schema": {
+							"default": 50,
 							"type": "integer",
 							"minimum": 1,
-							"maximum": 50
+							"maximum": 100
+						}
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"description": "Payments that match this [filter](/docs/reference/filters). Fields: `state` (`confirming`, `crediting`, `pending`, `credited`, `review`, `failed`, `not_credited` or `too_small`), `currency`, `processor` (`ccpayment`, `manual` or `wallet`), `amount` in the payment's currency, `credit` in USD, which a payment has once it is credited, `received` and `id`. Free text matches the ID, state, currency, method and processor. A `sort:` term takes `received-desc`, `received-asc`, `credit-desc` or `credit-asc`.",
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 1024
 						}
 					}
 				],
@@ -13284,6 +13060,9 @@
 													"providerHold": {
 														"type": "boolean"
 													},
+													"receipt": {
+														"type": "boolean"
+													},
 													"receivedAt": {
 														"type": "string",
 														"format": "date-time"
@@ -13298,6 +13077,20 @@
 																"type": "null"
 															}
 														]
+													},
+													"state": {
+														"type": "string",
+														"enum": [
+															"confirming",
+															"crediting",
+															"pending",
+															"credited",
+															"review",
+															"failed",
+															"not_credited",
+															"too_small"
+														],
+														"description": "What the credit is doing: `confirming` until the network or the processor settles the payment, `crediting` until its credit is decided, `pending` while the prepaid limits or a restriction hold the credit, `credited`, `review` while we or the processor review the payment, `failed`, `not_credited` when a review closed the payment without credit, and `too_small` when the payment did not cover its fees."
 													},
 													"status": {
 														"type": "string",
@@ -13349,8 +13142,10 @@
 													"provider",
 													"payerIsViewer",
 													"providerHold",
+													"receipt",
 													"receivedAt",
 													"settledAt",
+													"state",
 													"status",
 													"pendingUsd",
 													"suspendedUsd",
@@ -13370,15 +13165,22 @@
 												}
 											]
 										},
-										"retrievedAt": {
-											"type": "string",
-											"format": "date-time"
+										"filteredCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"total": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
 										}
 									},
 									"required": [
 										"items",
 										"nextCursor",
-										"retrievedAt"
+										"filteredCount",
+										"total"
 									],
 									"additionalProperties": false
 								}
@@ -13440,7 +13242,7 @@
 					"Balance"
 				],
 				"summary": "List invoices",
-				"description": "Newest first. Only organizations with invoiced billing receive invoices.",
+				"description": "Only organizations with invoiced billing receive invoices, one for each month. Newest first unless the filter sorts them.",
 				"security": [
 					{
 						"accessToken": []
@@ -13465,9 +13267,21 @@
 						"in": "query",
 						"required": false,
 						"schema": {
+							"default": 50,
 							"type": "integer",
 							"minimum": 1,
-							"maximum": 50
+							"maximum": 100
+						}
+					},
+					{
+						"name": "filter",
+						"in": "query",
+						"required": false,
+						"description": "Invoices that match this [filter](/docs/reference/filters). Fields: `status` (`open`, `partly_paid`, `overdue` or `paid`), `number`, `period`, `issued`, `due`, `total`, `amount-due` and `id`. Free text matches the ID and number. A `sort:` term takes `period-desc`, `period-asc`, `total-desc` or `total-asc`.",
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 1024
 						}
 					}
 				],
@@ -13548,11 +13362,23 @@
 													"type": "null"
 												}
 											]
+										},
+										"filteredCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"total": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
 										}
 									},
 									"required": [
 										"items",
-										"nextCursor"
+										"nextCursor",
+										"filteredCount",
+										"total"
 									],
 									"additionalProperties": false
 								}
@@ -14267,7 +14093,7 @@
 					"Balance"
 				],
 				"summary": "List balance changes",
-				"description": "Lists credited payments, credit released later, credit held while a payment is reviewed, refunds, sales tax and manual adjustments, newest first unless the filter sorts them. Spending is not included. `filter` takes the dashboard query language: `type:refund`, `amount<0`, `created>2026-01-01`, `payment-id:…` or free text, and `sort:created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
+				"description": "Lists credited payments, credit released later, credit held while a payment is reviewed, refunds, sales tax and manual adjustments, newest first unless the filter sorts them. Spending is not included.",
 				"security": [
 					{
 						"accessToken": []
@@ -14302,7 +14128,7 @@
 						"name": "filter",
 						"in": "query",
 						"required": false,
-						"description": "Balance changes that match this [filter](/docs/reference/filters). The dashboard search suggests the fields, and a `sort:` term orders the changes.",
+						"description": "Balance changes that match this [filter](/docs/reference/filters). Fields: `type` (`payment`, `release`, `suspension`, `refund`, `adjustment` or `tax`), `amount`, `created`, `payment-id` and `id`. Free text matches the ID, type and payment ID. A `sort:` term takes `created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
 						"schema": {
 							"default": "",
 							"type": "string",
@@ -14415,7 +14241,7 @@
 					"Balance"
 				],
 				"summary": "Preview a balance changes export",
-				"description": "Counts the changes an export with the same filter would contain, up to one more than rowLimit. `filter` takes the dashboard query language: `type:refund`, `amount<0`, `created>2026-01-01`, `payment-id:…` or free text, and `sort:created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
+				"description": "Counts the changes an export with the same filter would contain, up to one more than rowLimit.",
 				"security": [
 					{
 						"accessToken": []
@@ -14429,7 +14255,7 @@
 						"name": "filter",
 						"in": "query",
 						"required": false,
-						"description": "Balance changes that match this [filter](/docs/reference/filters). The dashboard search suggests the fields, and a `sort:` term orders the changes.",
+						"description": "Balance changes that match this [filter](/docs/reference/filters). Fields: `type` (`payment`, `release`, `suspension`, `refund`, `adjustment` or `tax`), `amount`, `created`, `payment-id` and `id`. Free text matches the ID, type and payment ID. A `sort:` term takes `created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
 						"schema": {
 							"default": "",
 							"type": "string",
@@ -14482,7 +14308,7 @@
 					"Balance"
 				],
 				"summary": "Export balance changes",
-				"description": "Returns every matching change as CSV or NDJSON with the fields the list returns. More than 50,000 changes fail, so narrow the filter. Each export is recorded as activity. `filter` takes the dashboard query language: `type:refund`, `amount<0`, `created>2026-01-01`, `payment-id:…` or free text, and `sort:created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
+				"description": "Returns every matching change as CSV or NDJSON with the fields the list returns. More than 50,000 changes fail, so narrow the filter. Each export is recorded as activity.",
 				"security": [
 					{
 						"accessToken": []
@@ -14496,7 +14322,7 @@
 						"name": "filter",
 						"in": "query",
 						"required": false,
-						"description": "Balance changes that match this [filter](/docs/reference/filters). The dashboard search suggests the fields, and a `sort:` term orders the changes.",
+						"description": "Balance changes that match this [filter](/docs/reference/filters). Fields: `type` (`payment`, `release`, `suspension`, `refund`, `adjustment` or `tax`), `amount`, `created`, `payment-id` and `id`. Free text matches the ID, type and payment ID. A `sort:` term takes `created-desc`, `created-asc`, `amount-desc` or `amount-asc`.",
 						"schema": {
 							"default": "",
 							"type": "string",
