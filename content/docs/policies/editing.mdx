@@ -41,8 +41,8 @@ draft, in order. It calls no model and costs nothing.
 
 - The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
   key uses that credential. Enabled state, expiration and other changes apply after you save.
-- The request uses Responses and sends every registered encryption key, no `service_tier` and no
-  tools. `request.bodyBytes` is 0, and the simulation reads no
+- The request uses Responses and sends every registered encryption key, no `service_tier`, no tools
+  and no system message. `request.bodyBytes` is 0, and the simulation reads no
   [request policy](/docs/policies/request-policies) or `provider` preference.
 - It uses the current catalog and time, so `access.deny` periods and rules that read
   `request.time` apply as they would now.

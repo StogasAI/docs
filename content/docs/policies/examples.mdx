@@ -1,6 +1,6 @@
 ---
 title: Examples
-description: Copy policies for budgets, request rates, provider choice, schedules and redaction.
+description: Copy policies for budgets, request rates, provider choice, schedules, content and tools.
 icon: ListChecks
 ---
 
@@ -188,6 +188,31 @@ The provider receives placeholders such as `<EMAIL_ADDRESS>` instead of the valu
 ```
 
 See [PII redaction](/docs/pii-redaction) for every preset, your own terms and patterns.
+
+### Refuse system messages
+
+Requests that send a `system` or `developer` message, or `instructions`, get `model_unavailable`.
+
+```json title="Key policy"
+{
+	"routing": {
+		"filter": "!request.systemMessages"
+	}
+}
+```
+
+### Allow only some MCP servers
+
+```json title="Organization policy"
+{
+	"routing": {
+		"filter": "request.mcpServers.all(server, server in ['mcp.example.com', 'connector_googledrive'])"
+	}
+}
+```
+
+See [Restrict tools with a policy](/docs/model-tools#restrict-tools-with-a-policy) for filters on
+tool names and hosted tools.
 
 ## Rules and permissions
 

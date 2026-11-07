@@ -302,6 +302,44 @@ provider reports.
 - The gateway returns `502` instead of a response with an item from a server that the request did
   not declare or that `tool_choice` leaves out.
 
+## Restrict tools with a policy
+
+A [routing filter](/docs/policies/routing) can read the tools that a request lets the model call. A
+request that the filter refuses gets `model_unavailable`. This policy allows only two MCP servers:
+
+```json title="policy.json"
+{
+	"routing": {
+		"filter": "request.mcpServers.all(server, server in ['mcp.example.com', 'connector_googledrive'])"
+	}
+}
+```
+
+This one refuses one tool of a server. A server whose `allowed_tools` names no tools reads as
+`mcp.example.com/*`, because the model can call any of its tools, so the filter refuses that too:
+
+```json title="policy.json"
+{
+	"routing": {
+		"filter": "!request.mcpTools.exists(tool, tool in ['mcp.example.com/*', 'mcp.example.com/delete_repo'])"
+	}
+}
+```
+
+| Filter                                                           | Effect                                                             |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `size(request.clientTools) == 0`                                 | Refuses `function` and `custom` tools                              |
+| `!('run_shell' in request.clientTools)`                          | Refuses requests that let the model call `run_shell`               |
+| `size(request.hostedTools) == 0`                                 | Refuses hosted tools, remote MCP servers included                  |
+| `!(provider.id == 'anthropic' && size(request.hostedTools) > 0)` | Sends requests with hosted tools to providers other than Anthropic |
+
+- List the MCP servers to allow rather than those to refuse, because one server can have many
+  hosts. A `server_url` without a host matches no server in a list.
+- `tool_choice: "none"` empties the lists, because the model can call no tool. A choice of one
+  function still counts every function, and a choice of one MCP server every server.
+- Your application names its tools, so a filter on `request.clientTools` cannot stop an
+  application that gives a tool another name.
+
 ## Unavailable tools
 
 These tools return `400` before the gateway calls a provider:

@@ -90,10 +90,11 @@ to `(3 × 4 + 15) / 4 = $6.75` at 300,000 tokens, so this filter removes it.
 
 ## Request facts
 
-Expressions can read five fields of the request, which
-[Request](/docs/policies/routing-fields#request) describes: `request.model`, `request.interface`,
-`request.hostedTools`, `request.time` and `request.bodyBytes`. They cannot read token estimates or
-costs, because the gateway calculates those only after it selects a deployment.
+Expressions can read the request fields that [Request](/docs/policies/routing-fields#request)
+describes: the model, the interface, the tools that the model may call, whether the request sends a
+system message, the time and the body size. They cannot read message text or tool arguments. Token
+estimates and costs are not available, because the gateway calculates them only after it selects a
+deployment.
 
 ## Bounds
 
