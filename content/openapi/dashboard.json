@@ -431,7 +431,7 @@
 					"Account"
 				],
 				"summary": "Delete an access token",
-				"description": "The token stops working at once. A token can delete itself.",
+				"description": "The token stops working at once. A token for all organizations can delete itself.",
 				"security": [
 					{
 						"accessToken": [
@@ -10437,7 +10437,7 @@
 						"schema": {
 							"type": "string",
 							"minLength": 1,
-							"maxLength": 512
+							"maxLength": 1024
 						}
 					},
 					{
@@ -10482,6 +10482,11 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"asOf": {
+											"type": "string",
+											"format": "date-time",
+											"description": "When the first page was read. Later pages list only the requests logged by then, so read the first page again to see newer ones."
+										},
 										"catalog_chains": {
 											"default": {},
 											"type": "object",
@@ -11708,6 +11713,7 @@
 										}
 									},
 									"required": [
+										"asOf",
 										"catalog_chains",
 										"items",
 										"nextCursor",
@@ -12858,7 +12864,7 @@
 					"Balance"
 				],
 				"summary": "Change the billing profile",
-				"description": "Receipts created after the change show the new profile.",
+				"description": "Receipts show the profile in effect when each payment was received, so the change applies to payments received after it.",
 				"security": [
 					{
 						"accessToken": [
@@ -13392,7 +13398,7 @@
 					"Balance"
 				],
 				"summary": "Get the receipt of a payment",
-				"description": "Returns a PDF. The first request creates the receipt from the billing profile at that time, so it needs write access; later requests return the same receipt.",
+				"description": "Returns a PDF with the billing profile in effect when the payment was received. The first request creates the receipt, so it needs write access, and later requests return the same receipt.",
 				"security": [
 					{
 						"accessToken": [
