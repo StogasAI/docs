@@ -144,13 +144,13 @@ content. A type whose files start with a fixed signature, such as PNG, JPEG, HEI
 Word document, must show it, so other data cannot pass a list by declaring that type. A `filename`
 never sets the type.
 
-| Attachment                                      | Type the lists check                                       |
-| ----------------------------------------------- | ---------------------------------------------------------- |
-| Inline data                                     | The declared type. With no type or `application/octet-stream`, the type the content shows. |
-| Inline data whose content is another type, such as a PDF declared as `text/plain` | None. The request fails.             |
-| `input_audio`                                   | `audio/mpeg` for `mp3`, otherwise `audio/` and the `format` |
-| An image URL or file ID                         | Only `image/*`, because the gateway never downloads it      |
-| A document URL or file ID                       | None                                                        |
+| Attachment                                                                        | Type the lists check                                                                       |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Inline data                                                                       | The declared type. With no type or `application/octet-stream`, the type the content shows. |
+| Inline data whose content is another type, such as a PDF declared as `text/plain` | None. The request fails.                                                                   |
+| `input_audio`                                                                     | `audio/mpeg` for `mp3`, otherwise `audio/` and the `format`                                |
+| An image URL or file ID                                                           | Only `image/*`, because the gateway never downloads it                                     |
+| A document URL or file ID                                                         | None                                                                                       |
 
 An attachment whose type the lists cannot check is refused, so a list that names `image/png`
 refuses an image URL. Send such a file inline with its media type.
@@ -179,6 +179,10 @@ for another reason, such as a disabled credential, the error gives that reason. 
 has a candidate but no candidate reads them all, the error names them. Send them in separate
 requests.
 
+A file ID names a file in one provider account, so a request with a `file_id` also fails with
+`attachment_unsupported` when more than one BYOK credential can serve it. Name the provider in the
+model, such as `provider:openai gpt-5.6-sol`, or use a key with one credential for the provider.
+
 ## Limits
 
 - URLs, file IDs and files that the gateway does not extract reserve the deployment's full input
@@ -192,4 +196,5 @@ requests.
 
 [^sources]:
     Anthropic models also take `file_url` on Chat Completions, and do not take an image
-    `file_id`. Claude that AWS or Google runs takes neither URLs nor file IDs.
+    `file_id`. Claude that AWS or Google runs takes neither URLs nor file IDs, and Claude that
+    Azure runs takes no file IDs.

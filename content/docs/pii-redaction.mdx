@@ -230,14 +230,16 @@ format:
 Redaction runs after the gateway selects a deployment, and before it estimates input tokens and
 calls the provider.
 
-| Scanned                                    | Not scanned                                      |
-| ------------------------------------------ | ------------------------------------------------ |
-| Message and `input` text, and instructions | Model, routing and policy fields                 |
-| Tool definitions and tool call arguments   | Headers, `metadata`, sampling and cache settings |
-| Structured output schemas                  | Images, audio and files                          |
-| Stop sequences                             | Signed or encrypted reasoning from earlier turns |
+| Scanned                                                                  | Not scanned                                      |
+| ------------------------------------------------------------------------ | ------------------------------------------------ |
+| Message and `input` text, and instructions                               | Model, routing and policy fields                 |
+| Tool definitions and tool call arguments                                 | Headers, `metadata`, sampling and cache settings |
+| Structured output schemas and stop sequences                             | Signed or encrypted reasoning from earlier turns |
+| Text files that [text extraction](/docs/text-extraction) turns into text |                                                  |
 
-To scan text files too, turn on [text extraction](/docs/text-extraction).
+Redaction cannot read images, audio, URLs, file IDs or other files, so it refuses them, and
+[routing](/docs/input-files#when-no-candidate-reads-a-file) leaves out each candidate whose policy
+redacts. Turn on text extraction to send text files.
 
 The settings of a [remote MCP server](/docs/model-tools#remote-mcp-servers), such as its address,
 credentials and tool filters, are not scanned, because a changed token or address would fail.
@@ -270,17 +272,19 @@ To reject a prompt that contains non-ASCII text, instead of redacting it:
 
 <PolicyFields section="input" />
 
-The check reads the [scanned fields](#what-is-scanned) before redaction. JSON escapes such as
-`é` count as non-ASCII. Any scope can require the check, and a child scope cannot turn it off.
+The check reads the [scanned fields](#what-is-scanned) before redaction, and refuses the
+attachments that redaction refuses. JSON escapes such as `\u00e9` count as non-ASCII. Any scope
+can require the check, and a child scope cannot turn it off.
 A request policy can set it when `delegation.request` permits `input`.
 
 ## Errors
 
-| Status | Code                        | Cause                                                       |
-| ------ | --------------------------- | ----------------------------------------------------------- |
-| `400`  | `input_ascii_required`      | ASCII-only input is on, and the prompt has other characters |
-| `413`  | `request_too_large`         | The request exceeded a redaction limit                      |
-| `503`  | `gateway_capacity_exceeded` | The gateway cannot load the redaction policy now            |
+| Status | Code                        | Cause                                                              |
+| ------ | --------------------------- | ------------------------------------------------------------------ |
+| `400`  | `attachment_unsupported`    | Redaction or ASCII-only input is on, and an attachment is not text |
+| `400`  | `input_ascii_required`      | ASCII-only input is on, and the prompt has other characters        |
+| `413`  | `request_too_large`         | The request exceeded a redaction limit                             |
+| `503`  | `gateway_capacity_exceeded` | The gateway cannot load the redaction policy now                   |
 
 The redaction limits for one request are 65,536 matches in one text value, 100,000 replacements,
 128 levels of JSON nesting, and one shared scan budget. Complex patterns and long text use more of

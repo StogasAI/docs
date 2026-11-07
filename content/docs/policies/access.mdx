@@ -117,7 +117,9 @@ periods only. A permitted [request policy](/docs/policies/request-policies) can 
 
 A deny period in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's
 policy blocks only the deployments and credentials it applies to. The gateway tries the others,
-and fails with `schedule_denied` when none remain.
+and fails with `schedule_denied` when none remain. If a filter or list also removes a candidate, or
+the candidate cannot read an [attachment](/docs/input-files#when-no-candidate-reads-a-file), the
+error gives that reason instead.
 
 ## Timestamps and time zones
 
