@@ -14,7 +14,7 @@ explains.
 | [Anthropic](/docs/providers/anthropic)       | API key               | Yes              | Fast                  | `cache_control`                 | Web search, web fetch             | Post-quantum TLS                            |
 | [Azure](/docs/providers/azure)               | Entra application     | Yes[^translated] | Flex, Fast            | As OpenAI or Anthropic          | Web search, web fetch for Claude  | TLS 1.3                                     |
 | [AWS](/docs/providers/aws)                   | Access key or API key | Yes              | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | TLS 1.3                                     |
-| [Google Cloud](/docs/providers/google-cloud) | Service account key   | Yes              | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | Post-quantum TLS                            |
+| [Google Cloud](/docs/providers/google-cloud) | Service account key   | Yes              | Fast[^anthropic]      | `cache_control`                 | Web search, web fetch[^anthropic] | Post-quantum TLS                            |
 | [Chutes](/docs/providers/chutes)             | Ours, or your API key | Yes[^translated] | None                  | Automatic                       | None                              | E2EE to a verified TEE, or post-quantum TLS |
 
 Every provider serves Chat Completions, some OpenAI and Azure deployments
@@ -78,6 +78,6 @@ A translated request returns `400` for what Responses cannot carry:
 OpenAI deployments return their reasoning encrypted in `reasoning_details`. Send it back unchanged
 in the assistant message, and the model continues from that reasoning.
 
-[^anthropic]: Only on deployments that Anthropic runs, whose IDs end in `-anthropic-hosted`.
+[^anthropic]: Only on deployments that Anthropic runs, whose IDs contain `-anthropic-hosted`.
 
 [^translated]: Partly [through Chat Completions](#responses-through-chat-completions).
