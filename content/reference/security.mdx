@@ -59,8 +59,9 @@ Over the request limit, the gateway returns `429 ip_rate_limit_exceeded` with `R
 the connection limit, it closes the TLS handshake. Reuse connections and E2EE sessions to stay under
 it. These limits never stop a stream that has started.
 
-Each gateway also accepts up to 240 requests a second from each organization. Over that, it returns
-`429 rate_limit_exceeded` with `Retry-After`.
+Each gateway also accepts an API key's requests at up to twice its organization's
+[platform limit](/docs/policies/limits#requests), and an organization's at up to four times it.
+Over that, it returns `429 rate_limit_exceeded` with `Retry-After`.
 
 Providers apply their own limits on files, context and output. Your organization's
 [limits](/docs/policies/limits) also apply.

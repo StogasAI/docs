@@ -14,17 +14,18 @@ publish.
 
 The gateway VM boots one image with no disk, shell or package manager:
 
-| Layer    | Component                                                                                                                                                          |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Firmware | OVMF from edk2 `stable202608`, built for AMD SEV with its own ACPI tables, to boot only the measured kernel and to run no code from the host                       |
-| Kernel   | Linux-libre 6.18.54 with a reduced guest configuration, no loadable modules and no console output                                                                  |
-| Boot     | A unified kernel image built with systemd 262 `ukify`                                                                                                              |
-| Init     | A small init process written in Go                                                                                                                                 |
-| Clock    | The [ntpd-rs](https://github.com/pendulum-project/ntpd-rs) client, which keeps the guest clock in sync                                                             |
-| Gateway  | The [Stogas gateway](https://github.com/StogasAI/gateway), built with Go 1.27.2, with the [Rust verifier](https://github.com/StogasAI/stogas) linked in statically |
+| Layer    | Component                                                                                                                                                        |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Firmware | OVMF from edk2 `stable202608`, built for AMD SEV with its own ACPI tables, to boot only the measured kernel and to run no code from the host                     |
+| Kernel   | Linux-libre 6.18 with a reduced guest configuration, no loadable modules and no console output                                                                   |
+| Boot     | A unified kernel image built with systemd 262 `ukify`                                                                                                            |
+| Init     | A small init process written in Go                                                                                                                               |
+| Clock    | The [ntpd-rs](https://github.com/pendulum-project/ntpd-rs) client, which keeps the guest clock in sync                                                           |
+| Gateway  | The [Stogas gateway](https://github.com/StogasAI/gateway), built with Go 1.27, with the [Rust verifier](https://github.com/StogasAI/stogas) linked in statically |
 
 The launch measurement covers all of it. Changing one byte in any layer gives a different
-measurement, which the SDK rejects.
+measurement, which the SDK rejects. Each release's `stogas/release/pins.lock.json` gives the exact
+version of every component.
 
 ## How the build stays reproducible
 

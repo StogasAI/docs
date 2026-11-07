@@ -46,10 +46,10 @@ The gateway prices the reported usage at catalog rates, charges it, and releases
 - When a provider changes a price for a set time, such as a promotion, the catalog lists the
   temporary price with its start and end. A request pays the price in effect when it starts.
 - If a request fails before it reaches the provider, the gateway releases the hold and charges nothing.
-- If a gateway stops before it settles a request, we release the hold without a charge within a few
-  minutes, and the request gets no [request record](/docs/request-records). If a usage record fails
-  our checks, the hold stays until we review it. Time alone never turns a hold into a charge or a
-  refund. Contact [billing@stogas.ai](mailto:billing@stogas.ai) about a hold that does not clear.
+- If a gateway stops before it settles a request, or a usage record fails our checks, the hold stays
+  until we review it. We release a stopped gateway's hold without a charge, and its request gets no
+  [request record](/docs/request-records). Time alone never turns a hold into a charge or a refund.
+  Contact [billing@stogas.ai](mailto:billing@stogas.ai) about a hold that does not clear.
 - While a gateway cannot settle requests, it rejects new ones with `503 gateway_unavailable`.
   Requests that already have a hold continue.
 

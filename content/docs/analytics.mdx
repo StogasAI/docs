@@ -87,9 +87,10 @@ Compare numbers with `>`, `>=`, `<` or `<=`:
 | `tokens_per_second`                   | Generated tokens per second                       | `tokens_per_second<20` |
 | `upstream_cost`, `billed_cost`        | USD, with or without `$`                          | `billed_cost>$0.05`    |
 
-Each member can run 30 queries a minute, and an organization 60. Each member can download 3 files a
-minute. Queries also have time and memory limits. If a query cannot finish, narrow the time range or
-filters.
+Each member can run 30 queries a minute and download 3 files a minute. An organization's queries
+share 30 seconds of query time a minute, and over that they return `429 ANALYTICS_QUOTA_EXCEEDED`
+with `Retry-After`. Each query also has time and memory limits. If a query cannot finish, narrow the
+time range or filters.
 
 ## Download records
 

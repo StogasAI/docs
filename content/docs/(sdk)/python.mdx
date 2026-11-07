@@ -143,4 +143,5 @@ arrived. `verify_receipt(stogas_bytes, request_digest, response_digest)` takes a
 that you saved on its own, with each side's digest from `request_digest` and `response_digest`, or
 from `StreamContent` for a stream. Pass `None` for a side that you don't check, for example a
 request kept private. To check current evidence instead, call `verifier.refresh(evidence_bytes)`,
-then `verify_logged_boot` on the snapshot it returns. Each method returns JSON bytes.
+then `verify_logged_boot` on the snapshot it returns. The three checks on a boot return their result
+as JSON bytes.

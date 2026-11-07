@@ -59,6 +59,8 @@ To load it now, call the transport's refresh method, such as `refresh_evidence()
 - JavaScript keeps each encrypted upload in memory until it is sent, so limit how many large uploads
   run at once.
 - More connections do not spread requests across gateways.
+- The SDK serves Chat Completions, Responses, policy validation and routing simulation. A request to
+  another path fails before your API key leaves your process.
 
 ## Connect through a proxy or Tor
 
@@ -138,7 +140,7 @@ change.
 | `setup_deadline`            | Connecting and verifying took longer than their time limit.                                             |
 | `connection_failed`         | The connection to the gateway failed.                                                                   |
 | `tls_failed`                | The attested TLS handshake failed.                                                                      |
-| `unsupported_profile`       | The gateway did not complete the required TLS handshake.                                                |
+| `unsupported_profile`       | The gateway finished TLS with a version, cipher suite, key exchange or protocol that the SDK refuses.   |
 | `setup_delivery_failed`     | The E2EE session setup did not arrive intact.                                                           |
 | `client_capacity`           | Too many requests are waiting for a connection.                                                         |
 | `transport_failed`          | The connection failed while the request was sent or answered.                                           |
