@@ -52,11 +52,15 @@ An account links to its person by the provider's subject identifier, never the e
 providers let people change. A provider that gives each client its own identifiers sends new ones
 after you save another client ID, so each member links their account again at their next sign-in.
 
+A person who joins takes their name from the provider's `name` claim, or their email when the
+provider sends no name, and can change it later. The members list shows the email that the
+provider sent at each member's latest sign-in, and `email:` finds members by it.
+
 A member's [picture](/docs/members#pictures) comes from the provider's `picture` claim when it
 names a JPEG or WebP image over HTTPS. Microsoft Entra ID sends none, so its members upload their
 own.
 
 Stogas stores the issuer, the client ID, the client secret encrypted, and each linked member's
-subject identifier, last sign-in and any picture taken from the provider. [Activity](/docs/activity)
-records each change to single sign-on and each member who joins or links through it, never the
-secret.
+subject identifier, email, last sign-in and any picture taken from the provider.
+[Activity](/docs/activity) records each change to single sign-on and each member who joins or links
+through it, never the secret.
