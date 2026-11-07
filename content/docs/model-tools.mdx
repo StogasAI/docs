@@ -252,7 +252,9 @@ Send the request again with the response's output items after your input, and an
 ```
 
 Keep the `mcp` tool in `tools`, with its `authorization`, because OpenAI keeps no copy of it. The
-approved call runs, and the response has its `mcp_call` item.
+approved call runs, and the response has its `mcp_call` item. An approval whose call has not run
+must answer an `mcp_approval_request` in the same input, from a server that `tools` declares, or
+the request gets `400`.
 
 </Step>
 </Steps>
@@ -275,11 +277,14 @@ Each tool list and each call result is new input for another pass of the model, 
 up to the deployment's input limit. The hold covers one pass at that limit for the tool list, and
 one more for each call that can run:
 
-- One for each `mcp_approval_response` with `approve: true`.
+- One for each `mcp_approval_response` with `approve: true` whose call has not run. A call has run
+  when an `mcp_call` in the input names its `approval_request_id`, so the approvals of earlier
+  turns that you send again add nothing.
 - Ten more when some tool runs without approval, or `max_tool_calls` if you set it. Without
   `max_tool_calls`, the provider gets a limit of 20 calls.
 
-`tool_choice: "none"`, or a choice of another tool, leaves the servers out of the hold. OpenAI
+`tool_choice: "none"`, or a choice of another tool, leaves the tool list and the calls without
+approval out of the hold. Approved calls still count, because they answer earlier requests. OpenAI
 charges the tokens of tool lists and calls, with no fee per call. Settlement charges what the
 provider reports.
 
@@ -289,8 +294,9 @@ provider reports.
   The data handling in the [catalog](https://stogas.ai/catalog) covers the provider, not the
   server. Each server keeps your data under its own terms, so check them before you connect it.
 - The gateway sends `authorization` and `headers` to the provider unchanged.
-  [Redaction](/docs/pii-redaction) skips the server's settings, and the response and
-  [exports](/docs/export) leave out its credentials.
+  [Redaction](/docs/pii-redaction) skips the server's settings. The response and
+  [exports](/docs/export) leave out its credentials and keep only the scheme, host and port of
+  `server_url`, because a URL can carry a token too.
 - With redaction on, the arguments of an `mcp_approval_request` that you send back are redacted
   too, so the approved call runs with the redacted arguments.
 - The gateway returns `502` instead of a response with an item from a server that the request did

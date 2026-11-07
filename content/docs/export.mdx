@@ -63,17 +63,19 @@ Each record is the request record with these fields added:
 }
 ```
 
-| Field      | Content                                                                                                                                 |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if the request was rejected. |
-| `response` | The response of a buffered request, or the error that ended it.                                                                         |
-| `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.               |
+| Field      | Content                                                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if the request was rejected.                |
+| `response` | The response of a buffered request, or the error that ended it.                                                                                        |
+| `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.                              |
 | `stogas`   | The object that [`Stogas-Metadata: v2`](/docs/receipts) returns, without its `salts`. Every record has it, whether or not the request sent the header. |
 
 - A destination with `"content": false` gets records without `request`, `response` and `events`.
 
-- In `request`, each tool's `authorization` and header values read `"[omitted]"`, so the
-  credentials of a [remote MCP server](/docs/model-tools#remote-mcp-servers) stay out of records.
+- In `request`, each tool's `authorization` and header values read `"[omitted]"`, and
+  `server_url` keeps only its scheme, host and port, so the credentials of a
+  [remote MCP server](/docs/model-tools#remote-mcp-servers) stay out of records, including a token
+  in its URL.
 
 - Records don't carry file contents. Each inline file in the request, such as a base64 image,
   audio clip or PDF, is replaced by an object with its declared `media_type`, and the `size` in bytes
