@@ -319,9 +319,9 @@ refused request prints the response and the error, and exits with status 1. The
 | `--input <file>`                | The JSON body, from a file or from standard input with `-`. Fields then go in the query.                                                             |
 | `-H`, `--header "Name: value"`  | A request header. The CLI keeps its own token and content type.                                                                                      |
 | `--paginate`                    | Gets every page of a list, following each page's next cursor                                                                                         |
-| `--slurp`                       | With `--paginate`, prints one JSON array of the pages                                                                                                |
+| `--slurp`                       | With `--paginate`, prints one JSON array of the pages, and only when every page arrives                                                              |
 | `-i`, `--include`               | Prints the status and the response headers before the body                                                                                           |
-| `-q`, `--silent`                | Prints no body                                                                                                                                       |
+| `--silent`                      | Prints no body                                                                                                                                       |
 
 Fields go in the query of a `GET` request and in the JSON body of any other. A key can nest as in
 `gh api`: `limits[requests]=10` sets a field of an object, `models[]=a` adds to a list, and
