@@ -209,8 +209,9 @@ Keep the original policies and provider credentials so you can encrypt them agai
 5. Remove the old key's registration, then stop sending it.
 
 After you remove a registration, requests skip the credentials that the key encrypts, and requests
-that need policy settings that it encrypts fail. You can still save a policy that uses the key, but
-no policy can start to use it until you register it again.
+that need policy settings that it encrypts fail with `encryption_key_required`, which names the key's
+identifier. You can still save a policy that uses the key, but no policy can start to use it until
+you register it again.
 
 ## Encryption details
 
