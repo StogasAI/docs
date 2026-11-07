@@ -8789,7 +8789,7 @@
 					"Analytics"
 				],
 				"summary": "List filter options",
-				"description": "Lists the API keys, grants, members, roles and BYOK credentials that you can filter requests by. Each list holds at most 1,000 records and `truncated` names the lists that stop there. Filters accept the names and IDs that a list leaves out.",
+				"description": "Lists the API keys, grants, members, roles, BYOK credentials and encryption keys that you can filter requests by. Each list holds at most 1,000 records and `truncated` names the lists that stop there. Filters accept the names and IDs that a list leaves out.",
 				"security": [
 					{
 						"accessToken": []
@@ -8857,6 +8857,28 @@
 													"name",
 													"preview",
 													"userId"
+												],
+												"additionalProperties": false
+											}
+										},
+										"encryption_keys": {
+											"maxItems": 1000,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"pattern": "^[0-9a-f]{64}$"
+													},
+													"label": {
+														"type": "string",
+														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+													}
+												},
+												"required": [
+													"id",
+													"label"
 												],
 												"additionalProperties": false
 											}
@@ -9013,6 +9035,7 @@
 												"type": "string",
 												"enum": [
 													"api_keys",
+													"encryption_keys",
 													"grants",
 													"members",
 													"roles",
@@ -9023,6 +9046,7 @@
 									},
 									"required": [
 										"api_keys",
+										"encryption_keys",
 										"grants",
 										"members",
 										"roles",
@@ -11309,6 +11333,29 @@
 														"type": "string",
 														"pattern": "^[^\\u0000-\\u001f]*$"
 													},
+													"trace_id": {
+														"default": "",
+														"description": "The request's [trace](/docs/request-records#traces). Empty when it had none.",
+														"anyOf": [
+															{
+																"type": "string",
+																"const": ""
+															},
+															{
+																"type": "string",
+																"pattern": "^(?!0{32}$)[0-9a-f]{32}$"
+															}
+														]
+													},
+													"encryption_key_ids": {
+														"default": [],
+														"description": "The identifiers of the [encryption keys](/docs/request-records#encryption-keys) of the encrypted credentials and policy settings that the request could use, sorted. A request refused with `encryption_key_required` lists the keys that it did not send.",
+														"type": "array",
+														"items": {
+															"type": "string",
+															"pattern": "^[0-9a-f]{64}$"
+														}
+													},
 													"metadata": {
 														"default": {},
 														"description": "The request's [metadata](/docs/request-records#metadata). `{}` when it had none.",
@@ -11894,6 +11941,8 @@
 													"request_type",
 													"request_settings",
 													"session_id",
+													"trace_id",
+													"encryption_key_ids",
 													"metadata",
 													"transport",
 													"cancelled",
@@ -11969,6 +12018,27 @@
 															"name",
 															"preview",
 															"userId"
+														],
+														"additionalProperties": false
+													}
+												},
+												"encryption_keys": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"id": {
+																"type": "string",
+																"pattern": "^[0-9a-f]{64}$"
+															},
+															"label": {
+																"type": "string",
+																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+															}
+														},
+														"required": [
+															"id",
+															"label"
 														],
 														"additionalProperties": false
 													}
@@ -12078,11 +12148,12 @@
 														"minLength": 1,
 														"maxLength": 128
 													},
-													"description": "The keys, grants and credentials that the requests name and that have been deleted since."
+													"description": "The keys, grants and credentials that the requests name and that have been deleted since, and the encryption keys that the organization no longer registers."
 												}
 											},
 											"required": [
 												"api_keys",
+												"encryption_keys",
 												"grants",
 												"upstream_byok",
 												"deleted"

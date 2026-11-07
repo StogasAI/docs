@@ -50,8 +50,9 @@ output. Generation speed divides generated tokens by the full request duration.
 ### Filters
 
 The search and the API's `filter` parameter take these fields in the
-[filter syntax](/docs/reference/filters). Text without a field searches IDs, names, providers,
-results, request types, error codes and HTTP statuses. Filters match whole values, so `:` and `=`
+[filter syntax](/docs/reference/filters). Text without a field searches request, API key, grant
+and provider credential IDs, model names, providers, results, request types, error codes and HTTP
+statuses. Filters match whole values, so `:` and `=`
 are the same, and names and the listed values ignore case.
 
 | Filter              | Matches                                                                                                                                                                                                                |
@@ -68,6 +69,8 @@ are the same, and names and the listed values ignore case.
 | `transport:`        | `https`, `attested_tls` or `e2ee`. See [connection modes](/docs/connection-modes).                                                                                                                                     |
 | `metadata.<key>:`   | A value of a [metadata](/docs/request-records#metadata) key, such as `metadata.team:search`. Keys and values are case-sensitive. Keys with spaces, quotes, parentheses or `:`, `!`, `<`, `>` or `=` can't be filtered. |
 | `session:`          | A [session](/docs/request-records#sessions) ID, such as `session:chat-42`. Session IDs are case-sensitive.                                                                                                             |
+| `trace:`            | A [trace](/docs/request-records#traces) ID, such as `trace:4bf92f3577b34da6a3ce929d0e0e4736`.                                                                                                                          |
+| `encryption_key:`   | A label or identifier of a [customer encryption key](/docs/request-records#encryption-keys) in the request's record.                                                                                                   |
 | `tool_call:`        | A tool call ID or its [hash](/docs/request-records#tool-calls), such as `tool_call:call_1`. Matches the request that made the call and the one that sent its result. IDs are case-sensitive.                           |
 | `outcome:`          | `success`, `failed`, `cancelled`, `rejected` or `unknown`.                                                                                                                                                             |
 | `status:`           | `success`, a [provider result](/docs/request-records#provider-results), a gateway error code such as `insufficient_balance`, or an HTTP status such as `402`.                                                          |
@@ -79,8 +82,9 @@ are the same, and names and the listed values ignore case.
 values check every provider attempt, including earlier failed ones.
 
 `none` selects requests without a value in `grant:`, `role:`, `model:`, `final_provider:`,
-`final_byok:`, `error:`, `metadata.<key>:` and `session:`. For example, `error:none` selects
-requests without a gateway error, and `session:"none"` selects the session named none.
+`final_byok:`, `error:`, `metadata.<key>:`, `session:`, `trace:` and `encryption_key:`. For
+example, `error:none` selects requests without a gateway error, and `session:"none"` selects the
+session named none.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
 
@@ -99,7 +103,7 @@ time range or filters.
 ## Download records
 
 Download the filtered requests as NDJSON, CSV or Parquet. NDJSON uses the same record as the raw
-request view, and CSV and Parquet keep nested objects as JSON strings. The
+request view, and CSV and Parquet keep nested objects and lists as JSON strings. The
 [request record reference](/docs/request-records) describes every field.
 
 To send each record to your own service as requests finish, use the [Export plugin](/docs/export).

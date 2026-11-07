@@ -10,8 +10,8 @@ credential.
 
 ## Example
 
-This streamed Chat Completions request to `gpt-5.5` has a session and metadata. OpenAI rate limited
-the first call, so the gateway called Azure:
+This streamed Chat Completions request to `gpt-5.5` has a session, a trace and metadata. OpenAI
+rate limited the first call, so the gateway called Azure:
 
 ```json title="Record of a served request"
 {
@@ -32,6 +32,8 @@ the first call, so the gateway called Azure:
 		"response_format": "json_schema"
 	},
 	"session_id": "ticket-4821",
+	"trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+	"encryption_key_ids": [],
 	"metadata": { "team": "support", "feature": "ticket-summary" },
 	"transport": "https",
 	"cancelled": false,
@@ -312,6 +314,35 @@ The gateway reads the first of these sources that has a value:
 - The gateway never sends the session ID to the provider, and PII redaction does not scan it.
 - Rejection records have no session ID.
 
+## Traces
+
+OpenTelemetry clients name the trace of each request in a
+[W3C `traceparent` header](https://www.w3.org/TR/trace-context/#traceparent-header):
+
+```http title="Request header"
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+```
+
+The record keeps the header's trace ID, `4bf92f3577b34da6a3ce929d0e0e4736` here, as `trace_id`, so
+the analytics filter [`trace:`](/docs/analytics#filters) finds the requests of a trace.
+
+- The gateway serves a request whose header is missing, invalid or repeated, and records no trace
+  ID.
+- The gateway never sends the header to the provider.
+- Records that count [repeated rejections](#grouped-rejections) have no trace ID.
+
+## Encryption keys
+
+`encryption_key_ids` lists the identifiers of the
+[customer encryption keys](/docs/customer-encryption) of every encrypted credential and policy
+setting that the request could use, including credentials that no attempt reached. The analytics
+filter [`encryption_key:`](/docs/analytics#filters) finds these requests by a key's label or
+identifier.
+
+- A request refused with `encryption_key_required` lists the keys that it did not send.
+- The record keeps identifiers, not labels, so it still names a key after you remove the key's
+  registration.
+
 ## Catalog history
 
 Each attempt's `catalog_chain_hash` identifies the exact author, model, deployment, route and
@@ -385,7 +416,7 @@ finds both the request that made the call and the one that sent its result.
 Requests that the gateway rejects before billing authorization, such as for credit, policy or
 validation errors, appear once the gateway can tell which API key sent them. Repeated rejections
 share records. In each UTC minute, rejections with the same key, `request_type`, `transport`,
-`policy_versions`, error code and HTTP status are recorded like this:
+`policy_versions`, `encryption_key_ids`, error code and HTTP status are recorded like this:
 
 | Rejections      | Record                                                                        |
 | --------------- | ----------------------------------------------------------------------------- |
@@ -409,6 +440,8 @@ For example, 99 matching credit rejections in one minute produce five single rec
 	"request_type": "chat_completion_stream",
 	"request_settings": {},
 	"session_id": "",
+	"trace_id": "",
+	"encryption_key_ids": [],
 	"metadata": {},
 	"transport": "https",
 	"cancelled": false,

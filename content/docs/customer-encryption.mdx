@@ -203,7 +203,10 @@ Keep the original policies and provider credentials so you can encrypt them agai
 3. Encrypt the exports, redactions and provider credentials again with the new key, and save
    them. The dashboard lists where each key is still used in the policies and credentials you can
    view, such as `plugins.redaction` or `rules.night.plugins.export`.
-4. When the old key is no longer used, remove its registration, then stop sending it.
+4. When the dashboard lists no more uses of the old key, filter analytics with
+   [`encryption_key:`](/docs/analytics#filters) and its label to check that no recent request
+   could still use it.
+5. Remove the old key's registration, then stop sending it.
 
 After you remove a registration, requests skip the credentials that the key encrypts, and requests
 that need policy settings that it encrypts fail. You can still save a policy that uses the key, but
