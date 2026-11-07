@@ -6440,6 +6440,16 @@
 							"type": "string",
 							"const": "true"
 						}
+					},
+					{
+						"name": "refusals",
+						"in": "query",
+						"required": false,
+						"description": "Set to `true` to return the deployments that [refuse](/docs/byok#checks) each listed credential, and to count those credentials in `problemCredentials`.",
+						"schema": {
+							"type": "string",
+							"const": "true"
+						}
 					}
 				],
 				"responses": {
@@ -6518,7 +6528,7 @@
 													},
 													"problems": {
 														"minItems": 1,
-														"maxItems": 2,
+														"maxItems": 3,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -6526,7 +6536,8 @@
 																"checkFailed",
 																"notChecked",
 																"noTargets",
-																"targetsUnavailable"
+																"targetsUnavailable",
+																"deploymentsRefused"
 															]
 														}
 													}
@@ -6543,6 +6554,60 @@
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 9007199254740991
+										},
+										"refusedDeployments": {
+											"type": "object",
+											"propertyNames": {
+												"type": "string",
+												"format": "uuid"
+											},
+											"additionalProperties": {
+												"type": "object",
+												"properties": {
+													"count": {
+														"type": "integer",
+														"exclusiveMinimum": 0,
+														"maximum": 9007199254740991
+													},
+													"latest": {
+														"minItems": 1,
+														"maxItems": 3,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"deployment": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"result": {
+																	"type": "string",
+																	"enum": [
+																		"authentication_error",
+																		"permission_error",
+																		"model_unavailable"
+																	]
+																},
+																"refusedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																}
+															},
+															"required": [
+																"deployment",
+																"result",
+																"refusedAt"
+															],
+															"additionalProperties": false
+														}
+													}
+												},
+												"required": [
+													"count",
+													"latest"
+												],
+												"additionalProperties": false
+											}
 										}
 									},
 									"required": [
@@ -6554,7 +6619,8 @@
 										"organizationCount",
 										"organizationLimit",
 										"problemCredentials",
-										"problemCredentialCount"
+										"problemCredentialCount",
+										"refusedDeployments"
 									],
 									"additionalProperties": false
 								}

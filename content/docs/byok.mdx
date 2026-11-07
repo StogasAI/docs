@@ -31,6 +31,11 @@ for that check only and never stores. If a provider refuses it in a request, it 
 until a check passes or, except on Azure, a request through it succeeds. An Azure credential's check
 also finds its account's deployments, which become its [targets](/docs/providers/azure#targets).
 
+A credential also lists each deployment that refused a call through it in the last 7 days with the
+[result](/docs/request-records#provider-results) `authentication_error`, `permission_error` or
+`model_unavailable`, such as a model that your provider account can't use. A deployment leaves the
+list once a later call to it through the credential succeeds or you replace the secret.
+
 ## Customer encryption
 
 With customer encryption, we store only ciphertext, and each request sends the key that unlocks it.
