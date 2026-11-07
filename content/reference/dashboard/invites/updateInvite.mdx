@@ -1,0 +1,31 @@
+---
+title: Change an invite
+description: Changes the name, the number of uses or the expiry, and leaves each
+  field you omit as it is. An invite needs more uses than it has had, and more
+  unused uses need free seats. expiresInSeconds counts from now, and null
+  removes the expiry.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PATCH
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Changes the name, the number of uses or the expiry, and leaves each
+          field you omit as it is. An invite needs more uses than it has had,
+          and more unused uses need free seats. expiresInSeconds counts from
+          now, and null removes the expiry.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/invites/{inviteId}', method: 'patch' }]} />
+    </>
+  );
+}
