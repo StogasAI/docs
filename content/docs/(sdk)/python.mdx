@@ -36,7 +36,7 @@ client = OpenAI(
 
 try:
     response = client.responses.create(
-        model="chutes-gemma-4-31b-turbo",
+        model="chutes-gemma-4-31b",
         input="Say hello in one sentence.",
     )
     print(response.output_text)
@@ -52,7 +52,7 @@ client's own timeout is 10 minutes unless you set `timeout`.
 
 ```python
 with client.chat.completions.create(
-    model="chutes-gemma-4-31b-turbo",
+    model="chutes-gemma-4-31b",
     messages=[{"role": "user", "content": "Say hello."}],
     stream=True,
 ) as stream:
@@ -85,7 +85,7 @@ async def main() -> None:
     )
     try:
         response = await client.responses.create(
-            model="chutes-gemma-4-31b-turbo", input="Say hello."
+            model="chutes-gemma-4-31b", input="Say hello."
         )
         print(response.output_text)
     finally:
@@ -110,7 +110,7 @@ Send `Stogas-Metadata: v2` to get a signed [receipt](/docs/receipts):
 
 ```python
 response = client.responses.create(
-    model="chutes-gemma-4-31b-turbo",
+    model="chutes-gemma-4-31b",
     input="Say hello.",
     extra_headers={"Stogas-Metadata": "v2"},
 )

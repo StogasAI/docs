@@ -220,7 +220,7 @@
 													"summaries": {}
 												}
 											],
-											"schema": "stogas.catalog.v12",
+											"schema": "stogas.catalog.v13",
 											"summaries": {
 												"authors": {},
 												"deployments": {
@@ -343,7 +343,7 @@
 													}
 												}
 											],
-											"schema": "stogas.catalog.part.v12"
+											"schema": "stogas.catalog.part.v13"
 										}
 									}
 								}
@@ -1407,7 +1407,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.v12"
+						"const": "stogas.catalog.v13"
 					},
 					"summaries": {
 						"type": "object",
@@ -1532,13 +1532,6 @@
 					"authorId": {
 						"type": "string"
 					},
-					"derivedFrom": {
-						"type": "array",
-						"description": "IDs of the models that it derives from.",
-						"items": {
-							"type": "string"
-						}
-					},
 					"groupIds": {
 						"type": "array",
 						"items": {
@@ -1644,7 +1637,7 @@
 				"properties": {
 					"graph": {
 						"type": "object",
-						"description": "The part's records in full, by kind and ID: models, routes, and deployments with their routes, prices, limits and data handling.",
+						"description": "The part's records in full, by kind and ID: models, routes, and deployments with their routes, prices, limits, data handling and notes.",
 						"additionalProperties": false,
 						"properties": {
 							"deployments": {
@@ -1685,7 +1678,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.part.v12"
+						"const": "stogas.catalog.part.v13"
 					}
 				}
 			},
@@ -5707,7 +5700,7 @@
 			},
 			"CatalogUnsupportedReason": {
 				"type": "string",
-				"description": "Why Stogas does not serve the record, in one sentence. The catalog lists the whole market, so it also lists what Stogas does not serve. A provider's reason passes to its routes, and a route's to its deployments. A model, provider, author or group has one once Stogas serves none of its deployments, routes or models: their shared reason, or one that says that Stogas serves none of them. A record that Stogas serves has none, and a request that names only records that Stogas does not serve fails with `model_unavailable` and the reason."
+				"description": "Why Stogas does not serve the record, in one or two sentences. The catalog lists the whole market, so it also lists what Stogas does not serve. A provider's reason passes to its routes, and a route's to its deployments. A model, provider, author or group has one once Stogas serves none of its deployments, routes or models: their shared reason, or one that says that Stogas serves none of them. A record that Stogas serves has none, and a request that names only records that Stogas does not serve fails with `model_unavailable` and the reason."
 			}
 		}
 	}

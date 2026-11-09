@@ -1,6 +1,6 @@
 ---
 title: Chutes
-description: Open models in Intel TDX and NVIDIA confidential GPUs, reached with end-to-end encryption, and Standard models that Chutes relays to an operator it does not name.
+description: Open models in Intel TDX and NVIDIA confidential GPUs, reached with end-to-end encryption, and Standard models that Chutes forwards to platforms it does not name.
 icon: logo:chutes
 ---
 
@@ -62,26 +62,24 @@ or the model weights. The catalog therefore lists TEE deployments with `tee: tru
 Chutes' terms call some of its models Standard models. They do not run in a Chutes TEE, so the
 gateway sends their requests without end-to-end encryption, to Chutes' OpenAI-compatible API at
 `https://llm.chutes.ai/v1/chat/completions` over post-quantum TLS, with the same API key. Chutes
-relays each request to a third-party operator that it does not name.
+forwards each request to inference platforms that it does not name, and their staff and systems can
+access content while they process it. Their IDs contain `-unknown-hosted`, such as
+`chutes-glm-5.2-unknown-hosted`, because [hosting](/docs/policies/routing-fields#hosting-values) is
+`unknown`.
 
-Their data handling comes from Chutes' [privacy policy](https://chutes.ai/privacy) and differs from
-TEE deployments in these fields:
+These fields differ between TEE and Standard deployments:
 
 | Field                            | TEE deployments | Standard deployments |
 | -------------------------------- | --------------- | -------------------- |
 | `dataHandling.endToEndEncrypted` | `true`          | `false`              |
 | `dataHandling.tee`               | `true`          | `false`              |
-| `dataHandling.storageLocation`   | `none`          | `world`              |
-| `dataHandling.retentionDays`     | `0`             | missing              |
-| `dataHandling.zeroDataRetention` | `true`          | `false`              |
-| `upstream.hosting`               | missing         | `unknown`            |
+| `dataHandling.trainingUse`       | `false`         | missing              |
+| `upstream.hosting`               | `chutes`        | `unknown`            |
 
-The operators may process and store content in the United States and other countries, including in
-Asia. An operator that offers zero data retention for a model keeps nothing, and the others keep
-content generally for up to 30 days, or longer where the law or their security requires. Chutes does
-not say which applies to each model, so `retentionDays` is missing. Operators keep content that
-their safety systems flag for up to two years. Chutes' agreements forbid them to train on it. To keep
-requests on TEE deployments, filter on `deployment.dataHandling.endToEndEncrypted`.
+Chutes' terms let it, its network operators and its model providers keep content for as long as
+processing needs it, and they name no storage place or retention period, so the catalog lists the
+storage location as `unknown` and retention as missing on every Chutes deployment. To keep requests
+on TEE deployments, filter on `deployment.dataHandling.endToEndEncrypted`.
 
 ## Supported requests
 

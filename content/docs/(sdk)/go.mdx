@@ -61,7 +61,7 @@ func run(ctx context.Context) error {
 	)
 
 	response, err := client.Responses.New(ctx, responses.ResponseNewParams{
-		Model: "chutes-gemma-4-31b-turbo",
+		Model: "chutes-gemma-4-31b",
 		Input: responses.ResponseNewParamsInputUnion{OfString: openai.String("Say hello in one sentence.")},
 	})
 	if err != nil {
@@ -86,7 +86,7 @@ deadline with the request `context.Context` or `http.Client.Timeout`.
 
 ```go
 stream := client.Chat.Completions.NewStreaming(ctx, openai.ChatCompletionNewParams{
-	Model:    "chutes-gemma-4-31b-turbo",
+	Model:    "chutes-gemma-4-31b",
 	Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Say hello.")},
 })
 defer stream.Close()

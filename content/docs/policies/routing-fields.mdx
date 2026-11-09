@@ -10,7 +10,8 @@ deployment's values on the candidate's route. For example, `deployment.contextWi
 keeps deployments with a context window of at least 128,000 tokens.
 
 The [catalog](https://stogas.ai/catalog) shows current IDs and values, and its search accepts these
-fields.
+fields. Some routes and deployments also show `notes`, one or two sentences that explain what the
+fields cannot say, such as how a provider relays requests. Policies never read `notes`.
 
 ## Types
 
@@ -119,9 +120,34 @@ differs only in case, such as `eu` for `EU`.
 ### Upstream details
 
 Most of these fields belong to one provider, which the description names. They are missing on
-deployments of other providers.
+deployments of other providers. `hosting` is set on every deployment.
 
 <RoutingFields group="upstream" />
+
+#### Hosting values
+
+`hosting` names who runs the model. The provider's own ID means the provider runs it. Another
+company's ID means that company runs it and the provider sells access to it. `unknown` means the
+provider forwards the request to a company that it does not name.
+
+| Value          | Who runs the model                                    | Example deployment                       |
+| -------------- | ----------------------------------------------------- | ---------------------------------------- |
+| `anthropic`    | Anthropic, on its own API or through another provider | `azure-claude-opus-5-5-anthropic-hosted` |
+| `aws`          | AWS                                                   | `aws-claude-fable-5-1`                   |
+| `azure`        | Azure                                                 | `azure-gpt-5.5-2026-04-23`               |
+| `chutes`       | Chutes, in a trusted execution environment            | `chutes-glm-5.2`                         |
+| `fireworks`    | Fireworks, through another provider                   | `azure-minimax-m3-fireworks-hosted-us`   |
+| `google-cloud` | Google Cloud                                          | `google-cloud-claude-opus-5-5`           |
+| `openai`       | OpenAI                                                | `openai-gpt-5.6-sol`                     |
+| `unknown`      | A company that the provider does not name             | `chutes-glm-5.2-unknown-hosted`          |
+
+A deny rule such as `deployment.upstream.hosting != 'fireworks'` still passes `unknown` deployments,
+because the company that runs them is not named. To keep requests away from a company, list the hostings that
+you accept:
+
+```cel title="Keep requests away from Fireworks"
+deployment.upstream.hosting in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai']
+```
 
 ## Route and provider
 

@@ -32,7 +32,7 @@ const client = new OpenAI(transport.openAIOptions(apiKey));
 
 try {
 	const response = await client.responses.create({
-		model: 'chutes-gemma-4-31b-turbo',
+		model: 'chutes-gemma-4-31b',
 		input: 'Say hello in one sentence.'
 	});
 	console.log(response.output_text);
@@ -52,7 +52,7 @@ const cancellation = new AbortController();
 // Your stop action calls cancellation.abort().
 const stream = await client.chat.completions.create(
 	{
-		model: 'chutes-gemma-4-31b-turbo',
+		model: 'chutes-gemma-4-31b',
 		messages: [{ role: 'user', content: 'Say hello.' }],
 		stream: true
 	},
@@ -104,7 +104,7 @@ Send `Stogas-Metadata: v2` to get a signed [receipt](/docs/receipts):
 
 ```ts
 const response = await client.responses.create(
-	{ model: 'chutes-gemma-4-31b-turbo', input: 'Say hello.' },
+	{ model: 'chutes-gemma-4-31b', input: 'Say hello.' },
 	{ headers: { 'Stogas-Metadata': 'v2' } }
 );
 ```

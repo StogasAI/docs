@@ -25,7 +25,7 @@ export STOGAS_API_KEY="your-key"
 
 ### Send a request
 
-This request uses the Chutes deployment `chutes-gemma-4-31b-turbo`. The 64-token output limit
+This request uses the Chutes deployment `chutes-gemma-4-31b`. The 64-token output limit
 keeps the [hold](/docs/usage#how-a-request-is-charged) small. Without it, the gateway holds funds
 for the deployment's maximum output.
 
@@ -34,7 +34,7 @@ curl https://api.stogas.ai/v1/chat/completions \
   -H "Authorization: Bearer $STOGAS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "chutes-gemma-4-31b-turbo",
+    "model": "chutes-gemma-4-31b",
     "messages": [{"role": "user", "content": "Say hello in one sentence."}],
     "max_completion_tokens": 64
   }'
@@ -52,7 +52,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="chutes-gemma-4-31b-turbo",
+    model="chutes-gemma-4-31b",
     messages=[{"role": "user", "content": "Say hello in one sentence."}],
     max_completion_tokens=64,
 )
@@ -69,7 +69,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-	model: 'chutes-gemma-4-31b-turbo',
+	model: 'chutes-gemma-4-31b',
 	messages: [{ role: 'user', content: 'Say hello in one sentence.' }],
 	max_completion_tokens: 64
 });
