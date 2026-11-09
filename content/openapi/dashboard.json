@@ -12894,6 +12894,9 @@
 												}
 											]
 										},
+										"bank": {
+											"type": "boolean"
+										},
 										"taxRate": {
 											"anyOf": [
 												{
@@ -12945,6 +12948,7 @@
 										"estimates",
 										"walletNetwork",
 										"card",
+										"bank",
 										"taxRate",
 										"retrievedAt"
 									],
@@ -13630,6 +13634,38 @@
 															}
 														]
 													},
+													"bank": {
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"network": {
+																		"type": "string",
+																		"enum": [
+																			"ach",
+																			"wire"
+																		]
+																	},
+																	"creditAt": {
+																		"type": "string",
+																		"format": "date-time"
+																	},
+																	"reversed": {
+																		"type": "boolean"
+																	}
+																},
+																"required": [
+																	"network",
+																	"creditAt",
+																	"reversed"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"receipt": {
 														"type": "boolean"
 													},
@@ -13660,7 +13696,7 @@
 															"not_credited",
 															"too_small"
 														],
-														"description": "What the credit is doing: `confirming` until the network or the processor settles the payment, `crediting` until its credit is decided, `pending` while the prepaid limits or a restriction hold the credit, `credited`, `review` while we or the processor review the payment, `failed`, `not_credited` when a review closed the payment without credit, and `too_small` when the payment did not cover its fees."
+														"description": "What the credit is doing: `confirming` until the network or the processor settles the payment or the sender's bank can no longer reverse an ACH transfer, `crediting` until its credit is decided, `pending` while the prepaid limits or a restriction hold the credit, `credited`, `review` while we or the processor review the payment, `failed`, `not_credited` when a review closed the payment without credit or the sender's bank reversed a credited transfer, and `too_small` when the payment did not cover its fees."
 													},
 													"status": {
 														"type": "string",
@@ -13713,6 +13749,7 @@
 													"payerIsViewer",
 													"providerHold",
 													"card",
+													"bank",
 													"receipt",
 													"receivedAt",
 													"settledAt",
@@ -14270,6 +14307,100 @@
 									},
 									"required": [
 										"url"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/funding/bank/account": {
+			"post": {
+				"operationId": "getBankAccount",
+				"tags": [
+					"Balance"
+				],
+				"summary": "Get the bank account for transfers",
+				"description": "Returns the bank account that takes your ACH transfers and wires for the organization, creating it the first time. Transfers to it credit the organization and count toward your payer limit.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"accountHolderName": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 200
+										},
+										"accountHolderAddress": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 500
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"accountNumber": {
+											"type": "string",
+											"pattern": "^[0-9A-Za-z]{4,34}$"
+										},
+										"routingNumber": {
+											"type": "string",
+											"pattern": "^\\d{9}$"
+										},
+										"bankName": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 200
+										},
+										"bankAddress": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1,
+													"maxLength": 500
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"testmode": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"accountHolderName",
+										"accountHolderAddress",
+										"accountNumber",
+										"routingNumber",
+										"bankName",
+										"bankAddress",
+										"testmode"
 									],
 									"additionalProperties": false
 								}

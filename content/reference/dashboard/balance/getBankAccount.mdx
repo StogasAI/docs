@@ -1,0 +1,29 @@
+---
+title: Get the bank account for transfers
+description: Returns the bank account that takes your ACH transfers and wires
+  for the organization, creating it the first time. Transfers to it credit the
+  organization and count toward your payer limit.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the bank account that takes your ACH transfers and wires for
+          the organization, creating it the first time. Transfers to it credit
+          the organization and count toward your payer limit.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/funding/bank/account', method: 'post' }]} />
+    </>
+  );
+}
