@@ -13606,6 +13606,7 @@
 																				"enum": [
 																					"authorization_expired",
 																					"canceled_at_stripe",
+																					"card_blocked",
 																					"card_limit",
 																					"card_not_authenticated",
 																					"high_risk",
@@ -13666,6 +13667,20 @@
 															}
 														]
 													},
+													"reversal": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"refund",
+																	"dispute"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"receipt": {
 														"type": "boolean"
 													},
@@ -13696,7 +13711,7 @@
 															"not_credited",
 															"too_small"
 														],
-														"description": "What the credit is doing: `confirming` until the network or the processor settles the payment or the sender's bank can no longer reverse an ACH transfer, `crediting` until its credit is decided, `pending` while the prepaid limits or a restriction hold the credit, `credited`, `review` while we or the processor review the payment, `failed`, `not_credited` when a review closed the payment without credit or the sender's bank reversed a credited transfer, and `too_small` when the payment did not cover its fees."
+														"description": "What the credit is doing: `confirming` until the network or the processor settles the payment or the sender's bank can no longer reverse an ACH transfer, `crediting` until its credit is decided, `pending` while the prepaid limits or a restriction hold the credit, `credited`, `review` while we or the processor review the payment, a refund is on its way or the card's bank disputes it, `failed`, `not_credited` when a review closed the payment without credit, the sender's bank reversed a credited transfer, or a refund or a lost dispute took the payment back, and `too_small` when the payment did not cover its fees."
 													},
 													"status": {
 														"type": "string",
@@ -13750,6 +13765,7 @@
 													"providerHold",
 													"card",
 													"bank",
+													"reversal",
 													"receipt",
 													"receivedAt",
 													"settledAt",
@@ -14258,7 +14274,7 @@
 					"Balance"
 				],
 				"summary": "Start a card payment",
-				"description": "Opens Stripe's payment page for a credit and returns its address, which stays open for 31 minutes. The total adds the funding fees and sales tax to the credit and must be at least $0.50. The credit can be at most what the prepaid limits allow now, less credit that is pending and credit that other card payments will add. Each account can start 10 card payments in any 24 hours.",
+				"description": "Opens Stripe's payment page for a credit and returns its address, which stays open for 31 minutes. The total adds the funding fees and sales tax to the credit and must be at least $0.50. The credit can be at most what the prepaid limits allow now, less credit that is pending and credit that other card payments will add. Each account can start 10 card payments in any 24 hours, and all accounts on one IP address or IPv6 /48 together 20.",
 				"security": [
 					{
 						"accessToken": [

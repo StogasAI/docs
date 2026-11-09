@@ -5,7 +5,7 @@ description: Opens Stripe's payment page for a credit and returns its address,
   to the credit and must be at least $0.50. The credit can be at most what the
   prepaid limits allow now, less credit that is pending and credit that other
   card payments will add. Each account can start 10 card payments in any 24
-  hours.
+  hours, and all accounts on one IP address or IPv6 /48 together 20.
 full: true
 _openapi:
   preload:
@@ -21,7 +21,8 @@ _openapi:
           tax to the credit and must be at least $0.50. The credit can be at
           most what the prepaid limits allow now, less credit that is pending
           and credit that other card payments will add. Each account can start
-          10 card payments in any 24 hours.
+          10 card payments in any 24 hours, and all accounts on one IP address
+          or IPv6 /48 together 20.
 ---
 
 export default function Layout(props) {

@@ -51,11 +51,17 @@ cards and bank transfers through [Stripe](https://stripe.com).
 - A card payment can add only the credit that the prepaid limits allow when you start it, less
   credit that is still pending. If other payments use that room before your bank approves the
   payment, or the organization is deleted or restricted, we cancel it and your card isn't charged.
-- Each account can start 10 card payments in any 24 hours, and one card can add at most $10,000 of
-  credit in any 24 hours across all accounts.
+- Each account can start 10 card payments in any 24 hours, and all accounts on one IP address or
+  IPv6 /48 together 20. One card can add at most $10,000 of credit in any 24 hours across all
+  accounts.
 - The payment page closes after 31 minutes.
 - Your bank holds the amount on your card until we take the payment. We check some payments first,
   and if we decline one or don't take it within 7 days, your bank releases the hold.
+- If a card payment is disputed with its bank, we take its credit out of the balance until the bank
+  decides and restrict the organization: API requests are denied and payments stay pending until
+  we lift the restriction. A dispute that the bank decides for the cardholder removes the credit,
+  as a refund does, which can leave the balance below zero.
+- A card that its bank reports as stolen cannot pay again.
 
 ### Bank transfers
 
