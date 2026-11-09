@@ -10,8 +10,8 @@ deployment's values on the candidate's route. For example, `deployment.contextWi
 keeps deployments with a context window of at least 128,000 tokens.
 
 The [catalog](https://stogas.ai/catalog) shows current IDs and values, and its search accepts these
-fields. Some routes and deployments also show `notes`, one or two sentences that explain what the
-fields cannot say, such as how a provider relays requests. Policies never read `notes`.
+fields. A record can also show `notes`, one or two sentences that explain what the fields cannot
+say, such as how a provider relays requests. Policies never read `notes`.
 
 ## Types
 
@@ -117,18 +117,22 @@ differs only in case, such as `eu` for `EU`.
 `eu` or `DE`. Prefer checks that accept places to exclusions:
 `deployment.dataHandling.processingLocation != 'US'` also accepts `world` and `unknown`.
 
-### Upstream details
+### Hosting
 
-Most of these fields belong to one provider, which the description names. They are missing on
-deployments of other providers. `hosting` is set on every deployment.
+```cel title="Only models that the provider runs itself"
+deployment.hosting == provider.id
+```
 
-<RoutingFields group="upstream" />
+`hosting` names the company that runs the model, on every deployment. The provider's own ID means
+the provider runs it. Another company's ID means that company runs it and the provider sells access
+to it. `via` lists each company that passes the request on between the two, and is empty when there
+is none.
+
+<RoutingFields group="hosting" />
 
 #### Hosting values
 
-`hosting` names who runs the model. The provider's own ID means the provider runs it. Another
-company's ID means that company runs it and the provider sells access to it. `unknown` means the
-provider forwards the request to a company that it does not name.
+`unknown` means a company that the provider does not name.
 
 | Value          | Who runs the model                                    | Example deployment                       |
 | -------------- | ----------------------------------------------------- | ---------------------------------------- |
@@ -141,13 +145,21 @@ provider forwards the request to a company that it does not name.
 | `openai`       | OpenAI                                                | `openai-gpt-5.6-sol`                     |
 | `unknown`      | A company that the provider does not name             | `chutes-glm-5.2-unknown-hosted`          |
 
-A deny rule such as `deployment.upstream.hosting != 'fireworks'` still passes `unknown` deployments,
-because the company that runs them is not named. To keep requests away from a company, list the hostings that
-you accept:
+A deny rule such as `deployment.hosting != 'fireworks'` still passes `unknown` deployments, because
+the company that runs them is not named. To keep requests away from a company, list the companies
+that you accept in both fields:
 
 ```cel title="Keep requests away from Fireworks"
-deployment.upstream.hosting in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai']
+deployment.hosting in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai'] &&
+  deployment.via.all(company, company in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai'])
 ```
+
+### Upstream details
+
+Most of these fields belong to one provider, which the description names. They are missing on
+deployments of other providers.
+
+<RoutingFields group="upstream" />
 
 ## Route and provider
 
