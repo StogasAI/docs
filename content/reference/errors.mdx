@@ -19,8 +19,10 @@ Errors use the OpenAI error object:
 Every gateway error has a code from the lists below. A provider's refusal keeps the provider's
 status, such as `404` or `422`, except that a credential or account failure becomes a
 [`424`](#424-failed-dependency). It keeps the provider's code and message when they help you fix
-the request, and otherwise has `"code": null`. Provider credentials and internal details are never
-shown.
+the request, and otherwise has `"code": null`. A request that used
+[your own provider credential](/docs/byok) always has the provider's message, up to 2,048 bytes. In
+a `424` and an `upstream_rate_limit_error` it follows ours after a colon. Provider credentials and
+internal details are never shown.
 
 After a stream starts, its HTTP status cannot change, and an error arrives as an event in the
 stream. See [Streaming](/docs/streaming#handle-errors).

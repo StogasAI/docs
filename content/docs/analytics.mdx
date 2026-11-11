@@ -11,19 +11,23 @@ all** shows every request in the organization.
 
 ## Metrics
 
-| Metric                       | Counts                                                                                                      |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Cache hit rate               | Requests with input usage that read any input from the provider's [cache](/docs/prompt-caching)             |
-| Cached input share           | Input tokens read from the cache                                                                            |
-| Reasoning tokens             | Only requests whose provider reports them, so a period without one shows no value instead of 0              |
-| Tool call error rate         | Requests with at least one tool call whose arguments do not match the tool's `parameters` schema            |
-| Structured output error rate | Requests with a JSON `response_format` or `text.format` whose output is not valid JSON or breaks the schema |
+| Metric                       | Counts                                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Cache hit rate               | Requests with input usage that read any input from the provider's [cache](/docs/prompt-caching)                  |
+| Cached input share           | Input tokens read from the cache                                                                                 |
+| Reasoning tokens             | Only requests whose provider reports them, so a period without one shows no value instead of 0                   |
+| Tool call error rate         | Requests with at least one tool call whose arguments do not match the tool's `parameters` schema                 |
+| Structured output error rate | Requests with a JSON `response_format` or `text.format` whose output is not valid JSON or breaks the schema      |
+| Refusal rate                 | Requests a provider answered whose [provider result](/docs/request-records#provider-results) is `content_filter` |
 
 - A tool without a schema that compiles accepts any arguments. A call to a tool that the request
   does not allow, or arguments that are not a JSON object, fail the request instead.
 - Output is checked only when the model finishes normally, without a tool call or a refusal. A
   `format` keyword is an annotation, as in JSON Schema 2020-12, and a schema can refer only to
   itself. A check that would be too large is skipped and counts as neither valid nor invalid.
+- A request is refused when the provider rejects it for its content, when the output stops for a
+  content filter, or when the response carries a `refusal`. A refusal that the model writes as
+  ordinary text is not counted. Filter by `status:content_filter` to list refused requests.
 
 Percentiles are approximate. They use only requests with a known value, and timing statistics use
 only successful requests that were not cancelled. Time to first token (TTFT) also needs streamed

@@ -9469,6 +9469,7 @@
 								"error_rate",
 								"tool_call_error_rate",
 								"structured_output_error_rate",
+								"refusal_rate",
 								"latency",
 								"provider_latency",
 								"ttft",
@@ -9540,6 +9541,7 @@
 								"error_rate",
 								"tool_call_error_rate",
 								"structured_output_error_rate",
+								"refusal_rate",
 								"latency",
 								"provider_latency",
 								"ttft",
@@ -9778,6 +9780,18 @@
 															}
 														]
 													},
+													"refusalRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"cacheReadSavingsSampleCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -9916,6 +9930,7 @@
 													"cachedInputShare",
 													"toolCallErrorRate",
 													"structuredOutputErrorRate",
+													"refusalRate",
 													"cacheReadSavingsSampleCount",
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
@@ -10126,6 +10141,18 @@
 															}
 														]
 													},
+													"refusalRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"cacheReadSavingsSampleCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -10259,6 +10286,7 @@
 													"cachedInputShare",
 													"toolCallErrorRate",
 													"structuredOutputErrorRate",
+													"refusalRate",
 													"cacheReadSavingsSampleCount",
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
@@ -10404,6 +10432,18 @@
 														}
 													]
 												},
+												"refusalRate": {
+													"anyOf": [
+														{
+															"type": "number",
+															"minimum": 0,
+															"maximum": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
 												"cacheReadSavingsSampleCount": {
 													"type": "integer",
 													"minimum": 0,
@@ -10534,6 +10574,7 @@
 												"cachedInputShare",
 												"toolCallErrorRate",
 												"structuredOutputErrorRate",
+												"refusalRate",
 												"cacheReadSavingsSampleCount",
 												"cacheWriteOverheadSampleCount",
 												"tokensPerSecond",
@@ -10679,6 +10720,18 @@
 																}
 															]
 														},
+														"refusalRate": {
+															"anyOf": [
+																{
+																	"type": "number",
+																	"minimum": 0,
+																	"maximum": 100
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
 														"cacheReadSavingsSampleCount": {
 															"type": "integer",
 															"minimum": 0,
@@ -10809,6 +10862,7 @@
 														"cachedInputShare",
 														"toolCallErrorRate",
 														"structuredOutputErrorRate",
+														"refusalRate",
 														"cacheReadSavingsSampleCount",
 														"cacheWriteOverheadSampleCount",
 														"tokensPerSecond",
