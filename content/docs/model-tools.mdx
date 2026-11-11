@@ -95,6 +95,48 @@ Request records link each call to the request that sends its result by a
 tool call, because some providers change a forced choice to `auto`[^forced]. Check for tool calls
 before you continue.
 
+## Group tools in namespaces
+
+On Responses, a `namespace` tool groups your tools under one name:
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Find customer 42.",
+	"tools": [
+		{
+			"type": "namespace",
+			"name": "crm",
+			"description": "Tools for the customer database.",
+			"tools": [
+				{
+					"type": "function",
+					"name": "find_customer",
+					"parameters": {
+						"type": "object",
+						"properties": { "id": { "type": "string" } },
+						"required": ["id"]
+					}
+				}
+			]
+		}
+	]
+}
+```
+
+The call is a `function_call` item with `"namespace": "crm"` and `"name": "find_customer"`. Send it
+back with both. Models without namespaces[^namespaces] get each tool as a function with a name such
+as `crm__find_customer` and the namespace's description before its own. The gateway returns their
+calls with your namespace and name, and a call in `input` must name a tool that `tools` declares in
+its namespace.
+
+- A namespace holds `function` and `custom` tools, with names of up to 128 letters, digits,
+  underscores or hyphens. Tools in one namespace need different names, and so do namespaces.
+- The tools of a namespace named `functions` are top-level tools, so their names must differ from
+  the names of the other top-level tools.
+- `tool_choice` can name only top-level tools.
+- [Policies](#restrict-tools-with-a-policy) read a tool in a namespace by its own name.
+
 ## Hosted tools
 
 | Tool                 | Endpoint                             |
@@ -337,6 +379,7 @@ This one refuses one tool of a server. A server whose `allowed_tools` names no t
   hosts. A `server_url` without a host matches no server in a list.
 - `tool_choice: "none"` empties the lists, because the model can call no tool. A choice of one
   function still counts every function, and a choice of one MCP server every server.
+- `request.clientTools` lists the tools of a namespace by their own names, without the namespace.
 - Your application names its tools, so a filter on `request.clientTools` cannot stop an
   application that gives a tool another name.
 
@@ -357,6 +400,10 @@ retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
 [^custom]: On OpenAI models, at [OpenAI](/docs/providers/openai#tools) and [Azure](/docs/providers/azure).
 
 [^forced]: [Anthropic](/docs/providers/anthropic#tools) does, with reasoning on.
+
+[^namespaces]:
+    [Claude](/docs/providers/anthropic#tools), and deployments that take Responses
+    [through Chat Completions](/docs/providers#responses-through-chat-completions).
 
 [^lists]: [Anthropic](/docs/providers/anthropic#tools) returns `400` for both lists in one tool.
 

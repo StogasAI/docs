@@ -52,7 +52,7 @@ prefix:
 ```
 
 - To choose the cache boundaries yourself, put the same object on text, image or file blocks, or on
-  tools.
+  tools outside a namespace.
 - `ttl` is `5m`, the default, or `1h`.
 - To fill the cache without generating output, send an output limit of `0`.
 
@@ -94,6 +94,8 @@ These fields work only on Anthropic deployments:
   names.
 - With reasoning on, a `required` or named `tool_choice` becomes `auto`.
 - `custom` tools are not available.
+- Claude gets each tool of a [namespace](/docs/model-tools#group-tools-in-namespaces) as a
+  function, so a call in `input` must name a tool that `tools` declares in its namespace.
 
 ## Files
 

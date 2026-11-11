@@ -61,6 +61,7 @@ A translated request returns `400` for what Chat Completions cannot carry:
 - hosted and custom tools, such as `web_search`, and tool choices that name them
 - a `reasoning.summary` other than `auto` or `none`
 - input items other than messages, function calls, their outputs and reasoning
+- a function call whose `namespace` and `name` name no tool in `tools`
 - file URLs and image file IDs
 - `stream_options.include_obfuscation` set to `true`
 - earlier reasoning items on Azure. Chutes takes back their reasoning text, without
