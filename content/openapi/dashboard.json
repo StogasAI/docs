@@ -6495,7 +6495,7 @@
 						"name": "refusals",
 						"in": "query",
 						"required": false,
-						"description": "Set to `true` to return the deployments that [refuse](/docs/byok#checks) each listed credential, and to count those credentials in `problemCredentials`.",
+						"description": "Set to `true` to return the deployments that [refuse](/docs/byok#checks) each listed credential, and to count those credentials in `problemCredentials`. `refusedDeployments` is null when they fail to load.",
 						"schema": {
 							"type": "string",
 							"const": "true"
@@ -6607,58 +6607,65 @@
 											"maximum": 9007199254740991
 										},
 										"refusedDeployments": {
-											"type": "object",
-											"propertyNames": {
-												"type": "string",
-												"format": "uuid"
-											},
-											"additionalProperties": {
-												"type": "object",
-												"properties": {
-													"count": {
-														"type": "integer",
-														"exclusiveMinimum": 0,
-														"maximum": 9007199254740991
+											"anyOf": [
+												{
+													"type": "object",
+													"propertyNames": {
+														"type": "string",
+														"format": "uuid"
 													},
-													"latest": {
-														"minItems": 1,
-														"maxItems": 3,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"deployment": {
-																	"type": "string",
-																	"minLength": 1
-																},
-																"result": {
-																	"type": "string",
-																	"enum": [
-																		"authentication_error",
-																		"permission_error",
-																		"model_unavailable"
-																	]
-																},
-																"refusedAt": {
-																	"type": "string",
-																	"format": "date-time"
-																}
+													"additionalProperties": {
+														"type": "object",
+														"properties": {
+															"count": {
+																"type": "integer",
+																"exclusiveMinimum": 0,
+																"maximum": 9007199254740991
 															},
-															"required": [
-																"deployment",
-																"result",
-																"refusedAt"
-															],
-															"additionalProperties": false
-														}
+															"latest": {
+																"minItems": 1,
+																"maxItems": 3,
+																"type": "array",
+																"items": {
+																	"type": "object",
+																	"properties": {
+																		"deployment": {
+																			"type": "string",
+																			"minLength": 1
+																		},
+																		"result": {
+																			"type": "string",
+																			"enum": [
+																				"authentication_error",
+																				"permission_error",
+																				"model_unavailable"
+																			]
+																		},
+																		"refusedAt": {
+																			"type": "string",
+																			"format": "date-time"
+																		}
+																	},
+																	"required": [
+																		"deployment",
+																		"result",
+																		"refusedAt"
+																	],
+																	"additionalProperties": false
+																}
+															}
+														},
+														"required": [
+															"count",
+															"latest"
+														],
+														"additionalProperties": false
 													}
 												},
-												"required": [
-													"count",
-													"latest"
-												],
-												"additionalProperties": false
-											}
+												{
+													"type": "null"
+												}
+											]
 										}
 									},
 									"required": [
