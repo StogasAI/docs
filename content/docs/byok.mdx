@@ -103,6 +103,17 @@ Requests that send its key then use your account, and the others use Stogas mana
 - If a key's policies and credentials grow too large, requests fail with
   `key_configuration_too_large`.
 
+## Allowlist the gateway's IP address
+
+Requests to providers come from `15.204.217.217`.
+
+- Every customer's requests come from this address.
+- A planned change appears on this page 30 days before it takes effect.
+- The [checks](#checks) of a stored credential come from other addresses. A provider account that
+  restricts IP addresses rejects them, so the credential is not saved. Use a
+  [customer-encrypted](#customer-encryption) credential, whose checks come from the gateway's
+  address.
+
 ## Rotate or revoke a credential
 
 - A replaced secret keeps the credential's ID, assignments and history.

@@ -95,8 +95,8 @@ On Responses, Claude returns each thinking block as its own reasoning item, whos
 ## Tools
 
 - A request can use one hosted tool type.
-- The gateway sends `web_search_20250305` and `web_fetch_20250910`, whatever version the request
-  names.
+- `web_search` runs as `web_search_20250305` and `web_fetch` as `web_fetch_20250910`. You can also
+  name either version. A request that names another version gets a 400 error.
 - `web_search` searches only the live web, so `external_web_access` must be `true` or left out.
   Codex sends `false` unless you set `web_search = "live"`.
 - With reasoning on, a `required` or named `tool_choice` becomes `auto`.
