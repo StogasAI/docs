@@ -135,7 +135,7 @@ always uses the provider's count.
 
 - The estimate is never more than the deployment's input limit. A large prompt can therefore hold
   the full input limit.
-- URLs, file IDs and files that the gateway does not [extract](/docs/text-extraction)
-  hold the full input limit, because the gateway cannot count them.
+- URLs, file IDs and files other than UTF-8 [text files](/docs/input-files#text-files) hold the
+  full input limit, because the gateway cannot count them.
 - Hosted tools add their own [holds](/docs/model-tools#holds-for-hosted-tools).
 - Text is never sampled or cut to lower a hold.

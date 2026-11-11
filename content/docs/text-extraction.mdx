@@ -14,17 +14,21 @@ text works on any deployment, even one that accepts no documents, and goes throu
 }
 ```
 
-| Mode     | What happens to a text file                                                                                                                                                                                                  |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auto`   | It stays a file where the deployment reads its type, and becomes text elsewhere. It always becomes text when [PII redaction](/docs/pii-redaction) or [ASCII-only input](/docs/pii-redaction#ascii-only-input) applies. |
-| `always` | It always becomes text, so every deployment and every fallback gets the same prompt.                                                                                                                                        |
-| `off`    | It stays a file. Use it to [replace a default](/docs/policies/rules#replace-a-default-without-adding-a-restriction).                                                                                                       |
+| Mode     | A deployment that reads text files | Any other deployment              |
+| -------- | ---------------------------------- | --------------------------------- |
+| `off`    | The file stays a file              | The deployment is left out        |
+| `auto`   | The file stays a file              | The file becomes text             |
+| `always` | The file becomes text              | The file becomes text             |
 
-When several policies set a mode, the strongest applies: `always`, then `auto`, then `off`.
+`off` is the default. When several policies set a mode, the strongest applies: `always`, then
+`auto`, then `off`, so `off` only
+[replaces a default](/docs/policies/rules#replace-a-default-without-adding-a-restriction).
 
-`auto` keeps what a provider adds to a file it reads itself, such as citations. `always` gives the
-same prompt to each candidate, which keeps a [prompt cache](/docs/prompt-caching) valid across
-fallbacks.
+[PII redaction](/docs/pii-redaction) and [ASCII-only input](/docs/pii-redaction#ascii-only-input)
+read only text. With either, `auto` turns every text file into text, and `off` refuses a text file.
+
+A file that stays a file goes to the provider [as a type that it reads](/docs/input-files#text-files).
+`always` gives every candidate the same prompt, whichever provider serves the request.
 
 ## What the provider gets
 
@@ -69,8 +73,9 @@ the prompt up to the same place:
 }
 ```
 
-A file without a filename starts with its type alone, such as `(application/yaml)`. A file block
-with any other field fails, so nothing in the request is lost.
+A file without a filename starts with its type alone, such as `(application/yaml)`, and a file
+without a type starts with its filename alone. A file block with any other field fails, so nothing
+in the request is lost.
 
 ## Examples by type
 
@@ -91,9 +96,9 @@ with any other field fails, so nothing in the request is lost.
 
 Tables stay as they are. CSV and TSV cost fewer tokens than Markdown tables and lose nothing.
 
-## What it extracts
+## What counts as a text file
 
-- Files whose data URL or `file_type` names `text/*`, a type that ends in `+json` or `+xml`, or
+- A file whose data URL or `file_type` names `text/*`, a type that ends in `+json` or `+xml`, or
   one of these application types:
 
   ```txt
@@ -108,10 +113,14 @@ Tables stay as they are. CSV and TSV cost fewer tokens than Markdown tables and 
   application/x-tex  application/x-toml  application/x-yaml  application/xml  application/yaml
   ```
 
-- Valid UTF-8 without NUL bytes. Other bytes fail the request with 400.
-- Document blocks only. An SVG sent as an image stays an image.
+- A file with no type, or with `application/octet-stream`, whose content is text. Browsers give
+  most source files, such as `.rs`, `.go` and `.zig`, no type.
 
-The filename never decides the type.
+The filename never decides whether a file is text.
+
+Extraction needs valid UTF-8 without NUL bytes. A file that names a text type and holds other
+bytes fails the request with 400, and a file with no type stays a file. Only document blocks are
+extracted, so an SVG sent as an image stays an image.
 
 ## What stays a file
 

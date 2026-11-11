@@ -99,7 +99,26 @@ Give each document exactly one source:
 | `file_id`   | A file that you uploaded to the provider                     | [BYOK](/docs/byok) credentials[^sources] |
 
 If the data URL has no MIME type or uses `application/octet-stream`, `filename` must end in an
-extension that the route accepts.
+extension that the route accepts, unless the file is a [text file](#text-files).
+
+## Text files
+
+```jsonc
+{
+	"type": "input_file",
+	"filename": "main.zig",
+	// Any text type works, and so does no type at all.
+	"file_data": "data:text/x-zig;base64,Y29uc3Qgc3RkID0gQGltcG9ydCgic3RkIik7"
+}
+```
+
+Every deployment that reads plain text reads every
+[text file](/docs/text-extraction#what-counts-as-a-text-file), such as source code, Markdown, CSV
+and configuration files. Where the provider does not list the file's type or extension, the gateway
+sends the file as `text/plain`, and the content and `filename` stay as they are.
+
+A deployment that reads no text files needs [text extraction](/docs/text-extraction), which sends
+the file as prompt text.
 
 ## Supported formats
 
@@ -185,8 +204,8 @@ model, such as `provider:openai gpt-5.6-sol`, or use a key with one credential f
 
 ## Limits
 
-- URLs, file IDs and files that the gateway does not extract reserve the deployment's full input
-  limit in the [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their
+- URLs, file IDs and files other than UTF-8 text files reserve the deployment's full input limit
+  in the [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their
   tokens.
 - Base64 and JSON encoding count toward the [128 MiB request limit](/docs/reference/security#limits).
   The provider applies its own file, page and size limits.
