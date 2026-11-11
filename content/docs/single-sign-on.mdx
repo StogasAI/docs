@@ -4,12 +4,14 @@ description: Sign members in through your identity provider, and let people at y
 icon: LogIn
 ---
 
-An external organization can connect one OpenID Connect identity provider, such as Okta, Microsoft
-Entra ID or Google Workspace. Members can then sign in through it, the organization can require
-that, and people at its verified domains can join through a single sign-on invite. SAML isn't
-supported. Set it up in **Settings → Single sign-on**, which needs **Organization → Manage**.
+An external organization can connect one identity provider, such as Okta, Microsoft Entra ID or
+Google Workspace, through OpenID Connect or SAML 2.0. Members can then sign in through it, the
+organization can require that, and people at its verified domains can join through a single
+sign-on invite. Set it up in **Settings → Single sign-on**, which needs **Organization → Manage**.
 
 ## Register Stogas with your provider
+
+### OpenID Connect
 
 Create a web application that uses the authorization code flow, with the redirect URI
 `https://app.stogas.ai/auth/sso/callback`. Sign-in asks for the `openid`, `email` and `profile`
@@ -21,13 +23,37 @@ endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refuse
 Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0` and add the `xms_edov` optional
 claim to the ID token, because Entra ID doesn't send `email_verified`.
 
+### SAML
+
+| Your provider asks for                   | Give it                                                  |
+| ---------------------------------------- | -------------------------------------------------------- |
+| ACS URL, reply URL or single sign-on URL | `https://app.stogas.ai/api/auth/sso/saml/acs`            |
+| Entity ID, audience or identifier        | `https://app.stogas.ai/api/auth/sso/saml/metadata`       |
+| Name ID                                  | A persistent identifier, or the email address            |
+| Attributes                               | `email`, and `displayName` or `firstName` and `lastName` |
+
+The entity ID is also the address of the service provider metadata. In Stogas, enter the
+provider's issuer, its sign-in URL and its signing certificate as PEM or base64.
+
+| Rule             | Value                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------- |
+| Signature        | The response or the assertion, with RSA-SHA256 or RSA-SHA512. SHA-1 is refused.               |
+| Start of sign-in | At Stogas. A response that answers no request from Stogas is refused.                         |
+| Name ID          | Any format except transient, which changes at every sign-in.                                  |
+| Email            | The `email` or `mail` attribute, otherwise a Name ID that is an address and is not persistent |
+| Certificates     | 2 at most. To renew, add the new certificate below the current one.                           |
+| Response size    | 128 KiB                                                                                       |
+| Not supported    | Encrypted assertions, signed requests, single logout                                          |
+
+Stogas also reads the attribute names that Microsoft Entra ID sends by default.
+
 ## Require single sign-on
 
 Once a test sign-in succeeds, you can require single sign-on. Each member then signs in through
 your provider to open the organization, and a sign-in counts for 24 hours unless you choose another
 length from 15 minutes to 30 days. A new length also applies to current sign-ins, and signing out
-all members ends every sign-in at once. Saving another issuer or client ID turns the requirement
-off until the next test.
+all members ends every sign-in at once. Saving another issuer, client ID or protocol turns the
+requirement off until the next test.
 
 Members who can manage the organization never need a sign-in, so a broken connection can't lock
 everyone out. API keys don't use single sign-on.
@@ -118,20 +144,22 @@ Single sign-on is another way to sign in to a Stogas account, and every account 
 including accounts created through single sign-on. Leaving the organization or disconnecting the
 provider therefore never locks anyone out.
 
-An account links to its person by the provider's subject identifier, never the email, which some
-providers let people change. A provider that gives each client its own identifiers sends new ones
-after you save another client ID, so each member links their account again at their next sign-in.
+An account links to its person by the provider's subject identifier, or by the Name ID with SAML,
+never the email, which some providers let people change. A provider that gives each client its own
+identifiers sends new ones after you save another client ID, so each member links their account
+again at their next sign-in. Saving another issuer or protocol unlinks every member.
 
-A person who joins takes their name from the provider's `name` claim, or their email when the
-provider sends no name, and can change it later. The members list shows the email that the
-provider sent at each member's latest sign-in, and `email:` finds members by it.
+A person who joins takes their name from the provider's `name` claim or SAML name attributes, or
+their email when the provider sends no name, and can change it later. The members list shows the
+email that the provider sent at each member's latest sign-in, and `email:` finds members by it.
 
 A member's [picture](/docs/members#pictures) comes from the provider's `picture` claim when it
-names a JPEG or WebP image over HTTPS. Microsoft Entra ID sends none, so its members upload their
-own.
+names a JPEG or WebP image over HTTPS. Microsoft Entra ID and SAML providers send none, so their
+members upload their own.
 
-Stogas stores the issuer, the client ID, the client secret encrypted, and each linked member's
-subject identifier, email, last sign-in and any picture taken from the provider. With SCIM, it also
-stores a hash of the SCIM secret and each provisioned user's kept attributes.
+Stogas stores the issuer, the client ID and encrypted client secret or the SAML sign-in URL and
+certificate, and each linked member's subject identifier, email, last sign-in and any picture taken
+from the provider. With SCIM, it also stores a hash of the SCIM secret and each provisioned user's
+kept attributes.
 [Activity](/docs/activity) records each change to single sign-on and each member who joins or links
 through it, never the secret.
