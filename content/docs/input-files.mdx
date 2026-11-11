@@ -160,8 +160,9 @@ office documents away from a model:
 
 The gateway reads the type from the data URL or `file_type`, and checks it against the start of the
 content. A type whose files start with a fixed signature, such as PNG, JPEG, HEIC, PDF, MP3 or a
-Word document, must show it, so other data cannot pass a list by declaring that type. A `filename`
-never sets the type.
+Word document, must show it, so other data cannot pass a list by declaring that type. Text formats
+have no signature, so a client can send any text file as `text/plain`, and a list cannot tell one
+text format from another. A `filename` never sets the type.
 
 | Attachment                                                                        | Type the lists check                                                                       |
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |

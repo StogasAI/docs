@@ -14,11 +14,11 @@ text works on any deployment, even one that accepts no documents, and goes throu
 }
 ```
 
-| Mode     | A deployment that reads text files | Any other deployment              |
-| -------- | ---------------------------------- | --------------------------------- |
-| `off`    | The file stays a file              | The deployment is left out        |
-| `auto`   | The file stays a file              | The file becomes text             |
-| `always` | The file becomes text              | The file becomes text             |
+| Mode     | A deployment that reads text files | Any other deployment       |
+| -------- | ---------------------------------- | -------------------------- |
+| `off`    | The file stays a file              | The deployment is left out |
+| `auto`   | The file stays a file              | The file becomes text      |
+| `always` | The file becomes text              | The file becomes text      |
 
 `off` is the default. When several policies set a mode, the strongest applies: `always`, then
 `auto`, then `off`, so `off` only
@@ -79,22 +79,23 @@ in the request is lost.
 
 ## Examples by type
 
-| File          | Media type               | Text sent                                      |
-| ------------- | ------------------------ | ---------------------------------------------- |
-| `notes.md`    | `text/markdown`          | `notes.md (text/markdown)` then the Markdown   |
-| `orders.csv`  | `text/csv`               | `orders.csv (text/csv)` then the rows          |
-| `page.html`   | `text/html`              | `page.html (text/html)` then the markup        |
-| `main.py`     | `text/x-python`          | `main.py (text/x-python)` then the code        |
-| `app.js`      | `application/javascript` | `app.js (application/javascript)` then the code |
-| `data.json`   | `application/json`       | `data.json (application/json)` then the JSON   |
-| `events.ndjson` | `application/x-ndjson` | `events.ndjson (application/x-ndjson)` then one object a line |
-| `config.yaml` | `application/yaml`       | `config.yaml (application/yaml)` then the YAML |
-| `Cargo.toml`  | `application/toml`       | `Cargo.toml (application/toml)` then the TOML  |
-| `query.sql`   | `application/sql`        | `query.sql (application/sql)` then the query   |
-| `feed.xml`    | `application/rss+xml`    | `feed.xml (application/rss+xml)` then the XML  |
-| `logo.svg`    | `image/svg+xml`          | `logo.svg (image/svg+xml)` then the SVG source |
+| File            | Media type               |
+| --------------- | ------------------------ |
+| `notes.md`      | `text/markdown`          |
+| `orders.csv`    | `text/csv`               |
+| `page.html`     | `text/html`              |
+| `main.py`       | `text/x-python`          |
+| `app.js`        | `application/javascript` |
+| `data.json`     | `application/json`       |
+| `events.ndjson` | `application/x-ndjson`   |
+| `config.yaml`   | `application/yaml`       |
+| `Cargo.toml`    | `application/toml`       |
+| `query.sql`     | `application/sql`        |
+| `feed.xml`      | `application/rss+xml`    |
+| `logo.svg`      | `image/svg+xml`          |
 
-Tables stay as they are. CSV and TSV cost fewer tokens than Markdown tables and lose nothing.
+Each becomes its header line, such as `main.py (text/x-python)`, then its content unchanged. The
+gateway never rewrites a file, so a table stays the CSV, TSV or Markdown that you sent.
 
 ## What counts as a text file
 
@@ -124,11 +125,11 @@ extracted, so an SVG sent as an image stays an image.
 
 ## What stays a file
 
-| Input                                   | Why                                                                                                      |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Input                                           | Why                                                                                                 |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | PDFs, office documents and other binary formats | The provider reads them. [Find a route](/docs/input-files#supported-formats) that lists the format. |
-| RTF, Protocol Buffers and email messages | They hold binary data or encoded parts, not plain text.                                                 |
-| Images and audio                        | Models read them as they are.                                                                            |
-| URLs and file IDs                       | The gateway never downloads a file.                                                                      |
+| RTF, Protocol Buffers and email messages        | They hold binary data or encoded parts, not plain text.                                             |
+| Images and audio                                | Models read them as they are.                                                                       |
+| URLs and file IDs                               | The gateway never downloads a file.                                                                 |
 
 To refuse some file types outright, [allow or deny them](/docs/input-files#allow-or-deny-file-types).
