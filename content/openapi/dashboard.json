@@ -626,11 +626,22 @@
 															"key.secret.exposed",
 															"token.created",
 															"token.rotated",
+															"token.revealed",
 															"token.deleted",
 															"token.exposed",
 															"credential.created",
 															"credential.updated",
 															"credential.deleted",
+															"credential.check.failed",
+															"credential.check.passed",
+															"organization.limit.reached",
+															"folder.limit.reached",
+															"grant.limit.reached",
+															"role.limit.reached",
+															"member.limit.reached",
+															"credential.limit.reached",
+															"key.limit.reached",
+															"balance.insufficient",
 															"billing.profile.updated",
 															"activity.export.requested",
 															"requests.export.requested",
@@ -966,11 +977,22 @@
 												"key.secret.exposed",
 												"token.created",
 												"token.rotated",
+												"token.revealed",
 												"token.deleted",
 												"token.exposed",
 												"credential.created",
 												"credential.updated",
 												"credential.deleted",
+												"credential.check.failed",
+												"credential.check.passed",
+												"organization.limit.reached",
+												"folder.limit.reached",
+												"grant.limit.reached",
+												"role.limit.reached",
+												"member.limit.reached",
+												"credential.limit.reached",
+												"key.limit.reached",
+												"balance.insufficient",
 												"billing.profile.updated",
 												"activity.export.requested",
 												"requests.export.requested",
@@ -1975,23 +1997,9 @@
 														"items": {
 															"type": "object",
 															"properties": {
-																"scope": {
+																"ruleName": {
 																	"type": "string",
-																	"enum": [
-																		"organization",
-																		"folder",
-																		"grant"
-																	]
-																},
-																"scopeId": {
-																	"type": "string",
-																	"minLength": 1,
-																	"maxLength": 64
-																},
-																"scopeName": {
-																	"type": "string",
-																	"minLength": 1,
-																	"maxLength": 100
+																	"maxLength": 48
 																},
 																"name": {
 																	"type": "string",
@@ -2090,17 +2098,36 @@
 																			"type": "null"
 																		}
 																	]
+																},
+																"scope": {
+																	"type": "string",
+																	"enum": [
+																		"organization",
+																		"folder",
+																		"grant"
+																	]
+																},
+																"scopeId": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 64
+																},
+																"scopeName": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 100
 																}
 															},
 															"required": [
-																"scope",
-																"scopeId",
-																"scopeName",
+																"ruleName",
 																"name",
 																"measure",
 																"per",
 																"maximum",
-																"resetAt"
+																"resetAt",
+																"scope",
+																"scopeId",
+																"scopeName"
 															],
 															"additionalProperties": false
 														}
@@ -2190,23 +2217,9 @@
 											"items": {
 												"type": "object",
 												"properties": {
-													"scope": {
+													"ruleName": {
 														"type": "string",
-														"enum": [
-															"organization",
-															"folder",
-															"grant"
-														]
-													},
-													"scopeId": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
-													},
-													"scopeName": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
+														"maxLength": 48
 													},
 													"name": {
 														"type": "string",
@@ -2306,6 +2319,24 @@
 															}
 														]
 													},
+													"scope": {
+														"type": "string",
+														"enum": [
+															"organization",
+															"folder",
+															"grant"
+														]
+													},
+													"scopeId": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													},
+													"scopeName": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
 													"grantCount": {
 														"type": "integer",
 														"exclusiveMinimum": 0,
@@ -2313,14 +2344,15 @@
 													}
 												},
 												"required": [
-													"scope",
-													"scopeId",
-													"scopeName",
+													"ruleName",
 													"name",
 													"measure",
 													"per",
 													"maximum",
 													"resetAt",
+													"scope",
+													"scopeId",
+													"scopeName",
 													"grantCount"
 												],
 												"additionalProperties": false
@@ -3544,7 +3576,7 @@
 																	"maxLength": 78,
 																	"pattern": "^\\d+(?:\\.\\d+)?$"
 																},
-																"exhausted": {
+																"reached": {
 																	"type": "boolean"
 																},
 																"refillPerSecond": {
@@ -3605,7 +3637,7 @@
 																"used",
 																"held",
 																"available",
-																"exhausted",
+																"reached",
 																"refillPerSecond",
 																"windowStart",
 																"resetAt",
@@ -4009,26 +4041,9 @@
 											"items": {
 												"type": "object",
 												"properties": {
-													"scope": {
+													"ruleName": {
 														"type": "string",
-														"enum": [
-															"organization",
-															"folder",
-															"grant",
-															"role",
-															"member",
-															"key"
-														]
-													},
-													"scopeId": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 64
-													},
-													"scopeName": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 100
+														"maxLength": 48
 													},
 													"name": {
 														"type": "string",
@@ -4128,6 +4143,27 @@
 															}
 														]
 													},
+													"scope": {
+														"type": "string",
+														"enum": [
+															"organization",
+															"folder",
+															"grant",
+															"role",
+															"member",
+															"key"
+														]
+													},
+													"scopeId": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													},
+													"scopeName": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													},
 													"keyCount": {
 														"type": "integer",
 														"exclusiveMinimum": 0,
@@ -4135,14 +4171,15 @@
 													}
 												},
 												"required": [
-													"scope",
-													"scopeId",
-													"scopeName",
+													"ruleName",
 													"name",
 													"measure",
 													"per",
 													"maximum",
 													"resetAt",
+													"scope",
+													"scopeId",
+													"scopeName",
 													"keyCount"
 												],
 												"additionalProperties": false
@@ -4166,6 +4203,18 @@
 													"type": "null"
 												}
 											]
+										},
+										"platformRateReached": {
+											"anyOf": [
+												{
+													"type": "integer",
+													"exclusiveMinimum": 0,
+													"maximum": 9007199254740991
+												},
+												{
+													"type": "null"
+												}
+											]
 										}
 									},
 									"required": [
@@ -4180,7 +4229,8 @@
 										"exposedKeyCount",
 										"reachedLimits",
 										"reachedLimitCount",
-										"organizationRefusal"
+										"organizationRefusal",
+										"platformRateReached"
 									],
 									"additionalProperties": false
 								}
@@ -6528,7 +6578,7 @@
 													},
 													"problems": {
 														"minItems": 1,
-														"maxItems": 3,
+														"maxItems": 4,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -6537,7 +6587,8 @@
 																"notChecked",
 																"noTargets",
 																"targetsUnavailable",
-																"deploymentsRefused"
+																"deploymentsRefused",
+																"limitReached"
 															]
 														}
 													}
@@ -18200,7 +18251,7 @@
 									"maxLength": 78,
 									"pattern": "^\\d+(?:\\.\\d+)?$"
 								},
-								"exhausted": {
+								"reached": {
 									"type": "boolean"
 								},
 								"refillPerSecond": {
@@ -18261,7 +18312,7 @@
 								"used",
 								"held",
 								"available",
-								"exhausted",
+								"reached",
 								"refillPerSecond",
 								"windowStart",
 								"resetAt",
@@ -18658,6 +18709,137 @@
 						"minimum": 0,
 						"maximum": 9007199254740991
 					},
+					"expiresAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"reachedLimits": {
+						"maxItems": 8,
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"ruleName": {
+									"type": "string",
+									"maxLength": 48
+								},
+								"name": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 48
+								},
+								"measure": {
+									"type": "string",
+									"enum": [
+										"requests",
+										"tokens",
+										"stt",
+										"usd",
+										"concurrentRequests"
+									]
+								},
+								"per": {
+									"anyOf": [
+										{
+											"type": "object",
+											"properties": {
+												"count": {
+													"type": "integer",
+													"minimum": 1,
+													"maximum": 1000
+												},
+												"unit": {
+													"type": "string",
+													"enum": [
+														"second",
+														"minute",
+														"hour",
+														"day",
+														"week",
+														"month",
+														"year"
+													]
+												},
+												"refill": {
+													"type": "string",
+													"enum": [
+														"reset",
+														"gradual"
+													]
+												},
+												"anchor": {
+													"anyOf": [
+														{
+															"type": "string",
+															"format": "date-time"
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"timeZone": {
+													"anyOf": [
+														{
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												}
+											},
+											"required": [
+												"count",
+												"unit",
+												"refill",
+												"anchor",
+												"timeZone"
+											],
+											"additionalProperties": false
+										},
+										{
+											"type": "null"
+										}
+									]
+								},
+								"maximum": {
+									"type": "string",
+									"maxLength": 78,
+									"pattern": "^\\d+(?:\\.\\d+)?$"
+								},
+								"resetAt": {
+									"anyOf": [
+										{
+											"type": "string",
+											"format": "date-time"
+										},
+										{
+											"type": "null"
+										}
+									]
+								}
+							},
+							"required": [
+								"ruleName",
+								"name",
+								"measure",
+								"per",
+								"maximum",
+								"resetAt"
+							],
+							"additionalProperties": false
+						}
+					},
 					"checkedAt": {
 						"anyOf": [
 							{
@@ -18824,6 +19006,8 @@
 					"canChangeAccess",
 					"assignedKeyCount",
 					"exclusiveKeyCount",
+					"expiresAt",
+					"reachedLimits",
 					"checkedAt",
 					"checkError",
 					"checkFailingSince",
@@ -21025,23 +21209,9 @@
 						"items": {
 							"type": "object",
 							"properties": {
-								"scope": {
+								"ruleName": {
 									"type": "string",
-									"enum": [
-										"organization",
-										"folder",
-										"grant"
-									]
-								},
-								"scopeId": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 64
-								},
-								"scopeName": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 100
+									"maxLength": 48
 								},
 								"name": {
 									"type": "string",
@@ -21140,17 +21310,36 @@
 											"type": "null"
 										}
 									]
+								},
+								"scope": {
+									"type": "string",
+									"enum": [
+										"organization",
+										"folder",
+										"grant"
+									]
+								},
+								"scopeId": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 64
+								},
+								"scopeName": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 100
 								}
 							},
 							"required": [
-								"scope",
-								"scopeId",
-								"scopeName",
+								"ruleName",
 								"name",
 								"measure",
 								"per",
 								"maximum",
-								"resetAt"
+								"resetAt",
+								"scope",
+								"scopeId",
+								"scopeName"
 							],
 							"additionalProperties": false
 						}
