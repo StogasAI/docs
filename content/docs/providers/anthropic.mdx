@@ -87,11 +87,18 @@ These fields work only on Anthropic deployments:
   `compact_20260112`, each once. A compaction raises the hold to cover one more input pass and the
   summary.
 
+## Reasoning
+
+On Responses, Claude returns each thinking block as its own reasoning item, whose
+`encrypted_content` holds the whole block when you [ask for it](/docs/reasoning#send-reasoning-back).
+
 ## Tools
 
 - A request can use one hosted tool type.
 - The gateway sends `web_search_20250305` and `web_fetch_20250910`, whatever version the request
   names.
+- `web_search` searches only the live web, so `external_web_access` must be `true` or left out.
+  Codex sends `false` unless you set `web_search = "live"`.
 - With reasoning on, a `required` or named `tool_choice` becomes `auto`.
 - `custom` tools are not available.
 - Claude gets each tool of a [namespace](/docs/model-tools#group-tools-in-namespaces) as a

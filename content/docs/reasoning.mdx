@@ -129,6 +129,60 @@ every provider gets the same budget. `none` turns reasoning off.
 Some models can return a summary of their reasoning. On Responses, set `reasoning.summary`[^summary].
 Omit it to keep the provider's default. The summary changes what you see, not what you pay.
 
+## Send reasoning back
+
+In a tool loop, send the model's reasoning back with the tool results:
+
+```json tab="Responses"
+{
+	"model": "claude-sonnet-5",
+	"include": ["reasoning.encrypted_content"],
+	"input": [
+		{ "role": "user", "content": "What's the weather in Paris?" },
+		{ "type": "reasoning", "id": "rs_...", "summary": [], "encrypted_content": "..." },
+		{
+			"type": "function_call",
+			"call_id": "call_1",
+			"name": "get_weather",
+			"arguments": "{\"city\":\"Paris\"}"
+		},
+		{ "type": "function_call_output", "call_id": "call_1", "output": "18°C and cloudy" }
+	]
+}
+```
+
+```json tab="Chat Completions"
+{
+	"model": "claude-sonnet-5",
+	"messages": [
+		{ "role": "user", "content": "What's the weather in Paris?" },
+		{
+			"role": "assistant",
+			"reasoning_details": [
+				{ "type": "reasoning.text", "text": "...", "signature": "...", "index": 0 }
+			],
+			"tool_calls": [
+				{
+					"id": "call_1",
+					"type": "function",
+					"function": { "name": "get_weather", "arguments": "{\"city\":\"Paris\"}" }
+				}
+			]
+		},
+		{ "role": "tool", "tool_call_id": "call_1", "content": "18°C and cloudy" }
+	]
+}
+```
+
+- On Responses, `include: ["reasoning.encrypted_content"]` returns reasoning items that you can
+  send back. Send each item back unchanged, in its place in `input`.
+- On Chat Completions, send `reasoning_details` back unchanged on its assistant message.
+- A signed or encrypted entry that you change returns `400`.
+- Each deployment gets only the reasoning that it can read, and the gateway leaves out the rest,
+  such as another model family's reasoning or reasoning that you got from a provider directly. A
+  conversation can move to another model or credential[^credential], and the model continues
+  without what it cannot read.
+
 ## Billing
 
 Reasoning tokens are a separate [usage meter](/docs/usage), billed at the deployment's output rate
@@ -143,3 +197,7 @@ including reasoning.
     Anthropic models accept `auto` or `none`, and on Chat Completions also
     `reasoning_display: "summarized"` or `"omitted"`. OpenAI models accept
     [OpenAI's values](https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries).
+
+[^credential]:
+    GPT models read encrypted reasoning only through the credential that returned it, and on
+    [Azure](/docs/providers/azure) only from a deployment in the same Azure account.

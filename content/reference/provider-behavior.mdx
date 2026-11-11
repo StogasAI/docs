@@ -40,9 +40,11 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
   returns `400`.
 - `client_metadata`, which Codex sends with each Responses request, is accepted and never sent to
   the provider.
-- `null`, and the defaults that SDKs send, such as `n: 1` or a plain-text `response_format`, count
-  as omitted. So do `parallel_tool_calls`, and `tool_choice` set to `auto` or `none`, in a request
-  without tools.
+- `null`, and the defaults that SDKs send, such as `n: 1`, `parallel_tool_calls: true` or a
+  plain-text `response_format`, count as omitted. So do `parallel_tool_calls: false`, and
+  `tool_choice` set to `auto` or `none`, in a request without tools.
+- `prompt_cache_key` works with every model, and only the models that use it receive it. See
+  [Prompt caching](/docs/prompt-caching#provider-controls).
 - `store` accepts only `false`. The gateway never asks a provider to store a response.
 - `safety_identifier` and `user` tell the provider which of your users sent a request, so the
   provider can act on that user instead of your whole account. Send an opaque value, such as a hash
