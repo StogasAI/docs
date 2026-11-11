@@ -41,6 +41,68 @@ you leave the organization. Other tokens get `403 SSO_REQUIRED`, and tokens of m
 manage the organization need no sign-in. To refuse every access token, turn off **Allow access
 tokens**.
 
+## Provisioning
+
+```http
+POST /api/scim/v2/<organization-id>/Users HTTP/1.1
+Host: app.stogas.ai
+Authorization: Bearer scim_stogas_v1_...
+Content-Type: application/scim+json
+
+{
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+  "userName": "ada@example.com",
+  "name": { "givenName": "Ada", "familyName": "Lovelace" },
+  "emails": [{ "value": "ada@example.com", "primary": true }],
+  "active": true
+}
+```
+
+Your identity provider can send the people that it assigns to Stogas through SCIM 2.0. Connect
+SCIM in the Single sign-on settings, which show the secret once.
+
+| Your provider asks for       | Give it                                               |
+| ---------------------------- | ----------------------------------------------------- |
+| Base URL or tenant URL       | `https://app.stogas.ai/api/scim/v2/<organization-id>` |
+| Bearer token or secret token | The SCIM secret                                       |
+| Token endpoint               | The base URL followed by `/token`                     |
+| Client ID                    | The organization ID                                   |
+| Client secret                | The SCIM secret                                       |
+
+The last three rows are for a provider that uses the OAuth 2.0 client credentials grant, whose
+tokens last 1 hour. Use `userName` as the unique identifier. Replacing the secret ends the old
+secret and its tokens at once.
+
+While SCIM is connected:
+
+- A person joins through the single sign-on invite only when the provider sent an active user whose
+  `userName` or primary email is the address that the person signs in with.
+- When the provider deactivates or deletes a user, the member who signs in as that person is
+  removed, as when an admin [removes a member](/docs/members#remove-access). [Activity](/docs/activity) names
+  **Identity provider** as the actor. The last member who can manage roles stays.
+- A user that the provider activates again is not a member. The person joins again through the
+  invite.
+- A provisioned user takes no seat until the person joins.
+- A member links to their user by email once. A later change of address at the provider keeps the
+  link.
+
+Disconnecting SCIM keeps every member, and saving another issuer disconnects SCIM.
+
+### SCIM limits
+
+| Limit           | Value                                                                                                     |
+| --------------- | --------------------------------------------------------------------------------------------------------- |
+| Resources       | Users. `GET /Groups` returns an empty list, and group changes return `501`.                               |
+| Attributes kept | `userName`, `externalId`, `name.givenName`, `name.familyName`, `displayName`, the primary email, `active` |
+| Filters         | `userName eq`, `externalId eq`, `emails.value eq`                                                         |
+| Changes         | `POST`, `PUT`, `PATCH` with `add`, `replace` and `remove`, `DELETE`                                       |
+| Users           | 50,000 for each organization                                                                              |
+| Page size       | 100 by default, 200 at most                                                                               |
+| Request body    | 64 KiB                                                                                                    |
+| Not supported   | Bulk requests, sorting, ETags, password changes                                                           |
+
+Stogas accepts every other attribute and leaves it out. Assign [roles](/docs/members#roles) in Stogas.
+
 ## Domains
 
 People join with the email address that your provider sends, which must be at a verified domain.
@@ -69,6 +131,7 @@ names a JPEG or WebP image over HTTPS. Microsoft Entra ID sends none, so its mem
 own.
 
 Stogas stores the issuer, the client ID, the client secret encrypted, and each linked member's
-subject identifier, email, last sign-in and any picture taken from the provider.
+subject identifier, email, last sign-in and any picture taken from the provider. With SCIM, it also
+stores a hash of the SCIM secret and each provisioned user's kept attributes.
 [Activity](/docs/activity) records each change to single sign-on and each member who joins or links
 through it, never the secret.
