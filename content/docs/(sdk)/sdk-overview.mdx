@@ -34,6 +34,7 @@ shutdown. In async native applications, start and close it away from the event l
 | `base_url`        |         | Another HTTPS origin, with no path. The trusted keys and evidence sources stay the same.                                               |
 | `proxy`           |         | A [proxy](#connect-through-a-proxy-or-tor) for every connection, as `socks5h://host:port` or `http://host:port`                        |
 | `onion`           | `false` | `true` reaches Stogas at its [onion address](#connect-through-a-proxy-or-tor) through `proxy`                                          |
+| `encryption_keys` |         | Your [organization keys](/docs/customer-encryption#send-the-key-with-a-request) by label, sent with each request that sends none       |
 
 Each language spells the names its own way, such as `MaxConnections` in Go and .NET and
 `maxConnections` in Swift. [`stogas serve`](/docs/cli#serve) takes them as flags.

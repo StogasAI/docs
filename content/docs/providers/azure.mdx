@@ -77,7 +77,13 @@ target stops serving, the gateway tries the next candidate that your
 [routing](/docs/policies/routing#retries-and-fallbacks) allows.
 
 Azure can upgrade a deployment to a new model version, as its `versionUpgradeOption` allows.
-Requests to an upgraded target fail with `byok_target_changed` until you choose the new version.
+Your choice follows the deployment. Within 20 minutes of an upgrade, requests use the
+deployment as a target of the new version, when your policies allow that version. Until then,
+requests for the old version use your next candidate or fail with `byok_target_unavailable`.
+
+The gateway reads your account's deployments every 10 minutes while requests use the credential.
+A reply that Azure answered from the new version before that read reaches you unchanged, and its
+request log names the version that answered.
 
 A check fails when an account has more than 20,000 targets. Requests through an API key whose Azure
 credentials have more than 20,000 chosen targets together fail with `key_configuration_too_large`.

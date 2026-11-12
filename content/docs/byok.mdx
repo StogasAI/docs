@@ -68,6 +68,11 @@ Personal organizations always allow them. To move an organization over:
 2. Put it in place of the stored credential in each key's [list](#order-credentials).
 3. Delete the stored credentials, then turn off **Allow stored credentials**.
 
+After that, the dashboard and the CLI encrypt every secret before it leaves your device. A call to
+the dashboard API that sends a secret in plain text gets `409 STORED_CREDENTIALS_NOT_ALLOWED`, and
+we neither store that secret nor send it to the provider. That request still carried the secret to
+us, so replace it at the provider if your rules forbid that.
+
 ## AWS and Google Cloud
 
 The CLI and the dashboard API take an AWS or Google Cloud credential as a JSON document, which the

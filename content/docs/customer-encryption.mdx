@@ -182,9 +182,14 @@ your API key in the `Authorization` header:
   call. To let the request use only the candidates whose keys it sends, set
   [`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
 - Each label must match its registered identifier.
-- Your application needs the keys themselves. To copy one from your keychain to the secret store
-  that the application reads, pipe `stogas encryption-key export` with `--output -` to it. The CLI
-  never prints a key on the screen.
+- To leave your application's requests unchanged, give the keys to the connection instead.
+  [`stogas serve --encryption-key`](/docs/cli#send-your-encryption-keys) reads them from your
+  keychain, and an SDK transport takes them as its
+  [`encryption_keys` option](/docs/sdk-overview#options). Both add the keys to each request that
+  sends none.
+- An application that sends the keys itself needs them. To copy one from your keychain to the
+  secret store that the application reads, pipe `stogas encryption-key export` with `--output -`
+  to it. The CLI never prints a key on the screen.
 - The gateway removes `encryption_keys` before it calls the provider, and never stores the keys.
 - Send keys through the [SDK or CLI](/docs/connection-modes), so that only the verified gateway
   can read them. Ordinary HTTPS does not verify the gateway, and a TLS proxy can read the body.

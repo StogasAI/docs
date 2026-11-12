@@ -6831,61 +6831,36 @@
 													"observed": {
 														"anyOf": [
 															{
-																"anyOf": [
-																	{
-																		"type": "object",
-																		"properties": {
-																			"modelFormat": {
-																				"type": "string"
-																			},
-																			"modelName": {
-																				"type": "string"
-																			},
-																			"modelVersion": {
-																				"type": "string"
-																			},
-																			"skuName": {
-																				"type": "string"
-																			},
-																			"state": {
-																				"type": "string"
-																			}
-																		},
-																		"required": [
-																			"modelFormat",
-																			"modelName",
-																			"modelVersion",
-																			"skuName",
-																			"state"
-																		],
-																		"additionalProperties": false
+																"type": "object",
+																"properties": {
+																	"modelFormat": {
+																		"type": "string"
 																	},
-																	{
-																		"type": "object",
-																		"properties": {
-																			"servedModel": {
-																				"type": "string",
-																				"minLength": 1
-																			}
-																		},
-																		"required": [
-																			"servedModel"
-																		],
-																		"additionalProperties": false
+																	"modelName": {
+																		"type": "string"
+																	},
+																	"modelVersion": {
+																		"type": "string"
+																	},
+																	"skuName": {
+																		"type": "string"
+																	},
+																	"state": {
+																		"type": "string"
 																	}
-																]
+																},
+																"required": [
+																	"modelFormat",
+																	"modelName",
+																	"modelVersion",
+																	"skuName",
+																	"state"
+																],
+																"additionalProperties": false
 															},
 															{
 																"type": "null"
 															}
-														]
-													},
-													"autoUpgrade": {
-														"type": "string",
-														"enum": [
-															"none",
-															"at_retirement",
-															"new_default"
 														]
 													},
 													"deploymentName": {
@@ -6992,7 +6967,6 @@
 													"unavailableReason",
 													"unavailableSince",
 													"observed",
-													"autoUpgrade",
 													"deploymentName",
 													"deploymentResourceId",
 													"deploymentType",
@@ -10689,7 +10663,6 @@
 																			"billing_price_invalid",
 																			"byok_not_allowed",
 																			"byok_required",
-																			"byok_target_changed",
 																			"byok_target_unavailable",
 																			"byok_unavailable",
 																			"catalog_unavailable",

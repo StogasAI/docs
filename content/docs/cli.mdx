@@ -91,12 +91,26 @@ simulation, and installs no certificate authority.
 | `--upstream`            |                  | Another HTTPS origin, with no path. The trusted evidence stays the same.         |
 | `--browser-origin`      |                  | The only [web origin](#browser-applications) that may call the endpoint          |
 | `--exit-on-stdin-close` |                  | Stop when the parent process closes stdin, for a CLI that another program starts |
+| `--encryption-key`      |                  | The label of a saved [key](#send-your-encryption-keys) to send. Repeat it.       |
+| `--organization`        |                  | The organization whose keys `--encryption-key` names                             |
 
 The CLI loads evidence when a session starts, and again only when a session needs newer evidence.
 A `POST` to the separately printed refresh URL loads it now.
 
 Ctrl+C or SIGTERM stops new work and allows active streams and sessions up to five seconds to
 close. A cancelled request may have run, so do not send it again automatically.
+
+### Send your encryption keys
+
+```bash
+stogas serve --organization 0192f3a4-5b6c-7d8e-9f01-23456789abcd --encryption-key providers
+```
+
+The endpoint adds the keys that [`stogas encryption-key`](#encrypt-secrets) saved under these
+labels to each Chat Completions, Responses and policy validation request, as
+[`encryption_keys`](/docs/customer-encryption#send-the-key-with-a-request). Your application
+then needs only the base URL and never holds a key. A request that sends its own `encryption_keys`
+goes unchanged.
 
 ### Browser applications
 
