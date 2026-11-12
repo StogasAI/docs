@@ -183,8 +183,8 @@ your API key in the `Authorization` header:
   [`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
 - Each label must match its registered identifier.
 - To leave your application's requests unchanged, give the keys to the connection instead.
-  [`stogas serve --encryption-key`](/docs/cli#send-your-encryption-keys) reads them from your
-  keychain, and an SDK transport takes them as its
+  [`stogas serve`](/docs/cli#send-your-encryption-keys) reads them from your keychain or from
+  key files, and an SDK transport takes them as its
   [`encryption_keys` option](/docs/sdk-overview#options). Both add the keys to each request that
   sends none.
 - An application that sends the keys itself needs them. To copy one from your keychain to the

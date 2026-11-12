@@ -93,6 +93,7 @@ simulation, and installs no certificate authority.
 | `--exit-on-stdin-close` |                  | Stop when the parent process closes stdin, for a CLI that another program starts |
 | `--encryption-key`      |                  | The label of a saved [key](#send-your-encryption-keys) to send. Repeat it.       |
 | `--organization`        |                  | The organization whose keys `--encryption-key` names                             |
+| `--encryption-key-file` |                  | A [key](#send-your-encryption-keys) file to send, as `LABEL=FILE`. Repeat it.    |
 
 The CLI loads evidence when a session starts, and again only when a session needs newer evidence.
 A `POST` to the separately printed refresh URL loads it now.
@@ -111,6 +112,15 @@ labels to each Chat Completions, Responses and policy validation request, as
 [`encryption_keys`](/docs/customer-encryption#send-the-key-with-a-request). Your application
 then needs only the base URL and never holds a key. A request that sends its own `encryption_keys`
 goes unchanged.
+
+On a server or in a container, which have no keychain, pass each key's file with its registered
+label instead:
+
+```bash
+stogas serve --encryption-key-file providers=/run/secrets/providers.key
+```
+
+The file holds the key as `stogas encryption-key export` writes it.
 
 ### Browser applications
 
