@@ -78,8 +78,6 @@ A criterion is one of these:
   no `direction`.
 - A list skips IDs that the request cannot use. It never adds a candidate that the request's
   `model`, filters, allowed lists or credentials exclude.
-- `order`, an older form, is a `deployments` list at the start of the policy's `sort`. It counts
-  toward the four criteria, and a policy that sets it cannot also set a `deployments` list.
 - The credentials of one deployment stay together, in the order that the key assigns them. The
   [fallbacks](#retries-and-fallbacks) follow the same order.
 
@@ -207,8 +205,8 @@ The criteria of every policy apply, in this order:
   set each run of them in `routing.sortFrom`.
 - To decide the order for every request, end the organization's required criteria with a criterion
   that leaves no tie, such as `random()`.
-- To stop other policies from adding criteria, remove `routing.order` and `routing.sort` from the
-  organization's [delegation](/docs/policies/delegation) for every resource type and for `request`.
+- To stop other policies from adding criteria, remove `routing.sort` from the organization's
+  [delegation](/docs/policies/delegation) for every resource type and for `request`.
 
 ## Retries and fallbacks
 

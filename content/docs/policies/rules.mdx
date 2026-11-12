@@ -94,7 +94,7 @@ replace defaults of the same kind:
 | Access             | All of `access`                                             |
 | Input              | All of `input`                                              |
 | Each timeout       | `totalSeconds` or `outputIdleSeconds`                       |
-| Each routing field | One field, except `order` and `sort`, which add up          |
+| Each routing field | One field, except `sort`, whose criteria add up             |
 | Each plugin        | `textExtraction`, `redaction` or `export`, encrypted or not |
 
 - A required plugin setting replaces only the default of the same plugin. A required text
@@ -128,7 +128,7 @@ another policy:
 
 - Rules can contain `access`, `input`, `timeouts`, `limits`, `plugins` and `routing`. They cannot
   contain other rules, `delegation` or `encryption`.
-- A rule can set `routing.order` or `routing.sort` only with `"mode": "default"` and no `when`. See
+- A rule can set `routing.sort` only with `"mode": "default"` and no `when`. See
   [Orders from several policies](/docs/policies/routing#orders-from-several-policies).
 - A rule that sets `routing.fallbacks` or `timeouts.totalSeconds` can read only `request` fields,
   because one fallback count and one total wait apply to the whole request.

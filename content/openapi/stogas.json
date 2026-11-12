@@ -4943,18 +4943,6 @@
 								"x-stogas-maxBytes": 16384,
 								"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
 							},
-							"order": {
-								"minItems": 1,
-								"type": "array",
-								"items": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 128,
-									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-								},
-								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
-							},
 							"sort": {
 								"maxItems": 4,
 								"type": "array",
@@ -5070,7 +5058,7 @@
 										}
 									]
 								},
-								"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
+								"description": "Up to four criteria that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 							}
 						},
 						"additionalProperties": false,
@@ -5554,18 +5542,6 @@
 											"x-stogas-maxBytes": 16384,
 											"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
 										},
-										"order": {
-											"minItems": 1,
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 128,
-												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-											},
-											"uniqueItems": true,
-											"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
-										},
 										"sort": {
 											"maxItems": 4,
 											"type": "array",
@@ -5681,7 +5657,7 @@
 													}
 												]
 											},
-											"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
+											"description": "Up to four criteria that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 										}
 									},
 									"additionalProperties": false,

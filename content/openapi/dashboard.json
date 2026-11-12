@@ -5061,7 +5061,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 20,
+																"maxItems": 19,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5079,7 +5079,6 @@
 																		"plugins.encrypted",
 																		"routing",
 																		"routing.filter",
-																		"routing.order",
 																		"routing.sort",
 																		"routing.allowedCatalogNodes",
 																		"routing.retries",
@@ -5097,38 +5096,6 @@
 														],
 														"additionalProperties": false,
 														"description": "The policy keeps sections that the named policy does not let it set. They still apply and can be removed, but not changed."
-													},
-													{
-														"type": "object",
-														"properties": {
-															"kind": {
-																"type": "string",
-																"const": "order"
-															},
-															"scope": {
-																"type": "string",
-																"enum": [
-																	"organization",
-																	"folder",
-																	"grant",
-																	"role",
-																	"member",
-																	"credential",
-																	"key"
-																]
-															},
-															"id": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 64
-															}
-														},
-														"required": [
-															"kind",
-															"scope"
-														],
-														"additionalProperties": false,
-														"description": "Older gateway releases: the named policy's routing.order and routing.sort apply instead of this policy's."
 													},
 													{
 														"type": "object",
@@ -5188,7 +5155,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 20,
+																"maxItems": 19,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5206,7 +5173,6 @@
 																		"plugins.encrypted",
 																		"routing",
 																		"routing.filter",
-																		"routing.order",
 																		"routing.sort",
 																		"routing.allowedCatalogNodes",
 																		"routing.retries",
@@ -17373,7 +17339,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 20,
+											"maxItems": 19,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -17391,7 +17357,6 @@
 													"plugins.encrypted",
 													"routing",
 													"routing.filter",
-													"routing.order",
 													"routing.sort",
 													"routing.allowedCatalogNodes",
 													"routing.retries",
@@ -17409,38 +17374,6 @@
 									],
 									"additionalProperties": false,
 									"description": "The policy keeps sections that the named policy does not let it set. They still apply and can be removed, but not changed."
-								},
-								{
-									"type": "object",
-									"properties": {
-										"kind": {
-											"type": "string",
-											"const": "order"
-										},
-										"scope": {
-											"type": "string",
-											"enum": [
-												"organization",
-												"folder",
-												"grant",
-												"role",
-												"member",
-												"credential",
-												"key"
-											]
-										},
-										"id": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 64
-										}
-									},
-									"required": [
-										"kind",
-										"scope"
-									],
-									"additionalProperties": false,
-									"description": "Older gateway releases: the named policy's routing.order and routing.sort apply instead of this policy's."
 								},
 								{
 									"type": "object",
@@ -17500,7 +17433,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 20,
+											"maxItems": 19,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -17518,7 +17451,6 @@
 													"plugins.encrypted",
 													"routing",
 													"routing.filter",
-													"routing.order",
 													"routing.sort",
 													"routing.allowedCatalogNodes",
 													"routing.retries",
@@ -19172,18 +19104,6 @@
 													"x-stogas-maxBytes": 16384,
 													"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
 												},
-												"order": {
-													"minItems": 1,
-													"type": "array",
-													"items": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128,
-														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-													},
-													"uniqueItems": true,
-													"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
-												},
 												"sort": {
 													"maxItems": 4,
 													"type": "array",
@@ -19299,7 +19219,7 @@
 															}
 														]
 													},
-													"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
+													"description": "Up to four criteria that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 												}
 											},
 											"additionalProperties": false,
@@ -19325,7 +19245,7 @@
 								},
 								"replaced": {
 									"minItems": 1,
-									"maxItems": 20,
+									"maxItems": 19,
 									"type": "array",
 									"items": {
 										"type": "object",
@@ -19346,7 +19266,6 @@
 													"plugins.encrypted",
 													"routing",
 													"routing.filter",
-													"routing.order",
 													"routing.sort",
 													"routing.allowedCatalogNodes",
 													"routing.retries",
@@ -19404,7 +19323,7 @@
 										],
 										"additionalProperties": false
 									},
-									"description": "A default rule's settings that a required one of the same kind replaces, each with the requirement that does: a policy's own settings, or its rule. One that applies to every request is named first. For routing.order and routing.sort, the one ordering that applies."
+									"description": "A default rule's settings that a required one of the same kind replaces, each with the requirement that does: a policy's own settings, or its rule. One that applies to every request is named first. For routing.sort, the one ordering that applies."
 								}
 							},
 							"required": [
@@ -19501,7 +19420,7 @@
 					},
 					"setBy": {
 						"minItems": 1,
-						"maxItems": 720,
+						"maxItems": 684,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -19522,7 +19441,6 @@
 										"plugins.encrypted",
 										"routing",
 										"routing.filter",
-										"routing.order",
 										"routing.sort",
 										"routing.allowedCatalogNodes",
 										"routing.retries",
@@ -19575,7 +19493,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19593,7 +19511,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -19612,7 +19529,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19630,7 +19547,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -19649,7 +19565,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19667,7 +19583,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -19686,7 +19601,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19704,7 +19619,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -19723,7 +19637,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19741,7 +19655,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -19760,7 +19673,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19778,7 +19691,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -19797,7 +19709,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19814,7 +19726,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -20384,7 +20295,7 @@
 										}
 									]
 								},
-								"description": "The combined criteria in the order they apply: required criteria from the organization policy down, then default criteria from the closest policy out. routing.order becomes its policy's deployments list. A criterion that repeats an earlier one, apart from its direction, is left out, since it can't break that one's ties."
+								"description": "The combined criteria in the order they apply: required criteria from the organization policy down, then default criteria from the closest policy out. A criterion that repeats an earlier one, apart from its direction, is left out, since it can't break that one's ties."
 							},
 							"sortFrom": {
 								"maxItems": 40,
@@ -20437,53 +20348,6 @@
 									"additionalProperties": false
 								},
 								"description": "The policy of each run of routing.sort criteria, in the same order: the first entry sets the first criteria many criteria, and so on."
-							},
-							"order": {
-								"minItems": 1,
-								"type": "array",
-								"items": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 128,
-									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-								},
-								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
-							},
-							"orderFrom": {
-								"type": "object",
-								"properties": {
-									"scope": {
-										"type": "string",
-										"enum": [
-											"organization",
-											"folder",
-											"grant",
-											"role",
-											"member",
-											"credential",
-											"key"
-										]
-									},
-									"id": {
-										"type": "string",
-										"minLength": 1,
-										"maxLength": 64
-									},
-									"mode": {
-										"type": "string",
-										"enum": [
-											"required",
-											"default"
-										]
-									}
-								},
-								"required": [
-									"scope",
-									"mode"
-								],
-								"additionalProperties": false,
-								"description": "Older gateway releases: the policy whose routing.order and routing.sort apply."
 							}
 						},
 						"additionalProperties": false
@@ -20742,7 +20606,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 19,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20760,7 +20624,6 @@
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
-														"routing.order",
 														"routing.sort",
 														"routing.allowedCatalogNodes",
 														"routing.retries",
@@ -20782,7 +20645,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -20800,7 +20663,6 @@
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
-																"routing.order",
 																"routing.sort",
 																"routing.allowedCatalogNodes",
 																"routing.retries",
@@ -20834,7 +20696,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 19,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -20852,7 +20714,6 @@
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
-																	"routing.order",
 																	"routing.sort",
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
@@ -20883,7 +20744,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 19,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20901,7 +20762,6 @@
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
-														"routing.order",
 														"routing.sort",
 														"routing.allowedCatalogNodes",
 														"routing.retries",
@@ -20923,7 +20783,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -20941,7 +20801,6 @@
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
-																"routing.order",
 																"routing.sort",
 																"routing.allowedCatalogNodes",
 																"routing.retries",
@@ -20975,7 +20834,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 19,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -20993,7 +20852,6 @@
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
-																	"routing.order",
 																	"routing.sort",
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
@@ -21024,7 +20882,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 19,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21042,7 +20900,6 @@
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
-														"routing.order",
 														"routing.sort",
 														"routing.allowedCatalogNodes",
 														"routing.retries",
@@ -21064,7 +20921,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21082,7 +20939,6 @@
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
-																"routing.order",
 																"routing.sort",
 																"routing.allowedCatalogNodes",
 																"routing.retries",
@@ -21116,7 +20972,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 19,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21134,7 +20990,6 @@
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
-																	"routing.order",
 																	"routing.sort",
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
@@ -21165,7 +21020,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 19,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21183,7 +21038,6 @@
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
-														"routing.order",
 														"routing.sort",
 														"routing.allowedCatalogNodes",
 														"routing.retries",
@@ -21205,7 +21059,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21223,7 +21077,6 @@
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
-																"routing.order",
 																"routing.sort",
 																"routing.allowedCatalogNodes",
 																"routing.retries",
@@ -21257,7 +21110,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 19,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21275,7 +21128,6 @@
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
-																	"routing.order",
 																	"routing.sort",
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
@@ -21306,7 +21158,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 19,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21324,7 +21176,6 @@
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
-														"routing.order",
 														"routing.sort",
 														"routing.allowedCatalogNodes",
 														"routing.retries",
@@ -21346,7 +21197,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21364,7 +21215,6 @@
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
-																"routing.order",
 																"routing.sort",
 																"routing.allowedCatalogNodes",
 																"routing.retries",
@@ -21398,7 +21248,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 19,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21416,7 +21266,6 @@
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
-																	"routing.order",
 																	"routing.sort",
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
@@ -21447,7 +21296,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 20,
+												"maxItems": 19,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21465,7 +21314,6 @@
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
-														"routing.order",
 														"routing.sort",
 														"routing.allowedCatalogNodes",
 														"routing.retries",
@@ -21487,7 +21335,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 20,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21505,7 +21353,6 @@
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
-																"routing.order",
 																"routing.sort",
 																"routing.allowedCatalogNodes",
 																"routing.retries",
@@ -21539,7 +21386,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 20,
+															"maxItems": 19,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21557,7 +21404,6 @@
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
-																	"routing.order",
 																	"routing.sort",
 																	"routing.allowedCatalogNodes",
 																	"routing.retries",
@@ -21586,7 +21432,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 20,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -21603,7 +21449,6 @@
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
-												"routing.order",
 												"routing.sort",
 												"routing.allowedCatalogNodes",
 												"routing.retries",
@@ -22207,18 +22052,6 @@
 								"x-stogas-maxBytes": 16384,
 								"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
 							},
-							"order": {
-								"minItems": 1,
-								"type": "array",
-								"items": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 128,
-									"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-								},
-								"uniqueItems": true,
-								"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
-							},
 							"sort": {
 								"maxItems": 4,
 								"type": "array",
@@ -22334,7 +22167,7 @@
 										}
 									]
 								},
-								"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
+								"description": "Up to four criteria that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 							}
 						},
 						"additionalProperties": false,
@@ -22939,18 +22772,6 @@
 											"x-stogas-maxBytes": 16384,
 											"description": "A CEL filter over catalog facts, request model, route and time. Input-token and cost estimates are unavailable during routing."
 										},
-										"order": {
-											"minItems": 1,
-											"type": "array",
-											"items": {
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 128,
-												"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-											},
-											"uniqueItems": true,
-											"description": "Deployment IDs to try first, in this order. It is the same as a deployments list at the start of routing.sort, so a policy cannot set both. Deployments the request cannot use are skipped."
-										},
 										"sort": {
 											"maxItems": 4,
 											"type": "array",
@@ -23066,7 +22887,7 @@
 													}
 												]
 											},
-											"description": "Up to four criteria, counting routing.order, that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
+											"description": "Up to four criteria that order the deployments a request can use. Each orders the ties of the one before. A criterion is by, a CEL expression with an optional direction, or one list of author, model, deployment, route or provider IDs, which ranks candidates by their position in the list. Required criteria apply from the organization policy down to the request policy, then default criteria from the closest policy out. A request fails, naming the tied models or deployments, when the criteria leave a tie among those it would try."
 										}
 									},
 									"additionalProperties": false,
