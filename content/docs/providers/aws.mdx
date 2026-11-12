@@ -96,6 +96,21 @@ The IAM user that owns the key needs this policy:
 A Bedrock API key also needs `bedrock:CallWithBearerToken` and `bedrock:ListFoundationModels`,
 and a Claude Platform on AWS API key needs `aws-external-anthropic:CallWithBearerToken`.
 
+## Turn on Claude Fable and Claude Mythos
+
+```bash
+curl -X PUT https://bedrock.us-east-1.amazonaws.com/data-retention \
+  -H "Authorization: Bearer $AWS_BEARER_TOKEN_BEDROCK" \
+  -H "Content-Type: application/json" \
+  -d '{ "mode": "aws_review" }'
+```
+
+Bedrock rejects Claude Fable and Claude Mythos requests until your account's data retention mode is
+`aws_review` in the Region of your credential. Run the command once for that Region, with a Bedrock
+API key that has `bedrock:PutAccountDataRetention`. AWS then keeps the prompts and responses of
+these models for up to 30 days in the Regions that run them, and can review them. AWS doesn't share
+them with Anthropic. Claude Mythos also needs Anthropic's approval for your account.
+
 ## Customer encryption
 
 With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts a credential
@@ -140,3 +155,4 @@ are not available.
 - [Claude in Amazon Bedrock](https://platform.claude.com/docs/en/build-with-claude/claude-in-amazon-bedrock)
 - [Claude Platform on AWS](https://platform.claude.com/docs/en/build-with-claude/claude-platform-on-aws)
 - [Inference profile permissions](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html)
+- [Bedrock data retention](https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html)

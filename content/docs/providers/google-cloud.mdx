@@ -71,6 +71,28 @@ stogas encrypt --key providers --organization <organization-id> \
 
 Then delete `key.json` and `google.json`, and add `credential.json` in [BYOK](/docs/byok).
 
+## Turn on Claude Fable on Agent Platform
+
+1. Accept the Advanced AI Safety Addendum for your project in Model Garden.
+2. Turn on sharing with Anthropic for each Claude Fable model in each location that you use:
+
+   ```bash
+   for model in claude-fable-5 claude-fable-5-1 claude-fable-5-2; do
+     for location in global us eu; do
+       host=aiplatform.googleapis.com
+       [ "$location" = global ] || host="aiplatform.$location.rep.googleapis.com"
+       curl -X POST "https://$host/v1beta1/projects/PROJECT_ID/locations/$location/publishers/anthropic/models/$model:setPublisherModelConfig" \
+         -H "Authorization: Bearer $(gcloud auth print-access-token)" \
+         -H "Content-Type: application/json" \
+         -d '{"publisherModelConfig": {"dataSharingEnabledProvider": "ANTHROPIC"}}'
+     done
+   done
+   ```
+
+Google keeps the prompts and responses of Claude Fable for up to 30 days, and shares them with
+Anthropic to monitor abuse. [`deployment.companies`](/docs/policies/routing-fields#hosting) of these
+deployments includes `anthropic`.
+
 ## Differences from Anthropic
 
 Claude Models on Google Cloud works as on [Anthropic](/docs/providers/anthropic). On Agent
@@ -98,3 +120,5 @@ gcloud org-policies set-policy policy.yaml
 
 - [Claude on Agent Platform](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/google-managed)
 - [Claude Models on Google Cloud (Anthropic managed)](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/anthropic-managed)
+- [Abuse monitoring on Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/abuse-monitoring)
+- [Sharing requests and responses with partners](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/multimodal/request-response-logging)

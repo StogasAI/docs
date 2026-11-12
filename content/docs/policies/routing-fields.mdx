@@ -125,8 +125,9 @@ deployment.hosting == provider.id
 
 `hosting` names the company that runs the model, on every deployment. The provider's own ID means
 the provider runs it. Another company's ID means that company runs it and the provider sells access
-to it. `via` lists each company that passes the request on between the two, and is empty when there
-is none.
+to it. `companies` lists every company that receives the request: the provider, each company that
+passes the request on, the hosting, and each company that the hosting shares the request with,
+such as Anthropic, which receives Claude Fable requests on Google Cloud to monitor abuse.
 
 <RoutingFields group="hosting" />
 
@@ -147,11 +148,10 @@ is none.
 
 A deny rule such as `deployment.hosting != 'fireworks'` still passes `unknown` deployments, because
 the company that runs them is not named. To keep requests away from a company, list the companies
-that you accept in both fields:
+that you accept:
 
 ```cel title="Keep requests away from Fireworks"
-deployment.hosting in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai'] &&
-  deployment.via.all(company, company in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai'])
+deployment.companies.all(company, company in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai'])
 ```
 
 ### Upstream details
