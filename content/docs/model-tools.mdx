@@ -7,7 +7,8 @@ icon: Wrench
 A request can give the model two kinds of tools:
 
 - **Your tools** run in your application. `function` tools work on both endpoints and every
-  provider. `custom` tools take free-form text input and work on Responses[^custom]. You pay only
+  provider. `custom` tools take free-form text input and work on Responses[^custom]. Some models
+  also know a shell tool and a file editing tool of their provider[^provider-tools]. You pay only
   for tokens.
 - **Hosted tools**, such as web search, run at the provider during the request. They can have a
   price per call.
@@ -370,7 +371,7 @@ This one refuses one tool of a server. A server whose `allowed_tools` names no t
 
 | Filter                                                           | Effect                                                             |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `size(request.clientTools) == 0`                                 | Refuses `function` and `custom` tools                              |
+| `size(request.clientTools) == 0`                                 | Refuses every tool that your application runs                      |
 | `!('run_shell' in request.clientTools)`                          | Refuses requests that let the model call `run_shell`               |
 | `size(request.hostedTools) == 0`                                 | Refuses hosted tools, remote MCP servers included                  |
 | `!(provider.id == 'anthropic' && size(request.hostedTools) > 0)` | Sends requests with hosted tools to providers other than Anthropic |
@@ -380,6 +381,8 @@ This one refuses one tool of a server. A server whose `allowed_tools` names no t
 - `tool_choice: "none"` empties the lists, because the model can call no tool. A choice of one
   function still counts every function, and a choice of one MCP server every server.
 - `request.clientTools` lists the tools of a namespace by their own names, without the namespace.
+- A provider's shell or file editing tool[^provider-tools] counts under its name: `shell`,
+  `apply_patch`, `bash` or `str_replace_based_edit_tool`.
 - Your application names its tools, so a filter on `request.clientTools` cannot stop an
   application that gives a tool another name.
 
@@ -390,7 +393,6 @@ These tools return `400` before the gateway calls a provider:
 - Remote MCP servers on Azure and Anthropic models
 - File search and hosted retrieval
 - Code interpreter, hosted shell and standalone code execution
-- Local shell and patch tools
 - Computer use and image generation
 - Provider memory and tool loading
 
@@ -398,6 +400,10 @@ Anthropic's MCP connector runs every call without your approval and is not eligi
 retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
 
 [^custom]: On OpenAI models, at [OpenAI](/docs/providers/openai#tools) and [Azure](/docs/providers/azure).
+
+[^provider-tools]:
+    [OpenAI's `shell` and `apply_patch`](/docs/providers/openai#shell-and-apply_patch), and
+    [Anthropic's bash and text editor](/docs/providers/anthropic#bash-and-text-editor).
 
 [^forced]: [Anthropic](/docs/providers/anthropic#tools) does, with reasoning on.
 
@@ -413,6 +419,6 @@ retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
 
 [^content]:
     For OpenAI search, each call reserves up to 128,000 tokens or the deployment's input limit, if
-    smaller. For Claude, the hold covers input for up to ten tool rounds and one output limit. With
-    caching on, rounds after the first are held at the cache-read rate, so cache misses can cost
-    more than the hold.
+    smaller. A search model reserves its whole input limit. For Claude, the hold covers input for
+    up to ten tool rounds and one output limit. With caching on, rounds after the first are held at
+    the cache-read rate, so cache misses can cost more than the hold.

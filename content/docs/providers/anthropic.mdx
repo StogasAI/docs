@@ -104,6 +104,34 @@ On Responses, Claude returns each thinking block as its own reasoning item, whos
 - Claude gets each tool of a [namespace](/docs/model-tools#group-tools-in-namespaces) as a
   function, so a call in `input` must name a tool that `tools` declares in its namespace.
 
+### Bash and text editor
+
+```jsonc title="Responses"
+{
+	"model": "claude-sonnet-5",
+	"input": "Fix the failing test.",
+	"tools": [
+		{ "type": "bash_20250124", "name": "bash" },
+		{ "type": "text_editor_20250728", "name": "str_replace_based_edit_tool" }
+	]
+}
+```
+
+Claude calls both as functions. The call is a `function_call` item named `bash` or
+`str_replace_based_edit_tool` with Anthropic's arguments, such as `{"command": "go test ./..."}`.
+Run it in your application and send the result as a `function_call_output` item.
+
+- Both tools work on Responses, with these versions and names only. The text editor also takes
+  `max_characters`, and both take `cache_control`.
+- No other tool can have their names, and `tool_choice` names them as functions.
+- Both tools cost only tokens. Anthropic adds its own instructions to the input of each request:
+  325 tokens for bash and 974 for the text editor on Claude Opus 4.7 and later models.
+- Computer use and the memory tool are not available.
+- See Anthropic's [bash](https://platform.claude.com/docs/en/agents-and-tools/tool-use/bash-tool)
+  and
+  [text editor](https://platform.claude.com/docs/en/agents-and-tools/tool-use/text-editor-tool)
+  guides for the arguments and results.
+
 ## Files
 
 Send text files, including Markdown and CSV, as `text/plain`, for example

@@ -64,13 +64,56 @@ Besides `function` tools, Responses accepts `custom` tools,
 [remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models, such as
 `gpt-5-search-api`, take `web_search_options` on Chat Completions instead of `tools`.
 
+### Shell and apply_patch
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Fix the failing test.",
+	"tools": [{ "type": "shell", "environment": { "type": "local" } }, { "type": "apply_patch" }]
+}
+```
+
+The model returns `shell_call` and `apply_patch_call` items. Run the commands and apply the patches
+in your application, then send the conversation again with each call and its `shell_call_output` or
+`apply_patch_call_output` after it:
+
+```jsonc
+"input": [
+	{ "role": "user", "content": "Fix the failing test." },
+	{ "type": "shell_call", "call_id": "call_1", "action": { "commands": ["go test ./..."] } },
+	{
+		"type": "shell_call_output",
+		"call_id": "call_1",
+		"output": [{ "stdout": "ok", "stderr": "", "outcome": { "type": "exit", "exit_code": 0 } }]
+	},
+	{
+		"type": "apply_patch_call",
+		"call_id": "call_2",
+		"status": "completed",
+		"operation": { "type": "delete_file", "path": "old_test.go" }
+	},
+	{ "type": "apply_patch_call_output", "call_id": "call_2", "status": "completed" }
+]
+```
+
+- `shell` runs only in your application: `environment` is `{ "type": "local" }` or left out, with
+  optional `skills`. Hosted containers return `400`.
+- Both tools cost only tokens. OpenAI adds its own instructions to the input of each request: about
+  240 tokens for `shell`, 520 more when it lists skills, and about 620 for `apply_patch`.
+- `tool_choice` accepts `{ "type": "shell" }` and `{ "type": "apply_patch" }`, also in
+  `allowed_tools`.
+- See OpenAI's [shell](https://developers.openai.com/api/docs/guides/tools-shell) and
+  [apply_patch](https://developers.openai.com/api/docs/guides/tools-apply-patch) guides for the
+  call and result fields.
+
 ## Not available
 
 - Audio and image output, and the `audio` request field.
 - Stored conversations: `store: true`, `previous_response_id`, `conversation` and `background`. The
   gateway always sends `store: false`.
 - Async tool calls (`async: true`) and `configuration_update` input items.
-- Hosted file search, code interpreter, shell, computer use and image generation.
+- Hosted file search, code interpreter, shell containers, computer use and image generation.
 - WebSocket mode and the Scale tier.
 
 ## References
