@@ -4,11 +4,11 @@ import Link from 'fumadocs-core/link';
 import type { AnchorHTMLAttributes, MouseEvent, PointerEvent } from 'react';
 import { useEffect, useState } from 'react';
 
-type Environment = 'development' | 'localhost' | 'staging' | 'production';
+type Environment = 'development' | 'localhost' | 'staging' | 'prod';
 type Segment = 'marketing' | 'app' | 'api';
 type Deployment = Record<Segment, string>;
 type Page = { environment: Environment; onion: boolean; segment?: Segment };
-const ENVIRONMENTS: readonly Environment[] = ['development', 'localhost', 'staging', 'production'];
+const ENVIRONMENTS: readonly Environment[] = ['development', 'localhost', 'staging', 'prod'];
 const SEGMENTS: readonly Segment[] = ['marketing', 'app', 'api'];
 
 const DEPLOYMENTS: Record<Environment, Deployment> = {
@@ -22,7 +22,7 @@ const DEPLOYMENTS: Record<Environment, Deployment> = {
 		app: 'app.stogas.localhost',
 		marketing: 'stogas.localhost'
 	},
-	production: {
+	prod: {
 		api: 'api.stogas.ai',
 		app: 'app.stogas.ai',
 		marketing: 'stogas.ai'
@@ -54,13 +54,13 @@ for (const environment of ENVIRONMENTS) {
 	}
 }
 HOST_TO_SEGMENT.set('www.stogas.ai', {
-	environment: 'production',
+	environment: 'prod',
 	segment: 'marketing',
 	onion: false
 });
 
 function getFallbackEnvironment(): Environment {
-	return process.env.NODE_ENV === 'development' ? 'localhost' : 'production';
+	return process.env.NODE_ENV === 'development' ? 'localhost' : 'prod';
 }
 
 function normalizeHostname(hostname: string) {
@@ -86,7 +86,7 @@ function detectPage(hostname: string, isDev: boolean): Page {
 	const known = HOST_TO_SEGMENT.get(host);
 	if (known) return known;
 	if (isLoopbackHostname(host)) return { environment: 'localhost', onion: false };
-	return { environment: isDev ? 'localhost' : 'production', onion: false };
+	return { environment: isDev ? 'localhost' : 'prod', onion: false };
 }
 
 function rewriteStogasUrl(href: string, page: Page): string {
