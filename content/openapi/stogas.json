@@ -192,13 +192,13 @@
 													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
 													"size": 236710,
 													"through": null,
-													"stogasUnsupported": false
+													"stogasSupported": true
 												},
 												{
 													"sha256": "76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98",
 													"size": 182340,
 													"through": "2027-03-31",
-													"stogasUnsupported": false
+													"stogasSupported": true
 												}
 											],
 											"periods": [
@@ -220,7 +220,7 @@
 													"summaries": {}
 												}
 											],
-											"schema": "stogas.catalog.v14",
+											"schema": "stogas.catalog.v15",
 											"summaries": {
 												"authors": {},
 												"deployments": {
@@ -231,7 +231,8 @@
 														"routeIds": [
 															"openai-chat-completions",
 															"openai-responses"
-														]
+														],
+														"stogasSupported": true
 													},
 													"openai-gpt-6.1-sol": {
 														"modelId": "gpt-6.1-sol",
@@ -240,7 +241,8 @@
 														"routeIds": [
 															"openai-chat-completions",
 															"openai-responses"
-														]
+														],
+														"stogasSupported": true
 													}
 												},
 												"groups": {},
@@ -256,7 +258,8 @@
 														"name": "GPT-4o",
 														"part": 1,
 														"releaseDate": "2024-05-13",
-														"retirementDate": "2027-03-31"
+														"retirementDate": "2027-03-31",
+														"stogasSupported": true
 													},
 													"gpt-6.1-sol": {
 														"aliases": [],
@@ -267,7 +270,8 @@
 														"name": "GPT-6.1 Sol",
 														"part": 0,
 														"releaseDate": "2026-10-01",
-														"retirementDate": null
+														"retirementDate": null,
+														"stogasSupported": true
 													}
 												},
 												"providers": {},
@@ -1308,7 +1312,7 @@
 								"sha256",
 								"size",
 								"through",
-								"stogasUnsupported"
+								"stogasSupported"
 							],
 							"additionalProperties": false,
 							"properties": {
@@ -1330,9 +1334,9 @@
 									"format": "date",
 									"description": "The latest retirement date of a record in the part, or `null` when a record in it has none. Every record in the part has retired once this date has."
 								},
-								"stogasUnsupported": {
+								"stogasSupported": {
 									"type": "boolean",
-									"description": "Whether the part holds records that Stogas does not serve. The gateway never reads such a part, and a reader that shows only what Stogas serves can skip it."
+									"description": "Whether Stogas serves the records in the part. The gateway never reads a part that Stogas does not serve, and a reader that shows only what Stogas serves can skip it."
 								}
 							}
 						}
@@ -1407,7 +1411,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.v14"
+						"const": "stogas.catalog.v15"
 					},
 					"summaries": {
 						"type": "object",
@@ -1428,14 +1432,15 @@
 								"additionalProperties": {
 									"type": "object",
 									"required": [
-										"retirementDate"
+										"retirementDate",
+										"stogasSupported"
 									],
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
 										},
-										"stogasUnsupported": {
-											"$ref": "#/components/schemas/CatalogUnsupportedReason"
+										"stogasSupported": {
+											"$ref": "#/components/schemas/CatalogStogasSupported"
 										}
 									},
 									"additionalProperties": true
@@ -1453,14 +1458,15 @@
 								"additionalProperties": {
 									"type": "object",
 									"required": [
-										"retirementDate"
+										"retirementDate",
+										"stogasSupported"
 									],
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
 										},
-										"stogasUnsupported": {
-											"$ref": "#/components/schemas/CatalogUnsupportedReason"
+										"stogasSupported": {
+											"$ref": "#/components/schemas/CatalogStogasSupported"
 										}
 									},
 									"additionalProperties": true
@@ -1478,14 +1484,15 @@
 								"additionalProperties": {
 									"type": "object",
 									"required": [
-										"retirementDate"
+										"retirementDate",
+										"stogasSupported"
 									],
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
 										},
-										"stogasUnsupported": {
-											"$ref": "#/components/schemas/CatalogUnsupportedReason"
+										"stogasSupported": {
+											"$ref": "#/components/schemas/CatalogStogasSupported"
 										}
 									},
 									"additionalProperties": true
@@ -1519,7 +1526,8 @@
 					"name",
 					"part",
 					"releaseDate",
-					"retirementDate"
+					"retirementDate",
+					"stogasSupported"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -1553,8 +1561,8 @@
 					"retirementDate": {
 						"$ref": "#/components/schemas/CatalogRetirementDate"
 					},
-					"stogasUnsupported": {
-						"$ref": "#/components/schemas/CatalogUnsupportedReason"
+					"stogasSupported": {
+						"$ref": "#/components/schemas/CatalogStogasSupported"
 					}
 				}
 			},
@@ -1565,7 +1573,8 @@
 					"interfaces",
 					"part",
 					"providerId",
-					"retirementDate"
+					"retirementDate",
+					"stogasSupported"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -1586,8 +1595,8 @@
 					"retirementDate": {
 						"$ref": "#/components/schemas/CatalogRetirementDate"
 					},
-					"stogasUnsupported": {
-						"$ref": "#/components/schemas/CatalogUnsupportedReason"
+					"stogasSupported": {
+						"$ref": "#/components/schemas/CatalogStogasSupported"
 					}
 				}
 			},
@@ -1598,7 +1607,8 @@
 					"modelId",
 					"part",
 					"retirementDate",
-					"routeIds"
+					"routeIds",
+					"stogasSupported"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -1620,8 +1630,8 @@
 							"type": "string"
 						}
 					},
-					"stogasUnsupported": {
-						"$ref": "#/components/schemas/CatalogUnsupportedReason"
+					"stogasSupported": {
+						"$ref": "#/components/schemas/CatalogStogasSupported"
 					}
 				}
 			},
@@ -5698,9 +5708,9 @@
 					}
 				}
 			},
-			"CatalogUnsupportedReason": {
-				"type": "string",
-				"description": "Why Stogas does not serve the record, in one or two sentences. The catalog lists the whole market, so it also lists what Stogas does not serve. A provider's reason passes to its routes, and a route's to its deployments. A model, provider, author or group has one once Stogas serves none of its deployments, routes or models: their shared reason, or one that says that Stogas serves none of them. A record that Stogas serves has none, and a request that names only records that Stogas does not serve fails with `model_unavailable` and the reason."
+			"CatalogStogasSupported": {
+				"type": "boolean",
+				"description": "Whether Stogas serves the record. The catalog lists the whole market, so it also lists what Stogas does not serve, and the record's `notes` say why. A provider that Stogas does not serve passes that to its routes, and a route to its deployments. A model, provider, author or group goes unserved once Stogas serves none of its deployments, routes or models. A request that names only records that Stogas does not serve fails with `model_unavailable`."
 			}
 		}
 	}
