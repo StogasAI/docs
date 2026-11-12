@@ -92,6 +92,18 @@ These fields work only on Anthropic deployments:
 On Responses, Claude returns each thinking block as its own reasoning item, whose
 `encrypted_content` holds the whole block when you [ask for it](/docs/reasoning#send-reasoning-back).
 
+- On Chat Completions, `reasoning_details` holds the reasoning that starts each reply, which Claude
+  continues from, and `reasoning` holds all of it. Later reasoning, such as a note before a tool
+  call, is for display.
+- Claude checks that its reasoning comes back after the same system prompt, tools and earlier
+  messages. If one of them changed, Claude Fable 5.2, Mythos 5.2 and Mythos 5.1 return a 400 error
+  that says the block is bound to a different conversation, and other models can bill the
+  reasoning. Send the history again without its reasoning to continue.
+- To change instructions during a conversation, add a `system` or `developer` message right after
+  the newest user message or tool results. It must be the last message or come right before
+  Claude's reply. Claude Opus 4.8 and later, Sonnet 5.5 and later, Haiku 5.5 and later, Fable and
+  Mythos accept it on every provider. Other models, and other positions, get a 400 error.
+
 ## Tools
 
 - A request can use one hosted tool type.
