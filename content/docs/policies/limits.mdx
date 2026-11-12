@@ -202,17 +202,6 @@ or raise the limit. Such a response, and one with a wait longer than a minute, h
 candidates as [fallbacks](/docs/policies/routing#retries-and-fallbacks). See
 [Errors](/docs/reference/errors) for every code.
 
-## Reached limits
-
-A limit is reached when its usage fills it, or when it blocks a request because of its usage. It
-stays reached until the next period starts, until a gradual limit has room for a request of the
-blocked size, or until you change the limit's amount or `per`. A lifetime limit stays reached until
-you change it.
-
-A request blocked only because running requests hold the rest of a limit does not reach it, and
-neither does a request larger than the whole limit. [Activity](/docs/activity#reported-events)
-records when a limit other than `concurrentRequests` is reached.
-
 ## Field reference
 
 <PolicyFields section="limit" />

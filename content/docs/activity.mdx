@@ -57,21 +57,6 @@ Credential tokens, API-key secrets, invitation codes, and inference content are 
 A secret rotation records the action without the secret. Export events record that an
 export was requested, not whether the file was saved.
 
-## Reported events
-
-Activity also records what requests and checks find, with Stogas as the actor, so `actor=Stogas`
-shows only these events.
-
-| Event                     | Recorded when                                                                                                                                                                               |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<scope>.limit.reached`   | A limit other than `concurrentRequests` is [reached](/docs/policies/limits#reached-limits). The scope is where the limit is set, such as `grant`.                                           |
-| `balance.insufficient`    | The balance, including funds that running requests hold, is too low for a request. It is recorded again after 24 hours if requests are still refused, or sooner once the balance has risen. |
-| `credential.check.failed` | A credential starts [failing](/docs/byok#checks). When requests make a customer-encrypted credential fail, at most one failure is recorded each hour.                                       |
-| `credential.check.passed` | A credential passes again after a recorded failure.                                                                                                                                         |
-
-A limit's event is recorded at most once each period when the limit resets every day or less
-often, and at most once every 24 hours otherwise, even if you change the limit in that time.
-
 ## Retention and export
 
 Events are kept for 365 days.
