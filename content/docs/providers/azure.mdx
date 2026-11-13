@@ -88,6 +88,12 @@ request log names the version that answered.
 A check fails when an account has more than 20,000 targets. Requests through an API key whose Azure
 credentials have more than 20,000 chosen targets together fail with `key_configuration_too_large`.
 
+## Prompt caching
+
+GPT deployments take the same cache fields as [OpenAI](/docs/providers/openai#prompt-caching).
+DeepSeek deployments cache automatically and receive `prompt_cache_key`, which gives each key its
+own cache. Azure returns `400` for `prompt_cache_retention` on a model that is not GPT.
+
 ## Claude on Azure
 
 Claude accepts the same request fields as on [Anthropic](/docs/providers/anthropic), except

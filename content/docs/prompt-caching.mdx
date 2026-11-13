@@ -20,7 +20,7 @@ summarizes the controls, and each provider's page has the details.
 The gateway forwards the cache fields of the selected provider. It does not convert one provider's
 controls into another's: a request with `cache_control` that goes to OpenAI returns `400`. The
 exception is `prompt_cache_key`, which only helps a provider send requests that share a prefix to the
-same cache. Every model accepts it, and only GPT models that cache automatically receive it.
+same cache. Every model accepts it, and only the models whose provider uses it receive it.
 
 When you send cache controls, pin the request to one provider with a
 [deployment ID](/docs/models#choose-a-model) or `provider.only`. Pinning also keeps requests that
