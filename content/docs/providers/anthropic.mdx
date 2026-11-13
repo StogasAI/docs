@@ -96,9 +96,9 @@ On Responses, Claude returns each thinking block as its own reasoning item, whos
   continues from, and `reasoning` holds all of it. Later reasoning, such as a note before a tool
   call, is for display.
 - Claude checks that its reasoning comes back after the same system prompt, tools and earlier
-  messages. If one of them changed, Claude Fable 5.2, Mythos 5.2 and Mythos 5.1 return a 400 error
-  that says the block is bound to a different conversation, and other models can bill the
-  reasoning. Send the history again without its reasoning to continue.
+  messages. If one of them changed, Claude Fable 5.2, Mythos 5.2 and Mythos 5.1 return a 400 error,
+  and other models can bill the reasoning. Send the request again without its reasoning to
+  continue.
 - To change instructions during a conversation, add a `system` or `developer` message right after
   the newest user message or tool results. It must be the last message or come right before
   Claude's reply. Claude Opus 4.8 and later, Sonnet 5.5 and later, Haiku 5.5 and later, Fable and
@@ -132,8 +132,9 @@ long work. Ask for the updates without the reasoning:
 | `updates`                            | `updates`                     | The updates only.                            |
 
 - Without the field, Claude uses its default, which is `omitted` on Claude 5 models.
-- On Chat Completions, the updates arrive in `reasoning`. On Responses, each update is a reasoning
-  item with the update as its summary.
+- On Chat Completions, the updates arrive in `reasoning`, with a blank line between two. On
+  Responses, each update is a reasoning item with the update as its summary.
+- The effort is optional. Without it, Claude reasons as much as it does by default.
 - A model that writes no updates gets `omitted` in place of `updates`.
 - Send every reasoning entry back unchanged, also when its text is empty.
 
