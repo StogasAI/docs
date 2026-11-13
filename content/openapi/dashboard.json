@@ -8888,7 +8888,7 @@
 								"model",
 								"provider",
 								"byok",
-								"type",
+								"interface",
 								"outcome",
 								"error"
 							]
@@ -9104,7 +9104,7 @@
 												"model",
 												"provider",
 												"byok",
-												"type",
+												"interface",
 												"outcome",
 												"error"
 											]
@@ -10803,9 +10803,17 @@
 														"format": "uuid",
 														"description": "The organization behind the request."
 													},
-													"request_type": {
+													"interface": {
 														"type": "string",
-														"description": "`chat_completion`, `chat_completion_stream`, `responses` or `responses_stream`."
+														"enum": [
+															"chat_completions",
+															"responses"
+														],
+														"description": "The API that you called: `chat_completions` or `responses`."
+													},
+													"stream": {
+														"type": "boolean",
+														"description": "Whether the request asked for a stream."
 													},
 													"request_settings": {
 														"default": {},
@@ -11541,7 +11549,8 @@
 													"grant_id",
 													"member_id",
 													"organization_id",
-													"request_type",
+													"interface",
+													"stream",
 													"request_settings",
 													"session_id",
 													"trace_id",

@@ -25,7 +25,8 @@ rate limited the first call, so the gateway called Azure:
 	"grant_id": null,
 	"member_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
 	"organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
-	"request_type": "chat_completion_stream",
+	"interface": "chat_completions",
+	"stream": true,
 	"request_settings": {
 		"max_output_tokens": 1024,
 		"reasoning_effort": "low",
@@ -248,7 +249,7 @@ Other fields record the remaining settings:
 
 | Setting                        | Field                                             |
 | ------------------------------ | ------------------------------------------------- |
-| Streaming                      | `request_type`                                    |
+| Streaming                      | `stream`                                          |
 | Service tier, speed and region | Each attempt's [catalog chain](#catalog-history)  |
 | Caching                        | The cache meters in [`usage`](/docs/usage#meters) |
 
@@ -422,7 +423,7 @@ finds both the request that made the call and the one that sent its result.
 
 Requests that the gateway rejects before billing authorization, such as for credit, policy or
 validation errors, appear once the gateway can tell which API key sent them. Repeated rejections
-share records. In each UTC minute, rejections with the same key, `request_type`, `transport`,
+share records. In each UTC minute, rejections with the same key, `interface`, `stream`, `transport`,
 `policy_versions`, `encryption_key_ids`, error code and HTTP status are recorded like this:
 
 | Rejections      | Record                                                                        |
@@ -444,7 +445,8 @@ For example, 99 matching credit rejections in one minute produce five single rec
 	"grant_id": null,
 	"member_id": "019cadd2-3ef8-7bb7-bbb5-1290cb42edc8",
 	"organization_id": "019cadd2-42e0-7534-9c4f-8b78b86a3daf",
-	"request_type": "chat_completion_stream",
+	"interface": "chat_completions",
+	"stream": true,
 	"request_settings": {},
 	"session_id": "",
 	"trace_id": "",

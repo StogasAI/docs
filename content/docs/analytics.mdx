@@ -55,7 +55,7 @@ output. Generation speed divides generated tokens by the full request duration.
 
 The search and the API's `filter` parameter take these fields in the
 [filter syntax](/docs/reference/filters). Text without a field searches request, API key, grant
-and provider credential IDs, model names, providers, results, request types, error codes and HTTP
+and provider credential IDs, model names, providers, results, interfaces, error codes and HTTP
 statuses. Filters match whole values, so `:` and `=`
 are the same, and names and the listed values ignore case.
 
@@ -69,7 +69,8 @@ are the same, and names and the listed values ignore case.
 | `final_provider:`   | The last provider attempt.                                                                                                                                                                                             |
 | `byok:`             | A provider credential name or ID used by any attempt, or `stogas` for a Stogas-managed credential.                                                                                                                     |
 | `final_byok:`       | The provider credential of the last attempt.                                                                                                                                                                           |
-| `type:`             | `chat_completion`, `chat_completion_stream`, `responses` or `responses_stream`.                                                                                                                                        |
+| `interface:`        | `chat_completions` or `responses`, the API that the request called.                                                                                                                                                    |
+| `stream:`           | `true` for requests that asked for a stream, otherwise `false`.                                                                                                                                                        |
 | `transport:`        | `https`, `attested_tls` or `e2ee`. See [connection modes](/docs/connection-modes).                                                                                                                                     |
 | `metadata.<key>:`   | A value of a [metadata](/docs/request-records#metadata) key, such as `metadata.team:search`. Keys and values are case-sensitive. Keys with spaces, quotes, parentheses or `:`, `!`, `<`, `>` or `=` can't be filtered. |
 | `session:`          | A [session](/docs/request-records#sessions) ID, such as `session:chat-42`. Session IDs are case-sensitive.                                                                                                             |
