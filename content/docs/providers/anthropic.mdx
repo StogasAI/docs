@@ -145,7 +145,9 @@ long work. Ask for the updates without the reasoning:
   name either version. A request that names another version gets a 400 error.
 - `web_search` searches only the live web, so `external_web_access` must be `true` or left out.
   Codex sends `false` unless you set `web_search = "live"`.
-- With reasoning on, a `required` or named `tool_choice` becomes `auto`.
+- A `required` or named `tool_choice` makes Claude call the tool without reasoning first, and
+  returns a 400 error together with a reasoning token budget. Claude Fable 5.2, Mythos 5.2, Fable
+  5.1, Mythos 5.1, Opus 5.5 and Sonnet 5.5 take only `auto` and `none`.
 - `custom` tools are not available.
 - Claude gets each tool of a [namespace](/docs/model-tools#group-tools-in-namespaces) as a
   function, so a call in `input` must name a tool that `tools` declares in its namespace.

@@ -93,9 +93,9 @@ On Responses, the call is a `function_call` output item, and you send the result
 Request records link each call to the request that sends its result by a
 [hash of the call ID](/docs/request-records#tool-calls), so analytics shows how long your app took.
 
-`tool_choice` accepts `auto`, `none`, `required` or a named function. A response can still have no
-tool call, because some providers change a forced choice to `auto`[^forced]. Check for tool calls
-before you continue.
+`tool_choice` accepts `auto`, `none`, `required` or a named function. Some models cannot be forced
+to call a tool[^forced], and a request with `required` or a named function leaves their deployments
+out.
 
 ## Group tools in namespaces
 
@@ -406,7 +406,7 @@ retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
     [OpenAI's `shell` and `apply_patch`](/docs/providers/openai#shell-and-apply_patch), and
     [Anthropic's bash and text editor](/docs/providers/anthropic#bash-and-text-editor).
 
-[^forced]: [Anthropic](/docs/providers/anthropic#tools) does, with reasoning on.
+[^forced]: Recent Claude models. See [Anthropic](/docs/providers/anthropic#tools).
 
 [^namespaces]:
     [Claude](/docs/providers/anthropic#tools), and deployments that take Responses

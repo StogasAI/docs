@@ -175,7 +175,8 @@ In a tool loop, send the model's reasoning back with the tool results:
 ```
 
 - On Responses, `include: ["reasoning.encrypted_content"]` returns reasoning items that you can
-  send back. Send each item back unchanged, in its place in `input`.
+  send back. Send each item back unchanged, in its place in `input`. Without it, a reasoning item
+  holds nothing to continue from, and the gateway leaves it out.
 - On Chat Completions, send the assistant message back unchanged. `reasoning_details` holds the
   reasoning to continue from. `reasoning` and `reasoning_content` are two names for the same text.
 - A signed or encrypted entry that you change returns `400`[^claude].
