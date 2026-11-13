@@ -107,6 +107,24 @@ in your application, then send the conversation again with each call and its `sh
   [apply_patch](https://developers.openai.com/api/docs/guides/tools-apply-patch) guides for the
   call and result fields.
 
+## Files
+
+OpenAI reads only the text of a file that is not a PDF, so convert a document to PDF to keep its
+images and charts. It reads at most the first 1,000 rows of each sheet of a spreadsheet, CSV and TSV
+included, and adds a summary that its model writes. To send every row of a CSV or another text
+file, [extract text](/docs/text-extraction) on OpenAI deployments:
+
+```json title="Policy"
+{
+	"rules": {
+		"openai_full_text": {
+			"when": "provider.id == 'openai'",
+			"plugins": { "textExtraction": "always" }
+		}
+	}
+}
+```
+
 ## Not available
 
 - Audio and image output, and the `audio` request field.
@@ -121,3 +139,4 @@ in your application, then send the conversation again with each call and its `sh
 - [OpenAI Flex processing](https://developers.openai.com/api/docs/guides/flex-processing)
 - [OpenAI Fast processing](https://developers.openai.com/api/docs/guides/priority-processing)
 - [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
+- [OpenAI file inputs](https://developers.openai.com/api/docs/guides/file-inputs)
