@@ -176,7 +176,8 @@ In a tool loop, send the model's reasoning back with the tool results:
 
 - On Responses, `include: ["reasoning.encrypted_content"]` returns reasoning items that you can
   send back. Send each item back unchanged, in its place in `input`.
-- On Chat Completions, send `reasoning_details` back unchanged on its assistant message.
+- On Chat Completions, send the assistant message back unchanged. `reasoning_details` holds the
+  reasoning to continue from. `reasoning` and `reasoning_content` are two names for the same text.
 - A signed or encrypted entry that you change returns `400`[^claude].
 - Each deployment gets only the reasoning that it can read, and the gateway leaves out the rest,
   such as another model family's reasoning or reasoning that you got from a provider directly. A
