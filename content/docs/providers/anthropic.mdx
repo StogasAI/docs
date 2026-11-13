@@ -104,6 +104,39 @@ On Responses, Claude returns each thinking block as its own reasoning item, whos
   Claude's reply. Claude Opus 4.8 and later, Sonnet 5.5 and later, Haiku 5.5 and later, Fable and
   Mythos accept it on every provider. Other models, and other positions, get a 400 error.
 
+### Progress updates
+
+Claude Fable, Mythos, Opus 5.5 and Sonnet 5.5 can write a short update before a tool call during
+long work. Ask for the updates without the reasoning:
+
+```json tab="Chat Completions"
+{
+	"model": "claude-fable-5-2",
+	"messages": [{ "role": "user", "content": "Fix the failing test." }],
+	"reasoning": { "effort": "medium", "display": "updates" }
+}
+```
+
+```json tab="Responses"
+{
+	"model": "claude-fable-5-2",
+	"input": "Fix the failing test.",
+	"reasoning": { "effort": "medium", "summary": "updates" }
+}
+```
+
+| Chat Completions `reasoning.display` | Responses `reasoning.summary` | The reply shows                              |
+| ------------------------------------ | ----------------------------- | -------------------------------------------- |
+| `summarized`                         | `auto`                        | A summary of the reasoning, and the updates. |
+| `omitted`                            | `none`                        | No reasoning text.                           |
+| `updates`                            | `updates`                     | The updates only.                            |
+
+- Without the field, Claude uses its default, which is `omitted` on Claude 5 models.
+- On Chat Completions, the updates arrive in `reasoning`. On Responses, each update is a reasoning
+  item with the update as its summary.
+- A model that writes no updates gets `omitted` in place of `updates`.
+- Send every reasoning entry back unchanged, also when its text is empty.
+
 ## Tools
 
 - A request can use one hosted tool type.
