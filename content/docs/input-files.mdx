@@ -117,8 +117,8 @@ Every deployment that reads plain text reads every
 and configuration files. Where the provider does not list the file's type or extension, the gateway
 sends the file as `text/plain`, and the content and `filename` stay as they are.
 
-A deployment that reads no text files needs [text extraction](/docs/text-extraction), which sends
-the file as prompt text.
+A deployment that reads no text files gets the file as prompt text, unless a policy turns
+[text extraction](/docs/text-extraction) off.
 
 ## Supported formats
 

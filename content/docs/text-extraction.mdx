@@ -10,7 +10,7 @@ text works on any deployment, even one that accepts no documents, and goes throu
 
 ```json title="Policy"
 {
-	"plugins": { "textExtraction": "auto" }
+	"plugins": { "textExtraction": "always" }
 }
 ```
 
@@ -20,9 +20,9 @@ text works on any deployment, even one that accepts no documents, and goes throu
 | `auto`   | The file stays a file              | The file becomes text      |
 | `always` | The file becomes text              | The file becomes text      |
 
-`off` is the default. When several policies set a mode, the strongest applies: `always`, then
-`auto`, then `off`, so `off` only
-[replaces a default](/docs/policies/rules#replace-a-default-without-adding-a-restriction).
+`auto` applies when no policy sets a mode. When several policies set one, the strongest applies:
+`always`, then `auto`, then `off`. `off` turns extraction off unless another policy sets a stronger
+mode, so it is a [neutral value](/docs/policies/rules#replace-a-default-without-adding-a-restriction).
 
 [PII redaction](/docs/pii-redaction) and [ASCII-only input](/docs/pii-redaction#ascii-only-input)
 read only text. With either, `auto` turns every text file into text, and `off` refuses a text file.
