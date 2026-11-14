@@ -1,8 +1,8 @@
 ---
 title: Remove an encryption key
-description: Needs organization management. Until you register the key again,
-  requests skip the credentials that it encrypts, and requests that need policy
-  settings that it encrypts fail.
+description: Needs organization management. A key that a policy or credential
+  still uses gets 409 ENCRYPTION_KEY_IN_USE, so encrypt those with another key
+  or delete them first.
 full: true
 _openapi:
   preload:
@@ -13,9 +13,9 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: Needs organization management. Until you register the key again,
-          requests skip the credentials that it encrypts, and requests that need
-          policy settings that it encrypts fail.
+      - content: Needs organization management. A key that a policy or credential still
+          uses gets 409 ENCRYPTION_KEY_IN_USE, so encrypt those with another key
+          or delete them first.
 ---
 
 export default function Layout(props) {

@@ -12,6 +12,14 @@ expiration are settings of the resource. Deny periods are in its policy, under `
 A disabled resource, or a disabled parent, blocks new requests, and requests that are running
 continue.
 
+## Blocked requests
+
+A blocked request fails with `403` and the code of the resource that blocks it, such as
+`folder_disabled` or `grant_expired`. When several resources block it, the code names the first of
+the organization, folder, grant, role, member and key. A resource that is both disabled and expired
+reports that it expired. A key's status in the dashboard names the same resource, and so does
+`denial` in the [dashboard API](/docs/reference/dashboard/api-keys/getApiKey).
+
 ## Set an expiration
 
 Set an expiration time on a key, grant or other resource, such as `2026-12-01T00:00:00Z`. From

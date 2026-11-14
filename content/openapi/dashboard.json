@@ -3005,19 +3005,30 @@
 													"enabled": {
 														"type": "boolean"
 													},
-													"effectiveEnabled": {
-														"type": "boolean"
-													},
-													"effectiveExpiresAt": {
+													"denial": {
 														"anyOf": [
 															{
 																"type": "string",
-																"format": "date-time"
+																"enum": [
+																	"organization_disabled",
+																	"organization_expired",
+																	"folder_disabled",
+																	"folder_expired",
+																	"grant_disabled",
+																	"grant_expired",
+																	"role_disabled",
+																	"role_expired",
+																	"member_disabled",
+																	"member_expired",
+																	"key_disabled",
+																	"key_expired"
+																]
 															},
 															{
 																"type": "null"
 															}
-														]
+														],
+														"description": "Why requests with the key are refused now: the first policy source, from the organization down to the key, that is disabled or has expired. The API answers such a request with this error code."
 													},
 													"expiresAt": {
 														"anyOf": [
@@ -3069,12 +3080,6 @@
 														]
 													},
 													"grantAllowMemberKeySettings": {
-														"type": [
-															"boolean",
-															"null"
-														]
-													},
-													"grantEnabled": {
 														"type": [
 															"boolean",
 															"null"
@@ -3619,8 +3624,7 @@
 													"configRevision",
 													"createdAt",
 													"enabled",
-													"effectiveEnabled",
-													"effectiveExpiresAt",
+													"denial",
 													"exposure",
 													"grantId",
 													"id",
@@ -5378,7 +5382,7 @@
 					"Encryption keys"
 				],
 				"summary": "List encryption keys",
-				"description": "Returns every customer encryption key that the organization registers, and each key that a policy or credential you can view uses: the policies with an export or redaction that it encrypts, and where each holds them, and the credentials whose secrets it encrypts. A key that is used without a registration has a null label, because requests that need it fail.",
+				"description": "Returns every customer encryption key that the organization registers, with what you can view of its uses: the policies with an export or redaction that it encrypts, and where each holds them, and the credentials whose secrets it encrypts.",
 				"security": [
 					{
 						"accessToken": []
@@ -5403,19 +5407,16 @@
 												"type": "object",
 												"properties": {
 													"label": {
-														"anyOf": [
-															{
-																"type": "string",
-																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-															},
-															{
-																"type": "null"
-															}
-														]
+														"type": "string",
+														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
 													},
 													"keyId": {
 														"type": "string",
 														"pattern": "^[0-9a-f]{64}$"
+													},
+													"inUse": {
+														"type": "boolean",
+														"description": "Whether any policy or credential uses the key, including those you cannot view. A key in use cannot be removed."
 													},
 													"policyCount": {
 														"type": "integer",
@@ -5510,6 +5511,7 @@
 												"required": [
 													"label",
 													"keyId",
+													"inUse",
 													"policyCount",
 													"policies",
 													"credentialCount",
@@ -5517,7 +5519,7 @@
 												],
 												"additionalProperties": false
 											},
-											"description": "Keys that something uses without a registration first, then registered keys by label."
+											"description": "By label."
 										}
 									},
 									"required": [
@@ -5598,19 +5600,16 @@
 												"type": "object",
 												"properties": {
 													"label": {
-														"anyOf": [
-															{
-																"type": "string",
-																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-															},
-															{
-																"type": "null"
-															}
-														]
+														"type": "string",
+														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
 													},
 													"keyId": {
 														"type": "string",
 														"pattern": "^[0-9a-f]{64}$"
+													},
+													"inUse": {
+														"type": "boolean",
+														"description": "Whether any policy or credential uses the key, including those you cannot view. A key in use cannot be removed."
 													},
 													"policyCount": {
 														"type": "integer",
@@ -5705,6 +5704,7 @@
 												"required": [
 													"label",
 													"keyId",
+													"inUse",
 													"policyCount",
 													"policies",
 													"credentialCount",
@@ -5712,7 +5712,7 @@
 												],
 												"additionalProperties": false
 											},
-											"description": "Keys that something uses without a registration first, then registered keys by label."
+											"description": "By label."
 										}
 									},
 									"required": [
@@ -5734,7 +5734,7 @@
 					"Encryption keys"
 				],
 				"summary": "Remove an encryption key",
-				"description": "Needs organization management. Until you register the key again, requests skip the credentials that it encrypts, and requests that need policy settings that it encrypts fail.",
+				"description": "Needs organization management. A key that a policy or credential still uses gets 409 ENCRYPTION_KEY_IN_USE, so encrypt those with another key or delete them first.",
 				"security": [
 					{
 						"accessToken": [
@@ -5770,19 +5770,16 @@
 												"type": "object",
 												"properties": {
 													"label": {
-														"anyOf": [
-															{
-																"type": "string",
-																"pattern": "^[a-z][a-z0-9_-]{0,47}$"
-															},
-															{
-																"type": "null"
-															}
-														]
+														"type": "string",
+														"pattern": "^[a-z][a-z0-9_-]{0,47}$"
 													},
 													"keyId": {
 														"type": "string",
 														"pattern": "^[0-9a-f]{64}$"
+													},
+													"inUse": {
+														"type": "boolean",
+														"description": "Whether any policy or credential uses the key, including those you cannot view. A key in use cannot be removed."
 													},
 													"policyCount": {
 														"type": "integer",
@@ -5877,6 +5874,7 @@
 												"required": [
 													"label",
 													"keyId",
+													"inUse",
 													"policyCount",
 													"policies",
 													"credentialCount",
@@ -5884,7 +5882,7 @@
 												],
 												"additionalProperties": false
 											},
-											"description": "Keys that something uses without a registration first, then registered keys by label."
+											"description": "By label."
 										}
 									},
 									"required": [
@@ -5951,16 +5949,6 @@
 						"name": "usable",
 						"in": "query",
 						"required": false,
-						"schema": {
-							"type": "string",
-							"const": "true"
-						}
-					},
-					{
-						"name": "refusals",
-						"in": "query",
-						"required": false,
-						"description": "Set to `true` to return the deployments that [refuse](/docs/byok#checks) each listed credential, and to count those credentials in `problemCredentials`. `refusedDeployments` is null when they fail to load.",
 						"schema": {
 							"type": "string",
 							"const": "true"
@@ -6043,7 +6031,7 @@
 													},
 													"problems": {
 														"minItems": 1,
-														"maxItems": 3,
+														"maxItems": 2,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -6051,8 +6039,7 @@
 																"checkFailed",
 																"notChecked",
 																"noTargets",
-																"targetsUnavailable",
-																"deploymentsRefused"
+																"targetsUnavailable"
 															]
 														}
 													}
@@ -6069,67 +6056,6 @@
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 9007199254740991
-										},
-										"refusedDeployments": {
-											"anyOf": [
-												{
-													"type": "object",
-													"propertyNames": {
-														"type": "string",
-														"format": "uuid"
-													},
-													"additionalProperties": {
-														"type": "object",
-														"properties": {
-															"count": {
-																"type": "integer",
-																"exclusiveMinimum": 0,
-																"maximum": 9007199254740991
-															},
-															"latest": {
-																"minItems": 1,
-																"maxItems": 3,
-																"type": "array",
-																"items": {
-																	"type": "object",
-																	"properties": {
-																		"deployment": {
-																			"type": "string",
-																			"minLength": 1
-																		},
-																		"result": {
-																			"type": "string",
-																			"enum": [
-																				"authentication_error",
-																				"permission_error",
-																				"model_unavailable"
-																			]
-																		},
-																		"refusedAt": {
-																			"type": "string",
-																			"format": "date-time"
-																		}
-																	},
-																	"required": [
-																		"deployment",
-																		"result",
-																		"refusedAt"
-																	],
-																	"additionalProperties": false
-																}
-															}
-														},
-														"required": [
-															"count",
-															"latest"
-														],
-														"additionalProperties": false
-													}
-												},
-												{
-													"type": "null"
-												}
-											]
 										}
 									},
 									"required": [
@@ -6141,8 +6067,7 @@
 										"organizationCount",
 										"organizationLimit",
 										"problemCredentials",
-										"problemCredentialCount",
-										"refusedDeployments"
+										"problemCredentialCount"
 									],
 									"additionalProperties": false
 								}
@@ -7533,7 +7458,7 @@
 					"BYOK"
 				],
 				"summary": "Allow a gateway to check a customer-encrypted credential",
-				"description": "Only a gateway can open a customer-encrypted credential, with the key that encrypted it. Within five minutes, send the grant to the gateway's `POST /v1/byok/check` with that key under `keyLabel`, and the gateway saves the result on the credential. `stogas byok check` makes both requests. A credential whose key the organization has not registered gets 409 ENCRYPTION_KEY_UNREGISTERED.",
+				"description": "Only a gateway can open a customer-encrypted credential, with the key that encrypted it. Within five minutes, send the grant to the gateway's `POST /v1/byok/check` with that key under `keyLabel`, and the gateway saves the result on the credential. `stogas byok check` makes both requests.",
 				"security": [
 					{
 						"accessToken": [
@@ -17477,19 +17402,30 @@
 					"enabled": {
 						"type": "boolean"
 					},
-					"effectiveEnabled": {
-						"type": "boolean"
-					},
-					"effectiveExpiresAt": {
+					"denial": {
 						"anyOf": [
 							{
 								"type": "string",
-								"format": "date-time"
+								"enum": [
+									"organization_disabled",
+									"organization_expired",
+									"folder_disabled",
+									"folder_expired",
+									"grant_disabled",
+									"grant_expired",
+									"role_disabled",
+									"role_expired",
+									"member_disabled",
+									"member_expired",
+									"key_disabled",
+									"key_expired"
+								]
 							},
 							{
 								"type": "null"
 							}
-						]
+						],
+						"description": "Why requests with the key are refused now: the first policy source, from the organization down to the key, that is disabled or has expired. The API answers such a request with this error code."
 					},
 					"effectiveConfig": {
 						"anyOf": [
@@ -17556,12 +17492,6 @@
 						]
 					},
 					"grantAllowMemberKeySettings": {
-						"type": [
-							"boolean",
-							"null"
-						]
-					},
-					"grantEnabled": {
 						"type": [
 							"boolean",
 							"null"
@@ -18109,8 +18039,7 @@
 					"policyNotes",
 					"createdAt",
 					"enabled",
-					"effectiveEnabled",
-					"effectiveExpiresAt",
+					"denial",
 					"effectiveConfig",
 					"exposure",
 					"grantId",
