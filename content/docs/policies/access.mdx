@@ -1,11 +1,12 @@
 ---
 title: Access and expiration
-description: Enable or disable a scope, expire access, or block requests on a weekly schedule.
+description: Enable or disable a scope, expire access, block requests on a weekly schedule, or accept them only from your networks.
 icon: CalendarClock
 ---
 
 Every resource that applies to a request must be enabled and unexpired. Enabled state and
-expiration are settings of the resource. Deny periods are in its policy, under `access.deny`.
+expiration are settings of the resource. Deny periods and networks are in its policy, under
+`access.deny` and `access.networks`.
 
 ## Enable or disable access
 
@@ -128,6 +129,41 @@ policy blocks only the deployments and credentials it applies to. The gateway tr
 and fails with `schedule_denied` when none remain. If a filter or list also removes a candidate, or
 the candidate cannot read an [attachment](/docs/input-files#when-no-candidate-reads-a-file), the
 error gives that reason instead.
+
+## Networks
+
+This policy accepts requests only from one address and two ranges:
+
+```json title="policy.json"
+{
+	"access": {
+		"networks": ["203.0.113.7", "198.51.100.0/24", "2001:db8:5::/48"]
+	}
+}
+```
+
+- List IPv4 and IPv6 addresses and CIDR ranges. A range starts at its first address, such as
+  `198.51.100.0/24`, and an IPv4 address takes its IPv4 form, not `::ffff:198.51.100.7`.
+- The gateway reads the address from the connection, never from headers such as
+  `X-Forwarded-For`. For a server behind a NAT gateway or proxy, list the address that the NAT
+  gateway or proxy sends from.
+- A request from any other address fails with `403 network_denied`, and the message names the
+  address that the gateway saw.
+- A list can hold as many entries as the [policy size](/docs/policies/editing#document-rules)
+  allows.
+
+## How networks combine
+
+Every policy that lists networks must hold the client's address. Two lists that share no address
+block every request.
+
+A [default rule](/docs/policies/rules#defaults) can list networks, and they apply until a required
+policy lists its own. To replace them without a restriction, list every address:
+`["0.0.0.0/0", "::/0"]`.
+
+Networks in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's policy
+block only the deployments and credentials it applies to. The gateway tries the others, and fails
+with `network_denied` when none remain.
 
 ## Timestamps and time zones
 

@@ -50,7 +50,8 @@ const documentFields = {
 		href: '/docs/policies/timeouts'
 	},
 	access: {
-		description: 'Deny access during scheduled periods.',
+		description:
+			'Deny requests during scheduled periods, or accept them only from listed networks.',
 		href: '/docs/policies/access#deny-periods'
 	},
 	input: {

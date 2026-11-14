@@ -5073,12 +5073,14 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 19,
+																"maxItems": 21,
 																"type": "array",
 																"items": {
 																	"type": "string",
 																	"enum": [
 																		"access",
+																		"access.deny",
+																		"access.networks",
 																		"input",
 																		"limits",
 																		"timeouts",
@@ -5167,12 +5169,14 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 19,
+																"maxItems": 21,
 																"type": "array",
 																"items": {
 																	"type": "string",
 																	"enum": [
 																		"access",
+																		"access.deny",
+																		"access.networks",
 																		"input",
 																		"limits",
 																		"timeouts",
@@ -10793,6 +10797,7 @@
 																			"model_ambiguous",
 																			"model_retired",
 																			"model_unavailable",
+																			"network_denied",
 																			"organization_concurrency_limit",
 																			"organization_disabled",
 																			"organization_expired",
@@ -17478,12 +17483,14 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 19,
+											"maxItems": 21,
 											"type": "array",
 											"items": {
 												"type": "string",
 												"enum": [
 													"access",
+													"access.deny",
+													"access.networks",
 													"input",
 													"limits",
 													"timeouts",
@@ -17572,12 +17579,14 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 19,
+											"maxItems": 21,
 											"type": "array",
 											"items": {
 												"type": "string",
 												"enum": [
 													"access",
+													"access.deny",
+													"access.networks",
 													"input",
 													"limits",
 													"timeouts",
@@ -18729,14 +18738,39 @@
 															"timeZone"
 														],
 														"additionalProperties": false
-													}
+													},
+													"description": "Weekly periods when the gateway refuses requests."
+												},
+												"networks": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "ipv4"
+															},
+															{
+																"type": "string",
+																"format": "ipv6"
+															},
+															{
+																"type": "string",
+																"format": "cidrv4"
+															},
+															{
+																"type": "string",
+																"format": "cidrv6"
+															}
+														],
+														"description": "An IPv4 or IPv6 address, or a CIDR range such as 203.0.113.0/24."
+													},
+													"uniqueItems": true,
+													"description": "Client networks that may send requests. A request must come from a network of every policy that lists networks."
 												}
 											},
-											"required": [
-												"deny"
-											],
 											"additionalProperties": false,
-											"description": "Weekly periods when the gateway refuses requests."
+											"description": "When and from where the gateway accepts requests."
 										},
 										"input": {
 											"type": "object",
@@ -19408,7 +19442,7 @@
 								},
 								"replaced": {
 									"minItems": 1,
-									"maxItems": 19,
+									"maxItems": 21,
 									"type": "array",
 									"items": {
 										"type": "object",
@@ -19417,6 +19451,8 @@
 												"type": "string",
 												"enum": [
 													"access",
+													"access.deny",
+													"access.networks",
 													"input",
 													"limits",
 													"timeouts",
@@ -19583,7 +19619,7 @@
 					},
 					"setBy": {
 						"minItems": 1,
-						"maxItems": 684,
+						"maxItems": 756,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -19592,6 +19628,8 @@
 									"type": "string",
 									"enum": [
 										"access",
+										"access.deny",
+										"access.networks",
 										"input",
 										"limits",
 										"timeouts",
@@ -19656,12 +19694,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"limits",
 												"timeouts",
@@ -19692,12 +19732,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"limits",
 												"timeouts",
@@ -19728,12 +19770,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"limits",
 												"timeouts",
@@ -19764,12 +19808,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"limits",
 												"timeouts",
@@ -19800,12 +19846,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"limits",
 												"timeouts",
@@ -19836,12 +19884,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"limits",
 												"timeouts",
@@ -19872,12 +19922,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -20089,11 +20141,14 @@
 									],
 									"additionalProperties": false
 								}
+							},
+							"networks": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
 							}
 						},
-						"required": [
-							"deny"
-						],
 						"additionalProperties": false
 					},
 					"limits": {
@@ -20769,12 +20824,14 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
 													"enum": [
 														"access",
+														"access.deny",
+														"access.networks",
 														"input",
 														"limits",
 														"timeouts",
@@ -20808,12 +20865,14 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
 															"enum": [
 																"access",
+																"access.deny",
+																"access.networks",
 																"input",
 																"limits",
 																"timeouts",
@@ -20859,12 +20918,14 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
 																"enum": [
 																	"access",
+																	"access.deny",
+																	"access.networks",
 																	"input",
 																	"limits",
 																	"timeouts",
@@ -20907,12 +20968,14 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
 													"enum": [
 														"access",
+														"access.deny",
+														"access.networks",
 														"input",
 														"limits",
 														"timeouts",
@@ -20946,12 +21009,14 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
 															"enum": [
 																"access",
+																"access.deny",
+																"access.networks",
 																"input",
 																"limits",
 																"timeouts",
@@ -20997,12 +21062,14 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
 																"enum": [
 																	"access",
+																	"access.deny",
+																	"access.networks",
 																	"input",
 																	"limits",
 																	"timeouts",
@@ -21045,12 +21112,14 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
 													"enum": [
 														"access",
+														"access.deny",
+														"access.networks",
 														"input",
 														"limits",
 														"timeouts",
@@ -21084,12 +21153,14 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
 															"enum": [
 																"access",
+																"access.deny",
+																"access.networks",
 																"input",
 																"limits",
 																"timeouts",
@@ -21135,12 +21206,14 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
 																"enum": [
 																	"access",
+																	"access.deny",
+																	"access.networks",
 																	"input",
 																	"limits",
 																	"timeouts",
@@ -21183,12 +21256,14 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
 													"enum": [
 														"access",
+														"access.deny",
+														"access.networks",
 														"input",
 														"limits",
 														"timeouts",
@@ -21222,12 +21297,14 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
 															"enum": [
 																"access",
+																"access.deny",
+																"access.networks",
 																"input",
 																"limits",
 																"timeouts",
@@ -21273,12 +21350,14 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
 																"enum": [
 																	"access",
+																	"access.deny",
+																	"access.networks",
 																	"input",
 																	"limits",
 																	"timeouts",
@@ -21321,12 +21400,14 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
 													"enum": [
 														"access",
+														"access.deny",
+														"access.networks",
 														"input",
 														"limits",
 														"timeouts",
@@ -21360,12 +21441,14 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
 															"enum": [
 																"access",
+																"access.deny",
+																"access.networks",
 																"input",
 																"limits",
 																"timeouts",
@@ -21411,12 +21494,14 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
 																"enum": [
 																	"access",
+																	"access.deny",
+																	"access.networks",
 																	"input",
 																	"limits",
 																	"timeouts",
@@ -21459,12 +21544,14 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 19,
+												"maxItems": 21,
 												"type": "array",
 												"items": {
 													"type": "string",
 													"enum": [
 														"access",
+														"access.deny",
+														"access.networks",
 														"input",
 														"limits",
 														"timeouts",
@@ -21498,12 +21585,14 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 19,
+														"maxItems": 21,
 														"type": "array",
 														"items": {
 															"type": "string",
 															"enum": [
 																"access",
+																"access.deny",
+																"access.networks",
 																"input",
 																"limits",
 																"timeouts",
@@ -21549,12 +21638,14 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 19,
+															"maxItems": 21,
 															"type": "array",
 															"items": {
 																"type": "string",
 																"enum": [
 																	"access",
+																	"access.deny",
+																	"access.networks",
 																	"input",
 																	"limits",
 																	"timeouts",
@@ -21595,12 +21686,14 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 19,
+										"maxItems": 21,
 										"type": "array",
 										"items": {
 											"type": "string",
 											"enum": [
 												"access",
+												"access.deny",
+												"access.networks",
 												"input",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -21696,14 +21789,43 @@
 										"timeZone"
 									],
 									"additionalProperties": false
-								}
+								},
+								"description": "Weekly periods when the gateway refuses requests."
+							},
+							"networks": {
+								"minItems": 1,
+								"type": "array",
+								"items": {
+									"anyOf": [
+										{
+											"type": "string",
+											"format": "ipv4",
+											"pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
+										},
+										{
+											"type": "string",
+											"format": "ipv6",
+											"pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$"
+										},
+										{
+											"type": "string",
+											"format": "cidrv4",
+											"pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\/([0-9]|[1-2][0-9]|3[0-2])$"
+										},
+										{
+											"type": "string",
+											"format": "cidrv6",
+											"pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))\\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$"
+										}
+									],
+									"description": "An IPv4 or IPv6 address, or a CIDR range such as 203.0.113.0/24."
+								},
+								"uniqueItems": true,
+								"description": "Client networks that may send requests. A request must come from a network of every policy that lists networks."
 							}
 						},
-						"required": [
-							"deny"
-						],
 						"additionalProperties": false,
-						"description": "Weekly periods when the gateway refuses requests."
+						"description": "When and from where the gateway accepts requests."
 					},
 					"input": {
 						"type": "object",
@@ -22436,14 +22558,43 @@
 													"timeZone"
 												],
 												"additionalProperties": false
-											}
+											},
+											"description": "Weekly periods when the gateway refuses requests."
+										},
+										"networks": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"anyOf": [
+													{
+														"type": "string",
+														"format": "ipv4",
+														"pattern": "^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"
+													},
+													{
+														"type": "string",
+														"format": "ipv6",
+														"pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))$"
+													},
+													{
+														"type": "string",
+														"format": "cidrv4",
+														"pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\/([0-9]|[1-2][0-9]|3[0-2])$"
+													},
+													{
+														"type": "string",
+														"format": "cidrv6",
+														"pattern": "^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:))\\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$"
+													}
+												],
+												"description": "An IPv4 or IPv6 address, or a CIDR range such as 203.0.113.0/24."
+											},
+											"uniqueItems": true,
+											"description": "Client networks that may send requests. A request must come from a network of every policy that lists networks."
 										}
 									},
-									"required": [
-										"deny"
-									],
 									"additionalProperties": false,
-									"description": "Weekly periods when the gateway refuses requests."
+									"description": "When and from where the gateway accepts requests."
 								},
 								"input": {
 									"type": "object",
