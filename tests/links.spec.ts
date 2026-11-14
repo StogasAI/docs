@@ -50,3 +50,17 @@ test('every link between built pages reaches a page and the fragment it names', 
 		Array.from(broken, ([problem, from]) => `${problem}, linked from ${[...from].join(', ')}`)
 	).toEqual([]);
 });
+
+test('every prefetch file loads at the name Next requests, without a redirect', async ({
+	request
+}) => {
+	// Next names a page's prefetch file with "$", and public/_redirects serves that name.
+	const files = readdirSync(out, { recursive: true, encoding: 'utf8' }).filter((file) =>
+		file.includes('$')
+	);
+	expect(files.length).toBeGreaterThan(100);
+	for (const file of files) {
+		const response = await request.get(`/${file}`, { maxRedirects: 0 });
+		expect(response.status(), file).toBe(200);
+	}
+});

@@ -1,0 +1,4 @@
+# Next names each page's prefetch file with "$", which Workers Assets serves only at its encoded path,
+# after a redirect. These rules serve the name Next requests, which saves that round trip.
+/docs/__next.docs.$oc$slug.__PAGE__.txt /docs/__next.docs.%24oc%24slug.__PAGE__.txt 200
+/docs/*/__next.docs.$oc$slug.__PAGE__.txt /docs/:splat/__next.docs.%24oc%24slug.__PAGE__.txt 200
