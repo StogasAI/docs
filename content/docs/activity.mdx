@@ -26,7 +26,7 @@ resource names and IDs, and event names.
 | Filter      | Matches                                                                                                                |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `action:`   | Events whose name contains the value, such as `action:key`. `action=key.deleted` matches one event.                    |
-| `actor:`    | The member who made the change, by part of their name or by their ID. `actor=` matches the whole name.                 |
+| `actor:`    | Who made the change, a member or Stogas, by part of the name or by ID. `actor=` matches the whole name.                |
 | `token:`    | The access token used, by part of its name or by its ID. `token=` matches the whole name.                              |
 | `resource:` | A changed resource, by part of its name or by its ID. `resource=` matches the whole name.                              |
 | `outcome:`  | `outcome:refused` matches refused attempts, and `outcome:succeeded` matches changes that happened.                     |
@@ -49,6 +49,9 @@ custom redaction expressions show only rule counts and whether the rules changed
 values pass 16 KiB is recorded without them, and its policy versions show the edit. An inherited
 change is recorded once, at the scope where it was made, not for every affected key.
 
+Changes that we make name Stogas as the actor: your organization's limits, its billing terms, and
+when a restriction stops its funding and API spending and when the last one is lifted.
+
 Activity records when a member creates, reveals, rotates or deletes an access token. When GitHub
 finds one in public, the event names its owner and where it was found. Each event appears in every
 organization that the token can act in, and names none of the others.
@@ -59,7 +62,8 @@ export was requested, not whether the file was saved.
 
 ## Retention and export
 
-Events are kept for 365 days.
+Events are kept for 365 days. Each event is stored in the same transaction as its change, so every
+change that happens has its event.
 
 CSV exports keep lists, names and changes as JSON text, and put an apostrophe before text that a
 spreadsheet would run as a formula, such as `=SUM(A1)`. For a change that happened, `refusal` is
@@ -67,6 +71,3 @@ spreadsheet would run as a formula, such as `=SUM(A1)`. For a change that happen
 
 We keep every version of every policy while your organization exists, so an event or a request
 record always shows the policies that it names.
-
-Activity is operational history. Delivery can be delayed or interrupted, so it is not a
-guaranteed complete compliance record.
