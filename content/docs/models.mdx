@@ -188,12 +188,11 @@ runs, such as a cheaper Flex tier or US-only inference. Each version is a separa
 its own price, and its ID adds a suffix to the standard deployment ID, such as `-flex`, `-fast`,
 `-pro`, `-us` or `-eu`. The [provider pages](/docs/providers) list each provider's options.
 
-When another company runs the model, the ID names it with `-<hosting>-hosted`, such as
+When another company runs the model, the ID names it with `-<company>-hosted`, such as
 `azure-claude-opus-5-5-anthropic-hosted`. `-unknown-hosted` marks a deployment whose provider
-forwards requests to a company that it does not name. A company that passes the request on to the
-hosting comes first, as `-via-<company>`. The suffixes come in this order: companies on the way,
-hosting, Pro, tier, then location, as in `azure-minimax-m3-fireworks-hosted-us`. The
-[hosting values](/docs/policies/routing-fields#hosting-values) list each one.
+forwards requests to a company that it does not name. The suffixes come in this order: hosting,
+Pro, tier, then location, as in `azure-minimax-m3-fireworks-hosted-us`.
+[Companies](/docs/policies/routing-fields#companies) explains the hosting.
 
 To select one:
 

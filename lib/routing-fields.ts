@@ -7,7 +7,7 @@ export type RoutingFieldGroup =
 	| 'deployment'
 	| 'capabilities'
 	| 'data-handling'
-	| 'hosting'
+	| 'companies'
 	| 'upstream'
 	| 'pricing'
 	| 'route-provider'
@@ -16,7 +16,7 @@ export type RoutingFieldGroup =
 function groupOf(field: string): RoutingFieldGroup {
 	if (field.startsWith('deployment.capabilities.')) return 'capabilities';
 	if (field.startsWith('deployment.dataHandling.')) return 'data-handling';
-	if (field === 'deployment.hosting' || field === 'deployment.companies') return 'hosting';
+	if (field === 'deployment.hosting' || field === 'deployment.companies') return 'companies';
 	if (field.startsWith('deployment.upstream.')) return 'upstream';
 	if (field.startsWith('deployment.pricing.')) return 'pricing';
 	if (field.startsWith('route.') || field.startsWith('provider.')) return 'route-provider';

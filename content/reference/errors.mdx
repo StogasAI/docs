@@ -180,7 +180,7 @@ Send the request again later. The gateway did not send these requests to a model
 | `ip_admission_unavailable`      | The gateway cannot track new IP addresses now.                                                                     |
 | `key_configuration_changed`     | The key changed, and the gateway is loading the new version.                                                       |
 | `byok_unavailable`              | Your provider credential is unavailable.                                                                           |
-| `upstream_capacity_unavailable` | The provider has no capacity now.                                                                                  |
+| `upstream_capacity_unavailable` | The provider has no capacity now, or its last calls failed and the gateway waits before the next one.              |
 | `upstream_unreachable`          | A provider call failed before the provider received the request. The message names the attempt and its deployment. |
 | `upstream_verification_failed`  | The provider's confidential evidence did not verify, so the gateway did not send the request.                      |
 | `upstream_configuration_error`  | Our provider configuration is unavailable.                                                                         |
@@ -202,7 +202,8 @@ passes sooner when you wait: a rate limit with a shorter wait, or a call that ne
 provider. An error that says a deployment no longer serves the model gives way to any other error.
 Each deployment counts with its last call, and a refusal by the gateway, such as a limit, counts
 like a call. A deployment that the gateway passes over while its provider's wait lasts counts with
-that provider error.
+that provider error, and one that it passes over after failed calls counts with
+`upstream_capacity_unavailable`.
 
 A retry from your client is a new request, billed on its own. When a request ends with
 `upstream_outcome_unknown`, or your connection to the gateway drops, the model may already have

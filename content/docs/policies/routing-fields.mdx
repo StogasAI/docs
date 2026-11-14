@@ -117,41 +117,32 @@ differs only in case, such as `eu` for `EU`.
 `eu` or `DE`. Prefer checks that accept places to exclusions:
 `deployment.dataHandling.processingLocation != 'US'` also accepts `world` and `unknown`.
 
-### Hosting
+### Companies
 
 ```cel title="Only models that the provider runs itself"
-deployment.hosting == provider.id
+deployment.hosting == provider.companyId
 ```
 
-`hosting` names the company that runs the model, on every deployment. The provider's own ID means
-the provider runs it. Another company's ID means that company runs it and the provider sells access
-to it. `companies` lists every company that receives the request: the provider, each company that
-passes the request on, the hosting, and each company that the hosting shares the request with,
+Each provider and each author belongs to a company, which its `companyId` names. `hosting` names
+the company that runs the model: the provider's own company, or another company that the provider
+sells access to. `dataHandling.sharedWith` names each other company that receives the request,
 such as Anthropic, which receives Claude Fable requests on Google Cloud to monitor abuse.
+`companies` lists every company that receives the request: the provider's company, the hosting and
+each company in `sharedWith`.
 
-<RoutingFields group="hosting" />
+<RoutingFields group="companies" />
 
-#### Hosting values
-
-`unknown` means a company that the provider does not name.
-
-| Value          | Who runs the model                                    | Example deployment                       |
-| -------------- | ----------------------------------------------------- | ---------------------------------------- |
-| `anthropic`    | Anthropic, on its own API or through another provider | `azure-claude-opus-5-5-anthropic-hosted` |
-| `aws`          | AWS                                                   | `aws-claude-fable-5-1`                   |
-| `azure`        | Azure                                                 | `azure-gpt-5.5-2026-04-23`               |
-| `chutes`       | Chutes, in a trusted execution environment            | `chutes-glm-5.2`                         |
-| `fireworks`    | Fireworks, through another provider                   | `azure-minimax-m3-fireworks-hosted-us`   |
-| `google-cloud` | Google Cloud                                          | `google-cloud-claude-opus-5-5`           |
-| `openai`       | OpenAI                                                | `openai-gpt-5.6-sol`                     |
-| `unknown`      | A company that the provider does not name             | `chutes-glm-5.2-unknown-hosted`          |
+A company ID can differ from the ID of its provider, such as `amazon` for AWS. The
+[provider comparison](/docs/providers#companies) lists each provider's company. `unknown` means a
+company that the provider does not name. Saving a policy fails when it names a company that the
+catalog does not list.
 
 A deny rule such as `deployment.hosting != 'fireworks'` still passes `unknown` deployments, because
 the company that runs them is not named. To keep requests away from a company, list the companies
 that you accept:
 
-```cel title="Keep requests away from Fireworks"
-deployment.companies.all(company, company in ['anthropic', 'aws', 'azure', 'chutes', 'google-cloud', 'openai'])
+```cel title="Send requests only to these companies"
+deployment.companies.all(company, company in ['amazon', 'anthropic', 'google', 'microsoft', 'openai'])
 ```
 
 ### Upstream details

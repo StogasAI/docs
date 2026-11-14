@@ -61,7 +61,7 @@
 					"Catalog"
 				],
 				"summary": "Catalog",
-				"description": "Returns the root of the active public catalog: the places that data handling names, authors, groups and providers in full, a summary of each model, route and deployment, the scheduled changes to them, and the parts that hold models, routes and deployments in full. The root keeps each retired record, and each record gives its retirement date.",
+				"description": "Returns the root of the active public catalog: the places that data handling names, the companies that records name, authors, groups and providers in full, a summary of each model, route and deployment, the scheduled changes to them, and the parts that hold models, routes and deployments in full. The root keeps each retired record, and each record gives its retirement date.",
 				"security": [],
 				"responses": {
 					"200": {
@@ -187,6 +187,12 @@
 													"parentIds": []
 												}
 											},
+											"companies": {
+												"openai": {
+													"headquarteredCountry": "US",
+													"name": "OpenAI"
+												}
+											},
 											"parts": [
 												{
 													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
@@ -220,7 +226,7 @@
 													"summaries": {}
 												}
 											],
-											"schema": "stogas.catalog.v16",
+											"schema": "stogas.catalog.v1",
 											"summaries": {
 												"authors": {},
 												"deployments": {
@@ -347,7 +353,7 @@
 													}
 												}
 											],
-											"schema": "stogas.catalog.part.v16"
+											"schema": "stogas.catalog.part.v1"
 										}
 									}
 								}
@@ -1279,6 +1285,7 @@
 					"sequence",
 					"digest",
 					"locations",
+					"companies",
 					"parts",
 					"periods",
 					"schedule",
@@ -1342,6 +1349,28 @@
 										"type": "string"
 									},
 									"description": "In order. Empty only for `world`."
+								}
+							}
+						}
+					},
+					"companies": {
+						"type": "object",
+						"description": "The companies that records name, by ID. An author and a provider each name their company in `companyId`, a deployment names the company that runs its model in `hosting`, and data handling names each other company that receives requests in `sharedWith`.",
+						"additionalProperties": {
+							"type": "object",
+							"required": [
+								"headquarteredCountry",
+								"name"
+							],
+							"additionalProperties": false,
+							"properties": {
+								"headquarteredCountry": {
+									"type": "string",
+									"pattern": "^[A-Z]{2}$",
+									"description": "The country of the company's headquarters, by ISO 3166-1 alpha-2 code."
+								},
+								"name": {
+									"type": "string"
 								}
 							}
 						}
@@ -1454,7 +1483,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.v16"
+						"const": "stogas.catalog.v1"
 					},
 					"summaries": {
 						"type": "object",
@@ -1731,7 +1760,7 @@
 					},
 					"schema": {
 						"type": "string",
-						"const": "stogas.catalog.part.v16"
+						"const": "stogas.catalog.part.v1"
 					}
 				}
 			},

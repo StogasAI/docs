@@ -23,6 +23,20 @@ shows each deployment's price, context window, input types, reasoning levels and
 [routing policies](/docs/policies/routing) can filter on them, for example to allow only zero data
 retention deployments.
 
+## Companies
+
+A provider belongs to a company, and another company can run its models.
+[Routing policies](/docs/policies/routing-fields#companies) name each company by its ID.
+
+| Provider     | `provider.companyId` | `deployment.hosting`                  |
+| ------------ | -------------------- | ------------------------------------- |
+| OpenAI       | `openai`             | `openai`                              |
+| Anthropic    | `anthropic`          | `anthropic`                           |
+| Azure        | `microsoft`          | `microsoft`, `anthropic`, `fireworks` |
+| AWS          | `amazon`             | `amazon`, `anthropic`                 |
+| Google Cloud | `google`             | `google`, `anthropic`                 |
+| Chutes       | `chutes`             | `chutes`, `unknown`                   |
+
 ## Request fields
 
 The gateway checks each request against the selected deployment before it calls the provider. A
