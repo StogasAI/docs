@@ -7,8 +7,8 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
 	metadataBase: new URL('https://stogas.ai'),
 	title: {
-		default: 'Stogas',
-		template: '%s | Stogas'
+		default: 'Stogas Docs',
+		template: '%s · Stogas Docs'
 	},
 	description: getMessage(messages.description),
 	other: { 'is-agentic-site-type': 'content' },
