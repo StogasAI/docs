@@ -268,13 +268,17 @@ stogas topup 25 BTC
 stogas topup 25 USDT --network TRX
 stogas topup 25 XMR --organization <organization-id>
 ```
+stogas topup 25 card
 
-The amount is the USD credit that you want. The CLI prints the coin amount, the fees on top, and
-the address with any memo and a QR code, then waits until the payment is credited. Bitcoin and
-Monero go to a [deposit address](/docs/billing#payment-methods), and other coins through CCPayment.
-`--network` picks a network for a coin that has several. Without `--organization`, the credit goes
-to your personal organization. If the organization has no billing country, state and ZIP code yet,
-the CLI asks for them.
+The amount is the USD credit that you want. For a coin, the CLI prints the coin amount, the fees on
+top, and the address with any memo and a QR code. Bitcoin and Monero go to a
+[deposit address](/docs/billing#payment-methods), and other coins through CCPayment. `--network`
+picks a network for a coin that has several. For `card`, the CLI prints a link to Stripe's payment
+page and its QR code, so you can pay in any browser or on your phone, within 31 minutes. The CLI
+then waits until the payment is credited.
+
+Without `--organization`, the credit goes to your personal organization. If the organization has no
+billing country, state and ZIP code yet, the CLI asks for them.
 
 ### Edit a policy
 

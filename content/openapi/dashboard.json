@@ -13780,7 +13780,7 @@
 					"Balance"
 				],
 				"summary": "Start a card payment",
-				"description": "Opens Stripe's payment page for a credit and returns its address, which stays open for 31 minutes. The total adds the funding fees and sales tax to the credit and must be at least $0.50. The credit can be at most what the prepaid limits allow now, less credit that is pending and credit that other card payments will add. Each account can start 10 card payments in any 24 hours, and all accounts on one IP address or IPv6 /48 together 20.",
+				"description": "Opens Stripe's payment page for a credit and returns its address and when it closes, 31 minutes later. The payment it makes lists with the returned ID. The total adds the funding fees and sales tax to the credit and must be at least $0.50. The credit can be at most what the prepaid limits allow now, less credit that is pending and credit that other card payments will add. Each account can start 10 card payments in any 24 hours, and all accounts on one IP address or IPv6 /48 together 20.",
 				"security": [
 					{
 						"accessToken": [
@@ -13822,13 +13822,23 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"id": {
+											"type": "string",
+											"format": "uuid"
+										},
 										"url": {
 											"type": "string",
 											"format": "uri"
+										},
+										"expiresAt": {
+											"type": "string",
+											"format": "date-time"
 										}
 									},
 									"required": [
-										"url"
+										"id",
+										"url",
+										"expiresAt"
 									],
 									"additionalProperties": false
 								}
