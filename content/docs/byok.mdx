@@ -42,16 +42,16 @@ With customer encryption, we store only ciphertext, and each request sends the k
 2. Encrypt the credential on your machine:
 
    ```console
-   stogas encrypt --key providers --organization YOUR_ORGANIZATION_ID \
-     --purpose byok/openai --input provider-secret.txt --output credential.json
+   stogas encrypt --key providers --organization YOUR_ORGANIZATION_ID --purpose byok/openai
    ```
 
-   The purpose is `byok/` and the provider ID. Save a plain key without a trailing newline. AWS
-   and Google Cloud take a credential document, and Azure takes an
-   [application](/docs/providers/azure#customer-encryption), which the CLI checks before it
-   encrypts them.
+   The purpose is `byok/` and the provider ID. The CLI asks for the API key without showing it, and
+   prints the credential to add. AWS and Google Cloud take a credential document, and Azure takes
+   an [application](/docs/providers/azure#customer-encryption), which you pass with `--input` and
+   the CLI checks before it encrypts them.
 
-3. Add `credential.json` as a customer-encrypted credential. Saving does not contact the provider.
+3. Add what the CLI printed as a customer-encrypted credential. Saving does not contact the
+   provider.
 4. [Send the key](/docs/customer-encryption#send-the-key-with-a-request) with each request.
 
 A request that could use the credential but doesn't send its key fails with

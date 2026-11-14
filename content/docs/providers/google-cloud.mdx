@@ -51,7 +51,7 @@ With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts the
 
 ```bash
 stogas encrypt --key providers --organization <organization-id> \
-  --purpose byok/google-cloud --input key.json --output credential.json
+  --purpose byok/google-cloud --input key.json
 ```
 
 For Claude Models on Google Cloud, encrypt a credential document with your workspace ID instead:
@@ -66,10 +66,10 @@ jq --arg workspace wrkspc_... '{
   workspaceId: $workspace
 }' key.json > google.json
 stogas encrypt --key providers --organization <organization-id> \
-  --purpose byok/google-cloud --input google.json --output credential.json
+  --purpose byok/google-cloud --input google.json
 ```
 
-Then delete `key.json` and `google.json`, and add `credential.json` in [BYOK](/docs/byok).
+Then delete `key.json` and `google.json`, and add what the CLI printed in [BYOK](/docs/byok).
 
 ## Turn on Claude Fable on Agent Platform
 

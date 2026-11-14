@@ -215,8 +215,7 @@ side out of it. Without `--request`, the request stays unchecked. See
 
 ```console
 stogas encryption-key create --organization <id> --label prod
-stogas encrypt --key prod --organization <id> --purpose byok/openai \
-  --input secret.txt --output credential.json
+stogas encrypt --key prod --organization <id> --purpose byok/openai
 ```
 
 `encryption-key create` creates an organization key for
@@ -227,8 +226,10 @@ writes the key to a new file that only you can read. Where there is no keychain,
 `export` copies a saved key to a new file, or with `--output -` pipes it to another program, such
 as your secret manager. `delete` removes a saved key, and `logout` keeps them all.
 
-`encrypt` encrypts a file with the key saved under `--key`, or with the key file that `--key-file`
-names. `--purpose` is `plugins/export` or `plugins/redaction` for
+`encrypt` encrypts the file that `--input` names or what you pipe in, and without either asks for an
+API key without showing it. It uses the key saved under `--key`, or the key file that `--key-file`
+names, and prints the result, or writes it to the new file that `--output` names. `--purpose` is
+`plugins/export` or `plugins/redaction` for
 [an export or a redaction](/docs/customer-encryption#encrypt-plugin-settings), or `byok/openai`,
 `byok/anthropic`, `byok/chutes`, `byok/aws`, `byok/azure` or `byok/google-cloud` for a
 [provider credential](/docs/byok#customer-encryption). `byok/azure` takes what
