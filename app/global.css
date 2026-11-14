@@ -205,6 +205,15 @@ a.sr-only[href='#nd-page']:focus {
 	}
 }
 
+/* Fumadocs sizes the outline column once the outline is in the document, and the outline follows
+   the article, so a browser that painted a long page early then moved the article aside. The outline
+   popover precedes the article on every page with an outline, so it reserves the column instead. */
+@media (width >= 80rem) {
+	#nd-docs-layout:has(> [data-toc-popover]) {
+		--fd-toc-width: 268px;
+	}
+}
+
 /* The sidebar's Radix scrollbar appears only while scrolling; a thin native scrollbar replaces it.
    `scrollbar-color` also disables Radix's hidden `::-webkit-scrollbar` in Chrome and Safari.
    Radix sets `overflow-y: scroll` inline, which would show an empty track when links fit. */

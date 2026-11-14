@@ -123,6 +123,23 @@ test('page outline names its progress and follows a keyboard-selected section', 
 		.toBeGreaterThan(0);
 });
 
+test('the article keeps its place before the page outline loads', async ({ browser }) => {
+	// The first paint comes before any script runs, and the outline follows the article in the
+	// document, so a browser can paint the article before the outline arrives.
+	const context = await browser.newContext({ javaScriptEnabled: false });
+	try {
+		const page = await context.newPage();
+		await page.goto('/docs/policies/routing');
+		const article = page.locator('#nd-page');
+		const placed = await article.boundingBox();
+		expect(placed).not.toBeNull();
+		await page.locator('#nd-toc').evaluate((outline) => outline.remove());
+		expect(await article.boundingBox()).toEqual(placed);
+	} finally {
+		await context.close();
+	}
+});
+
 for (const viewport of [
 	{ width: 333, height: 504, zoom: 1.5 },
 	{ width: 590, height: 378, zoom: 2 }
