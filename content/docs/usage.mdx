@@ -114,8 +114,8 @@ $0.000000001 for one token. [Billing](/docs/billing#fees) lists the fees.
 ## Standard text tokens
 
 Each provider counts tokens with its own tokenizer, so the same prompt can have different token
-counts on different models. Standard text tokens (STT) measure text the same way on every model:
-**1 STT is 4 bytes of UTF-8 text**, which is close to one token of English text.
+counts on different models. Standard text tokens measure text the same way on every model: **one
+standard text token is 4 bytes of UTF-8 text**, which is close to one token of English text.
 
 `usage.standard_text_tokens` has `input`, `reasoning` and `output`.
 
@@ -123,8 +123,9 @@ counts on different models. Standard text tokens (STT) measure text the same way
   and arguments. JSON syntax, property names and attachments do not count.
 - Output and reasoning count only visible text. Hidden or encrypted reasoning cannot be measured.
 
-Use STT to compare text size across models, or to cap input text the same way on every model with
-an [STT token quota](/docs/policies/limits#tokens-and-input-text). STT never sets the price.
+Use them to compare text size across models, or to cap input text the same way on every model with
+a [`standardTextTokens` limit](/docs/policies/limits#tokens-and-input-text). They never set the
+price.
 
 ## Input estimates
 

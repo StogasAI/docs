@@ -30,8 +30,9 @@ Each entry in `limits` has a name and counts one thing:
 }
 ```
 
-- Each limit sets exactly one field: [`usd`](#spending), [`tokens` or `stt`](#tokens-and-input-text),
-  [`requests`](#requests) or [`concurrentRequests`](#concurrent-requests).
+- Each limit sets exactly one field: [`usd`](#spending),
+  [`tokens` or `standardTextTokens`](#tokens-and-input-text), [`requests`](#requests) or
+  [`concurrentRequests`](#concurrent-requests).
 - Names such as `monthly` use 1–48 lowercase letters, digits, `_` or `-`, and start with a letter.
 - A policy can have up to **8 limits**, counting the limits in its rules.
 - Limits always apply, so a rule with limits cannot use `mode: "default"`.
@@ -120,10 +121,10 @@ reasoning. Each token counts once.
 - Settlement uses the provider's count. If the provider reports no usage, the whole hold counts. A
   request that fails before it reaches the provider counts nothing.
 
-`stt` limits count [standard text tokens](/docs/usage#standard-text-tokens) of input instead: the
-request text after redaction, 4 bytes to a token. STT counts the same text the same way on every
-model, so one limit means the same amount on every provider. Its hold is exact. It counts when the
-provider reports usage or cost, and is released when the request fails.
+A `standardTextTokens` limit counts [standard text tokens](/docs/usage#standard-text-tokens) of
+input instead: the request text after redaction, 4 bytes to a token. It counts the same text the
+same way on every model, so one limit means the same amount on every provider. Its hold is exact.
+It counts when the provider reports usage or cost, and is released when the request fails.
 
 ## Requests
 
@@ -186,12 +187,12 @@ A limit below current usage blocks new requests until usage falls under it.
 
 ## Blocked requests
 
-| Status | Cause                                                            | Codes                                                                      |
-| ------ | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `402`  | A `usd` limit, or the organization's balance                     | `<scope>_spend_limit`, `insufficient_balance`                              |
-| `429`  | A `requests`, `tokens`, `stt` or `concurrentRequests` limit      | `<scope>_rate_limited`, `<scope>_token_limit`, `<scope>_concurrency_limit` |
-| `429`  | The platform limit                                               | `platform_rate_limited`                                                    |
-| `429`  | A request within 25 ms after a blocked request with the same key | `rate_limit_exceeded`                                                      |
+| Status | Cause                                                                      | Codes                                                                      |
+| ------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `402`  | A `usd` limit, or the organization's balance                               | `<scope>_spend_limit`, `insufficient_balance`                              |
+| `429`  | A `requests`, `tokens`, `standardTextTokens` or `concurrentRequests` limit | `<scope>_rate_limited`, `<scope>_token_limit`, `<scope>_concurrency_limit` |
+| `429`  | The platform limit                                                         | `platform_rate_limited`                                                    |
+| `429`  | A request within 25 ms after a blocked request with the same key           | `rate_limit_exceeded`                                                      |
 
 The code names the scope, such as `grant_token_limit`, but not the named limit. A `429` response has
 `Retry-After` when waiting can help: until a reset, until a gradual limit has room, or until running
