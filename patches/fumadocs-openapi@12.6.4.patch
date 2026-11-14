@@ -1,5 +1,18 @@
+diff --git a/dist/packages/shared-api/dist/components/playground/fields.js b/dist/packages/shared-api/dist/components/playground/fields.js
+index 492608c5590c15370cde047c74cecd0a1a0c01c6..e275fab74293befbc6296ac65825360b1463780f 100644
+--- a/dist/packages/shared-api/dist/components/playground/fields.js
++++ b/dist/packages/shared-api/dist/components/playground/fields.js
+@@ -21,7 +21,7 @@ const segmentClassName = "flex items-center transition-colors not-first:border-s
+ /** the type of a field and the actions on it, like changing its type or unsetting it */
+ function TypePill({ type, action, quiet = false }) {
+ 	return /* @__PURE__ */ jsxs("span", {
+-		className: cn("flex h-6 shrink-0 items-stretch overflow-hidden rounded-md border bg-fd-secondary font-mono text-xs", quiet ? "text-fd-muted-foreground/70" : "text-fd-muted-foreground"),
++		className: "flex h-6 shrink-0 items-stretch overflow-hidden rounded-md border bg-fd-secondary font-mono text-xs text-fd-muted-foreground",
+ 		children: [typeof type === "string" ? /* @__PURE__ */ jsx("span", {
+ 			className: "max-w-40 truncate px-1.5 leading-[1.375rem]",
+ 			title: type,
 diff --git a/dist/packages/shared-api/dist/components/playground/panels.js b/dist/packages/shared-api/dist/components/playground/panels.js
-index 4561f4e..9fc9f73 100644
+index d4fecbe90f46556f5110492eb418c6da9fcb8784..97c13cf6f8dbfb9d29f3c675ee532f303165a534 100644
 --- a/dist/packages/shared-api/dist/components/playground/panels.js
 +++ b/dist/packages/shared-api/dist/components/playground/panels.js
 @@ -288,15 +288,18 @@ function RequestExampleSelect({ items, value, onValueChange, disabled }) {
@@ -22,7 +35,7 @@ index 4561f4e..9fc9f73 100644
  		children: [
  			sending ? /* @__PURE__ */ jsx(Spinner, { className: "size-3.5" }) : /* @__PURE__ */ jsx(SendHorizontal, { className: "size-3.5" }),
 diff --git a/dist/ui/operation/index.js b/dist/ui/operation/index.js
-index 82f0615..77c2ad5 100644
+index e416476c68fefe7c84fde128a3342d6006a3a630..aab5a361cf3d654a89ec8a2500a1ed96a03b5941 100644
 --- a/dist/ui/operation/index.js
 +++ b/dist/ui/operation/index.js
 @@ -326,7 +326,7 @@ function ResponseSection({ responses, headingLevel }) {
@@ -35,7 +48,7 @@ index 82f0615..77c2ad5 100644
  			})
  		}), responses.map((item) => /* @__PURE__ */ jsx(ResponseContent, {
 diff --git a/dist/ui/operation/usage-tabs.js b/dist/ui/operation/usage-tabs.js
-index a7caa17..a068d18 100644
+index ad904d53bf12f67a4d7d80ac89c38280b6a43c8b..766ec0142ee7b15a3eedac9bdaf38893b5226767 100644
 --- a/dist/ui/operation/usage-tabs.js
 +++ b/dist/ui/operation/usage-tabs.js
 @@ -183,7 +183,7 @@ function ResponseTabsDefaultContent({ tabs }) {
@@ -48,7 +61,7 @@ index a7caa17..a068d18 100644
  				value: tab.code,
  				onValueChange: (v) => {
 diff --git a/dist/ui/playground/client.js b/dist/ui/playground/client.js
-index 663f3d5..cdf93ad 100644
+index a497523bf4d9522c0cee52b8a3472fb48cf31138..aae7ee40754750154cbdc9728987d27bea245c0e 100644
 --- a/dist/ui/playground/client.js
 +++ b/dist/ui/playground/client.js
 @@ -77,6 +77,13 @@ function PlaygroundDialog({ playground, renderParameterField, renderBodyField, R
@@ -66,7 +79,7 @@ index 663f3d5..cdf93ad 100644
  		setView("response");
  	};
 diff --git a/dist/ui/playground/components/request-panel.js b/dist/ui/playground/components/request-panel.js
-index 1694aeb..af5be47 100644
+index 918e7302f835f02673fbc9809d521132c70535c9..0b5a8cde408626aa226c32b0f0a2e994ac77324e 100644
 --- a/dist/ui/playground/components/request-panel.js
 +++ b/dist/ui/playground/components/request-panel.js
 @@ -151,6 +151,7 @@ function AuthSection({ auth, onAuthorize }) {
@@ -74,6 +87,6 @@ index 1694aeb..af5be47 100644
  			onValueChange: (v) => v !== null && select(v),
  			children: [/* @__PURE__ */ jsx(SelectTrigger, {
 +				"aria-label": t("Authorization"),
- 				className: "h-7 w-auto max-w-60 gap-1.5 @sm:-me-2 border-0 bg-transparent px-2 text-xs hover:bg-fd-accent focus:ring-0 focus-visible:ring-2",
+ 				className: "h-7 w-auto max-w-60 -me-3 gap-1.5 border-0 bg-transparent px-2 text-xs hover:bg-fd-accent focus:ring-0 focus-visible:ring-2",
  				children: /* @__PURE__ */ jsx(SelectValue, { className: "truncate" })
  			}), /* @__PURE__ */ jsx(SelectContent, {

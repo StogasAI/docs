@@ -46,60 +46,55 @@ interface LayoutClientProps {
 export default function LayoutClient({ children, tree, baseOptions }: LayoutClientProps) {
 	const t = useTranslations();
 	return (
-		<>
-			<a href="#nd-page" className="stogas-skip-link">
-				{t(messages.skipToContent)}
-			</a>
-			<DocsLayout
-				tree={tree}
-				slots={{
-					themeSwitch: false,
-					languageSelect: false,
-					searchTrigger: {
-						sm: CompactSearchTrigger,
-						full: WideSearchTrigger
-					}
-				}}
-				{...baseOptions}
-				sidebar={{
-					defaultOpenLevel: 1,
-					footer: (
-						<div className="mt-1 flex w-full flex-col gap-1 pt-2">
-							{/* Landing page + dashboard links */}
-							<StogasLink
-								href="https://stogas.ai/"
-								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
-							>
-								<Home aria-hidden="true" className="size-4 shrink-0" />
-								<span className="text-[13px]">{t(messages.landing)}</span>
-							</StogasLink>
-							<StogasLink
-								href="https://app.stogas.ai/"
-								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
-							>
-								<LayoutDashboard aria-hidden="true" className="size-4 shrink-0" />
-								<span className="text-[13px]">{t(messages.dashboard)}</span>
-							</StogasLink>
+		<DocsLayout
+			tree={tree}
+			slots={{
+				themeSwitch: false,
+				languageSelect: false,
+				searchTrigger: {
+					sm: CompactSearchTrigger,
+					full: WideSearchTrigger
+				}
+			}}
+			{...baseOptions}
+			sidebar={{
+				defaultOpenLevel: 1,
+				footer: (
+					<div className="mt-1 flex w-full flex-col gap-1 pt-2">
+						{/* Landing page + dashboard links */}
+						<StogasLink
+							href="https://stogas.ai/"
+							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
+						>
+							<Home aria-hidden="true" className="size-4 shrink-0" />
+							<span className="text-[13px]">{t(messages.landing)}</span>
+						</StogasLink>
+						<StogasLink
+							href="https://app.stogas.ai/"
+							className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent group flex items-center gap-3 rounded-md p-2 text-sm transition-colors"
+						>
+							<LayoutDashboard aria-hidden="true" className="size-4 shrink-0" />
+							<span className="text-[13px]">{t(messages.dashboard)}</span>
+						</StogasLink>
 
-							{/* GitHub + theme toggle row */}
-							<div className="bg-fd-secondary mt-2 flex items-center rounded-lg p-1">
-								<a
-									href="https://github.com/StogasAI/docs"
-									target="_blank"
-									rel="noreferrer noopener"
-									aria-label={t(messages.githubDocumentation)}
-									className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent inline-flex size-8 items-center justify-center rounded-md transition-colors"
-								>
-									<GithubIcon className="size-4" />
-								</a>
-								<ThemeSwitch className="ms-auto rounded-none border-y-0 border-e-0 px-1 py-0 *:rounded-md" />
-							</div>
+						{/* GitHub + theme toggle row */}
+						<div className="bg-fd-secondary mt-2 flex items-center rounded-lg p-1">
+							<a
+								href="https://github.com/StogasAI/docs"
+								target="_blank"
+								rel="noreferrer noopener"
+								aria-label={t(messages.githubDocumentation)}
+								className="text-fd-muted-foreground hover:text-fd-foreground hover:bg-fd-accent inline-flex size-8 items-center justify-center rounded-md transition-colors"
+							>
+								<GithubIcon className="size-4" />
+							</a>
+							<ThemeSwitch className="ms-auto rounded-none border-y-0 border-e-0 px-1 py-0 *:rounded-md" />
 						</div>
-					)
-				}}
-			>
-				{children}
-			</DocsLayout>
-		</>
+					</div>
+				)
+			}}
+		>
+			{children}
+		</DocsLayout>
 	);
 }

@@ -49,7 +49,9 @@ function remarkComponentMarkdown() {
 	};
 }
 
+// Runtime output would keep each component as JSX and drop the replacements above.
 const markdownOptions: LLMsOptions = {
+	output: 'string',
 	headingIds: false,
 	filterElement: (node) =>
 		(node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') &&

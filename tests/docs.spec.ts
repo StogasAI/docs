@@ -356,7 +356,9 @@ test('defaults to dark, preserves light preference, and supports keyboard access
 	await expect(page.locator('html')).toHaveClass(/dark/);
 	await expect(page.locator('html')).toHaveCSS('color-scheme', /^(?:only dark|dark only)$/);
 	await page.keyboard.press('Tab');
-	await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused();
+	const skip = page.getByRole('link', { name: 'Skip to content', exact: true });
+	await expect(skip).toBeFocused();
+	expect((await skip.boundingBox())?.width).toBeGreaterThan(100);
 	await page.keyboard.press('Enter');
 	await expect(page.locator('#nd-page')).toBeFocused();
 	expect(
@@ -382,6 +384,8 @@ test('defaults to dark, preserves light preference, and supports keyboard access
 });
 
 test('API reference controls and code remain accessible in both themes', async ({ page }) => {
+	// Four full-page accessibility scans and a reload take about 25 seconds.
+	test.slow();
 	await page.emulateMedia({ reducedMotion: 'reduce' });
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
 	for (const theme of ['dark', 'light']) {
@@ -544,7 +548,7 @@ test('copy controls copy their example and clear native scrollbars, and statuses
 	const shortExample = dialog.getByRole('tabpanel', { name: '402', exact: true });
 	const shortCopy = shortExample.getByRole('button', { name: 'Copy Text', exact: true });
 	await expect(async () => {
-		const viewport = await shortExample.getByRole('region').evaluate((element) => ({
+		const viewport = await shortExample.locator('.fd-scroll-container').evaluate((element) => ({
 			right: element.getBoundingClientRect().left + element.clientWidth,
 			scrolls: element.scrollHeight > element.clientHeight
 		}));
@@ -555,7 +559,7 @@ test('copy controls copy their example and clear native scrollbars, and statuses
 	}).toPass({ timeout: 5000 });
 	await page.addStyleTag({
 		content:
-			'[role="region"] { scrollbar-gutter: stable; } [role="region"]::-webkit-scrollbar { width: 24px; height: 24px; }'
+			'.fd-scroll-container { scrollbar-gutter: stable; } .fd-scroll-container::-webkit-scrollbar { width: 24px; height: 24px; }'
 	});
 	for (const width of [1440, 320]) {
 		await page.setViewportSize({ width, height: 1000 });
@@ -564,7 +568,7 @@ test('copy controls copy their example and clear native scrollbars, and statuses
 		await dialog.getByRole('tab', { name: '200', exact: true }).click();
 		const panel = dialog.getByRole('tabpanel', { name: '200', exact: true });
 		const copy = panel.getByRole('button', { name: /^Cop(?:y|ied) Text$/ });
-		const viewport = panel.getByRole('region');
+		const viewport = panel.locator('.fd-scroll-container');
 		await expect(async () => {
 			await expect(copy).toBeVisible();
 			const bounds = await viewport.evaluate((element) => ({

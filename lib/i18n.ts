@@ -17,7 +17,12 @@ export const translations = i18n
 	.extend(uiTranslations())
 	.extend(openapiTranslations())
 	.extend({ keys: Object.values(messages) })
-	.add({ en: { 'Collapse Sidebar(sidebar)(aria-label)': 'Toggle Sidebar' } });
+	.add({
+		en: {
+			'Collapse Sidebar(sidebar)(aria-label)': 'Toggle Sidebar',
+			'Skip to Content(skip link)': 'Skip to content'
+		}
+	});
 
 // Server metadata and exports use the same registered messages as the UI provider.
 export function getMessage(

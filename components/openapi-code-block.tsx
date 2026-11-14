@@ -6,8 +6,7 @@ import { messages } from '@/lib/messages';
 import { cn } from '@/lib/cn';
 import { apiHighlighter } from '@/lib/api-highlight';
 import { codeThemes } from '@/lib/highlight';
-import { toJsxRuntime } from 'hast-util-to-jsx-runtime';
-import * as jsxRuntime from 'react/jsx-runtime';
+import { toJsx } from 'fumadocs-core/utils/hast-to-jsx';
 import { CodeBlock, Pre, type CodeBlockProps } from 'fumadocs-ui/components/codeblock';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
 import { useCopyButton } from 'fumadocs-ui/utils/use-copy-button';
@@ -96,7 +95,7 @@ export function OpenAPICodeBlock({
 			themes: codeThemes,
 			defaultColor: false
 		});
-		return toJsxRuntime(tree, { ...jsxRuntime, components: { pre: CodeFrame } });
+		return toJsx(tree, { components: { pre: CodeFrame } });
 	}, [lang, deferredCode]);
 	return <FrameContext value={{ code: deferredCode, codeblock }}>{highlighted}</FrameContext>;
 }

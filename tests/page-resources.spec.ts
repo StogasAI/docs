@@ -42,6 +42,8 @@ function checkReferences(document: Record<string, unknown>) {
 test('every indexed page exports readable Markdown and complete operation schemas', async ({
 	request
 }) => {
+	// The test fetches every page in four forms, which takes about 25 seconds.
+	test.slow();
 	const index = await request.get('/llms.txt');
 	expect(index.ok()).toBe(true);
 	const markdownLinks = Array.from(

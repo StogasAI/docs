@@ -9,7 +9,6 @@ export const messages = {
 	platform: 'Platform',
 	apiReference: 'API Reference',
 	documentationSection: 'Documentation',
-	skipToContent: 'Skip to content',
 	landing: 'Landing',
 	dashboard: 'Dashboard',
 	githubDocumentation: 'Stogas documentation on GitHub',

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import schema from '../content/schemas/key-config-v1.json';
 import routingRegistry from '../content/schemas/routing-fields.json';
 import navigation from '../content/docs/policies/meta.json';
@@ -176,14 +176,20 @@ test('routing field inventories survive Markdown export and query examples are h
 	await expect(example).toContainText('!has(deployment.dataHandling.retentionDays)');
 });
 
+// Once the page hydrates, the sidebar scrolls back to the current page, which can move a link away
+// from a click that came earlier.
+async function openFromSidebar(page: Page, name: string, url: RegExp) {
+	await expect(async () => {
+		await page.locator('#nd-sidebar').getByRole('link', { name, exact: true }).click();
+		await expect(page).toHaveURL(url, { timeout: 1000 });
+	}).toPass();
+}
+
 test('plugin pages are discoverable through the sidebar and search', async ({ page }) => {
 	await page.goto('/docs');
-	const sidebar = page.locator('#nd-sidebar');
-	await sidebar.getByRole('link', { name: 'PII redaction', exact: true }).click();
-	await expect(page).toHaveURL(/\/docs\/pii-redaction$/);
+	await openFromSidebar(page, 'PII redaction', /\/docs\/pii-redaction$/);
 	await expect(page.getByRole('heading', { name: 'PII redaction', exact: true })).toBeVisible();
-	await sidebar.getByRole('link', { name: 'Export', exact: true }).click();
-	await expect(page).toHaveURL(/\/docs\/export$/);
+	await openFromSidebar(page, 'Export', /\/docs\/export$/);
 	await expect(page.getByRole('heading', { name: 'Export', exact: true })).toBeVisible();
 	const destination = page.locator('[id="policy-fields.exportDestination"]');
 	await expect(destination).toContainText('url');

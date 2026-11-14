@@ -160,20 +160,21 @@ html.light {
 	overflow-wrap: anywhere;
 }
 
-.stogas-skip-link {
+/* Fumadocs' skip link is visible only to screen readers; keyboard users see it while it has focus. */
+a.sr-only[href='#nd-page']:focus {
 	position: fixed;
 	inset-block-start: 0.75rem;
 	inset-inline-start: 0.75rem;
 	z-index: 100;
-	transform: translateY(-200%);
+	width: auto;
+	height: auto;
+	margin: 0;
+	overflow: visible;
+	clip-path: none;
 	border-radius: 0.5rem;
 	padding: 0.75rem 1rem;
 	background: var(--color-fd-primary);
 	color: var(--color-fd-primary-foreground);
-}
-
-.stogas-skip-link:focus {
-	transform: none;
 }
 
 [data-object-search-input] {
