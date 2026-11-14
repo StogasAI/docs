@@ -18848,50 +18848,70 @@
 														{
 															"type": "object",
 															"properties": {
-																"email_address": {
-																	"type": "boolean",
-																	"description": "Email address",
-																	"x-stogas-group": "Contact"
-																},
-																"phone_number": {
-																	"type": "boolean",
-																	"description": "Formatted phone number, including international",
-																	"x-stogas-group": "Contact"
-																},
-																"social_security_number": {
-																	"type": "boolean",
-																	"description": "U.S. Social Security number",
-																	"x-stogas-group": "National and business"
-																},
-																"credit_card_number": {
-																	"type": "boolean",
-																	"description": "Credit card number",
-																	"x-stogas-group": "Bank"
-																},
-																"ip_address": {
-																	"type": "boolean",
-																	"description": "IPv4 or IPv6 address",
-																	"x-stogas-group": "Network"
-																},
-																"api_keys_and_secrets": {
-																	"type": "boolean",
-																	"description": "API keys, credentials and secrets",
-																	"x-stogas-group": "Secrets"
-																},
-																"bank_identifiers": {
-																	"type": "boolean",
-																	"description": "IBAN and U.S. routing numbers",
-																	"x-stogas-group": "Bank"
-																},
-																"national_identifiers": {
-																	"type": "boolean",
-																	"description": "National, tax and business identifiers",
-																	"x-stogas-group": "National and business"
-																},
-																"health_identifiers": {
-																	"type": "boolean",
-																	"description": "Healthcare and health-insurance identifiers",
-																	"x-stogas-group": "Health"
+																"presets": {
+																	"minItems": 1,
+																	"maxItems": 9,
+																	"type": "array",
+																	"items": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"const": "email_address",
+																				"description": "Email address",
+																				"x-stogas-group": "Contact"
+																			},
+																			{
+																				"type": "string",
+																				"const": "phone_number",
+																				"description": "Formatted phone number, including international",
+																				"x-stogas-group": "Contact"
+																			},
+																			{
+																				"type": "string",
+																				"const": "social_security_number",
+																				"description": "U.S. Social Security number",
+																				"x-stogas-group": "National and business"
+																			},
+																			{
+																				"type": "string",
+																				"const": "credit_card_number",
+																				"description": "Credit card number",
+																				"x-stogas-group": "Bank"
+																			},
+																			{
+																				"type": "string",
+																				"const": "ip_address",
+																				"description": "IPv4 or IPv6 address",
+																				"x-stogas-group": "Network"
+																			},
+																			{
+																				"type": "string",
+																				"const": "api_keys_and_secrets",
+																				"description": "API keys, credentials and secrets",
+																				"x-stogas-group": "Secrets"
+																			},
+																			{
+																				"type": "string",
+																				"const": "bank_identifiers",
+																				"description": "IBAN and U.S. routing numbers",
+																				"x-stogas-group": "Bank"
+																			},
+																			{
+																				"type": "string",
+																				"const": "national_identifiers",
+																				"description": "National, tax and business identifiers",
+																				"x-stogas-group": "National and business"
+																			},
+																			{
+																				"type": "string",
+																				"const": "health_identifiers",
+																				"description": "Healthcare and health-insurance identifiers",
+																				"x-stogas-group": "Health"
+																			}
+																		]
+																	},
+																	"uniqueItems": true,
+																	"description": "Detector groups to turn on. Presets that you leave out stay off."
 																},
 																"customPattern": {
 																	"type": "string",
@@ -19096,7 +19116,7 @@
 																"type": "string",
 																"minLength": 1,
 																"x-stogas-maxBytes": 16384,
-																"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
+																"description": "A CEL expression over author, model, deployment, route or provider fields, such as blendedPrice(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
 															},
 															"direction": {
 																"type": "string",
@@ -20172,7 +20192,7 @@
 											"type": "string",
 											"minLength": 1,
 											"x-stogas-maxBytes": 16384,
-											"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
+											"description": "A CEL expression over author, model, deployment, route or provider fields, such as blendedPrice(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
 										},
 										"direction": {
 											"type": "string",
@@ -21796,50 +21816,70 @@
 									{
 										"type": "object",
 										"properties": {
-											"email_address": {
-												"type": "boolean",
-												"description": "Email address",
-												"x-stogas-group": "Contact"
-											},
-											"phone_number": {
-												"type": "boolean",
-												"description": "Formatted phone number, including international",
-												"x-stogas-group": "Contact"
-											},
-											"social_security_number": {
-												"type": "boolean",
-												"description": "U.S. Social Security number",
-												"x-stogas-group": "National and business"
-											},
-											"credit_card_number": {
-												"type": "boolean",
-												"description": "Credit card number",
-												"x-stogas-group": "Bank"
-											},
-											"ip_address": {
-												"type": "boolean",
-												"description": "IPv4 or IPv6 address",
-												"x-stogas-group": "Network"
-											},
-											"api_keys_and_secrets": {
-												"type": "boolean",
-												"description": "API keys, credentials and secrets",
-												"x-stogas-group": "Secrets"
-											},
-											"bank_identifiers": {
-												"type": "boolean",
-												"description": "IBAN and U.S. routing numbers",
-												"x-stogas-group": "Bank"
-											},
-											"national_identifiers": {
-												"type": "boolean",
-												"description": "National, tax and business identifiers",
-												"x-stogas-group": "National and business"
-											},
-											"health_identifiers": {
-												"type": "boolean",
-												"description": "Healthcare and health-insurance identifiers",
-												"x-stogas-group": "Health"
+											"presets": {
+												"minItems": 1,
+												"maxItems": 9,
+												"type": "array",
+												"items": {
+													"anyOf": [
+														{
+															"type": "string",
+															"const": "email_address",
+															"description": "Email address",
+															"x-stogas-group": "Contact"
+														},
+														{
+															"type": "string",
+															"const": "phone_number",
+															"description": "Formatted phone number, including international",
+															"x-stogas-group": "Contact"
+														},
+														{
+															"type": "string",
+															"const": "social_security_number",
+															"description": "U.S. Social Security number",
+															"x-stogas-group": "National and business"
+														},
+														{
+															"type": "string",
+															"const": "credit_card_number",
+															"description": "Credit card number",
+															"x-stogas-group": "Bank"
+														},
+														{
+															"type": "string",
+															"const": "ip_address",
+															"description": "IPv4 or IPv6 address",
+															"x-stogas-group": "Network"
+														},
+														{
+															"type": "string",
+															"const": "api_keys_and_secrets",
+															"description": "API keys, credentials and secrets",
+															"x-stogas-group": "Secrets"
+														},
+														{
+															"type": "string",
+															"const": "bank_identifiers",
+															"description": "IBAN and U.S. routing numbers",
+															"x-stogas-group": "Bank"
+														},
+														{
+															"type": "string",
+															"const": "national_identifiers",
+															"description": "National, tax and business identifiers",
+															"x-stogas-group": "National and business"
+														},
+														{
+															"type": "string",
+															"const": "health_identifiers",
+															"description": "Healthcare and health-insurance identifiers",
+															"x-stogas-group": "Health"
+														}
+													]
+												},
+												"uniqueItems": true,
+												"description": "Detector groups to turn on. Presets that you leave out stay off."
 											},
 											"customPattern": {
 												"type": "string",
@@ -22044,7 +22084,7 @@
 											"type": "string",
 											"minLength": 1,
 											"x-stogas-maxBytes": 16384,
-											"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
+											"description": "A CEL expression over author, model, deployment, route or provider fields, such as blendedPrice(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
 										},
 										"direction": {
 											"type": "string",
@@ -22516,50 +22556,70 @@
 												{
 													"type": "object",
 													"properties": {
-														"email_address": {
-															"type": "boolean",
-															"description": "Email address",
-															"x-stogas-group": "Contact"
-														},
-														"phone_number": {
-															"type": "boolean",
-															"description": "Formatted phone number, including international",
-															"x-stogas-group": "Contact"
-														},
-														"social_security_number": {
-															"type": "boolean",
-															"description": "U.S. Social Security number",
-															"x-stogas-group": "National and business"
-														},
-														"credit_card_number": {
-															"type": "boolean",
-															"description": "Credit card number",
-															"x-stogas-group": "Bank"
-														},
-														"ip_address": {
-															"type": "boolean",
-															"description": "IPv4 or IPv6 address",
-															"x-stogas-group": "Network"
-														},
-														"api_keys_and_secrets": {
-															"type": "boolean",
-															"description": "API keys, credentials and secrets",
-															"x-stogas-group": "Secrets"
-														},
-														"bank_identifiers": {
-															"type": "boolean",
-															"description": "IBAN and U.S. routing numbers",
-															"x-stogas-group": "Bank"
-														},
-														"national_identifiers": {
-															"type": "boolean",
-															"description": "National, tax and business identifiers",
-															"x-stogas-group": "National and business"
-														},
-														"health_identifiers": {
-															"type": "boolean",
-															"description": "Healthcare and health-insurance identifiers",
-															"x-stogas-group": "Health"
+														"presets": {
+															"minItems": 1,
+															"maxItems": 9,
+															"type": "array",
+															"items": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"const": "email_address",
+																		"description": "Email address",
+																		"x-stogas-group": "Contact"
+																	},
+																	{
+																		"type": "string",
+																		"const": "phone_number",
+																		"description": "Formatted phone number, including international",
+																		"x-stogas-group": "Contact"
+																	},
+																	{
+																		"type": "string",
+																		"const": "social_security_number",
+																		"description": "U.S. Social Security number",
+																		"x-stogas-group": "National and business"
+																	},
+																	{
+																		"type": "string",
+																		"const": "credit_card_number",
+																		"description": "Credit card number",
+																		"x-stogas-group": "Bank"
+																	},
+																	{
+																		"type": "string",
+																		"const": "ip_address",
+																		"description": "IPv4 or IPv6 address",
+																		"x-stogas-group": "Network"
+																	},
+																	{
+																		"type": "string",
+																		"const": "api_keys_and_secrets",
+																		"description": "API keys, credentials and secrets",
+																		"x-stogas-group": "Secrets"
+																	},
+																	{
+																		"type": "string",
+																		"const": "bank_identifiers",
+																		"description": "IBAN and U.S. routing numbers",
+																		"x-stogas-group": "Bank"
+																	},
+																	{
+																		"type": "string",
+																		"const": "national_identifiers",
+																		"description": "National, tax and business identifiers",
+																		"x-stogas-group": "National and business"
+																	},
+																	{
+																		"type": "string",
+																		"const": "health_identifiers",
+																		"description": "Healthcare and health-insurance identifiers",
+																		"x-stogas-group": "Health"
+																	}
+																]
+															},
+															"uniqueItems": true,
+															"description": "Detector groups to turn on. Presets that you leave out stay off."
 														},
 														"customPattern": {
 															"type": "string",
@@ -22764,7 +22824,7 @@
 														"type": "string",
 														"minLength": 1,
 														"x-stogas-maxBytes": 16384,
-														"description": "A CEL expression over author, model, deployment, route or provider fields, such as blended_price(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
+														"description": "A CEL expression over author, model, deployment, route or provider fields, such as blendedPrice(3, 1). random() or random(weight), without a direction, gives a weighted random order and must come last."
 													},
 													"direction": {
 														"type": "string",

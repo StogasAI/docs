@@ -18,8 +18,7 @@ Add `redaction` to the policy of an API key or another [scope](/docs/policies/sc
 {
 	"plugins": {
 		"redaction": {
-			"email_address": true, // A preset. Presets that you leave out stay off.
-			"bank_identifiers": true,
+			"presets": ["email_address", "bank_identifiers"], // Presets that you leave out stay off.
 			"literals": [{ "values": ["Project Aurora"], "ignoreCase": true }], // Your own terms.
 			"customPattern": "\\bEMP-[0-9]{6}\\b" // Employee IDs such as EMP-123456.
 		}
@@ -43,7 +42,7 @@ Every setting is optional. An empty `redaction` object adds no rules and replace
 
 ## Presets
 
-Each preset turns on a group of detectors:
+Each preset in `presets` turns on a group of detectors:
 
 | Preset                   | Replaces                                                          | Placeholders                                                                            |
 | ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -255,8 +254,7 @@ credentials and tool filters, are not scanned, because a changed token or addres
 
 Redaction from every scope that applies to a request adds together. For example, organization email
 detection, a grant's banking detection and a key's custom pattern all run on the same request. A
-preset, term or pattern that one scope requires stays on, and a child scope cannot turn it off with
-`false`.
+child scope cannot turn off a preset, term or pattern that another scope requires.
 
 If a parent change makes the combined rules of a key exceed a limit, requests with that key fail
 until you fix its policies. To keep terms and patterns private, [encrypt the plugin

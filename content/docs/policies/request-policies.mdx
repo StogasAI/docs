@@ -38,7 +38,7 @@ Send `policy` in the body of a Chat Completions or Responses request:
 	"messages": [{ "role": "user", "content": "Reply to élise@contoso.com." }],
 	"policy": {
 		"routing": { "filter": "provider.id == 'openai'" },
-		"plugins": { "redaction": { "email_address": true } }
+		"plugins": { "redaction": { "presets": ["email_address"] } }
 	}
 }
 ```

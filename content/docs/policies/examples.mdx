@@ -133,7 +133,7 @@ a model uses its cheapest deployment first. A request without a model uses the c
 ```json title="Key policy"
 {
 	"routing": {
-		"sort": [{ "by": "blended_price(3, 1)" }]
+		"sort": [{ "by": "blendedPrice(3, 1)" }]
 	}
 }
 ```
@@ -182,7 +182,7 @@ The provider receives placeholders such as `<EMAIL_ADDRESS>` instead of the valu
 ```json title="Organization policy"
 {
 	"plugins": {
-		"redaction": { "email_address": true, "phone_number": true }
+		"redaction": { "presets": ["email_address", "phone_number"] }
 	}
 }
 ```
@@ -241,7 +241,7 @@ comes first, and this default orders the deployments that it leaves tied.
 	"rules": {
 		"cheapest_first": {
 			"mode": "default",
-			"routing": { "sort": [{ "by": "blended_price(3, 1)" }] }
+			"routing": { "sort": [{ "by": "blendedPrice(3, 1)" }] }
 		}
 	}
 }

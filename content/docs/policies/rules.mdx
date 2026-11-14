@@ -17,11 +17,11 @@ Settings at the top level of a policy apply to every request. Put settings in a 
 	"rules": {
 		"redact_openai": {
 			"when": "provider.id == 'openai'",
-			"plugins": { "redaction": { "email_address": true } }
+			"plugins": { "redaction": { "presets": ["email_address"] } }
 		},
 		"cheapest_first": {
 			"mode": "default",
-			"routing": { "sort": [{ "by": "blended_price(3, 1)" }] }
+			"routing": { "sort": [{ "by": "blendedPrice(3, 1)" }] }
 		}
 	}
 }
