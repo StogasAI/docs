@@ -149,9 +149,12 @@ own repository signature. Maven Central also serves a Sigstore signature of each
 `<file>.sigstore.json`, which
 `https://github.com/StogasAI/stogas/.github/workflows/publish.yml@refs/tags/v<version>` makes. Go
 downloads the module from the `go/v<version>` tag, which has the same files as
-`stogas-go-v<version>.tar.gz`.
+`stogas-go-v<version>.tar.gz`. The container image `ghcr.io/stogasai/stogas:<version>` is
+`stogas-container-v<version>.tar`, an OCI image layout that `docker load` reads, and the registry
+serves it under the digest in that file's `index.json`.
 
-Check that the release workflow built a file from its tag:
+Check that the release workflow built a file from its tag. For the container image, use
+`oci://ghcr.io/stogasai/stogas:<version>` in place of the file:
 
 ```console
 gh attestation verify <file> --repo StogasAI/stogas \
@@ -179,8 +182,8 @@ the tag and every file matches GitHub's build byte for byte. Apple's compilers r
 hardware, so the compiled Apple libraries come from GitHub's build. We still package them again
 and require the same bytes. A key that our root key authorizes makes the
 signature, and Rekor logs it. `qualification.json` records GitHub's tests of the installed
-packages on each platform, including real iPhones and Android phones on the oldest supported system
-version. GitHub makes its build proof only after every test passes, and that one proof covers the
+packages on each platform, including Android 8.0 on an emulator and real iPhones and Android
+phones. GitHub makes its build proof only after every test passes, and that one proof covers the
 test report too.
 
 ## Rebuild an SDK release

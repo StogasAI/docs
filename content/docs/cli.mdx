@@ -12,16 +12,33 @@ your own editor, and manages your account.
 
 ## Install
 
-A package manager installs a release archive and checks its SHA-256:
+The install script downloads the newest release archive and checks its SHA-256 against the
+release manifest:
 
 ```console tab="macOS and Linux" tab-group="os"
-brew install stogasai/tap/stogas
+curl -fsSL https://raw.githubusercontent.com/StogasAI/stogas/main/install.sh | sh
 ```
 
 ```console tab="Windows" tab-group="os"
-scoop bucket add stogas https://github.com/StogasAI/homebrew-tap
-scoop install stogas/stogas
+irm https://raw.githubusercontent.com/StogasAI/stogas/main/install.ps1 | iex
 ```
+
+It installs into `~/.local/bin`, or on Windows into `%LOCALAPPDATA%\Programs\stogas`, which it adds
+to your user PATH. On macOS and Linux, `sh -s -- --version <version> --dir <directory>` picks another
+release or directory. On Windows, set `STOGAS_VERSION` and `STOGAS_INSTALL_DIR` first.
+
+Package managers install the same CLI:
+
+| Package manager | Command |
+| --- | --- |
+| Homebrew | `brew install stogasai/tap/stogas` |
+| Scoop | `scoop bucket add stogas https://github.com/StogasAI/homebrew-tap`, then `scoop install stogas/stogas` |
+| pipx or uv | `pipx install stogas`, or `uvx stogas <command>` without installing |
+| cargo-binstall | `cargo binstall stogas-cli` |
+| Docker | `docker run --rm ghcr.io/stogasai/stogas <command>` |
+
+The container image holds only the CLI. It has no keychain, and `serve` listens on the container's
+own loopback address, so on Linux run `serve` with `--network host`.
 
 To check the archive yourself, install it by hand:
 
@@ -30,13 +47,13 @@ To check the archive yourself, install it by hand:
 
 ### Download the archive
 
-Each [release](https://github.com/StogasAI/stogas/releases) has an archive for each platform:
+Each [release](https://github.com/StogasAI/stogas/releases) has a CLI archive for each platform:
 `linux-amd64`, `linux-arm64`, `linux-musl-amd64`, `linux-musl-arm64`, `darwin-amd64`,
 `darwin-arm64`, `windows-amd64` and `windows-arm64`. Use a `linux-musl` archive on Alpine and other
 musl systems.
 
 ```console
-gh release download v<version> --repo StogasAI/stogas --pattern 'stogas-v<version>-linux-amd64.tar.gz'
+gh release download v<version> --repo StogasAI/stogas --pattern 'stogas-cli-v<version>-linux-amd64.tar.gz'
 ```
 
 </Step>
@@ -47,10 +64,13 @@ gh release download v<version> --repo StogasAI/stogas --pattern 'stogas-v<versio
 Check that the release workflow built the archive from its tag:
 
 ```console
-gh attestation verify stogas-v<version>-linux-amd64.tar.gz --repo StogasAI/stogas \
+gh attestation verify stogas-cli-v<version>-linux-amd64.tar.gz --repo StogasAI/stogas \
   --signer-workflow StogasAI/stogas/.github/workflows/release.yml \
   --source-ref refs/tags/v<version> --deny-self-hosted-runners
 ```
+
+The same command checks the container image as `oci://ghcr.io/stogasai/stogas:<version>`. The
+release notes name the image's digest, so you can pull exactly that image.
 
 </Step>
 <Step>
@@ -58,8 +78,8 @@ gh attestation verify stogas-v<version>-linux-amd64.tar.gz --repo StogasAI/stoga
 ### Put it on your PATH
 
 ```console
-tar -xzf stogas-v<version>-linux-amd64.tar.gz
-sudo install stogas-v<version>-linux-amd64/stogas /usr/local/bin/
+tar -xzf stogas-cli-v<version>-linux-amd64.tar.gz
+sudo install stogas-cli-v<version>-linux-amd64/stogas /usr/local/bin/
 ```
 
 </Step>
