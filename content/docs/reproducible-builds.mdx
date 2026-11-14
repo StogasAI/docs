@@ -145,8 +145,11 @@ The SDK makes the same check, and our approval check, before it trusts a gateway
 Each [SDK release](https://github.com/StogasAI/stogas/releases) lists every file with its SHA-256
 in `release-manifest.json`. GitHub build proofs cover each file, and our signature covers the manifest.
 npm, PyPI, crates.io, RubyGems and Maven Central serve the same bytes as the release. NuGet adds its
-own repository signature. Go downloads the module from the `go/v<version>` tag, which has the same
-files as `stogas-go-v<version>.tar.gz`.
+own repository signature. Maven Central also serves a Sigstore signature of each file,
+`<file>.sigstore.json`, which
+`https://github.com/StogasAI/stogas/.github/workflows/publish.yml@refs/tags/v<version>` makes. Go
+downloads the module from the `go/v<version>` tag, which has the same files as
+`stogas-go-v<version>.tar.gz`.
 
 Check that the release workflow built a file from its tag:
 
@@ -179,3 +182,32 @@ signature, and Rekor logs it. `qualification.json` records GitHub's tests of the
 packages on each platform, including real iPhones and Android phones on the oldest supported system
 version. GitHub makes its build proof only after every test passes, and that one proof covers the
 test report too.
+
+## Rebuild an SDK release
+
+```console
+git clone --branch v<version> https://github.com/StogasAI/stogas
+cd stogas
+gh release download v<version> --repo StogasAI/stogas --dir ../release
+python3 release/release.py rebuild ../release --out ../rebuild
+```
+
+You need Git, Python 3, the GitHub CLI, Docker and about 2 GB for the release files. The command
+builds every platform except Apple from the tag in the pinned Docker images that GitHub's build
+used, packages every language package again, and fails unless each file matches the release byte
+for byte. Apple's compilers run only on Apple hardware, so it packages the compiled Apple libraries
+from the release again instead.
+
+The build images run x86-64 tools. On an ARM machine, Docker runs them with emulation, which Docker
+Desktop provides by default. On ARM Linux, install QEMU's `binfmt` handlers first.
+
+## Scan an SDK download for vulnerable crates
+
+```console
+cargo audit bin stogas
+```
+
+The CLI, the native libraries, the Python extension and the WebAssembly modules list the Rust crates
+they contain and their versions. `cargo audit bin`, Trivy and Grype read that list, and so does
+osv-scanner when it scans the CLI's container image. The static libraries for C, Go and iOS carry no
+list, so check them against `Cargo.lock` at the release tag.
