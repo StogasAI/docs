@@ -10,8 +10,8 @@ credential.
 
 ## Example
 
-This streamed Chat Completions request to `gpt-5.5` has a session, a trace and metadata. OpenAI
-rate limited the first call, so the gateway called Azure:
+This streamed Chat Completions request to `gpt-5.5` has a session, a trace, metadata and an app.
+OpenAI rate limited the first call, so the gateway called Azure:
 
 ```json title="Record of a served request"
 {
@@ -36,6 +36,8 @@ rate limited the first call, so the gateway called Azure:
 	"trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
 	"encryption_key_ids": [],
 	"metadata": { "team": "support", "feature": "ticket-summary" },
+	"app_title": "Support Desk",
+	"app_url": "https://desk.example.com",
 	"transport": "https",
 	"cancelled": false,
 	"client_stop_ms": null,
@@ -277,6 +279,16 @@ team or feature:
 The record keeps the metadata, so you can find these requests with the analytics filter
 [`metadata.team:support`](/docs/analytics#filters), and in downloads and exports.
 
+A client that can add headers but not body fields, such as a coding agent, can send the same
+object as JSON in the `Stogas-Request-Metadata` header:
+
+```http title="Request header"
+Stogas-Request-Metadata: {"team": "support", "agent": "codex"}
+```
+
+The record keeps the keys of both. A key in the body replaces the same key in the header, and the
+limits below apply to the keys of both together.
+
 | Part       | Limit                                      |
 | ---------- | ------------------------------------------ |
 | Pairs      | Up to 16                                   |
@@ -284,7 +296,8 @@ The record keeps the metadata, so you can find these requests with the analytics
 | Each value | A string of up to 512 bytes of UTF-8       |
 | Characters | No control characters, such as line breaks |
 
-- The gateway rejects other metadata with `invalid_request`.
+- The gateway rejects other metadata with `invalid_request`, as it does a header that is not a
+  JSON object or that is sent twice.
 - The gateway never sends metadata to the provider. [PII redaction](/docs/pii-redaction) does not
   scan it, so keep personal data out of it.
 - Rejection records have no metadata.
@@ -331,6 +344,31 @@ the analytics filter [`trace:`](/docs/analytics#filters) finds the requests of a
   ID.
 - The gateway never sends the header to the provider.
 - Records that count [repeated rejections](#grouped-rejections) have no trace ID.
+
+## Apps
+
+Send the attribution headers that OpenRouter and Vercel AI Gateway read to name the app that makes
+a request:
+
+```http title="Request headers"
+HTTP-Referer: https://desk.example.com
+X-Title: Support Desk
+```
+
+| Header                               | Record field                                                    |
+| ------------------------------------ | --------------------------------------------------------------- |
+| `HTTP-Referer`                       | `app_url`, without credentials, query, fragment and final slash |
+| `X-OpenRouter-Title`, else `X-Title` | `app_title`                                                     |
+
+The analytics filter [`app:`](/docs/analytics#filters) and the app breakdown use the title, or the
+URL when a request has no title.
+
+- Roo Code sends both headers without any setup.
+- Each value has up to 512 bytes of UTF-8 and no control characters, and the URL starts with
+  `http://` or `https://`. The gateway serves a request whose headers are missing, invalid or
+  repeated, and records no app from them.
+- The gateway never sends the headers to the provider.
+- Rejection records have no app.
 
 ## Encryption keys
 

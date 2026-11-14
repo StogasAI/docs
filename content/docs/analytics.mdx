@@ -19,6 +19,10 @@ all** shows every request in the organization.
 | Tool call error rate         | Requests with at least one tool call whose arguments do not match the tool's `parameters` schema                 |
 | Structured output error rate | Requests with a JSON `response_format` or `text.format` whose output is not valid JSON or breaks the schema      |
 | Refusal rate                 | Requests a provider answered whose [provider result](/docs/request-records#provider-results) is `content_filter` |
+| Truncation rate              | Requests a provider answered whose output stopped at the output token limit or a full context window             |
+| Recovered requests           | Successful requests that needed more than one provider attempt                                                   |
+| Retries                      | Provider attempts that called the same candidate again, a [retry](/docs/policies/routing#retries-and-fallbacks)  |
+| Fallbacks                    | Provider attempts that called the next candidate, a [fallback](/docs/policies/routing#retries-and-fallbacks)     |
 
 - A tool without a schema that compiles accepts any arguments. A call to a tool that the request
   does not allow, or arguments that are not a JSON object, fail the request instead.
@@ -57,7 +61,8 @@ The search and the API's `filter` parameter take these fields in the
 [filter syntax](/docs/reference/filters). Text without a field searches request, API key, grant
 and provider credential IDs, model names, providers, results, interfaces, error codes and HTTP
 statuses. Filters match whole values, so `:` and `=`
-are the same, and names and the listed values ignore case.
+are the same, and names and the listed values ignore case. A name matches every API key, member or
+provider credential that has it, so use an ID to match one.
 
 | Filter              | Matches                                                                                                                                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -74,6 +79,7 @@ are the same, and names and the listed values ignore case.
 | `transport:`        | `https`, `attested_tls` or `e2ee`. See [connection modes](/docs/connection-modes).                                                                                                                                     |
 | `metadata.<key>:`   | A value of a [metadata](/docs/request-records#metadata) key, such as `metadata.team:search`. Keys and values are case-sensitive. Keys with spaces, quotes, parentheses or `:`, `!`, `<`, `>` or `=` can't be filtered. |
 | `session:`          | A [session](/docs/request-records#sessions) ID, such as `session:chat-42`. Session IDs are case-sensitive.                                                                                                             |
+| `app:`              | The name of the request's [app](/docs/request-records#apps), or its URL when it sent no name, such as `app:"Roo Code"`. App names are case-sensitive.                                                                  |
 | `trace:`            | A [trace](/docs/request-records#traces) ID, such as `trace:4bf92f3577b34da6a3ce929d0e0e4736`.                                                                                                                          |
 | `encryption_key:`   | The identifier of a [customer encryption key](/docs/request-records#encryption-keys) in the request's record, or the label it is registered under.                                                                     |
 | `tool_call:`        | A tool call ID or its [hash](/docs/request-records#tool-calls), such as `tool_call:call_1`. Matches the request that made the call and the one that sent its result. IDs are case-sensitive.                           |
@@ -87,7 +93,7 @@ are the same, and names and the listed values ignore case.
 values check every provider attempt, including earlier failed ones.
 
 `none` selects requests without a value in `grant:`, `role:`, `model:`, `final_provider:`,
-`final_byok:`, `error:`, `metadata.<key>:`, `session:`, `trace:` and `encryption_key:`. For
+`final_byok:`, `error:`, `metadata.<key>:`, `session:`, `app:`, `trace:` and `encryption_key:`. For
 example, `error:none` selects requests without a gateway error, and `session:"none"` selects the
 session named none.
 

@@ -434,6 +434,15 @@
 					},
 					{
 						"$ref": "#/components/parameters/SessionId"
+					},
+					{
+						"$ref": "#/components/parameters/RequestMetadata"
+					},
+					{
+						"$ref": "#/components/parameters/AppUrl"
+					},
+					{
+						"$ref": "#/components/parameters/AppTitle"
 					}
 				],
 				"requestBody": {
@@ -526,6 +535,15 @@
 					},
 					{
 						"$ref": "#/components/parameters/SessionId"
+					},
+					{
+						"$ref": "#/components/parameters/RequestMetadata"
+					},
+					{
+						"$ref": "#/components/parameters/AppUrl"
+					},
+					{
+						"$ref": "#/components/parameters/AppTitle"
 					}
 				],
 				"requestBody": {
@@ -1006,6 +1024,31 @@
 					"pattern": "^[^\\u0000-\\u001f]*$"
 				},
 				"description": "Groups the request with others in the same [session](/docs/request-records#sessions). Send it at most once. The body's `session_id` takes precedence."
+			},
+			"RequestMetadata": {
+				"name": "Stogas-Request-Metadata",
+				"in": "header",
+				"schema": {
+					"type": "string"
+				},
+				"description": "[Metadata](/docs/request-records#metadata) as a JSON object, for clients that cannot add body fields. Send it at most once. A key in the body's `metadata` replaces the same key here, and the limits apply to the keys of both together."
+			},
+			"AppUrl": {
+				"name": "HTTP-Referer",
+				"in": "header",
+				"schema": {
+					"type": "string",
+					"format": "uri"
+				},
+				"description": "The URL of the [app](/docs/request-records#apps) that sends the request."
+			},
+			"AppTitle": {
+				"name": "X-Title",
+				"in": "header",
+				"schema": {
+					"type": "string"
+				},
+				"description": "The name of the [app](/docs/request-records#apps) that sends the request. `X-OpenRouter-Title` takes precedence."
 			}
 		},
 		"responses": {
@@ -1893,7 +1936,7 @@
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. The gateway does not send metadata to the provider.",
+						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs, counting those of the `Stogas-Request-Metadata` header: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. A key here replaces the same key in the header. The gateway does not send metadata to the provider.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",
@@ -2704,7 +2747,7 @@
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. The gateway does not send metadata to the provider.",
+						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs, counting those of the `Stogas-Request-Metadata` header: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. A key here replaces the same key in the header. The gateway does not send metadata to the provider.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",

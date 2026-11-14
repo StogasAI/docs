@@ -8766,6 +8766,9 @@
 								"provider",
 								"byok",
 								"interface",
+								"app",
+								"session",
+								"trace",
 								"outcome",
 								"error"
 							]
@@ -8782,9 +8785,13 @@
 								"requests",
 								"errors",
 								"error_rate",
+								"recovered_requests",
+								"retries",
+								"fallbacks",
 								"tool_call_error_rate",
 								"structured_output_error_rate",
 								"refusal_rate",
+								"truncation_rate",
 								"latency",
 								"provider_latency",
 								"ttft",
@@ -8862,9 +8869,13 @@
 								"requests",
 								"errors",
 								"error_rate",
+								"recovered_requests",
+								"retries",
+								"fallbacks",
 								"tool_call_error_rate",
 								"structured_output_error_rate",
 								"refusal_rate",
+								"truncation_rate",
 								"latency",
 								"provider_latency",
 								"ttft",
@@ -8982,6 +8993,9 @@
 												"provider",
 												"byok",
 												"interface",
+												"app",
+												"session",
+												"trace",
 												"outcome",
 												"error"
 											]
@@ -9125,6 +9139,33 @@
 															}
 														]
 													},
+													"truncationRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"retries": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"fallbacks": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"recoveredRequests": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
 													"cacheReadSavingsSampleCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -9264,6 +9305,10 @@
 													"toolCallErrorRate",
 													"structuredOutputErrorRate",
 													"refusalRate",
+													"truncationRate",
+													"retries",
+													"fallbacks",
+													"recoveredRequests",
 													"cacheReadSavingsSampleCount",
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
@@ -9487,6 +9532,33 @@
 															}
 														]
 													},
+													"truncationRate": {
+														"anyOf": [
+															{
+																"type": "number",
+																"minimum": 0,
+																"maximum": 100
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"retries": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"fallbacks": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"recoveredRequests": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
 													"cacheReadSavingsSampleCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -9621,6 +9693,10 @@
 													"toolCallErrorRate",
 													"structuredOutputErrorRate",
 													"refusalRate",
+													"truncationRate",
+													"retries",
+													"fallbacks",
+													"recoveredRequests",
 													"cacheReadSavingsSampleCount",
 													"cacheWriteOverheadSampleCount",
 													"tokensPerSecond",
@@ -9779,6 +9855,33 @@
 														}
 													]
 												},
+												"truncationRate": {
+													"anyOf": [
+														{
+															"type": "number",
+															"minimum": 0,
+															"maximum": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"retries": {
+													"type": "integer",
+													"minimum": 0,
+													"maximum": 9007199254740991
+												},
+												"fallbacks": {
+													"type": "integer",
+													"minimum": 0,
+													"maximum": 9007199254740991
+												},
+												"recoveredRequests": {
+													"type": "integer",
+													"minimum": 0,
+													"maximum": 9007199254740991
+												},
 												"cacheReadSavingsSampleCount": {
 													"type": "integer",
 													"minimum": 0,
@@ -9910,6 +10013,10 @@
 												"toolCallErrorRate",
 												"structuredOutputErrorRate",
 												"refusalRate",
+												"truncationRate",
+												"retries",
+												"fallbacks",
+												"recoveredRequests",
 												"cacheReadSavingsSampleCount",
 												"cacheWriteOverheadSampleCount",
 												"tokensPerSecond",
@@ -10068,6 +10175,33 @@
 																}
 															]
 														},
+														"truncationRate": {
+															"anyOf": [
+																{
+																	"type": "number",
+																	"minimum": 0,
+																	"maximum": 100
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"retries": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 9007199254740991
+														},
+														"fallbacks": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 9007199254740991
+														},
+														"recoveredRequests": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 9007199254740991
+														},
 														"cacheReadSavingsSampleCount": {
 															"type": "integer",
 															"minimum": 0,
@@ -10199,6 +10333,10 @@
 														"toolCallErrorRate",
 														"structuredOutputErrorRate",
 														"refusalRate",
+														"truncationRate",
+														"retries",
+														"fallbacks",
+														"recoveredRequests",
 														"cacheReadSavingsSampleCount",
 														"cacheWriteOverheadSampleCount",
 														"tokensPerSecond",
@@ -10855,6 +10993,18 @@
 															"pattern": "^[^\\u0000-\\u001f]*$"
 														}
 													},
+													"app_title": {
+														"default": "",
+														"description": "The [app](/docs/request-records#apps)'s name. Empty when it sent none.",
+														"type": "string",
+														"pattern": "^[^\\u0000-\\u001f]*$"
+													},
+													"app_url": {
+														"default": "",
+														"description": "The [app](/docs/request-records#apps)'s URL. Empty when it sent none.",
+														"type": "string",
+														"pattern": "^[^\\u0000-\\u001f]*$"
+													},
 													"transport": {
 														"default": "https",
 														"description": "The client's [connection mode](/docs/connection-modes).",
@@ -11433,6 +11583,8 @@
 													"trace_id",
 													"encryption_key_ids",
 													"metadata",
+													"app_title",
+													"app_url",
 													"transport",
 													"cancelled",
 													"client_stop_ms",
