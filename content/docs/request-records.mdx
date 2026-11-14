@@ -418,7 +418,10 @@ The [example](#example) record has this timeline:
 ```
 
 `provider_ms` includes upstream connection setup, waits between calls and, for streams, response
-backpressure. The time outside it is gateway preparation and response processing.
+backpressure. `rate_limit_wait_ms` is how long the
+[platform request limit](/docs/policies/limits#requests) held the first call, before
+`provider_start_ms`. The rest of the time is gateway preparation and response processing, which
+analytics shows as gateway duration.
 
 `first_output_ms` is when the provider's first output reached the gateway, and `ttft_ms` is when the
 gateway passed the first generated token on to your client, so `ttft_ms` is never earlier. Output

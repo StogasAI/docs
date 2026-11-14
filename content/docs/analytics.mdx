@@ -11,18 +11,19 @@ all** shows every request in the organization.
 
 ## Metrics
 
-| Metric                       | Counts                                                                                                           |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Cache hit rate               | Requests with input usage that read any input from the provider's [cache](/docs/prompt-caching)                  |
-| Cached input share           | Input tokens read from the cache                                                                                 |
-| Reasoning tokens             | Only requests whose provider reports them, so a period without one shows no value instead of 0                   |
-| Tool call error rate         | Requests with at least one tool call whose arguments do not match the tool's `parameters` schema                 |
-| Structured output error rate | Requests with a JSON `response_format` or `text.format` whose output is not valid JSON or breaks the schema      |
-| Refusal rate                 | Requests a provider answered whose [provider result](/docs/request-records#provider-results) is `content_filter` |
-| Truncation rate              | Requests a provider answered whose output stopped at the output token limit or a full context window             |
-| Recovered requests           | Successful requests that needed more than one provider attempt                                                   |
-| Retries                      | Provider attempts that called the same candidate again, a [retry](/docs/policies/routing#retries-and-fallbacks)  |
-| Fallbacks                    | Provider attempts that called the next candidate, a [fallback](/docs/policies/routing#retries-and-fallbacks)     |
+| Metric                       | Counts                                                                                                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cache hit rate               | Requests with input usage that read any input from the provider's [cache](/docs/prompt-caching)                                                        |
+| Cached input share           | Input tokens read from the cache                                                                                                                       |
+| Reasoning tokens             | Only requests whose provider reports them, so a period without one shows no value instead of 0                                                         |
+| Tool call error rate         | Requests with at least one tool call whose arguments do not match the tool's `parameters` schema                                                       |
+| Structured output error rate | Requests with a JSON `response_format` or `text.format` whose output is not valid JSON or breaks the schema                                            |
+| Refusal rate                 | Requests a provider answered whose [provider result](/docs/request-records#provider-results) is `content_filter`                                       |
+| Truncation rate              | Requests a provider answered whose output stopped at the output token limit or a full context window                                                   |
+| Recovered requests           | Successful requests that needed more than one provider attempt                                                                                         |
+| Retries                      | Provider attempts that called the same candidate again, a [retry](/docs/policies/routing#retries-and-fallbacks)                                        |
+| Fallbacks                    | Provider attempts that called the next candidate, a [fallback](/docs/policies/routing#retries-and-fallbacks)                                           |
+| Gateway duration             | The [request clock](/docs/request-records#timing) outside provider calls and the wait for the [platform request limit](/docs/policies/limits#requests) |
 
 - A tool without a schema that compiles accepts any arguments. A call to a tool that the request
   does not allow, or arguments that are not a JSON object, fail the request instead.
@@ -103,12 +104,12 @@ session named none.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
 
-| Filter                                | Unit                                              | Example                |
-| ------------------------------------- | ------------------------------------------------- | ---------------------- |
-| `latency`, `provider_latency`, `ttft` | Milliseconds, or `ms`, `s` and `m`                | `latency>2s`           |
-| `input_tokens`, `output_tokens`       | Tokens, or `k` and `m` for thousands and millions | `input_tokens>=10k`    |
-| `tokens_per_second`                   | Generated tokens per second                       | `tokens_per_second<20` |
-| `upstream_cost`, `billed_cost`        | USD, with or without `$`                          | `billed_cost>$0.05`    |
+| Filter                                                   | Unit                                              | Example                |
+| -------------------------------------------------------- | ------------------------------------------------- | ---------------------- |
+| `latency`, `provider_latency`, `gateway_latency`, `ttft` | Milliseconds, or `ms`, `s` and `m`                | `latency>2s`           |
+| `input_tokens`, `output_tokens`                          | Tokens, or `k` and `m` for thousands and millions | `input_tokens>=10k`    |
+| `tokens_per_second`                                      | Generated tokens per second                       | `tokens_per_second<20` |
+| `upstream_cost`, `billed_cost`                           | USD, with or without `$`                          | `billed_cost>$0.05`    |
 
 Each member can run 30 queries a minute and download 3 files a minute. An organization's queries
 share 30 seconds of query time a minute, and over that they return `429 ANALYTICS_QUOTA_EXCEEDED`
