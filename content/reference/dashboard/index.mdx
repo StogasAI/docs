@@ -58,3 +58,9 @@ except those for its balance, payments and billing details, and leaving it.
 Each user can send 60 requests a minute, shared by the dashboard and all of the user's tokens.
 Further requests return `429 RATE_LIMITED` with `Retry-After`. [Analytics](/docs/analytics) queries
 and downloads have lower limits of their own.
+
+## Changes
+
+We add operations, fields, values and error codes without notice, so ignore what your program
+doesn't recognize. A change that could break a working program comes with an API version that you
+choose with a header, and requests without the header keep their current behavior.
