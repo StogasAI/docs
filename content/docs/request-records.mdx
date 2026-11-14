@@ -389,6 +389,11 @@ provider settings used for accounting. If the provider served a different offeri
 your request resolved to, such as another service tier, `resolved_catalog_chain_hash` records the
 resolved one. It is omitted when both are the same.
 
+A chain states its route's [hosted tools](/docs/model-tools#hosted-tools) and what each changes,
+whether or not a request can call them. When the tools that your request let the model call change
+the chain's data handling, the attempt's `data_handling` holds the result, such as a longer
+retention with web search. Without it, the chain's own data handling applied.
+
 Paste a chain hash into catalog search to open its historical settings and the catalog releases
 that contain it. Lookup checks the content against the hash and never falls back to the current
 catalog.

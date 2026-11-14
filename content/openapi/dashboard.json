@@ -5409,6 +5409,12 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"limit": {
+											"type": "integer",
+											"exclusiveMinimum": 0,
+											"maximum": 9007199254740991,
+											"description": "How many keys the organization can register."
+										},
 										"keys": {
 											"type": "array",
 											"items": {
@@ -5531,6 +5537,7 @@
 										}
 									},
 									"required": [
+										"limit",
 										"keys"
 									],
 									"additionalProperties": false
@@ -5551,7 +5558,7 @@
 					"Encryption keys"
 				],
 				"summary": "Register an encryption key",
-				"description": "Needs organization management. Requests send the key under its label, and only registered keys can encrypt credentials and policies. Registering a key again under its label changes nothing. A key registered under another label gets 409 ENCRYPTION_KEY_REGISTERED, a label that another key has gets 409 ENCRYPTION_KEY_LABEL_TAKEN, and an organization can register up to 32 keys.",
+				"description": "Needs organization management. Requests send the key under its label, and only registered keys can encrypt credentials and policies. Registering a key again under its label changes nothing. A key registered under another label gets 409 ENCRYPTION_KEY_REGISTERED, a label that another key has gets 409 ENCRYPTION_KEY_LABEL_TAKEN, and an organization at its limit of keys, 32 by default, gets 409 ENCRYPTION_KEY_LIMIT.",
 				"security": [
 					{
 						"accessToken": [
@@ -5602,6 +5609,12 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"limit": {
+											"type": "integer",
+											"exclusiveMinimum": 0,
+											"maximum": 9007199254740991,
+											"description": "How many keys the organization can register."
+										},
 										"keys": {
 											"type": "array",
 											"items": {
@@ -5724,6 +5737,7 @@
 										}
 									},
 									"required": [
+										"limit",
 										"keys"
 									],
 									"additionalProperties": false
@@ -5772,6 +5786,12 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"limit": {
+											"type": "integer",
+											"exclusiveMinimum": 0,
+											"maximum": 9007199254740991,
+											"description": "How many keys the organization can register."
+										},
 										"keys": {
 											"type": "array",
 											"items": {
@@ -5894,6 +5914,7 @@
 										}
 									},
 									"required": [
+										"limit",
 										"keys"
 									],
 									"additionalProperties": false
@@ -11191,6 +11212,62 @@
 																		}
 																	],
 																	"description": "The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential."
+																},
+																"data_handling": {
+																	"description": "The call's [data handling](/docs/request-records#catalog-history) with the hosted tools that the request let the model call. Present only when those tools change what the catalog chain states.",
+																	"type": "object",
+																	"properties": {
+																		"processing_location": {
+																			"type": "string",
+																			"description": "A catalog location ID, `none` or `unknown`, as in the catalog."
+																		},
+																		"storage_location": {
+																			"type": "string"
+																		},
+																		"retention_days": {
+																			"anyOf": [
+																				{
+																					"type": "integer",
+																					"minimum": 0,
+																					"maximum": 9007199254740991
+																				},
+																				{
+																					"type": "null"
+																				}
+																			],
+																			"description": "`null` when unknown."
+																		},
+																		"training_use": {
+																			"description": "`null` when unknown.",
+																			"type": [
+																				"boolean",
+																				"null"
+																			]
+																		},
+																		"zero_data_retention": {
+																			"type": "boolean"
+																		},
+																		"end_to_end_encrypted": {
+																			"type": "boolean"
+																		},
+																		"tee": {
+																			"type": "boolean"
+																		},
+																		"tee_verified": {
+																			"type": "boolean"
+																		}
+																	},
+																	"required": [
+																		"processing_location",
+																		"storage_location",
+																		"retention_days",
+																		"training_use",
+																		"zero_data_retention",
+																		"end_to_end_encrypted",
+																		"tee",
+																		"tee_verified"
+																	],
+																	"additionalProperties": false
 																}
 															},
 															"required": [
@@ -15416,8 +15493,8 @@
 									"type": "object",
 									"properties": {
 										"limits": {
-											"minItems": 7,
-											"maxItems": 7,
+											"minItems": 8,
+											"maxItems": 8,
 											"type": "array",
 											"items": {
 												"type": "object",
@@ -15431,7 +15508,8 @@
 															"folders",
 															"seats",
 															"roles",
-															"byokKeys"
+															"byokKeys",
+															"encryptionKeys"
 														]
 													},
 													"limit": {
