@@ -8782,24 +8782,34 @@
 						"name": "groupBy",
 						"in": "query",
 						"required": false,
+						"description": "How to group requests. `metadata` counts a request under each of its [metadata](/docs/request-records#metadata) keys, and `metadata.<key>` groups requests by the values of one key.",
 						"schema": {
 							"default": "time",
-							"type": "string",
-							"enum": [
-								"time",
-								"key",
-								"grant",
-								"member",
-								"role",
-								"model",
-								"provider",
-								"byok",
-								"interface",
-								"app",
-								"session",
-								"trace",
-								"outcome",
-								"error"
+							"anyOf": [
+								{
+									"type": "string",
+									"enum": [
+										"time",
+										"key",
+										"grant",
+										"member",
+										"role",
+										"model",
+										"provider",
+										"byok",
+										"interface",
+										"app",
+										"session",
+										"trace",
+										"metadata",
+										"outcome",
+										"error"
+									]
+								},
+								{
+									"type": "string",
+									"pattern": "^metadata\\.[\\s\\S]{1,64}$"
+								}
 							]
 						}
 					},
@@ -9011,22 +9021,31 @@
 									"properties": {
 										"groupBy": {
 											"default": "time",
-											"type": "string",
-											"enum": [
-												"time",
-												"key",
-												"grant",
-												"member",
-												"role",
-												"model",
-												"provider",
-												"byok",
-												"interface",
-												"app",
-												"session",
-												"trace",
-												"outcome",
-												"error"
+											"anyOf": [
+												{
+													"type": "string",
+													"enum": [
+														"time",
+														"key",
+														"grant",
+														"member",
+														"role",
+														"model",
+														"provider",
+														"byok",
+														"interface",
+														"app",
+														"session",
+														"trace",
+														"metadata",
+														"outcome",
+														"error"
+													]
+												},
+												{
+													"type": "string",
+													"pattern": "^metadata\\.[\\s\\S]{1,64}$"
+												}
 											]
 										},
 										"groups": {
