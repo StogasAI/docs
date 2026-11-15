@@ -68,6 +68,10 @@ you leave the organization. Other tokens get `403 SSO_REQUIRED`, and tokens of m
 manage the organization need no sign-in. To refuse every access token, turn off **Allow access
 tokens**.
 
+A manager's access token can manage domains, the sign-in rules, SCIM and member sign-outs through
+the [Dashboard API](/docs/reference/dashboard). Connecting or changing the identity provider needs
+the dashboard, because whoever sets its certificate or secret can sign in as every linked member.
+
 ## Provisioning
 
 ```http

@@ -1,0 +1,27 @@
+---
+title: Delete the identity provider
+description: Turns single sign-on off, disconnects SCIM and deletes the
+  invitations that single sign-on gave.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: DELETE
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Turns single sign-on off, disconnects SCIM and deletes the invitations
+          that single sign-on gave.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/sso/provider', method: 'delete' }]} />
+    </>
+  );
+}

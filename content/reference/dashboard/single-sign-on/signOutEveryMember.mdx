@@ -1,0 +1,29 @@
+---
+title: Sign every member out of the organization
+description: Each member must sign in through the identity provider again, and
+  access tokens lose their authorization for the organization. Accounts stay
+  signed in to everything else.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: DELETE
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Each member must sign in through the identity provider again, and
+          access tokens lose their authorization for the organization. Accounts
+          stay signed in to everything else.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/sso/sessions', method: 'delete' }]} />
+    </>
+  );
+}

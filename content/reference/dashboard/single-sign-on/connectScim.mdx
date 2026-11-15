@@ -1,0 +1,27 @@
+---
+title: Connect SCIM or replace its secret
+description: Returns the SCIM secret once. A replaced secret stops working for
+  the identity provider at once.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PUT
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the SCIM secret once. A replaced secret stops working for the
+          identity provider at once.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/sso/scim', method: 'put' }]} />
+    </>
+  );
+}

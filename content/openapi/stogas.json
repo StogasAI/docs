@@ -4797,13 +4797,30 @@
 								]
 							},
 							"textExtraction": {
-								"description": "Turn inline UTF-8 text files into prompt text before input checks and redaction. `auto`, which applies when no policy sets a mode, keeps a file that the deployment reads as a file unless input checks or redaction must read it, and `always` turns every one into text. The strongest required mode applies.",
-								"type": "string",
-								"enum": [
-									"off",
-									"auto",
-									"always"
-								]
+								"type": "object",
+								"properties": {
+									"text": {
+										"description": "UTF-8 text files, such as source code, CSV, JSON and Markdown.",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"office": {
+										"description": "Word, Excel, PowerPoint and OpenDocument files.",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									}
+								},
+								"additionalProperties": false,
+								"minProperties": 1,
+								"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
 							},
 							"redaction": {
 								"anyOf": [
@@ -5445,13 +5462,30 @@
 											]
 										},
 										"textExtraction": {
-											"description": "Turn inline UTF-8 text files into prompt text before input checks and redaction. `auto`, which applies when no policy sets a mode, keeps a file that the deployment reads as a file unless input checks or redaction must read it, and `always` turns every one into text. The strongest required mode applies.",
-											"type": "string",
-											"enum": [
-												"off",
-												"auto",
-												"always"
-											]
+											"type": "object",
+											"properties": {
+												"text": {
+													"description": "UTF-8 text files, such as source code, CSV, JSON and Markdown.",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"office": {
+													"description": "Word, Excel, PowerPoint and OpenDocument files.",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												}
+											},
+											"additionalProperties": false,
+											"minProperties": 1,
+											"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
 										},
 										"redaction": {
 											"anyOf": [

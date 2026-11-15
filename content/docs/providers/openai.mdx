@@ -111,15 +111,15 @@ in your application, then send the conversation again with each call and its `sh
 
 OpenAI reads only the text of a file that is not a PDF, so convert a document to PDF to keep its
 images and charts. It reads at most the first 1,000 rows of each sheet of a spreadsheet, CSV and TSV
-included, and adds a summary that its model writes. To send every row of a CSV or another text
-file, [extract text](/docs/text-extraction) on OpenAI deployments:
+included, and adds a summary that its model writes. To send every row of a spreadsheet, a CSV or
+another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 
 ```json title="Policy"
 {
 	"rules": {
 		"openai_full_text": {
 			"when": "provider.id == 'openai'",
-			"plugins": { "textExtraction": "always" }
+			"plugins": { "textExtraction": { "text": "always", "office": "always" } }
 		}
 	}
 }

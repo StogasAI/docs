@@ -89,16 +89,18 @@ default orders only the deployments that the key's criteria leave tied. See
 [Orders from several policies](/docs/policies/routing#orders-from-several-policies). Other settings
 replace defaults of the same kind:
 
-| Kind               | Includes                                                    |
-| ------------------ | ----------------------------------------------------------- |
-| Each access field  | `deny` or `networks`                                        |
-| Input              | All of `input`                                              |
-| Each timeout       | `totalSeconds` or `outputIdleSeconds`                       |
-| Each routing field | One field, except `sort`, whose criteria add up             |
-| Each plugin        | `textExtraction`, `redaction` or `export`, encrypted or not |
+| Kind               | Includes                                        |
+| ------------------ | ----------------------------------------------- |
+| Each access field  | `deny` or `networks`                            |
+| Input              | All of `input`                                  |
+| Each timeout       | `totalSeconds` or `outputIdleSeconds`           |
+| Each routing field | One field, except `sort`, whose criteria add up |
+| Each plugin        | `redaction` or `export`, encrypted or not       |
+| Each file family   | `text` or `office` of `textExtraction`          |
 
 - A required plugin setting replaces only the default of the same plugin. A required text
-  extraction setting leaves default redaction and default export destinations in place.
+  extraction mode replaces the default mode of the same file family, and leaves the other family,
+  default redaction and default export destinations in place.
 - When several policies set defaults of the same kind, they
   [combine](/docs/policies/scopes#how-settings-combine) like required settings. Default sort
   criteria apply from the closest policy out.
@@ -122,7 +124,7 @@ another policy:
 | Networks              | `"access": { "networks": ["0.0.0.0/0", "::/0"] }` |
 | Routing filter        | `"filter": "true"`                                |
 | Allowed catalog nodes | `"allowedCatalogNodes": {}`                       |
-| Text extraction       | `"textExtraction": "off"`                         |
+| Text extraction       | `"textExtraction": { "text": "off" }`             |
 | Redaction             | `"redaction": {}`                                 |
 
 ## What rules can contain

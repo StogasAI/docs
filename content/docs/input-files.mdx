@@ -117,8 +117,9 @@ Every deployment that reads plain text reads every
 and configuration files. Where the provider does not list the file's type or extension, the gateway
 sends the file as `text/plain`, and the content and `filename` stay as they are.
 
-A deployment that reads no text files gets the file as prompt text, unless a policy turns
-[text extraction](/docs/text-extraction) off.
+A deployment that reads no text files gets the file as prompt text where a policy sets
+[text extraction](/docs/text-extraction), as a new organization's policy does. Text extraction also
+turns Word, Excel and PowerPoint files into text.
 
 ## Supported formats
 
@@ -205,7 +206,8 @@ model, such as `provider:openai gpt-5.6-sol`, or use a key with one credential f
 
 ## Limits
 
-- URLs, file IDs and files other than UTF-8 text files reserve the deployment's full input limit
+- URLs, file IDs and files other than UTF-8 text files and extracted Office files reserve the
+  deployment's full input limit
   in the [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their
   tokens.
 - Base64 and JSON encoding count toward the [128 MiB request limit](/docs/reference/security#limits).

@@ -52,6 +52,9 @@
 		},
 		{
 			"name": "Roles"
+		},
+		{
+			"name": "Single sign-on"
 		}
 	],
 	"paths": {
@@ -5073,7 +5076,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 21,
+																"maxItems": 23,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5089,6 +5092,8 @@
 																		"plugins",
 																		"plugins.redaction",
 																		"plugins.textExtraction",
+																		"plugins.textExtraction.text",
+																		"plugins.textExtraction.office",
 																		"plugins.export",
 																		"plugins.encrypted",
 																		"routing",
@@ -5169,7 +5174,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 21,
+																"maxItems": 23,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5185,6 +5190,8 @@
 																		"plugins",
 																		"plugins.redaction",
 																		"plugins.textExtraction",
+																		"plugins.textExtraction.text",
+																		"plugins.textExtraction.office",
 																		"plugins.export",
 																		"plugins.encrypted",
 																		"routing",
@@ -5920,6 +5927,2449 @@
 									"required": [
 										"limit",
 										"keys"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso": {
+			"get": {
+				"operationId": "getSingleSignOn",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Get single sign-on",
+				"description": "The domains, the identity provider, the sign-in rules and SCIM, with the addresses to register with the identity provider. Secrets are never returned.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso/domains": {
+			"post": {
+				"operationId": "addDomain",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Add a domain",
+				"description": "Returns the DNS TXT record that proves the domain is yours. An organization has at most 10 domains.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"domain": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 253
+									}
+								},
+								"required": [
+									"domain"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso/domains/{domainId}/check": {
+			"post": {
+				"operationId": "checkDomain",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Check a domain",
+				"description": "Looks the TXT record up in DNS and verifies the domain when it is there.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "domainId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso/domains/{domainId}": {
+			"delete": {
+				"operationId": "deleteDomain",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Delete a domain",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "domainId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso/provider": {
+			"delete": {
+				"operationId": "deleteIdentityProvider",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Delete the identity provider",
+				"description": "Turns single sign-on off, disconnects SCIM and deletes the invitations that single sign-on gave.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso/rules": {
+			"put": {
+				"operationId": "setSignInRules",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Set the sign-in rules",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"requireSso": {
+										"type": "boolean"
+									},
+									"signInMinutes": {
+										"type": "integer",
+										"minimum": 15,
+										"maximum": 43200
+									}
+								},
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso/scim": {
+			"put": {
+				"operationId": "connectScim",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Connect SCIM or replace its secret",
+				"description": "Returns the SCIM secret once. A replaced secret stops working for the identity provider at once.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"secret": {
+											"type": "string"
+										},
+										"sso": {
+											"type": "object",
+											"properties": {
+												"redirectUri": {
+													"type": "string",
+													"format": "uri"
+												},
+												"saml": {
+													"type": "object",
+													"properties": {
+														"entityId": {
+															"type": "string",
+															"format": "uri"
+														},
+														"acsUrl": {
+															"type": "string",
+															"format": "uri"
+														}
+													},
+													"required": [
+														"entityId",
+														"acsUrl"
+													],
+													"additionalProperties": false
+												},
+												"scimBaseUrl": {
+													"type": "string",
+													"format": "uri"
+												},
+												"domains": {
+													"maxItems": 10,
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"id": {
+																"type": "string",
+																"format": "uuid"
+															},
+															"domain": {
+																"type": "string"
+															},
+															"record": {
+																"type": "object",
+																"properties": {
+																	"name": {
+																		"type": "string"
+																	},
+																	"value": {
+																		"type": "string"
+																	}
+																},
+																"required": [
+																	"name",
+																	"value"
+																],
+																"additionalProperties": false
+															},
+															"verifiedAt": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"format": "date-time"
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															}
+														},
+														"required": [
+															"id",
+															"domain",
+															"record",
+															"verifiedAt"
+														],
+														"additionalProperties": false
+													}
+												},
+												"provider": {
+													"anyOf": [
+														{
+															"oneOf": [
+																{
+																	"type": "object",
+																	"properties": {
+																		"requireSso": {
+																			"type": "boolean"
+																		},
+																		"signInMinutes": {
+																			"type": "integer",
+																			"minimum": 15,
+																			"maximum": 43200
+																		},
+																		"testedAt": {
+																			"anyOf": [
+																				{
+																					"type": "string",
+																					"format": "date-time"
+																				},
+																				{
+																					"type": "null"
+																				}
+																			]
+																		},
+																		"updatedAt": {
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		"protocol": {
+																			"type": "string",
+																			"const": "oidc"
+																		},
+																		"issuer": {
+																			"type": "string"
+																		},
+																		"clientId": {
+																			"type": "string"
+																		}
+																	},
+																	"required": [
+																		"requireSso",
+																		"signInMinutes",
+																		"testedAt",
+																		"updatedAt",
+																		"protocol",
+																		"issuer",
+																		"clientId"
+																	],
+																	"additionalProperties": false
+																},
+																{
+																	"type": "object",
+																	"properties": {
+																		"requireSso": {
+																			"type": "boolean"
+																		},
+																		"signInMinutes": {
+																			"type": "integer",
+																			"minimum": 15,
+																			"maximum": 43200
+																		},
+																		"testedAt": {
+																			"anyOf": [
+																				{
+																					"type": "string",
+																					"format": "date-time"
+																				},
+																				{
+																					"type": "null"
+																				}
+																			]
+																		},
+																		"updatedAt": {
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		"protocol": {
+																			"type": "string",
+																			"const": "saml"
+																		},
+																		"issuer": {
+																			"type": "string"
+																		},
+																		"signInUrl": {
+																			"type": "string"
+																		},
+																		"certificate": {
+																			"type": "string"
+																		}
+																	},
+																	"required": [
+																		"requireSso",
+																		"signInMinutes",
+																		"testedAt",
+																		"updatedAt",
+																		"protocol",
+																		"issuer",
+																		"signInUrl",
+																		"certificate"
+																	],
+																	"additionalProperties": false
+																}
+															]
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"scim": {
+													"anyOf": [
+														{
+															"type": "object",
+															"properties": {
+																"createdAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"rotatedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"usedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"users": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 50000
+																},
+																"activeUsers": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 50000
+																}
+															},
+															"required": [
+																"createdAt",
+																"rotatedAt",
+																"usedAt",
+																"users",
+																"activeUsers"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "null"
+														}
+													]
+												}
+											},
+											"required": [
+												"redirectUri",
+												"saml",
+												"scimBaseUrl",
+												"domains",
+												"provider",
+												"scim"
+											],
+											"additionalProperties": false
+										}
+									},
+									"required": [
+										"secret",
+										"sso"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"delete": {
+				"operationId": "disconnectScim",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Disconnect SCIM",
+				"description": "Members stay, and anyone at a verified domain can join again.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/sso/sessions": {
+			"delete": {
+				"operationId": "signOutEveryMember",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Sign every member out of the organization",
+				"description": "Each member must sign in through the identity provider again, and access tokens lose their authorization for the organization. Accounts stay signed in to everything else.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"signedOut": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										}
+									},
+									"required": [
+										"signedOut"
 									],
 									"additionalProperties": false
 								}
@@ -17483,7 +19933,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 21,
+											"maxItems": 23,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -17499,6 +19949,8 @@
 													"plugins",
 													"plugins.redaction",
 													"plugins.textExtraction",
+													"plugins.textExtraction.text",
+													"plugins.textExtraction.office",
 													"plugins.export",
 													"plugins.encrypted",
 													"routing",
@@ -17579,7 +20031,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 21,
+											"maxItems": 23,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -17595,6 +20047,8 @@
 													"plugins",
 													"plugins.redaction",
 													"plugins.textExtraction",
+													"plugins.textExtraction.text",
+													"plugins.textExtraction.office",
 													"plugins.export",
 													"plugins.encrypted",
 													"routing",
@@ -19030,13 +21484,30 @@
 													]
 												},
 												"textExtraction": {
-													"description": "Turn inline UTF-8 text files into prompt text before input checks and redaction. `auto`, which applies when no policy sets a mode, keeps a file that the deployment reads as a file unless input checks or redaction must read it, and `always` turns every one into text. The strongest required mode applies.",
-													"type": "string",
-													"enum": [
-														"off",
-														"auto",
-														"always"
-													]
+													"type": "object",
+													"properties": {
+														"text": {
+															"description": "UTF-8 text files, such as source code, CSV, JSON and Markdown.",
+															"type": "string",
+															"enum": [
+																"off",
+																"auto",
+																"always"
+															]
+														},
+														"office": {
+															"description": "Word, Excel, PowerPoint and OpenDocument files.",
+															"type": "string",
+															"enum": [
+																"off",
+																"auto",
+																"always"
+															]
+														}
+													},
+													"additionalProperties": false,
+													"minProperties": 1,
+													"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
 												},
 												"redaction": {
 													"anyOf": [
@@ -19442,7 +21913,7 @@
 								},
 								"replaced": {
 									"minItems": 1,
-									"maxItems": 21,
+									"maxItems": 23,
 									"type": "array",
 									"items": {
 										"type": "object",
@@ -19461,6 +21932,8 @@
 													"plugins",
 													"plugins.redaction",
 													"plugins.textExtraction",
+													"plugins.textExtraction.text",
+													"plugins.textExtraction.office",
 													"plugins.export",
 													"plugins.encrypted",
 													"routing",
@@ -19619,7 +22092,7 @@
 					},
 					"setBy": {
 						"minItems": 1,
-						"maxItems": 756,
+						"maxItems": 828,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -19638,6 +22111,8 @@
 										"plugins",
 										"plugins.redaction",
 										"plugins.textExtraction",
+										"plugins.textExtraction.text",
+										"plugins.textExtraction.office",
 										"plugins.export",
 										"plugins.encrypted",
 										"routing",
@@ -19694,7 +22169,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19710,6 +22185,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -19732,7 +22209,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19748,6 +22225,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -19770,7 +22249,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19786,6 +22265,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -19808,7 +22289,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19824,6 +22305,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -19846,7 +22329,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19862,6 +22345,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -19884,7 +22369,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19900,6 +22385,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -19922,7 +22409,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -19937,6 +22424,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -20004,12 +22493,30 @@
 								"additionalProperties": false
 							},
 							"textExtraction": {
-								"type": "string",
-								"enum": [
-									"off",
-									"auto",
-									"always"
-								]
+								"type": "object",
+								"properties": {
+									"text": {
+										"description": "UTF-8 text files, such as source code, CSV, JSON and Markdown.",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"office": {
+										"description": "Word, Excel, PowerPoint and OpenDocument files.",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									}
+								},
+								"additionalProperties": false,
+								"minProperties": 1,
+								"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
 							},
 							"redaction": {
 								"type": "object",
@@ -20824,7 +23331,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 23,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20840,6 +23347,8 @@
 														"plugins",
 														"plugins.redaction",
 														"plugins.textExtraction",
+														"plugins.textExtraction.text",
+														"plugins.textExtraction.office",
 														"plugins.export",
 														"plugins.encrypted",
 														"routing",
@@ -20865,7 +23374,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 23,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -20881,6 +23390,8 @@
 																"plugins",
 																"plugins.redaction",
 																"plugins.textExtraction",
+																"plugins.textExtraction.text",
+																"plugins.textExtraction.office",
 																"plugins.export",
 																"plugins.encrypted",
 																"routing",
@@ -20918,7 +23429,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 23,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -20934,6 +23445,8 @@
 																	"plugins",
 																	"plugins.redaction",
 																	"plugins.textExtraction",
+																	"plugins.textExtraction.text",
+																	"plugins.textExtraction.office",
 																	"plugins.export",
 																	"plugins.encrypted",
 																	"routing",
@@ -20968,7 +23481,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 23,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -20984,6 +23497,8 @@
 														"plugins",
 														"plugins.redaction",
 														"plugins.textExtraction",
+														"plugins.textExtraction.text",
+														"plugins.textExtraction.office",
 														"plugins.export",
 														"plugins.encrypted",
 														"routing",
@@ -21009,7 +23524,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 23,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21025,6 +23540,8 @@
 																"plugins",
 																"plugins.redaction",
 																"plugins.textExtraction",
+																"plugins.textExtraction.text",
+																"plugins.textExtraction.office",
 																"plugins.export",
 																"plugins.encrypted",
 																"routing",
@@ -21062,7 +23579,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 23,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21078,6 +23595,8 @@
 																	"plugins",
 																	"plugins.redaction",
 																	"plugins.textExtraction",
+																	"plugins.textExtraction.text",
+																	"plugins.textExtraction.office",
 																	"plugins.export",
 																	"plugins.encrypted",
 																	"routing",
@@ -21112,7 +23631,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 23,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21128,6 +23647,8 @@
 														"plugins",
 														"plugins.redaction",
 														"plugins.textExtraction",
+														"plugins.textExtraction.text",
+														"plugins.textExtraction.office",
 														"plugins.export",
 														"plugins.encrypted",
 														"routing",
@@ -21153,7 +23674,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 23,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21169,6 +23690,8 @@
 																"plugins",
 																"plugins.redaction",
 																"plugins.textExtraction",
+																"plugins.textExtraction.text",
+																"plugins.textExtraction.office",
 																"plugins.export",
 																"plugins.encrypted",
 																"routing",
@@ -21206,7 +23729,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 23,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21222,6 +23745,8 @@
 																	"plugins",
 																	"plugins.redaction",
 																	"plugins.textExtraction",
+																	"plugins.textExtraction.text",
+																	"plugins.textExtraction.office",
 																	"plugins.export",
 																	"plugins.encrypted",
 																	"routing",
@@ -21256,7 +23781,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 23,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21272,6 +23797,8 @@
 														"plugins",
 														"plugins.redaction",
 														"plugins.textExtraction",
+														"plugins.textExtraction.text",
+														"plugins.textExtraction.office",
 														"plugins.export",
 														"plugins.encrypted",
 														"routing",
@@ -21297,7 +23824,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 23,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21313,6 +23840,8 @@
 																"plugins",
 																"plugins.redaction",
 																"plugins.textExtraction",
+																"plugins.textExtraction.text",
+																"plugins.textExtraction.office",
 																"plugins.export",
 																"plugins.encrypted",
 																"routing",
@@ -21350,7 +23879,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 23,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21366,6 +23895,8 @@
 																	"plugins",
 																	"plugins.redaction",
 																	"plugins.textExtraction",
+																	"plugins.textExtraction.text",
+																	"plugins.textExtraction.office",
 																	"plugins.export",
 																	"plugins.encrypted",
 																	"routing",
@@ -21400,7 +23931,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 23,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21416,6 +23947,8 @@
 														"plugins",
 														"plugins.redaction",
 														"plugins.textExtraction",
+														"plugins.textExtraction.text",
+														"plugins.textExtraction.office",
 														"plugins.export",
 														"plugins.encrypted",
 														"routing",
@@ -21441,7 +23974,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 23,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21457,6 +23990,8 @@
 																"plugins",
 																"plugins.redaction",
 																"plugins.textExtraction",
+																"plugins.textExtraction.text",
+																"plugins.textExtraction.office",
 																"plugins.export",
 																"plugins.encrypted",
 																"routing",
@@ -21494,7 +24029,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 23,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21510,6 +24045,8 @@
 																	"plugins",
 																	"plugins.redaction",
 																	"plugins.textExtraction",
+																	"plugins.textExtraction.text",
+																	"plugins.textExtraction.office",
 																	"plugins.export",
 																	"plugins.encrypted",
 																	"routing",
@@ -21544,7 +24081,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 21,
+												"maxItems": 23,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -21560,6 +24097,8 @@
 														"plugins",
 														"plugins.redaction",
 														"plugins.textExtraction",
+														"plugins.textExtraction.text",
+														"plugins.textExtraction.office",
 														"plugins.export",
 														"plugins.encrypted",
 														"routing",
@@ -21585,7 +24124,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 21,
+														"maxItems": 23,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21601,6 +24140,8 @@
 																"plugins",
 																"plugins.redaction",
 																"plugins.textExtraction",
+																"plugins.textExtraction.text",
+																"plugins.textExtraction.office",
 																"plugins.export",
 																"plugins.encrypted",
 																"routing",
@@ -21638,7 +24179,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 21,
+															"maxItems": 23,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -21654,6 +24195,8 @@
 																	"plugins",
 																	"plugins.redaction",
 																	"plugins.textExtraction",
+																	"plugins.textExtraction.text",
+																	"plugins.textExtraction.office",
 																	"plugins.export",
 																	"plugins.encrypted",
 																	"routing",
@@ -21686,7 +24229,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 21,
+										"maxItems": 23,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -21701,6 +24244,8 @@
 												"plugins",
 												"plugins.redaction",
 												"plugins.textExtraction",
+												"plugins.textExtraction.text",
+												"plugins.textExtraction.office",
 												"plugins.export",
 												"plugins.encrypted",
 												"routing",
@@ -22086,13 +24631,30 @@
 								]
 							},
 							"textExtraction": {
-								"description": "Turn inline UTF-8 text files into prompt text before input checks and redaction. `auto`, which applies when no policy sets a mode, keeps a file that the deployment reads as a file unless input checks or redaction must read it, and `always` turns every one into text. The strongest required mode applies.",
-								"type": "string",
-								"enum": [
-									"off",
-									"auto",
-									"always"
-								]
+								"type": "object",
+								"properties": {
+									"text": {
+										"description": "UTF-8 text files, such as source code, CSV, JSON and Markdown.",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"office": {
+										"description": "Word, Excel, PowerPoint and OpenDocument files.",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									}
+								},
+								"additionalProperties": false,
+								"minProperties": 1,
+								"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
 							},
 							"redaction": {
 								"anyOf": [
@@ -22855,13 +25417,30 @@
 											]
 										},
 										"textExtraction": {
-											"description": "Turn inline UTF-8 text files into prompt text before input checks and redaction. `auto`, which applies when no policy sets a mode, keeps a file that the deployment reads as a file unless input checks or redaction must read it, and `always` turns every one into text. The strongest required mode applies.",
-											"type": "string",
-											"enum": [
-												"off",
-												"auto",
-												"always"
-											]
+											"type": "object",
+											"properties": {
+												"text": {
+													"description": "UTF-8 text files, such as source code, CSV, JSON and Markdown.",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"office": {
+													"description": "Word, Excel, PowerPoint and OpenDocument files.",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												}
+											},
+											"additionalProperties": false,
+											"minProperties": 1,
+											"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
 										},
 										"redaction": {
 											"anyOf": [

@@ -1,0 +1,29 @@
+---
+title: Get single sign-on
+description: The domains, the identity provider, the sign-in rules and SCIM,
+  with the addresses to register with the identity provider. Secrets are never
+  returned.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: The domains, the identity provider, the sign-in rules and SCIM, with
+          the addresses to register with the identity provider. Secrets are
+          never returned.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/sso', method: 'get' }]} />
+    </>
+  );
+}

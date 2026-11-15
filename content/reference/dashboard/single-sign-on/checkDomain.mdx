@@ -1,0 +1,26 @@
+---
+title: Check a domain
+description: Looks the TXT record up in DNS and verifies the domain when it is there.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Looks the TXT record up in DNS and verifies the domain when it is
+          there.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/sso/domains/{domainId}/check', method: 'post' }]} />
+    </>
+  );
+}

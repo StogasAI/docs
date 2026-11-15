@@ -229,16 +229,16 @@ format:
 Redaction runs after the gateway selects a deployment, and before it estimates input tokens and
 calls the provider.
 
-| Scanned                                                                  | Not scanned                                      |
-| ------------------------------------------------------------------------ | ------------------------------------------------ |
-| Message and `input` text, and instructions                               | Model, routing and policy fields                 |
-| Tool definitions and tool call arguments                                 | Headers, `metadata`, sampling and cache settings |
-| Structured output schemas and stop sequences                             | Signed or encrypted reasoning from earlier turns |
-| Text files that [text extraction](/docs/text-extraction) turns into text |                                                  |
+| Scanned                                                             | Not scanned                                      |
+| ------------------------------------------------------------------- | ------------------------------------------------ |
+| Message and `input` text, and instructions                          | Model, routing and policy fields                 |
+| Tool definitions and tool call arguments                            | Headers, `metadata`, sampling and cache settings |
+| Structured output schemas and stop sequences                        | Signed or encrypted reasoning from earlier turns |
+| Files that [text extraction](/docs/text-extraction) turns into text |                                                  |
 
 Redaction cannot read images, audio, URLs, file IDs or other files, so it refuses them, and
 [routing](/docs/input-files#when-no-candidate-reads-a-file) leaves out each candidate whose policy
-redacts. Turn on text extraction to send text files.
+redacts. Turn on text extraction to send text and Office files.
 
 The settings of a [remote MCP server](/docs/model-tools#remote-mcp-servers), such as its address,
 credentials and tool filters, are not scanned, because a changed token or address would fail.

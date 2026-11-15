@@ -1,39 +1,69 @@
 ---
 title: Text extraction
-description: Turn text files into prompt text that every model reads and redaction scans.
+description: Turn text and Office files into prompt text that every model reads and redaction scans.
 icon: FileText
 ---
 
-Text extraction turns inline text files, such as CSV, JSON and source code, into prompt text. The
-text works on any deployment, even one that accepts no documents, and goes through
-[PII redaction](/docs/pii-redaction) and input checks like the rest of the prompt.
+Text extraction turns inline files into prompt text: text files such as CSV, JSON and source code,
+and Office files such as Word, Excel and PowerPoint. The text works on any deployment, even one
+that accepts no documents, and goes through [PII redaction](/docs/pii-redaction) and input checks
+like the rest of the prompt.
 
 ```json title="Policy"
 {
-	"plugins": { "textExtraction": "always" }
+	"plugins": { "textExtraction": { "text": "auto", "office": "always" } }
 }
 ```
 
-| Mode     | A deployment that reads text files | Any other deployment       |
-| -------- | ---------------------------------- | -------------------------- |
-| `off`    | The file stays a file              | The deployment is left out |
-| `auto`   | The file stays a file              | The file becomes text      |
-| `always` | The file becomes text              | The file becomes text      |
+Each file family has its own mode:
 
-`auto` applies when no policy sets a mode. When several policies set one, the strongest applies:
-`always`, then `auto`, then `off`. `off` turns extraction off unless another policy sets a stronger
-mode, so it is a [neutral value](/docs/policies/rules#replace-a-default-without-adding-a-restriction).
+| Family   | Files                                                                            |
+| -------- | -------------------------------------------------------------------------------- |
+| `text`   | [UTF-8 text files](#what-counts-as-a-text-file)                                  |
+| `office` | [Word, Excel, PowerPoint and OpenDocument files](#what-counts-as-an-office-file) |
+
+| Mode     | A deployment that reads the file | Any other deployment       |
+| -------- | -------------------------------- | -------------------------- |
+| `off`    | The file stays a file            | The deployment is left out |
+| `auto`   | The file stays a file            | The file becomes text      |
+| `always` | The file becomes text            | The file becomes text      |
 
 [PII redaction](/docs/pii-redaction) and [ASCII-only input](/docs/pii-redaction#ascii-only-input)
-read only text. With either, `auto` turns every text file into text, and `off` refuses a text file.
+read only text. With either, `auto` turns every file of the family into text, and `off` refuses
+one.
 
 A file that stays a file goes to the provider [as a type that it reads](/docs/input-files#text-files).
 `always` gives every candidate the same prompt, whichever provider serves the request.
 
+## A family that no policy sets is off
+
+The gateway changes a file only when a policy says so. A new organization's policy starts with this
+[default rule](/docs/policies/rules#defaults), which you can edit or remove:
+
+```json title="Organization policy"
+{
+	"rules": {
+		"default_extraction": {
+			"mode": "default",
+			"plugins": { "textExtraction": { "text": "auto", "office": "auto" } }
+		}
+	}
+}
+```
+
+## How policies combine
+
+When several policies set a family, the strongest mode applies: `always`, then `auto`, then `off`.
+Each family combines on its own, so `"office": "always"` in one policy leaves the `text` mode of
+another policy in place.
+
+`off` never weakens another policy's mode. Use it as a
+[neutral value](/docs/policies/rules#replace-a-default-without-adding-a-restriction) to replace a
+default.
+
 ## What the provider gets
 
-The gateway replaces each text file with a text block. Its first line names the file and its media
-type:
+The gateway replaces each file with a text block. Its first line names the file and its media type:
 
 ```json tab="Request"
 {
@@ -77,7 +107,7 @@ A file without a filename starts with its type alone, such as `(application/yaml
 without a type starts with its filename alone. A file block with any other field fails, so nothing
 in the request is lost.
 
-## Examples by type
+## Text files
 
 | File            | Media type               |
 | --------------- | ------------------------ |
@@ -95,9 +125,9 @@ in the request is lost.
 | `logo.svg`      | `image/svg+xml`          |
 
 Each becomes its header line, such as `main.py (text/x-python)`, then its content unchanged. The
-gateway never rewrites a file, so a table stays the CSV, TSV or Markdown that you sent.
+gateway never rewrites a text file, so a table stays the CSV, TSV or Markdown that you sent.
 
-## What counts as a text file
+### What counts as a text file
 
 - A file whose data URL or `file_type` names `text/*`, a type that ends in `+json` or `+xml`, or
   one of these application types:
@@ -123,13 +153,83 @@ Extraction needs valid UTF-8 without NUL bytes. A file that names a text type an
 bytes fails the request with 400, and a file with no type stays a file. Only document blocks are
 extracted, so an SVG sent as an image stays an image.
 
+## Office files
+
+| Format                            | Extensions               | Becomes                                               |
+| --------------------------------- | ------------------------ | ----------------------------------------------------- |
+| Word and OpenDocument text        | `.docx`, `.docm`, `.odt` | Markdown with headings, lists, tables and footnotes   |
+| Excel and OpenDocument sheets     | `.xlsx`, `.xlsm`, `.ods` | One CSV for each sheet, under a heading with its name |
+| PowerPoint and OpenDocument decks | `.pptx`, `.pptm`, `.odp` | The text, tables and speaker notes of each slide      |
+
+```txt tab="Word"
+report.docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document)
+# Quarterly report
+
+Revenue grew 12% in the third quarter.[^1]
+
+- Europe
+  - Zürich
+
+| Region | Revenue |
+| --- | --- |
+| Europe | 1,200 |
+
+[^1]: Unaudited.
+```
+
+```txt tab="Excel"
+orders.xlsx (application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+## Orders
+id,customer,amount,ordered
+1,"Acme, Inc.",20.5,2026-03-01
+total,,20.5
+```
+
+```txt tab="PowerPoint"
+plan.pptx (application/vnd.openxmlformats-officedocument.presentationml.presentation)
+## Slide 1
+Launch plan
+Ship in May
+Notes:
+Mention the beta users.
+```
+
+- A Word file gives its text with every tracked change accepted. Text boxes, footnotes and
+  endnotes are part of it. Headers, footers and comments are not.
+- A cell gives the value that the file stores: the last result of a formula, and a date or time in
+  ISO 8601 where the cell's format shows one. Hidden sheets, rows and slides are part of the text.
+- Slide numbers, dates and footers are left out.
+- Images, charts and embedded files have no text and are left out. To let the model see them, send
+  the file to a deployment that [reads the format](/docs/input-files#supported-formats).
+
+### What counts as an Office file
+
+- A zip archive whose data URL or `file_type` names an Office Open XML or OpenDocument type.
+- A zip archive with no type, `application/octet-stream` or `application/zip`, whose filename has
+  one of the extensions above.
+
+The content must match the declared format. A spreadsheet that is named `report.docx` fails the
+request with 400.
+
+### Limits
+
+| Limit                             | Value  |
+| --------------------------------- | ------ |
+| XML inside one file, uncompressed | 32 MiB |
+| Text from one file                | 8 MiB  |
+
+A file beyond a limit, a file that is not a readable archive and a file whose XML is not UTF-8 fail
+the request with 400 where extraction applies.
+
 ## What stays a file
 
-| Input                                           | Why                                                                                                 |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| PDFs, office documents and other binary formats | The provider reads them. [Find a route](/docs/input-files#supported-formats) that lists the format. |
-| RTF, Protocol Buffers and email messages        | They hold binary data or encoded parts, not plain text.                                             |
-| Images and audio                                | Models read them as they are.                                                                       |
-| URLs and file IDs                               | The gateway never downloads a file.                                                                 |
+| Input                                    | Why                                                                                                 |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| PDFs and other binary formats            | The provider reads them. [Find a route](/docs/input-files#supported-formats) that lists the format. |
+| `.doc`, `.xls` and `.ppt` files          | The Office 97 to 2003 formats are binary.                                                           |
+| Password-protected Office files          | Their content is encrypted.                                                                         |
+| RTF, Protocol Buffers and email messages | They hold binary data or encoded parts, not plain text.                                             |
+| Images and audio                         | Models read them as they are.                                                                       |
+| URLs and file IDs                        | The gateway never downloads a file.                                                                 |
 
 To refuse some file types outright, [allow or deny them](/docs/input-files#allow-or-deny-file-types).

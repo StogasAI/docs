@@ -1,0 +1,27 @@
+---
+title: Add a domain
+description: Returns the DNS TXT record that proves the domain is yours. An
+  organization has at most 10 domains.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the DNS TXT record that proves the domain is yours. An
+          organization has at most 10 domains.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/sso/domains', method: 'post' }]} />
+    </>
+  );
+}
