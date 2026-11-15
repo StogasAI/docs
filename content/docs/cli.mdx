@@ -29,13 +29,13 @@ release or directory. On Windows, set `STOGAS_VERSION` and `STOGAS_INSTALL_DIR` 
 
 Package managers install the same CLI:
 
-| Package manager | Command |
-| --- | --- |
-| Homebrew | `brew install stogasai/tap/stogas` |
-| Scoop | `scoop bucket add stogas https://github.com/StogasAI/homebrew-tap`, then `scoop install stogas/stogas` |
-| pipx or uv | `pipx install stogas`, or `uvx stogas <command>` without installing |
-| cargo-binstall | `cargo binstall stogas-cli` |
-| Docker | `docker run --rm ghcr.io/stogasai/stogas <command>` |
+| Package manager | Command                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------ |
+| Homebrew        | `brew install stogasai/tap/stogas`                                                                     |
+| Scoop           | `scoop bucket add stogas https://github.com/StogasAI/homebrew-tap`, then `scoop install stogas/stogas` |
+| pipx or uv      | `pipx install stogas`, or `uvx stogas <command>` without installing                                    |
+| cargo-binstall  | `cargo binstall stogas-cli`                                                                            |
+| Docker          | `docker run --rm ghcr.io/stogasai/stogas <command>`                                                    |
 
 The container image holds only the CLI. It has no keychain, and `serve` listens on the container's
 own loopback address, so on Linux run `serve` with `--network host`.
