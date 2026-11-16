@@ -812,7 +812,11 @@ test('sidebar shows a draggable native scrollbar only when its links overflow', 
 		await page.goto('/docs/policies');
 		await expect.poll(gutter).toBeGreaterThan(0);
 		expect(await linkOverhang()).toBeLessThanOrEqual(1);
-		// Fumadocs scrolls the active link into view after hydration; reset the scroll after that.
+		// Fumadocs scrolls the active link into view after hydration, which would undo an earlier
+		// drag. Radix sets the viewport's own overflow in that same pass; reset the scroll after it.
+		await expect
+			.poll(() => viewport.evaluate((element: HTMLElement) => element.style.overflowY))
+			.toBe('scroll');
 		await expect(viewport.locator('a[data-active="true"]')).toBeInViewport();
 		await viewport.evaluate((element) => element.scrollTo({ top: 0 }));
 		const box = await viewport.boundingBox();
