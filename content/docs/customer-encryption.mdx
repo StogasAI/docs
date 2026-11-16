@@ -207,8 +207,9 @@ Keep the original policies and provider credentials so you can encrypt them agai
 1. Generate a new key and register it under a new label.
 2. Update your clients to send both keys.
 3. Encrypt the exports, redactions and provider credentials again with the new key, and save
-   them. The dashboard lists where each key is still used in the policies and credentials you can
-   view, such as `plugins.redaction` or `rules.night.plugins.export`.
+   them. [List the uses of an encryption key](/docs/reference/dashboard/encryption-keys/listEncryptionKeyUses)
+   names each policy and credential that you can view and that still uses the old key, and where
+   each policy holds it, such as `plugins.redaction` or `rules.night.plugins.export`.
 4. Filter analytics with [`encryption_key:`](/docs/analytics#filters) and the old key's label to
    check that no recent request could still use it.
 5. Remove the old key's registration, then stop sending it.

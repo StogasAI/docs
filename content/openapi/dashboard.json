@@ -3142,7 +3142,7 @@
 														]
 													},
 													"limitStates": {
-														"maxItems": 289,
+														"maxItems": 288,
 														"type": "array",
 														"items": {
 															"type": "object",
@@ -3156,8 +3156,7 @@
 																		"role",
 																		"member",
 																		"credential",
-																		"key",
-																		"platform"
+																		"key"
 																	]
 																},
 																"scopeId": {
@@ -3309,17 +3308,6 @@
 																			"type": "null"
 																		}
 																	]
-																},
-																"since": {
-																	"anyOf": [
-																		{
-																			"type": "string",
-																			"format": "date-time"
-																		},
-																		{
-																			"type": "null"
-																		}
-																	]
 																}
 															},
 															"required": [
@@ -3336,8 +3324,7 @@
 																"available",
 																"refillPerSecond",
 																"windowStart",
-																"resetAt",
-																"since"
+																"resetAt"
 															],
 															"additionalProperties": false
 														}
@@ -5401,7 +5388,7 @@
 					"Encryption keys"
 				],
 				"summary": "List encryption keys",
-				"description": "Returns every customer encryption key that the organization registers, with what you can view of its uses: the policies with an export or redaction that it encrypts, and where each holds them, and the credentials whose secrets it encrypts.",
+				"description": "Returns every customer encryption key that the organization registers, with how many of the policies and credentials that you can view use it, and the first of them.",
 				"security": [
 					{
 						"accessToken": []
@@ -5443,13 +5430,14 @@
 														"type": "boolean",
 														"description": "Whether any policy or credential uses the key, including those you cannot view. A key in use cannot be removed."
 													},
-													"policyCount": {
+													"useCount": {
 														"type": "integer",
 														"minimum": 0,
-														"maximum": 9007199254740991
+														"maximum": 9007199254740991,
+														"description": "How many of the policies and credentials that you can view use the key."
 													},
-													"policies": {
-														"maxItems": 100,
+													"uses": {
+														"maxItems": 3,
 														"type": "array",
 														"items": {
 															"type": "object",
@@ -5476,8 +5464,28 @@
 																		"null"
 																	]
 																},
+																"provider": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"enum": [
+																				"anthropic",
+																				"aws",
+																				"azure",
+																				"chutes",
+																				"google-cloud",
+																				"openai"
+																			]
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"secret": {
+																	"type": "boolean"
+																},
 																"paths": {
-																	"minItems": 1,
 																	"type": "array",
 																	"items": {
 																		"type": "string",
@@ -5489,58 +5497,21 @@
 																"scope",
 																"id",
 																"name",
+																"provider",
+																"secret",
 																"paths"
 															],
 															"additionalProperties": false
-														}
-													},
-													"credentialCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													},
-													"credentials": {
-														"maxItems": 100,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"id": {
-																	"type": "string",
-																	"format": "uuid"
-																},
-																"name": {
-																	"type": "string"
-																},
-																"provider": {
-																	"type": "string",
-																	"enum": [
-																		"anthropic",
-																		"aws",
-																		"azure",
-																		"chutes",
-																		"google-cloud",
-																		"openai"
-																	]
-																}
-															},
-															"required": [
-																"id",
-																"name",
-																"provider"
-															],
-															"additionalProperties": false
-														}
+														},
+														"description": "The first 3 of them."
 													}
 												},
 												"required": [
 													"label",
 													"keyId",
 													"inUse",
-													"policyCount",
-													"policies",
-													"credentialCount",
-													"credentials"
+													"useCount",
+													"uses"
 												],
 												"additionalProperties": false
 											},
@@ -5550,6 +5521,166 @@
 									"required": [
 										"limit",
 										"keys"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/encryption-keys/{encryptionKeyId}/uses": {
+			"get": {
+				"operationId": "listEncryptionKeyUses",
+				"tags": [
+					"Encryption keys"
+				],
+				"summary": "List the uses of an encryption key",
+				"description": "Returns the policies and credentials that you can view and that use the key: each credential whose secret it encrypts, and each policy with an export or redaction that it encrypts, with where the policy holds it.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "encryptionKeyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"pattern": "^[0-9a-f]{64}$"
+						}
+					},
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"maxLength": 1024
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": 50,
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100
+						}
+					},
+					{
+						"name": "search",
+						"in": "query",
+						"required": false,
+						"description": "Only the policies and credentials whose name contains this text, in any case.",
+						"schema": {
+							"type": "string",
+							"maxLength": 200
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"items": {
+											"maxItems": 100,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"organization",
+															"folder",
+															"grant",
+															"role",
+															"member",
+															"credential",
+															"key"
+														]
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1
+													},
+													"name": {
+														"type": [
+															"string",
+															"null"
+														]
+													},
+													"provider": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"anthropic",
+																	"aws",
+																	"azure",
+																	"chutes",
+																	"google-cloud",
+																	"openai"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"secret": {
+														"type": "boolean"
+													},
+													"paths": {
+														"type": "array",
+														"items": {
+															"type": "string",
+															"minLength": 1
+														}
+													}
+												},
+												"required": [
+													"scope",
+													"id",
+													"name",
+													"provider",
+													"secret",
+													"paths"
+												],
+												"additionalProperties": false
+											}
+										},
+										"nextCursor": {
+											"anyOf": [
+												{
+													"type": "string",
+													"minLength": 1
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"items",
+										"nextCursor"
 									],
 									"additionalProperties": false
 								}
@@ -5643,13 +5774,14 @@
 														"type": "boolean",
 														"description": "Whether any policy or credential uses the key, including those you cannot view. A key in use cannot be removed."
 													},
-													"policyCount": {
+													"useCount": {
 														"type": "integer",
 														"minimum": 0,
-														"maximum": 9007199254740991
+														"maximum": 9007199254740991,
+														"description": "How many of the policies and credentials that you can view use the key."
 													},
-													"policies": {
-														"maxItems": 100,
+													"uses": {
+														"maxItems": 3,
 														"type": "array",
 														"items": {
 															"type": "object",
@@ -5676,8 +5808,28 @@
 																		"null"
 																	]
 																},
+																"provider": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"enum": [
+																				"anthropic",
+																				"aws",
+																				"azure",
+																				"chutes",
+																				"google-cloud",
+																				"openai"
+																			]
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"secret": {
+																	"type": "boolean"
+																},
 																"paths": {
-																	"minItems": 1,
 																	"type": "array",
 																	"items": {
 																		"type": "string",
@@ -5689,58 +5841,21 @@
 																"scope",
 																"id",
 																"name",
+																"provider",
+																"secret",
 																"paths"
 															],
 															"additionalProperties": false
-														}
-													},
-													"credentialCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													},
-													"credentials": {
-														"maxItems": 100,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"id": {
-																	"type": "string",
-																	"format": "uuid"
-																},
-																"name": {
-																	"type": "string"
-																},
-																"provider": {
-																	"type": "string",
-																	"enum": [
-																		"anthropic",
-																		"aws",
-																		"azure",
-																		"chutes",
-																		"google-cloud",
-																		"openai"
-																	]
-																}
-															},
-															"required": [
-																"id",
-																"name",
-																"provider"
-															],
-															"additionalProperties": false
-														}
+														},
+														"description": "The first 3 of them."
 													}
 												},
 												"required": [
 													"label",
 													"keyId",
 													"inUse",
-													"policyCount",
-													"policies",
-													"credentialCount",
-													"credentials"
+													"useCount",
+													"uses"
 												],
 												"additionalProperties": false
 											},
@@ -5767,7 +5882,7 @@
 					"Encryption keys"
 				],
 				"summary": "Remove an encryption key",
-				"description": "Needs organization management. A key that a policy or credential still uses gets 409 ENCRYPTION_KEY_IN_USE, so encrypt those with another key or delete them first.",
+				"description": "Needs organization management. A key that a policy or credential still uses gets 409 ENCRYPTION_KEY_IN_USE.",
 				"security": [
 					{
 						"accessToken": [
@@ -5820,13 +5935,14 @@
 														"type": "boolean",
 														"description": "Whether any policy or credential uses the key, including those you cannot view. A key in use cannot be removed."
 													},
-													"policyCount": {
+													"useCount": {
 														"type": "integer",
 														"minimum": 0,
-														"maximum": 9007199254740991
+														"maximum": 9007199254740991,
+														"description": "How many of the policies and credentials that you can view use the key."
 													},
-													"policies": {
-														"maxItems": 100,
+													"uses": {
+														"maxItems": 3,
 														"type": "array",
 														"items": {
 															"type": "object",
@@ -5853,8 +5969,28 @@
 																		"null"
 																	]
 																},
+																"provider": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"enum": [
+																				"anthropic",
+																				"aws",
+																				"azure",
+																				"chutes",
+																				"google-cloud",
+																				"openai"
+																			]
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"secret": {
+																	"type": "boolean"
+																},
 																"paths": {
-																	"minItems": 1,
 																	"type": "array",
 																	"items": {
 																		"type": "string",
@@ -5866,58 +6002,21 @@
 																"scope",
 																"id",
 																"name",
+																"provider",
+																"secret",
 																"paths"
 															],
 															"additionalProperties": false
-														}
-													},
-													"credentialCount": {
-														"type": "integer",
-														"minimum": 0,
-														"maximum": 9007199254740991
-													},
-													"credentials": {
-														"maxItems": 100,
-														"type": "array",
-														"items": {
-															"type": "object",
-															"properties": {
-																"id": {
-																	"type": "string",
-																	"format": "uuid"
-																},
-																"name": {
-																	"type": "string"
-																},
-																"provider": {
-																	"type": "string",
-																	"enum": [
-																		"anthropic",
-																		"aws",
-																		"azure",
-																		"chutes",
-																		"google-cloud",
-																		"openai"
-																	]
-																}
-															},
-															"required": [
-																"id",
-																"name",
-																"provider"
-															],
-															"additionalProperties": false
-														}
+														},
+														"description": "The first 3 of them."
 													}
 												},
 												"required": [
 													"label",
 													"keyId",
 													"inUse",
-													"policyCount",
-													"policies",
-													"credentialCount",
-													"credentials"
+													"useCount",
+													"uses"
 												],
 												"additionalProperties": false
 											},
@@ -9142,6 +9241,7 @@
 					"BYOK"
 				],
 				"summary": "List the Azure deployments of a credential",
+				"description": "Returns the targets that the credential reaches, grouped by model, version, hosting and deployment type. Requests use the chosen target of each group.",
 				"security": [
 					{
 						"accessToken": []
@@ -9183,6 +9283,7 @@
 						"name": "search",
 						"in": "query",
 						"required": false,
+						"description": "Only the groups with a target whose model, version, deployment, hosting or deployment type contains this text, in any case. Each group comes whole.",
 						"schema": {
 							"type": "string",
 							"maxLength": 200
@@ -9448,6 +9549,7 @@
 					"BYOK"
 				],
 				"summary": "Choose whether to use an Azure deployment",
+				"description": "Choosing a target replaces the chosen target of its group. A target that cannot serve gets 409, and so does a change based on targets that changed since you listed them.",
 				"security": [
 					{
 						"accessToken": [
@@ -20239,7 +20341,7 @@
 						]
 					},
 					"limitStates": {
-						"maxItems": 289,
+						"maxItems": 288,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -20253,8 +20355,7 @@
 										"role",
 										"member",
 										"credential",
-										"key",
-										"platform"
+										"key"
 									]
 								},
 								"scopeId": {
@@ -20406,17 +20507,6 @@
 											"type": "null"
 										}
 									]
-								},
-								"since": {
-									"anyOf": [
-										{
-											"type": "string",
-											"format": "date-time"
-										},
-										{
-											"type": "null"
-										}
-									]
 								}
 							},
 							"required": [
@@ -20433,8 +20523,7 @@
 								"available",
 								"refillPerSecond",
 								"windowStart",
-								"resetAt",
-								"since"
+								"resetAt"
 							],
 							"additionalProperties": false
 						}

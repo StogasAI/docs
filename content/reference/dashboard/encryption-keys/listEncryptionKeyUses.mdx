@@ -1,0 +1,30 @@
+---
+title: List the uses of an encryption key
+description: 'Returns the policies and credentials that you can view and that
+  use the key: each credential whose secret it encrypts, and each policy with an
+  export or redaction that it encrypts, with where the policy holds it.'
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: 'Returns the policies and credentials that you can view and that use
+          the key: each credential whose secret it encrypts, and each policy
+          with an export or redaction that it encrypts, with where the policy
+          holds it.'
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/encryption-keys/{encryptionKeyId}/uses', method: 'get' }]} />
+    </>
+  );
+}
