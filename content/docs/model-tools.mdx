@@ -349,7 +349,8 @@ reserves for them:
 - Without `max_tool_calls`, the hold covers ten calls of the most expensive hosted tool in the
   request, and the model decides how many calls it makes. `max_tool_calls` limits the calls, and a
   value under ten lowers the hold.
-- The hold also covers the content that the tools return[^content].
+- The hold also covers 8,000 tokens of content for each call[^content], or a fetch's
+  `max_content_tokens`. Larger results cost more than the hold.
 - `tool_choice: "none"` turns hosted tools off, so they cost nothing.
 
 The provider does not stop at the hold. Settlement charges the calls and tokens that the provider
@@ -413,7 +414,7 @@ These tools return `400` before the gateway calls a provider:
 [^replay]: [Claude](/docs/providers/anthropic#tools) reads a search again only with the encrypted content of its results.
 
 [^content]:
-    For OpenAI search, each call reserves up to 128,000 tokens or the deployment's input limit, if
-    smaller. A search model reserves its whole input limit. For Claude, the hold covers input for
-    up to ten tool rounds and one output limit. With caching on, rounds after the first are held at
-    the cache-read rate, so cache misses can cost more than the hold.
+    [Claude](/docs/providers/anthropic#tools) reads every earlier result again in each later step
+    of its tool loop, so its hold covers each step with the content of every call before it. With
+    caching on, the content that a step reads again is held at the cache-read rate. A search model
+    on Chat Completions reserves its whole input limit.

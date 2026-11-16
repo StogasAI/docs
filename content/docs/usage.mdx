@@ -16,7 +16,8 @@ Each [request record](/docs/request-records) lists the request's usage meters an
 
 Before the gateway calls the provider, it holds the most the request can cost: the
 [estimated input](#input-estimates) at the highest input rate, plus the output limit at the highest
-output rate. The hold must fit your balance, including the credit limit of an
+output rate. A model whose price rises above a context length is held at the rates that the
+estimated input reaches. The hold must fit your balance, including the credit limit of an
 [invoiced](/docs/billing#invoiced-billing) organization, and every [limit](/docs/policies/limits)
 that applies.
 

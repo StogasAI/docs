@@ -84,8 +84,8 @@ These fields work only on Anthropic deployments:
 - `task_budget` guides the model and does not lower the
   [hold](/docs/usage#how-a-request-is-charged).
 - `context_management.edits` accepts `clear_thinking_20251015`, `clear_tool_uses_20250919` and
-  `compact_20260112`, each once. A compaction raises the hold to cover one more input pass and the
-  summary.
+  `compact_20260112`, each once. When the input and the tool results that the hold covers can reach
+  the compaction trigger, the hold also covers one more input pass and the summary.
 
 ## Reasoning
 
