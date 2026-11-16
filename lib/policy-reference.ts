@@ -10,8 +10,8 @@ const sections = {
 	timeouts: policy.properties.timeouts,
 	// A value that can be encrypted takes its settings, the first form, or an envelope.
 	exportDestination:
-		policy.properties.plugins.properties.export.anyOf[0]!.properties.destinations!.anyOf[0]!
-			.items!.anyOf[0]!,
+		policy.properties.plugins.properties.export.anyOf[0]!.properties.destinations!.anyOf[0]!.items!
+			.anyOf[0]!,
 	limit: policy.properties.limits.additionalProperties,
 	limitPeriod: policy.properties.limits.additionalProperties.properties.per,
 	accessPeriod: policy.properties.access.properties.deny.items,
