@@ -65,6 +65,9 @@ test('policy topics retain complete field exports and working links to their own
 	page,
 	request
 }) => {
+	// The test loads every policy topic and fetches each page that they link to, which takes over
+	// 30 seconds on a busy machine.
+	test.slow();
 	const definitions: Record<string, unknown[]> = {
 		'/docs/policies/rules': [schema.properties.rules.additionalProperties],
 		'/docs/policies/delegation': [schema.properties.delegation],

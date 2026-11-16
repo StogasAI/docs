@@ -3404,7 +3404,7 @@
 			},
 			"ResponsesInputItem": {
 				"type": "object",
-				"description": "An output item: a message, a tool call, reasoning, a hosted tool call, a tool search or an MCP item.",
+				"description": "An output item: a message, a tool call, reasoning, a hosted tool call or a tool search.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -3423,9 +3423,6 @@
 							"custom_tool_call_output",
 							"shell_call",
 							"apply_patch_call",
-							"mcp_list_tools",
-							"mcp_call",
-							"mcp_approval_request",
 							"reasoning"
 						]
 					},
@@ -3599,7 +3596,7 @@
 			"ResponsesRequestInputItem": {
 				"type": "object",
 				"additionalProperties": false,
-				"description": "An input item: a message, a tool call, a tool output, reasoning, a hosted tool call, a tool search or an MCP item from an earlier response, or tools that a client declares during the conversation. Send items back as the reply returned them.",
+				"description": "An input item: a message, a tool call, a tool output, reasoning, a hosted tool call or a tool search from an earlier response, or tools that a client declares during the conversation. Send items back as the reply returned them.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -3617,10 +3614,6 @@
 							"apply_patch_call",
 							"apply_patch_call_output",
 							"reasoning",
-							"mcp_list_tools",
-							"mcp_call",
-							"mcp_approval_request",
-							"mcp_approval_response",
 							"web_search_call",
 							"web_fetch_call",
 							"tool_search_call",
@@ -3635,10 +3628,9 @@
 							"in_progress",
 							"incomplete",
 							"searching",
-							"failed",
-							"calling"
+							"failed"
 						],
-						"description": "`searching` applies only to `web_search_call` and `web_fetch_call` items, `calling` only to `mcp_call` items, and `failed` to all three."
+						"description": "`searching` and `failed` apply only to `web_search_call` and `web_fetch_call` items."
 					},
 					"role": {
 						"type": "string",
@@ -3670,10 +3662,6 @@
 							"client"
 						],
 						"description": "Where a `tool_search_call` or `tool_search_output` ran: `server` for OpenAI's own search, which has no `call_id`, or `client` for a search that your app ran."
-					},
-					"server_label": {
-						"type": "string",
-						"description": "The MCP server of an `mcp_list_tools`, `mcp_call` or `mcp_approval_request` item."
 					},
 					"name": {
 						"type": "string",
@@ -3722,22 +3710,6 @@
 								}
 							}
 						]
-					},
-					"error": {
-						"type": "string",
-						"description": "The error of an `mcp_list_tools` or `mcp_call` item."
-					},
-					"approval_request_id": {
-						"type": "string",
-						"description": "The `mcp_approval_request` that an `mcp_approval_response` answers, or that an `mcp_call` ran after."
-					},
-					"approve": {
-						"type": "boolean",
-						"description": "Whether an `mcp_approval_response` approves the call."
-					},
-					"reason": {
-						"type": "string",
-						"description": "Why an `mcp_approval_response` decided so."
 					},
 					"action": {
 						"type": "object",
@@ -3923,7 +3895,7 @@
 					},
 					"tools": {
 						"type": "array",
-						"description": "The tools of an `additional_tools` item, which count as tools of the request, the tools that an `mcp_list_tools` item lists, or the function, custom and namespace tools that a `tool_search_output` loads. Codex declares tools in `additional_tools` for some models.",
+						"description": "The tools of an `additional_tools` item, which count as tools of the request, or the function, custom and namespace tools that a `tool_search_output` loads. Codex declares tools in `additional_tools` for some models.",
 						"items": {
 							"type": "object"
 						}

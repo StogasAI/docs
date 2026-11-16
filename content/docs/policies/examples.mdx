@@ -201,12 +201,14 @@ Requests that send a `system` or `developer` message, or `instructions`, get `mo
 }
 ```
 
-### Allow only some MCP servers
+### Refuse hosted tools
+
+Requests that let the model call a hosted tool, such as web search, get `model_unavailable`.
 
 ```json title="Organization policy"
 {
 	"routing": {
-		"filter": "request.mcpServers.all(server, server in ['mcp.example.com', 'connector_googledrive'])"
+		"filter": "size(request.hostedTools) == 0"
 	}
 }
 ```
