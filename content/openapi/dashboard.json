@@ -2,7 +2,7 @@
 	"openapi": "3.1.0",
 	"info": {
 		"title": "Stogas Dashboard API",
-		"version": "1.0.0",
+		"version": "2026-11-16",
 		"description": "Manage organizations, members, API keys, policies, balance, analytics and activity with an access token. Each request acts as the user who created the token."
 	},
 	"servers": [
@@ -69,6 +69,11 @@
 				"security": [
 					{
 						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
 					}
 				],
 				"responses": {
@@ -154,6 +159,11 @@
 						]
 					}
 				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -218,6 +228,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"name": "v",
 						"in": "query",
 						"required": false,
@@ -252,6 +265,11 @@
 						"accessToken": [
 							"all-organizations"
 						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
 					}
 				],
 				"responses": {
@@ -448,6 +466,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"name": "tokenId",
 						"in": "path",
 						"required": true,
@@ -501,6 +522,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -754,6 +778,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -820,6 +847,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -873,6 +903,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -1138,6 +1171,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -1296,6 +1332,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -1470,6 +1509,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -1649,6 +1691,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -1704,6 +1749,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -1789,6 +1837,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -2095,6 +2146,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -2191,6 +2245,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -2289,6 +2346,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -2332,6 +2392,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -2457,6 +2520,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -2521,6 +2587,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -2702,6 +2771,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -2788,6 +2860,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -2868,6 +2943,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -3759,6 +3837,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -3873,6 +3954,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -3970,6 +4054,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -4012,6 +4099,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -4114,6 +4204,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -4171,6 +4264,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -4258,6 +4354,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -4333,6 +4432,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -4392,6 +4494,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -4449,6 +4554,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -4589,6 +4697,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -4639,6 +4750,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -4680,6 +4794,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -4732,6 +4849,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -4894,6 +5014,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -5255,6 +5378,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -5395,6 +5521,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -5547,6 +5676,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -5709,6 +5841,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -5892,6 +6027,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -6052,6 +6190,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -6351,6 +6492,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -6672,6 +6816,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -6978,6 +7125,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -7287,6 +7437,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -7584,6 +7737,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -7908,6 +8064,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -8218,6 +8377,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -8517,6 +8679,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -8561,6 +8726,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -8743,6 +8911,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -9068,6 +9239,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -9140,6 +9314,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -9313,6 +9490,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -9624,6 +9804,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -9701,6 +9884,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -9781,6 +9967,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -9856,6 +10045,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -10013,6 +10205,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -10071,6 +10266,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -10116,6 +10314,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -10200,6 +10401,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"name": "search",
 						"in": "query",
@@ -10371,6 +10575,11 @@
 						]
 					}
 				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -10430,6 +10639,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"name": "selectedOrgId",
 						"in": "query",
@@ -10703,6 +10915,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"name": "code",
 						"in": "query",
 						"required": true,
@@ -10787,6 +11002,11 @@
 						]
 					}
 				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					}
+				],
 				"requestBody": {
 					"required": true,
 					"content": {
@@ -10849,6 +11069,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -11132,6 +11355,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -11237,6 +11463,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -11350,6 +11579,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -13087,6 +13319,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -13816,9 +14051,9 @@
 																	"description": "The provider's HTTP status. `null` when there was none, such as after a lost connection."
 																},
 																"error_code": {
+																	"description": "The code in the provider's error reply, such as `invalid_prompt` or `ValidationException`, which `status` can generalize. Absent when the call succeeded or the reply had no code.",
 																	"type": "string",
-																	"pattern": "^[A-Za-z][\\w.-]{0,47}$",
-																	"description": "The code in the provider's error reply, such as `invalid_prompt` or `ValidationException`, which `status` can generalize. Absent when the call succeeded or the reply had no code."
+																	"pattern": "^[A-Za-z][\\w.-]{0,47}$"
 																},
 																"start_ms": {
 																	"type": "integer",
@@ -14591,6 +14826,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -14718,6 +14956,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -15339,6 +15580,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -15508,6 +15752,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -15811,6 +16058,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -16196,6 +16446,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -16235,6 +16488,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -16392,6 +16648,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -16434,6 +16693,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -16475,6 +16737,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -16646,6 +16911,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -16723,6 +16991,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -16814,6 +17085,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -16985,6 +17259,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -17259,6 +17536,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -17407,6 +17687,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -17474,6 +17757,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -17530,6 +17816,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -17734,6 +18023,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -17871,6 +18163,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -18020,6 +18315,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -18077,6 +18375,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -18151,6 +18452,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -18254,6 +18558,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -18363,6 +18670,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -18576,6 +18886,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -18648,6 +18961,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -18780,6 +19096,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -18985,6 +19304,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -19115,6 +19437,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -19225,6 +19550,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					},
@@ -19435,6 +19763,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -19510,6 +19841,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -19598,6 +19932,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -19688,6 +20025,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					},
 					{
@@ -19774,6 +20114,9 @@
 					}
 				],
 				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
 					{
 						"$ref": "#/components/parameters/orgId"
 					}
@@ -19871,6 +20214,9 @@
 				],
 				"parameters": [
 					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
 						"$ref": "#/components/parameters/orgId"
 					}
 				],
@@ -19911,6 +20257,18 @@
 			}
 		},
 		"parameters": {
+			"version": {
+				"name": "Stogas-Version",
+				"in": "header",
+				"required": true,
+				"description": "The API version that your program was written for. The current version is 2026-11-16.",
+				"schema": {
+					"type": "string",
+					"enum": [
+						"2026-11-16"
+					]
+				}
+			},
 			"orgId": {
 				"name": "orgId",
 				"in": "path",

@@ -3,11 +3,16 @@ title: Dashboard API
 description: Manage organizations, members, API keys, policies, balance, analytics and activity from your own programs.
 ---
 
-The base URL is `https://app.stogas.ai`. Send an access token as `Authorization: Bearer <token>`.
-Create a token on the **Account** page, or sign in with the [CLI](/docs/cli#use-your-account) and send
-requests with `stogas api`. Each request acts as the user who created the token, with that user's
-roles. Browsers do not let web pages on other sites call the API, so call it from a server or a
-script.
+```sh title="Request"
+curl https://app.stogas.ai/api/organizations \
+  -H "Authorization: Bearer $STOGAS_TOKEN" \
+  -H "Stogas-Version: 2026-11-16"
+```
+
+Send an access token and the [API version](#versions) with every request. Create a token on the
+**Account** page, or sign in with the [CLI](/docs/cli#use-your-account) and send requests with
+`stogas api`. Each request acts as the user who created the token, with that user's roles. Browsers
+do not let web pages on other sites call the API, so call it from a server or a script.
 
 ## Access tokens
 
@@ -60,8 +65,13 @@ Each user can send 60 requests a minute, shared by the dashboard and all of the 
 Further requests return `429 RATE_LIMITED` with `Retry-After`. [Analytics](/docs/analytics) queries
 and downloads have lower limits of their own.
 
-## Changes
+## Versions
 
-We add operations, fields, values and error codes without notice, so ignore what your program
-doesn't recognize. A change that could break a working program comes with an API version that you
-choose with a header, and requests without the header keep their current behavior.
+`Stogas-Version` names the API version that your program was written for. The current version is
+`2026-11-16`, and a request without it returns `400 INVALID_API_VERSION`.
+
+- We add operations, fields, values and error codes to every version without notice, so ignore what
+  your program doesn't recognize.
+- A change that could break a working program comes only in a new version, named for the date it
+  comes out.
+- We support each version for at least 24 months after the next one comes out.
