@@ -132,8 +132,8 @@ price.
 ## When the client stops early
 
 If your client disconnects or times out, the provider call still runs to its end and you pay for its
-full usage, because providers report usage only when a call ends. The record keeps when the client
-stopped in `client_stop_ms`, and what it had received by then in `client_stop_output` and
+full usage, because providers report usage only when a call ends.[^chutes] The record keeps when the
+client stopped in `client_stop_ms`, and what it had received by then in `client_stop_output` and
 `client_stop_reasoning`.
 
 ## Input estimates
@@ -149,3 +149,7 @@ always uses the provider's count.
   full input limit, because the gateway cannot count them.
 - Hosted tools add their own [holds](/docs/model-tools#holds-for-hosted-tools).
 - Text is never sampled or cut to lower a hold.
+
+[^chutes]:
+    On [Chutes](/docs/providers/chutes#when-the-client-stops-early) TEE deployments, the gateway
+    stops a stream that no client receives, and you pay for the usage up to the stop.

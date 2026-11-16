@@ -98,7 +98,7 @@ Each record is the request record with these fields added:
   record has the `response` and `stogas` object of the first rejection that it counts, and goes to
   that rejection's destinations.
 - If the client disconnects, the provider still finishes, and the record has the whole output and
-  final usage.
+  final usage.[^chutes]
 - The record never contains API keys, provider credentials or webhook headers. Your prompt text is
   only [redacted](/docs/pii-redaction) if a policy turns redaction on.
 - A record has no salts, so it cannot prove a request or response, and its request is the one after
@@ -133,3 +133,7 @@ The record of each request that ran has a `plugins.export` entry, even when the 
 dropped its export. Its `duration_us` is the time that export added to the request, mostly to
 describe attached files. Rejections have no plugin entries, and each of their records is exported,
 including the [grouped](/docs/request-records#grouped-rejections) record of repeated ones.
+
+[^chutes]:
+    On [Chutes](/docs/providers/chutes#when-the-client-stops-early) TEE deployments, the gateway
+    stops a stream that no client receives, and the record has the output and usage up to the stop.

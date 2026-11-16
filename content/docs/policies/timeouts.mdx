@@ -30,9 +30,9 @@ the full response arrives, so the limit covers the whole provider call. If you s
 `totalSeconds`, only the total limit applies.
 
 Many models reason for minutes without sending output, because some send reasoning text only on
-request and others never do. A timeout
-does not stop the provider's work or its charge, so by default the gateway waits for that work. Set
-`outputIdleSeconds` for callers that should give up sooner when a provider stops sending output.
+request and others never do. A timeout does not stop the provider's work or its charge, so by
+default the gateway waits for that work.[^chutes] Set `outputIdleSeconds` for callers that should
+give up sooner when a provider stops sending output.
 
 ## How policies combine
 
@@ -64,12 +64,16 @@ own `408` or `504` response also ends the request, with
 [`upstream_outcome_unknown`](/docs/reference/errors#504-gateway-timeout), because the provider may
 have run it.
 
-A timeout ends only your wait. Once the gateway has called the provider, the provider work continues up
-to 60 minutes. The gateway keeps reading the response and bills the usage, including usage that arrives
-after your response ended, so a short timeout does not limit the cost of a request that was sent.
-The response then has `X-Should-Retry: false`, which the OpenAI and Anthropic SDKs follow. Set
-other clients so they do not send a timed-out request again when its outcome is unknown.
+A timeout ends only your wait. Once the gateway has called the provider, the provider work continues
+up to 60 minutes.[^chutes] The gateway keeps reading the response and bills the usage, including
+usage that arrives after your response ended, so a short timeout does not limit the cost of a request
+that was sent. The response then has `X-Should-Retry: false`, which the OpenAI and Anthropic SDKs
+follow. Set other clients so they do not send a timed-out request again when its outcome is unknown.
 
 ## Fields
 
 <PolicyFields section="timeouts" />
+
+[^chutes]:
+    On [Chutes](/docs/providers/chutes#when-the-client-stops-early) TEE deployments, the gateway
+    stops a stream that no client receives, and you pay for the usage up to the stop.

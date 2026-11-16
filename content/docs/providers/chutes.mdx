@@ -112,6 +112,13 @@ Chutes sends no request ID on encrypted calls. Each call's entry in the
 [request record](/docs/request-records#provider-attempts) names its instance in
 `provider_instance_id` instead, so Chutes can find the call by instance and time.
 
+## When the client stops early
+
+When your client disconnects, or a [timeout](/docs/policies/timeouts) ends a stream, on a TEE
+deployment, the gateway stops the Chutes call. You pay for the usage up to the stop, because each
+encrypted chunk carries the usage so far. Buffered requests and Standard models report usage only
+when the call ends, so their calls run to the end and you pay for their full usage.
+
 ## References
 
 - [Chutes documentation](https://chutes.ai/docs)
