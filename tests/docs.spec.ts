@@ -620,7 +620,8 @@ test('single-property schemas omit filtering and nested filters fit narrow cards
 	const status = main.getByRole('tab', { name: '402', exact: true });
 	await status.click();
 	await expect(status).toHaveAttribute('aria-selected', 'true');
-	const response = main.getByRole('tabpanel');
+	// The panel that the click replaces stays in the page, inert, until its transition ends.
+	const response = main.locator('[role="tabpanel"]:not([inert])');
 	await expect(response).toContainText('more credit');
 	const filter = response.getByRole('textbox', { name: 'Filter Properties' });
 	await expect(filter).toHaveCount(0);
