@@ -5161,39 +5161,234 @@
 										"type": "object",
 										"properties": {
 											"destinations": {
-												"maxItems": 8,
-												"type": "array",
-												"items": {
-													"type": "object",
-													"properties": {
-														"url": {
-															"type": "string",
-															"maxLength": 2048,
-															"format": "uri",
-															"description": "Complete JSON webhook URL. No path is appended."
-														},
-														"headers": {
-															"description": "Destination authentication headers. Encrypt the export to keep them private when saved.",
-															"type": "object",
-															"propertyNames": {
-																"type": "string",
-																"pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
-															},
-															"additionalProperties": {
-																"type": "string",
-																"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
-															}
-														},
-														"content": {
-															"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
-															"type": "boolean"
+												"anyOf": [
+													{
+														"maxItems": 8,
+														"type": "array",
+														"items": {
+															"anyOf": [
+																{
+																	"type": "object",
+																	"properties": {
+																		"url": {
+																			"anyOf": [
+																				{
+																					"type": "string",
+																					"maxLength": 2048,
+																					"format": "uri",
+																					"description": "Complete JSON webhook URL. No path is appended."
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			]
+																		},
+																		"headers": {
+																			"description": "Destination authentication headers. Encrypt the destination to keep them private when saved.",
+																			"type": "object",
+																			"propertyNames": {
+																				"type": "string",
+																				"pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+																			},
+																			"additionalProperties": {
+																				"type": "string",
+																				"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
+																			}
+																		},
+																		"content": {
+																			"anyOf": [
+																				{
+																					"type": "boolean"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			]
+																		}
+																	},
+																	"required": [
+																		"url"
+																	],
+																	"additionalProperties": false
+																},
+																{
+																	"type": "object",
+																	"properties": {
+																		"encrypted": {
+																			"type": "object",
+																			"properties": {
+																				"version": {
+																					"type": "number",
+																					"const": 1
+																				},
+																				"keyId": {
+																					"type": "string",
+																					"pattern": "^[0-9a-f]{64}$"
+																				},
+																				"salt": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																				},
+																				"nonce": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{16}$"
+																				},
+																				"blob": {
+																					"type": "string",
+																					"minLength": 22,
+																					"maxLength": 349547,
+																					"pattern": "^[A-Za-z0-9_-]+$"
+																				}
+																			},
+																			"required": [
+																				"version",
+																				"keyId",
+																				"salt",
+																				"nonce",
+																				"blob"
+																			],
+																			"additionalProperties": false
+																		}
+																	},
+																	"required": [
+																		"encrypted"
+																	],
+																	"additionalProperties": false,
+																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																}
+															]
 														}
 													},
-													"required": [
-														"url"
-													],
-													"additionalProperties": false
-												},
+													{
+														"type": "object",
+														"properties": {
+															"encrypted": {
+																"type": "object",
+																"properties": {
+																	"version": {
+																		"type": "number",
+																		"const": 1
+																	},
+																	"keyId": {
+																		"type": "string",
+																		"pattern": "^[0-9a-f]{64}$"
+																	},
+																	"salt": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																	},
+																	"nonce": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{16}$"
+																	},
+																	"blob": {
+																		"type": "string",
+																		"minLength": 22,
+																		"maxLength": 349547,
+																		"pattern": "^[A-Za-z0-9_-]+$"
+																	}
+																},
+																"required": [
+																	"version",
+																	"keyId",
+																	"salt",
+																	"nonce",
+																	"blob"
+																],
+																"additionalProperties": false
+															}
+														},
+														"required": [
+															"encrypted"
+														],
+														"additionalProperties": false,
+														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+													}
+												],
 												"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if any of them sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
 											}
 										},
@@ -5245,7 +5440,7 @@
 											"encrypted"
 										],
 										"additionalProperties": false,
-										"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
+										"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 									}
 								]
 							},
@@ -5281,117 +5476,607 @@
 										"type": "object",
 										"properties": {
 											"presets": {
-												"minItems": 1,
-												"maxItems": 9,
-												"type": "array",
-												"items": {
-													"anyOf": [
-														{
-															"type": "string",
-															"const": "email_address",
-															"description": "Email address",
-															"x-stogas-group": "Contact"
+												"anyOf": [
+													{
+														"minItems": 1,
+														"maxItems": 9,
+														"type": "array",
+														"items": {
+															"anyOf": [
+																{
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"const": "email_address",
+																			"description": "Email address",
+																			"x-stogas-group": "Contact"
+																		},
+																		{
+																			"type": "string",
+																			"const": "phone_number",
+																			"description": "Formatted phone number, including international",
+																			"x-stogas-group": "Contact"
+																		},
+																		{
+																			"type": "string",
+																			"const": "social_security_number",
+																			"description": "U.S. Social Security number",
+																			"x-stogas-group": "National and business"
+																		},
+																		{
+																			"type": "string",
+																			"const": "credit_card_number",
+																			"description": "Credit card number",
+																			"x-stogas-group": "Bank"
+																		},
+																		{
+																			"type": "string",
+																			"const": "ip_address",
+																			"description": "IPv4 or IPv6 address",
+																			"x-stogas-group": "Network"
+																		},
+																		{
+																			"type": "string",
+																			"const": "api_keys_and_secrets",
+																			"description": "API keys, credentials and secrets",
+																			"x-stogas-group": "Secrets"
+																		},
+																		{
+																			"type": "string",
+																			"const": "bank_identifiers",
+																			"description": "IBAN and U.S. routing numbers",
+																			"x-stogas-group": "Bank"
+																		},
+																		{
+																			"type": "string",
+																			"const": "national_identifiers",
+																			"description": "National, tax and business identifiers",
+																			"x-stogas-group": "National and business"
+																		},
+																		{
+																			"type": "string",
+																			"const": "health_identifiers",
+																			"description": "Healthcare and health-insurance identifiers",
+																			"x-stogas-group": "Health"
+																		}
+																	]
+																},
+																{
+																	"type": "object",
+																	"properties": {
+																		"encrypted": {
+																			"type": "object",
+																			"properties": {
+																				"version": {
+																					"type": "number",
+																					"const": 1
+																				},
+																				"keyId": {
+																					"type": "string",
+																					"pattern": "^[0-9a-f]{64}$"
+																				},
+																				"salt": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																				},
+																				"nonce": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{16}$"
+																				},
+																				"blob": {
+																					"type": "string",
+																					"minLength": 22,
+																					"maxLength": 349547,
+																					"pattern": "^[A-Za-z0-9_-]+$"
+																				}
+																			},
+																			"required": [
+																				"version",
+																				"keyId",
+																				"salt",
+																				"nonce",
+																				"blob"
+																			],
+																			"additionalProperties": false
+																		}
+																	},
+																	"required": [
+																		"encrypted"
+																	],
+																	"additionalProperties": false,
+																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																}
+															]
 														},
-														{
-															"type": "string",
-															"const": "phone_number",
-															"description": "Formatted phone number, including international",
-															"x-stogas-group": "Contact"
+														"uniqueItems": true
+													},
+													{
+														"type": "object",
+														"properties": {
+															"encrypted": {
+																"type": "object",
+																"properties": {
+																	"version": {
+																		"type": "number",
+																		"const": 1
+																	},
+																	"keyId": {
+																		"type": "string",
+																		"pattern": "^[0-9a-f]{64}$"
+																	},
+																	"salt": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																	},
+																	"nonce": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{16}$"
+																	},
+																	"blob": {
+																		"type": "string",
+																		"minLength": 22,
+																		"maxLength": 349547,
+																		"pattern": "^[A-Za-z0-9_-]+$"
+																	}
+																},
+																"required": [
+																	"version",
+																	"keyId",
+																	"salt",
+																	"nonce",
+																	"blob"
+																],
+																"additionalProperties": false
+															}
 														},
-														{
-															"type": "string",
-															"const": "social_security_number",
-															"description": "U.S. Social Security number",
-															"x-stogas-group": "National and business"
-														},
-														{
-															"type": "string",
-															"const": "credit_card_number",
-															"description": "Credit card number",
-															"x-stogas-group": "Bank"
-														},
-														{
-															"type": "string",
-															"const": "ip_address",
-															"description": "IPv4 or IPv6 address",
-															"x-stogas-group": "Network"
-														},
-														{
-															"type": "string",
-															"const": "api_keys_and_secrets",
-															"description": "API keys, credentials and secrets",
-															"x-stogas-group": "Secrets"
-														},
-														{
-															"type": "string",
-															"const": "bank_identifiers",
-															"description": "IBAN and U.S. routing numbers",
-															"x-stogas-group": "Bank"
-														},
-														{
-															"type": "string",
-															"const": "national_identifiers",
-															"description": "National, tax and business identifiers",
-															"x-stogas-group": "National and business"
-														},
-														{
-															"type": "string",
-															"const": "health_identifiers",
-															"description": "Healthcare and health-insurance identifiers",
-															"x-stogas-group": "Health"
-														}
-													]
-												},
-												"uniqueItems": true,
+														"required": [
+															"encrypted"
+														],
+														"additionalProperties": false,
+														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+													}
+												],
 												"description": "Detector groups to turn on. Presets that you leave out stay off."
 											},
 											"customPattern": {
-												"type": "string",
-												"minLength": 1,
-												"maxLength": 512,
-												"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+												"anyOf": [
+													{
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 512,
+														"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+													},
+													{
+														"type": "object",
+														"properties": {
+															"encrypted": {
+																"type": "object",
+																"properties": {
+																	"version": {
+																		"type": "number",
+																		"const": 1
+																	},
+																	"keyId": {
+																		"type": "string",
+																		"pattern": "^[0-9a-f]{64}$"
+																	},
+																	"salt": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																	},
+																	"nonce": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{16}$"
+																	},
+																	"blob": {
+																		"type": "string",
+																		"minLength": 22,
+																		"maxLength": 349547,
+																		"pattern": "^[A-Za-z0-9_-]+$"
+																	}
+																},
+																"required": [
+																	"version",
+																	"keyId",
+																	"salt",
+																	"nonce",
+																	"blob"
+																],
+																"additionalProperties": false
+															}
+														},
+														"required": [
+															"encrypted"
+														],
+														"additionalProperties": false,
+														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+													}
+												]
 											},
 											"literals": {
-												"minItems": 1,
-												"maxItems": 1000,
-												"type": "array",
-												"items": {
-													"type": "object",
-													"properties": {
-														"values": {
-															"minItems": 1,
-															"maxItems": 1000,
-															"type": "array",
-															"items": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 256,
-																"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
-															},
-															"description": "Plain text strings, each at most 256 UTF-8 bytes. Settings apply to every value."
+												"anyOf": [
+													{
+														"minItems": 1,
+														"maxItems": 1000,
+														"type": "array",
+														"items": {
+															"anyOf": [
+																{
+																	"type": "object",
+																	"properties": {
+																		"values": {
+																			"anyOf": [
+																				{
+																					"minItems": 1,
+																					"maxItems": 1000,
+																					"type": "array",
+																					"items": {
+																						"anyOf": [
+																							{
+																								"type": "string",
+																								"minLength": 1,
+																								"maxLength": 256,
+																								"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						]
+																					}
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			],
+																			"description": "Plain text strings, each at most 256 UTF-8 bytes. Settings apply to every value."
+																		},
+																		"ignoreCase": {
+																			"anyOf": [
+																				{
+																					"type": "boolean"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			],
+																			"description": "Ignore ASCII letter case",
+																			"default": false
+																		},
+																		"wholeWord": {
+																			"anyOf": [
+																				{
+																					"type": "boolean"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			],
+																			"description": "Require Unicode word boundaries",
+																			"default": true
+																		},
+																		"fuzzy": {
+																			"anyOf": [
+																				{
+																					"type": "boolean"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			],
+																			"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
+																			"default": false
+																		}
+																	},
+																	"required": [
+																		"values"
+																	],
+																	"additionalProperties": false
+																},
+																{
+																	"type": "object",
+																	"properties": {
+																		"encrypted": {
+																			"type": "object",
+																			"properties": {
+																				"version": {
+																					"type": "number",
+																					"const": 1
+																				},
+																				"keyId": {
+																					"type": "string",
+																					"pattern": "^[0-9a-f]{64}$"
+																				},
+																				"salt": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																				},
+																				"nonce": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{16}$"
+																				},
+																				"blob": {
+																					"type": "string",
+																					"minLength": 22,
+																					"maxLength": 349547,
+																					"pattern": "^[A-Za-z0-9_-]+$"
+																				}
+																			},
+																			"required": [
+																				"version",
+																				"keyId",
+																				"salt",
+																				"nonce",
+																				"blob"
+																			],
+																			"additionalProperties": false
+																		}
+																	},
+																	"required": [
+																		"encrypted"
+																	],
+																	"additionalProperties": false,
+																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																}
+															]
 														},
-														"ignoreCase": {
-															"type": "boolean",
-															"description": "Ignore ASCII letter case",
-															"default": false
-														},
-														"wholeWord": {
-															"type": "boolean",
-															"description": "Require Unicode word boundaries",
-															"default": true
-														},
-														"fuzzy": {
-															"type": "boolean",
-															"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
-															"default": false
-														}
+														"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
 													},
-													"required": [
-														"values"
-													],
-													"additionalProperties": false
-												},
-												"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+													{
+														"type": "object",
+														"properties": {
+															"encrypted": {
+																"type": "object",
+																"properties": {
+																	"version": {
+																		"type": "number",
+																		"const": 1
+																	},
+																	"keyId": {
+																		"type": "string",
+																		"pattern": "^[0-9a-f]{64}$"
+																	},
+																	"salt": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																	},
+																	"nonce": {
+																		"type": "string",
+																		"pattern": "^[A-Za-z0-9_-]{16}$"
+																	},
+																	"blob": {
+																		"type": "string",
+																		"minLength": 22,
+																		"maxLength": 349547,
+																		"pattern": "^[A-Za-z0-9_-]+$"
+																	}
+																},
+																"required": [
+																	"version",
+																	"keyId",
+																	"salt",
+																	"nonce",
+																	"blob"
+																],
+																"additionalProperties": false
+															}
+														},
+														"required": [
+															"encrypted"
+														],
+														"additionalProperties": false,
+														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+													}
+												]
 											}
 										},
 										"additionalProperties": false,
@@ -5440,14 +6125,14 @@
 											"encrypted"
 										],
 										"additionalProperties": false,
-										"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
+										"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 									}
 								]
 							}
 						},
 						"additionalProperties": false,
 						"minProperties": 1,
-						"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt the export or the redaction to keep its settings private."
+						"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt the export or the redaction, or any value inside them, to keep those settings private."
 					},
 					"routing": {
 						"type": "object",
@@ -5826,39 +6511,234 @@
 													"type": "object",
 													"properties": {
 														"destinations": {
-															"maxItems": 8,
-															"type": "array",
-															"items": {
-																"type": "object",
-																"properties": {
-																	"url": {
-																		"type": "string",
-																		"maxLength": 2048,
-																		"format": "uri",
-																		"description": "Complete JSON webhook URL. No path is appended."
-																	},
-																	"headers": {
-																		"description": "Destination authentication headers. Encrypt the export to keep them private when saved.",
-																		"type": "object",
-																		"propertyNames": {
-																			"type": "string",
-																			"pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
-																		},
-																		"additionalProperties": {
-																			"type": "string",
-																			"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
-																		}
-																	},
-																	"content": {
-																		"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
-																		"type": "boolean"
+															"anyOf": [
+																{
+																	"maxItems": 8,
+																	"type": "array",
+																	"items": {
+																		"anyOf": [
+																			{
+																				"type": "object",
+																				"properties": {
+																					"url": {
+																						"anyOf": [
+																							{
+																								"type": "string",
+																								"maxLength": 2048,
+																								"format": "uri",
+																								"description": "Complete JSON webhook URL. No path is appended."
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						]
+																					},
+																					"headers": {
+																						"description": "Destination authentication headers. Encrypt the destination to keep them private when saved.",
+																						"type": "object",
+																						"propertyNames": {
+																							"type": "string",
+																							"pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$"
+																						},
+																						"additionalProperties": {
+																							"type": "string",
+																							"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
+																						}
+																					},
+																					"content": {
+																						"anyOf": [
+																							{
+																								"type": "boolean"
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						]
+																					}
+																				},
+																				"required": [
+																					"url"
+																				],
+																				"additionalProperties": false
+																			},
+																			{
+																				"type": "object",
+																				"properties": {
+																					"encrypted": {
+																						"type": "object",
+																						"properties": {
+																							"version": {
+																								"type": "number",
+																								"const": 1
+																							},
+																							"keyId": {
+																								"type": "string",
+																								"pattern": "^[0-9a-f]{64}$"
+																							},
+																							"salt": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																							},
+																							"nonce": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{16}$"
+																							},
+																							"blob": {
+																								"type": "string",
+																								"minLength": 22,
+																								"maxLength": 349547,
+																								"pattern": "^[A-Za-z0-9_-]+$"
+																							}
+																						},
+																						"required": [
+																							"version",
+																							"keyId",
+																							"salt",
+																							"nonce",
+																							"blob"
+																						],
+																						"additionalProperties": false
+																					}
+																				},
+																				"required": [
+																					"encrypted"
+																				],
+																				"additionalProperties": false,
+																				"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																			}
+																		]
 																	}
 																},
-																"required": [
-																	"url"
-																],
-																"additionalProperties": false
-															},
+																{
+																	"type": "object",
+																	"properties": {
+																		"encrypted": {
+																			"type": "object",
+																			"properties": {
+																				"version": {
+																					"type": "number",
+																					"const": 1
+																				},
+																				"keyId": {
+																					"type": "string",
+																					"pattern": "^[0-9a-f]{64}$"
+																				},
+																				"salt": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																				},
+																				"nonce": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{16}$"
+																				},
+																				"blob": {
+																					"type": "string",
+																					"minLength": 22,
+																					"maxLength": 349547,
+																					"pattern": "^[A-Za-z0-9_-]+$"
+																				}
+																			},
+																			"required": [
+																				"version",
+																				"keyId",
+																				"salt",
+																				"nonce",
+																				"blob"
+																			],
+																			"additionalProperties": false
+																		}
+																	},
+																	"required": [
+																		"encrypted"
+																	],
+																	"additionalProperties": false,
+																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																}
+															],
 															"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if any of them sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
 														}
 													},
@@ -5910,7 +6790,7 @@
 														"encrypted"
 													],
 													"additionalProperties": false,
-													"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
+													"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 												}
 											]
 										},
@@ -5946,117 +6826,607 @@
 													"type": "object",
 													"properties": {
 														"presets": {
-															"minItems": 1,
-															"maxItems": 9,
-															"type": "array",
-															"items": {
-																"anyOf": [
-																	{
-																		"type": "string",
-																		"const": "email_address",
-																		"description": "Email address",
-																		"x-stogas-group": "Contact"
+															"anyOf": [
+																{
+																	"minItems": 1,
+																	"maxItems": 9,
+																	"type": "array",
+																	"items": {
+																		"anyOf": [
+																			{
+																				"anyOf": [
+																					{
+																						"type": "string",
+																						"const": "email_address",
+																						"description": "Email address",
+																						"x-stogas-group": "Contact"
+																					},
+																					{
+																						"type": "string",
+																						"const": "phone_number",
+																						"description": "Formatted phone number, including international",
+																						"x-stogas-group": "Contact"
+																					},
+																					{
+																						"type": "string",
+																						"const": "social_security_number",
+																						"description": "U.S. Social Security number",
+																						"x-stogas-group": "National and business"
+																					},
+																					{
+																						"type": "string",
+																						"const": "credit_card_number",
+																						"description": "Credit card number",
+																						"x-stogas-group": "Bank"
+																					},
+																					{
+																						"type": "string",
+																						"const": "ip_address",
+																						"description": "IPv4 or IPv6 address",
+																						"x-stogas-group": "Network"
+																					},
+																					{
+																						"type": "string",
+																						"const": "api_keys_and_secrets",
+																						"description": "API keys, credentials and secrets",
+																						"x-stogas-group": "Secrets"
+																					},
+																					{
+																						"type": "string",
+																						"const": "bank_identifiers",
+																						"description": "IBAN and U.S. routing numbers",
+																						"x-stogas-group": "Bank"
+																					},
+																					{
+																						"type": "string",
+																						"const": "national_identifiers",
+																						"description": "National, tax and business identifiers",
+																						"x-stogas-group": "National and business"
+																					},
+																					{
+																						"type": "string",
+																						"const": "health_identifiers",
+																						"description": "Healthcare and health-insurance identifiers",
+																						"x-stogas-group": "Health"
+																					}
+																				]
+																			},
+																			{
+																				"type": "object",
+																				"properties": {
+																					"encrypted": {
+																						"type": "object",
+																						"properties": {
+																							"version": {
+																								"type": "number",
+																								"const": 1
+																							},
+																							"keyId": {
+																								"type": "string",
+																								"pattern": "^[0-9a-f]{64}$"
+																							},
+																							"salt": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																							},
+																							"nonce": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{16}$"
+																							},
+																							"blob": {
+																								"type": "string",
+																								"minLength": 22,
+																								"maxLength": 349547,
+																								"pattern": "^[A-Za-z0-9_-]+$"
+																							}
+																						},
+																						"required": [
+																							"version",
+																							"keyId",
+																							"salt",
+																							"nonce",
+																							"blob"
+																						],
+																						"additionalProperties": false
+																					}
+																				},
+																				"required": [
+																					"encrypted"
+																				],
+																				"additionalProperties": false,
+																				"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																			}
+																		]
 																	},
-																	{
-																		"type": "string",
-																		"const": "phone_number",
-																		"description": "Formatted phone number, including international",
-																		"x-stogas-group": "Contact"
+																	"uniqueItems": true
+																},
+																{
+																	"type": "object",
+																	"properties": {
+																		"encrypted": {
+																			"type": "object",
+																			"properties": {
+																				"version": {
+																					"type": "number",
+																					"const": 1
+																				},
+																				"keyId": {
+																					"type": "string",
+																					"pattern": "^[0-9a-f]{64}$"
+																				},
+																				"salt": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																				},
+																				"nonce": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{16}$"
+																				},
+																				"blob": {
+																					"type": "string",
+																					"minLength": 22,
+																					"maxLength": 349547,
+																					"pattern": "^[A-Za-z0-9_-]+$"
+																				}
+																			},
+																			"required": [
+																				"version",
+																				"keyId",
+																				"salt",
+																				"nonce",
+																				"blob"
+																			],
+																			"additionalProperties": false
+																		}
 																	},
-																	{
-																		"type": "string",
-																		"const": "social_security_number",
-																		"description": "U.S. Social Security number",
-																		"x-stogas-group": "National and business"
-																	},
-																	{
-																		"type": "string",
-																		"const": "credit_card_number",
-																		"description": "Credit card number",
-																		"x-stogas-group": "Bank"
-																	},
-																	{
-																		"type": "string",
-																		"const": "ip_address",
-																		"description": "IPv4 or IPv6 address",
-																		"x-stogas-group": "Network"
-																	},
-																	{
-																		"type": "string",
-																		"const": "api_keys_and_secrets",
-																		"description": "API keys, credentials and secrets",
-																		"x-stogas-group": "Secrets"
-																	},
-																	{
-																		"type": "string",
-																		"const": "bank_identifiers",
-																		"description": "IBAN and U.S. routing numbers",
-																		"x-stogas-group": "Bank"
-																	},
-																	{
-																		"type": "string",
-																		"const": "national_identifiers",
-																		"description": "National, tax and business identifiers",
-																		"x-stogas-group": "National and business"
-																	},
-																	{
-																		"type": "string",
-																		"const": "health_identifiers",
-																		"description": "Healthcare and health-insurance identifiers",
-																		"x-stogas-group": "Health"
-																	}
-																]
-															},
-															"uniqueItems": true,
+																	"required": [
+																		"encrypted"
+																	],
+																	"additionalProperties": false,
+																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																}
+															],
 															"description": "Detector groups to turn on. Presets that you leave out stay off."
 														},
 														"customPattern": {
-															"type": "string",
-															"minLength": 1,
-															"maxLength": 512,
-															"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+															"anyOf": [
+																{
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 512,
+																	"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+																},
+																{
+																	"type": "object",
+																	"properties": {
+																		"encrypted": {
+																			"type": "object",
+																			"properties": {
+																				"version": {
+																					"type": "number",
+																					"const": 1
+																				},
+																				"keyId": {
+																					"type": "string",
+																					"pattern": "^[0-9a-f]{64}$"
+																				},
+																				"salt": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																				},
+																				"nonce": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{16}$"
+																				},
+																				"blob": {
+																					"type": "string",
+																					"minLength": 22,
+																					"maxLength": 349547,
+																					"pattern": "^[A-Za-z0-9_-]+$"
+																				}
+																			},
+																			"required": [
+																				"version",
+																				"keyId",
+																				"salt",
+																				"nonce",
+																				"blob"
+																			],
+																			"additionalProperties": false
+																		}
+																	},
+																	"required": [
+																		"encrypted"
+																	],
+																	"additionalProperties": false,
+																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																}
+															]
 														},
 														"literals": {
-															"minItems": 1,
-															"maxItems": 1000,
-															"type": "array",
-															"items": {
-																"type": "object",
-																"properties": {
-																	"values": {
-																		"minItems": 1,
-																		"maxItems": 1000,
-																		"type": "array",
-																		"items": {
-																			"type": "string",
-																			"minLength": 1,
-																			"maxLength": 256,
-																			"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
-																		},
-																		"description": "Plain text strings, each at most 256 UTF-8 bytes. Settings apply to every value."
+															"anyOf": [
+																{
+																	"minItems": 1,
+																	"maxItems": 1000,
+																	"type": "array",
+																	"items": {
+																		"anyOf": [
+																			{
+																				"type": "object",
+																				"properties": {
+																					"values": {
+																						"anyOf": [
+																							{
+																								"minItems": 1,
+																								"maxItems": 1000,
+																								"type": "array",
+																								"items": {
+																									"anyOf": [
+																										{
+																											"type": "string",
+																											"minLength": 1,
+																											"maxLength": 256,
+																											"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
+																										},
+																										{
+																											"type": "object",
+																											"properties": {
+																												"encrypted": {
+																													"type": "object",
+																													"properties": {
+																														"version": {
+																															"type": "number",
+																															"const": 1
+																														},
+																														"keyId": {
+																															"type": "string",
+																															"pattern": "^[0-9a-f]{64}$"
+																														},
+																														"salt": {
+																															"type": "string",
+																															"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																														},
+																														"nonce": {
+																															"type": "string",
+																															"pattern": "^[A-Za-z0-9_-]{16}$"
+																														},
+																														"blob": {
+																															"type": "string",
+																															"minLength": 22,
+																															"maxLength": 349547,
+																															"pattern": "^[A-Za-z0-9_-]+$"
+																														}
+																													},
+																													"required": [
+																														"version",
+																														"keyId",
+																														"salt",
+																														"nonce",
+																														"blob"
+																													],
+																													"additionalProperties": false
+																												}
+																											},
+																											"required": [
+																												"encrypted"
+																											],
+																											"additionalProperties": false,
+																											"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																										}
+																									]
+																								}
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						],
+																						"description": "Plain text strings, each at most 256 UTF-8 bytes. Settings apply to every value."
+																					},
+																					"ignoreCase": {
+																						"anyOf": [
+																							{
+																								"type": "boolean"
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						],
+																						"description": "Ignore ASCII letter case",
+																						"default": false
+																					},
+																					"wholeWord": {
+																						"anyOf": [
+																							{
+																								"type": "boolean"
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						],
+																						"description": "Require Unicode word boundaries",
+																						"default": true
+																					},
+																					"fuzzy": {
+																						"anyOf": [
+																							{
+																								"type": "boolean"
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						],
+																						"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
+																						"default": false
+																					}
+																				},
+																				"required": [
+																					"values"
+																				],
+																				"additionalProperties": false
+																			},
+																			{
+																				"type": "object",
+																				"properties": {
+																					"encrypted": {
+																						"type": "object",
+																						"properties": {
+																							"version": {
+																								"type": "number",
+																								"const": 1
+																							},
+																							"keyId": {
+																								"type": "string",
+																								"pattern": "^[0-9a-f]{64}$"
+																							},
+																							"salt": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																							},
+																							"nonce": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{16}$"
+																							},
+																							"blob": {
+																								"type": "string",
+																								"minLength": 22,
+																								"maxLength": 349547,
+																								"pattern": "^[A-Za-z0-9_-]+$"
+																							}
+																						},
+																						"required": [
+																							"version",
+																							"keyId",
+																							"salt",
+																							"nonce",
+																							"blob"
+																						],
+																						"additionalProperties": false
+																					}
+																				},
+																				"required": [
+																					"encrypted"
+																				],
+																				"additionalProperties": false,
+																				"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																			}
+																		]
 																	},
-																	"ignoreCase": {
-																		"type": "boolean",
-																		"description": "Ignore ASCII letter case",
-																		"default": false
-																	},
-																	"wholeWord": {
-																		"type": "boolean",
-																		"description": "Require Unicode word boundaries",
-																		"default": true
-																	},
-																	"fuzzy": {
-																		"type": "boolean",
-																		"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
-																		"default": false
-																	}
+																	"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
 																},
-																"required": [
-																	"values"
-																],
-																"additionalProperties": false
-															},
-															"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+																{
+																	"type": "object",
+																	"properties": {
+																		"encrypted": {
+																			"type": "object",
+																			"properties": {
+																				"version": {
+																					"type": "number",
+																					"const": 1
+																				},
+																				"keyId": {
+																					"type": "string",
+																					"pattern": "^[0-9a-f]{64}$"
+																				},
+																				"salt": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																				},
+																				"nonce": {
+																					"type": "string",
+																					"pattern": "^[A-Za-z0-9_-]{16}$"
+																				},
+																				"blob": {
+																					"type": "string",
+																					"minLength": 22,
+																					"maxLength": 349547,
+																					"pattern": "^[A-Za-z0-9_-]+$"
+																				}
+																			},
+																			"required": [
+																				"version",
+																				"keyId",
+																				"salt",
+																				"nonce",
+																				"blob"
+																			],
+																			"additionalProperties": false
+																		}
+																	},
+																	"required": [
+																		"encrypted"
+																	],
+																	"additionalProperties": false,
+																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																}
+															]
 														}
 													},
 													"additionalProperties": false,
@@ -6105,14 +7475,14 @@
 														"encrypted"
 													],
 													"additionalProperties": false,
-													"description": "These settings, encrypted with `stogas encrypt`. The gateway reads them only with the encryption key a request sends."
+													"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 												}
 											]
 										}
 									},
 									"additionalProperties": false,
 									"minProperties": 1,
-									"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt the export or the redaction to keep its settings private."
+									"description": "Text extraction, redaction and export of each request and response to your webhook. Encrypt the export or the redaction, or any value inside them, to keep those settings private."
 								},
 								"routing": {
 									"type": "object",
