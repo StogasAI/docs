@@ -2901,6 +2901,10 @@
 									"standard",
 									"pro"
 								]
+							},
+							"context": {
+								"type": "string",
+								"description": "Which earlier reasoning the model reads, with values that OpenAI decides. Anthropic-format deployments take only `auto`."
 							}
 						},
 						"additionalProperties": false
@@ -3052,6 +3056,13 @@
 								"null"
 							]
 						}
+					},
+					"request_country": {
+						"type": [
+							"string",
+							"null"
+						],
+						"description": "The country that Codex sends when its host sets one: two letters, or null when the host does not know it. The gateway accepts it and never sends it to the provider."
 					},
 					"prompt_cache_options": {
 						"type": "object",
@@ -3393,7 +3404,7 @@
 			},
 			"ResponsesInputItem": {
 				"type": "object",
-				"description": "An output item: a message, a tool call, reasoning or a hosted tool result.",
+				"description": "An output item: a message, a tool call, reasoning, a hosted tool call or an MCP item.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -3408,6 +3419,11 @@
 							"function_call_output",
 							"custom_tool_call",
 							"custom_tool_call_output",
+							"shell_call",
+							"apply_patch_call",
+							"mcp_list_tools",
+							"mcp_call",
+							"mcp_approval_request",
 							"reasoning"
 						]
 					},
@@ -3558,7 +3574,7 @@
 			"ResponsesRequestInputItem": {
 				"type": "object",
 				"additionalProperties": false,
-				"description": "An input item: a message, a tool call, a tool output or reasoning from an earlier response. Send items back as the reply returned them.",
+				"description": "An input item: a message, a tool call, a tool output, reasoning, a hosted tool call or an MCP item from an earlier response, or tools that a client declares during the conversation. Send items back as the reply returned them.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -3575,7 +3591,14 @@
 							"shell_call_output",
 							"apply_patch_call",
 							"apply_patch_call_output",
-							"reasoning"
+							"reasoning",
+							"mcp_list_tools",
+							"mcp_call",
+							"mcp_approval_request",
+							"mcp_approval_response",
+							"web_search_call",
+							"web_fetch_call",
+							"additional_tools"
 						]
 					},
 					"status": {
@@ -3583,8 +3606,12 @@
 						"enum": [
 							"completed",
 							"in_progress",
-							"incomplete"
-						]
+							"incomplete",
+							"searching",
+							"failed",
+							"calling"
+						],
+						"description": "`searching` applies only to `web_search_call` and `web_fetch_call` items, `calling` only to `mcp_call` items, and `failed` to all three."
 					},
 					"role": {
 						"type": "string",
@@ -3609,9 +3636,13 @@
 					"call_id": {
 						"type": "string"
 					},
+					"server_label": {
+						"type": "string",
+						"description": "The MCP server of an `mcp_list_tools`, `mcp_call` or `mcp_approval_request` item."
+					},
 					"name": {
 						"type": "string",
-						"pattern": "^[A-Za-z0-9_-]{1,64}$"
+						"description": "The tool of a call. A function or custom tool's name has 1 to 64 letters, digits, underscores or hyphens."
 					},
 					"namespace": {
 						"type": "string",
@@ -3650,11 +3681,31 @@
 							}
 						]
 					},
+					"error": {
+						"type": "string",
+						"description": "The error of an `mcp_list_tools` or `mcp_call` item."
+					},
+					"approval_request_id": {
+						"type": "string",
+						"description": "The `mcp_approval_request` that an `mcp_approval_response` answers, or that an `mcp_call` ran after."
+					},
+					"approve": {
+						"type": "boolean",
+						"description": "Whether an `mcp_approval_response` approves the call."
+					},
+					"reason": {
+						"type": "string",
+						"description": "Why an `mcp_approval_response` decided so."
+					},
 					"action": {
 						"type": "object",
-						"description": "The commands of a `shell_call`.",
+						"description": "The commands of a `shell_call`, or what a `web_search_call` or `web_fetch_call` did.",
 						"additionalProperties": false,
 						"properties": {
+							"type": {
+								"type": "string",
+								"description": "The kind of search or fetch, such as `search`."
+							},
 							"commands": {
 								"type": "array",
 								"items": {
@@ -3666,6 +3717,103 @@
 							},
 							"max_output_length": {
 								"type": "integer"
+							},
+							"query": {
+								"type": "string"
+							},
+							"queries": {
+								"type": "array",
+								"items": {
+									"type": "string"
+								}
+							},
+							"url": {
+								"type": "string"
+							},
+							"pattern": {
+								"type": "string"
+							},
+							"sources": {
+								"type": "array",
+								"description": "The results of a search. Claude needs each result's `encrypted_content` to read the search again.",
+								"items": {
+									"type": "object",
+									"additionalProperties": false,
+									"properties": {
+										"type": {
+											"type": "string"
+										},
+										"url": {
+											"type": "string"
+										},
+										"title": {
+											"type": "string"
+										},
+										"encrypted_content": {
+											"type": "string"
+										},
+										"page_age": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					},
+					"tool_caller": {
+						"type": "object",
+						"description": "What called a hosted tool. Only `direct`.",
+						"additionalProperties": false,
+						"required": [
+							"type"
+						],
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": [
+									"direct"
+								]
+							}
+						}
+					},
+					"web_fetch_result_type": {
+						"type": "string",
+						"description": "The result of a Claude `web_fetch_call`, with the fields below, as the reply returned them."
+					},
+					"web_fetch_result_url": {
+						"type": "string"
+					},
+					"web_fetch_retrieved_at": {
+						"type": "string"
+					},
+					"web_fetch_error_code": {
+						"type": "string"
+					},
+					"web_fetch_document": {
+						"type": "object",
+						"description": "The page that a Claude `web_fetch_call` got.",
+						"additionalProperties": false,
+						"properties": {
+							"type": {
+								"type": "string"
+							},
+							"title": {
+								"type": "string"
+							},
+							"source": {
+								"type": "object",
+								"additionalProperties": false,
+								"properties": {
+									"type": {
+										"type": "string"
+									},
+									"media_type": {
+										"type": "string"
+									},
+									"data": {
+										"type": "string"
+									}
+								}
 							}
 						}
 					},
@@ -3730,6 +3878,13 @@
 					},
 					"encrypted_content": {
 						"type": "string"
+					},
+					"tools": {
+						"type": "array",
+						"description": "The tools of an `additional_tools` item, which count as tools of the request, or the tools that an `mcp_list_tools` item lists. Codex declares tools in `additional_tools` for some models.",
+						"items": {
+							"type": "object"
+						}
 					}
 				}
 			},

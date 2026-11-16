@@ -100,9 +100,11 @@ On Responses, Claude returns each thinking block as its own reasoning item, whos
   and other models can bill the reasoning. Send the request again without its reasoning to
   continue.
 - To change instructions during a conversation, add a `system` or `developer` message right after
-  the newest user message or tool results. It must be the last message or come right before
-  Claude's reply. Claude Opus 4.8 and later, Sonnet 5.5 and later, Haiku 5.5 and later, Fable and
-  Mythos accept it on every provider. Other models, and other positions, get a 400 error.
+  the newest user message, tool results or hosted tool call. It must be the last message or come
+  right before Claude's reply. Claude Opus 4.8 and later, Sonnet 5.5 and later, Haiku 5.5 and
+  later, Fable and Mythos accept it on every provider. Other models, and other positions, get a 400
+  error.
+- `reasoning.context` takes only `auto`.
 
 ### Progress updates
 
@@ -145,6 +147,9 @@ long work. Ask for the updates without the reasoning:
   name either version. A request that names another version gets a 400 error.
 - `web_search` searches only the live web, so `external_web_access` must be `true` or left out.
   Codex sends `false` unless you set `web_search = "live"`.
+- Claude reads an earlier `web_search_call` only with the `encrypted_content` of each of its
+  `sources`, and the gateway leaves out a search without it. Codex sends searches back without
+  their sources, so Claude does not see the searches of a Codex conversation.
 - A `required` or named `tool_choice` makes Claude call the tool without reasoning first, and
   returns a 400 error together with a reasoning token budget. Claude Fable 5.2, Mythos 5.2, Fable
   5.1, Mythos 5.1, Opus 5.5 and Sonnet 5.5 take only `auto` and `none`.

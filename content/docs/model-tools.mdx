@@ -97,6 +97,10 @@ Request records link each call to the request that sends its result by a
 to call a tool[^forced], and a request with `required` or a named function leaves their deployments
 out.
 
+On Responses, an `additional_tools` input item can also declare tools, as Codex does for some
+models. Its `tools` count as tools of the request on every provider, and a later declaration of a
+tool replaces the earlier one.
+
 ## Group tools in namespaces
 
 On Responses, a `namespace` tool groups your tools under one name:
@@ -167,6 +171,14 @@ request for `provider:aws claude-fable-5-1` with `web_fetch` goes to
 
 The gateway accepts only tool versions with a price in the catalog, and returns `400` for an
 unknown version. Each provider's page lists its prices and versions.
+
+### Send hosted calls back
+
+On Responses, a reply returns each hosted call as a `web_search_call` or `web_fetch_call` item. Send
+these items back in `input` with the rest of the reply. Each deployment gets only the calls that it
+can read: calls of a tool that its route runs, in the form that its provider returns them[^replay].
+The gateway leaves the other calls out and keeps the rest of the conversation, so a conversation can
+move to another model.
 
 ### Domain filters
 
@@ -413,6 +425,8 @@ retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
     [through Chat Completions](/docs/providers#responses-through-chat-completions).
 
 [^lists]: [Anthropic](/docs/providers/anthropic#tools) returns `400` for both lists in one tool.
+
+[^replay]: [Claude](/docs/providers/anthropic#tools) reads a search again only with the encrypted content of its results.
 
 [^mcp]: [OpenAI's MCP guide](https://developers.openai.com/api/docs/guides/tools-connectors-mcp).
 
