@@ -126,8 +126,30 @@ every provider gets the same budget. `none` turns reasoning off.
 
 ## Show or hide the reasoning summary
 
-Some models can return a summary of their reasoning. On Responses, set `reasoning.summary`[^summary].
-Omit it to keep the provider's default. The summary changes what you see, not what you pay.
+Some models can return a summary of their reasoning. Set `reasoning.display` on Chat Completions,
+or `reasoning.summary` on Responses[^summary]:
+
+```json tab="Chat Completions"
+{
+	"model": "gpt-5.6-sol",
+	"messages": [{ "role": "user", "content": "Find the bug in this function." }],
+	"reasoning": { "effort": "high", "display": "summarized" }
+}
+```
+
+```json tab="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Find the bug in this function.",
+	"reasoning": { "effort": "high", "summary": "auto" }
+}
+```
+
+- `summarized` returns the summary in `reasoning`, with a blank line between its parts, and each
+  part in a `reasoning.summary` entry of `reasoning_details`. `omitted` returns no summary.
+- Omit the field to keep the provider's default.
+- A model that returns all of its reasoning or none rejects `reasoning.display`.
+- The summary changes what you see, not what you pay.
 
 ## Send reasoning back
 
@@ -179,7 +201,9 @@ In a tool loop, send the model's reasoning back with the tool results:
   and the gateway leaves it out.
 - On Chat Completions, send the assistant message back unchanged. `reasoning_details` holds the
   reasoning to continue from. `reasoning` and `reasoning_content` are two names for the same text.
-  The gateway also accepts OpenRouter's `reasoning_details` and leaves out their summaries.
+- The gateway sends no summary back to a model, which continues from its own reasoning.
+- The gateway also accepts OpenRouter's reasoning: its `reasoning_details`, and its reasoning items
+  with `format` and `signature`.
 - A signed or encrypted entry that you change returns `400`[^claude].
 - Each deployment gets only the reasoning that it can read, and the gateway leaves out the rest,
   such as another model family's reasoning or reasoning that you got from a provider directly. A
@@ -197,10 +221,14 @@ including reasoning.
     [Azure](/docs/providers/azure).
 
 [^summary]:
-    Anthropic models accept `auto`, `none` or `updates`, and on Chat Completions
-    `reasoning.display`. See [Anthropic](/docs/providers/anthropic#progress-updates). OpenAI models
-    accept
-    [OpenAI's values](https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries).
+    Anthropic models accept `auto`, `none` or `updates` in `reasoning.summary`, and `summarized`,
+    `omitted` or `updates` in `reasoning.display`. See
+    [Anthropic](/docs/providers/anthropic#progress-updates). GPT models accept
+    [OpenAI's values](https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries)
+    in `reasoning.summary`, and `summarized` or `omitted` in `reasoning.display`. The gateway gets
+    their summaries [through Responses](/docs/providers#chat-completions-through-responses), so
+    `summarized` returns `400` with a field that Responses lack, such as `seed`, `stop` or `n`
+    above 1.
 
 [^claude]:
     Claude also checks the system prompt, tools and earlier messages before its reasoning. See
