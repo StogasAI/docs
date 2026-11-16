@@ -195,8 +195,11 @@ When every call fails, the error that you received can be an earlier call's. See
 
 The gateway sets each call's `status` from the provider's structured error type, code and HTTP
 status. Only failures that providers mark in no other way are read from the start of the message:
-Anthropic's spend limits, low credit and workspace region refusals, and prompts longer than the
-deployment's context window. An unrecognized failure is `provider_error`.
+Anthropic's spend limits, low credit and workspace region refusals, prompts longer than the
+deployment's context window, and prompts that OpenAI's safety checks flag, which share the
+`invalid_prompt` code with prompts that OpenAI refuses for other reasons. An unrecognized failure is
+`provider_error`. Each failed call also keeps the code from the provider's error reply in
+`error_code`, such as `invalid_prompt`, and `status:invalid_prompt` filters by it.
 
 | Result                                                                             | Meaning                                                                   |
 | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |

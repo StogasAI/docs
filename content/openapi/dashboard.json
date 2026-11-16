@@ -13815,6 +13815,11 @@
 																	],
 																	"description": "The provider's HTTP status. `null` when there was none, such as after a lost connection."
 																},
+																"error_code": {
+																	"type": "string",
+																	"pattern": "^[A-Za-z][\\w.-]{0,47}$",
+																	"description": "The code in the provider's error reply, such as `invalid_prompt` or `ValidationException`, which `status` can generalize. Absent when the call succeeded or the reply had no code."
+																},
 																"start_ms": {
 																	"type": "integer",
 																	"minimum": 0,
