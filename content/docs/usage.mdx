@@ -85,6 +85,7 @@ charge:
 | `checked_client_tool_calls`, `invalid_client_tool_calls`              | Returned calls [checked](/docs/analytics#metrics) against their tool's schema, and failures                           |
 | `checked_structured_outputs`, `invalid_structured_outputs`            | JSON outputs checked against the requested format, and failures                                                       |
 | `input_text_bytes`, `output_text_bytes`, `reasoning_text_bytes`       | UTF-8 bytes of text: input after redaction, visible output and visible reasoning                                      |
+| `client_stop_output_text_bytes`, `client_stop_reasoning_text_bytes`   | The visible output and reasoning that the client had received when it [stopped early](#when-the-client-stops-early)   |
 | `input_file_count`, `input_file_url_count`, `input_inline_file_bytes` | Attachments, attachments sent as URLs, and decoded inline bytes                                                       |
 
 Some models charge more for every token of a request whose prompt is over a size. The prompt counts
@@ -117,7 +118,8 @@ Each provider counts tokens with its own tokenizer, so the same prompt can have 
 counts on different models. Standard text tokens measure text the same way on every model: **one
 standard text token is 4 bytes of UTF-8 text**, which is close to one token of English text.
 
-`usage.standard_text_tokens` has `input`, `reasoning` and `output`.
+`usage.standard_text_tokens` has `input`, `reasoning` and `output`, and `client_stop_output` and
+`client_stop_reasoning` when the client [stopped early](#when-the-client-stops-early).
 
 - Input is the request text after [PII redaction](/docs/pii-redaction), including tool definitions
   and arguments. JSON syntax, property names and attachments do not count.
@@ -126,6 +128,13 @@ standard text token is 4 bytes of UTF-8 text**, which is close to one token of E
 Use them to compare text size across models, or to cap input text the same way on every model with
 a [`standardTextTokens` limit](/docs/policies/limits#tokens-and-input-text). They never set the
 price.
+
+## When the client stops early
+
+If your client disconnects or times out, the provider call still runs to its end and you pay for its
+full usage, because providers report usage only when a call ends. The record keeps when the client
+stopped in `client_stop_ms`, and what it had received by then in `client_stop_output` and
+`client_stop_reasoning`.
 
 ## Input estimates
 

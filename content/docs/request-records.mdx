@@ -351,26 +351,29 @@ the analytics filter [`trace:`](/docs/analytics#filters) finds the requests of a
 
 ## Apps
 
-Send the attribution headers that OpenRouter and Vercel AI Gateway read to name the app that makes
-a request:
+Send these headers to name the app that makes a request:
 
 ```http title="Request headers"
-HTTP-Referer: https://desk.example.com
-X-Title: Support Desk
+Stogas-App-Title: Support Desk
+Stogas-App-URL: https://desk.example.com
 ```
 
-| Header                               | Record field                                                    |
-| ------------------------------------ | --------------------------------------------------------------- |
-| `HTTP-Referer`                       | `app_url`, without credentials, query, fragment and final slash |
-| `X-OpenRouter-Title`, else `X-Title` | `app_title`                                                     |
+| Header                                                        | Record field                                                    |
+| ------------------------------------------------------------- | --------------------------------------------------------------- |
+| `Stogas-App-Title`, else `X-OpenRouter-Title`, else `X-Title` | `app_title`                                                     |
+| `Stogas-App-URL`, else `HTTP-Referer`                         | `app_url`, without credentials, query, fragment and final slash |
 
 The analytics filter [`app:`](/docs/analytics#filters) and the app breakdown use the title, or the
 URL when a request has no title.
 
-- Roo Code sends both headers without any setup.
+- The gateway also reads the headers that OpenRouter and Vercel AI Gateway use, which clients such
+  as Roo Code send without any setup. The first header in a row that a request sends sets that
+  field, so your `Stogas-App-*` headers replace the ones a client sends.
 - Each value has up to 512 bytes of UTF-8 and no control characters, and the URL starts with
   `http://` or `https://`. The gateway serves a request whose headers are missing, invalid or
-  repeated, and records no app from them.
+  repeated, and leaves the field empty.
+- To group requests by app without sending headers, give each app its own API key and group
+  analytics by API key.
 - The gateway never sends the headers to the provider.
 - Rejection records have no app.
 
