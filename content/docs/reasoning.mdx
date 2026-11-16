@@ -136,7 +136,6 @@ In a tool loop, send the model's reasoning back with the tool results:
 ```json tab="Responses"
 {
 	"model": "claude-sonnet-5",
-	"include": ["reasoning.encrypted_content"],
 	"input": [
 		{ "role": "user", "content": "What's the weather in Paris?" },
 		{ "type": "reasoning", "id": "rs_...", "summary": [], "encrypted_content": "..." },
@@ -174,11 +173,13 @@ In a tool loop, send the model's reasoning back with the tool results:
 }
 ```
 
-- On Responses, `include: ["reasoning.encrypted_content"]` returns reasoning items that you can
-  send back. Send each item back unchanged, in its place in `input`. Without it, a reasoning item
-  holds nothing to continue from, and the gateway leaves it out.
+- On Responses, send each reasoning item back unchanged, in its place in `input`. Its
+  `encrypted_content` holds the reasoning to continue from, so you don't need to ask for it with
+  `include`. An item without `encrypted_content` or reasoning text holds nothing to continue from,
+  and the gateway leaves it out.
 - On Chat Completions, send the assistant message back unchanged. `reasoning_details` holds the
   reasoning to continue from. `reasoning` and `reasoning_content` are two names for the same text.
+  The gateway also accepts OpenRouter's `reasoning_details` and leaves out their summaries.
 - A signed or encrypted entry that you change returns `400`[^claude].
 - Each deployment gets only the reasoning that it can read, and the gateway leaves out the rest,
   such as another model family's reasoning or reasoning that you got from a provider directly. A
