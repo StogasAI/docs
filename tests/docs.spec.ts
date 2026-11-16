@@ -822,7 +822,8 @@ test('sidebar shows a draggable native scrollbar only when its links overflow', 
 		await page.mouse.down();
 		await page.mouse.move(x, box!.y + 120, { steps: 8 });
 		await page.mouse.up();
-		expect(await viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+		// The page reports the scroll a frame after the drag.
+		await expect.poll(() => viewport.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
 		await page.goto('/docs/reference');
 		// Grow the window until every link fits.
 		const hidden = await viewport.evaluate(
