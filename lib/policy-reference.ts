@@ -1,4 +1,5 @@
 import policy from '@/content/schemas/key-config-v1.json';
+import { withoutEnvelopes } from '@/lib/policy-settings';
 
 const sections = {
 	document: policy,
@@ -7,13 +8,16 @@ const sections = {
 	delegation: policy.properties.delegation,
 	input: policy.properties.input,
 	timeouts: policy.properties.timeouts,
-	// Each plugin that can be encrypted takes its settings, the first form, or an envelope.
+	// A value that can be encrypted takes its settings, the first form, or an envelope.
 	exportDestination:
-		policy.properties.plugins.properties.export.anyOf[0]!.properties.destinations!.items,
+		policy.properties.plugins.properties.export.anyOf[0]!.properties.destinations!.anyOf[0]!
+			.items!.anyOf[0]!,
 	limit: policy.properties.limits.additionalProperties,
 	limitPeriod: policy.properties.limits.additionalProperties.properties.per,
 	accessPeriod: policy.properties.access.properties.deny.items,
-	literalRule: policy.properties.plugins.properties.redaction.anyOf[0]!.properties.literals!.items
+	literalRule:
+		policy.properties.plugins.properties.redaction.anyOf[0]!.properties.literals!.anyOf[0]!.items!
+			.anyOf[0]!
 };
 export type PolicySection = keyof typeof sections;
 
@@ -92,7 +96,7 @@ export function policyDocumentFields() {
 
 export function policySection(section: PolicySection) {
 	if (!Object.hasOwn(sections, section)) throw new Error(`Unknown policy section: ${section}`);
-	return sections[section];
+	return withoutEnvelopes(sections[section]);
 }
 
 // Use the same definitions in the page, Copy Markdown, search and llms-full.txt.

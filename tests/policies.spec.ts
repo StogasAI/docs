@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import schema from '../content/schemas/key-config-v1.json';
 import routingRegistry from '../content/schemas/routing-fields.json';
 import navigation from '../content/docs/policies/meta.json';
+import { withoutEnvelopes } from '../lib/policy-settings';
 
 const topics = [
 	'/docs/policies',
@@ -78,11 +79,13 @@ test('policy topics retain complete field exports and working links to their own
 		],
 		'/docs/policies/access': [schema.properties.access.properties.deny.items],
 		'/docs/pii-redaction': [
-			schema.properties.plugins.properties.redaction.anyOf[0]!.properties.literals!.items,
+			schema.properties.plugins.properties.redaction.anyOf[0]!.properties.literals!.anyOf[0]!
+				.items!.anyOf[0]!,
 			schema.properties.input
 		],
 		'/docs/export': [
-			schema.properties.plugins.properties.export.anyOf[0]!.properties.destinations!.items
+			schema.properties.plugins.properties.export.anyOf[0]!.properties.destinations!.anyOf[0]!
+				.items!.anyOf[0]!
 		]
 	};
 	const links = new Set<string>();
@@ -113,7 +116,8 @@ test('policy topics retain complete field exports and working links to their own
 		const json = Array.from(markdown.matchAll(/```json(?: [^\n]*)?\n([\s\S]*?)\n```/g), (m) =>
 			JSON.parse(m[1])
 		);
-		for (const definition of definitions[path] ?? []) expect(json, path).toContainEqual(definition);
+		for (const definition of definitions[path] ?? [])
+			expect(json, path).toContainEqual(withoutEnvelopes(definition));
 		if (path === '/docs/policies') {
 			for (const key of Object.keys(schema.properties))
 				expect(markdown).toContain(`[\`${key}\`](/docs`);

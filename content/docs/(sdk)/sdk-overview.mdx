@@ -57,6 +57,9 @@ To load it now, call the transport's refresh method, such as `refresh_evidence()
   request deadline, or 60 seconds through a proxy.
 - A request through a native SDK's local URL can run for up to one hour.
 - E2EE request bodies can be up to 128 MiB, and response bodies up to 64 MiB.
+- To add `encryption_keys` to a compressed request body, a transport decodes it and sends it
+  uncompressed. JavaScript decodes gzip and deflate, and the other SDKs also decode Brotli and
+  Zstandard. A body in another encoding goes unchanged, without the keys.
 - JavaScript keeps each encrypted upload in memory until it is sent, so limit how many large uploads
   run at once.
 - More connections do not spread requests across gateways.

@@ -93,8 +93,8 @@ document, which for a workload identity pool holds `schema`, `projectId` and
 encrypts a key file as Google Cloud downloaded it:
 
 ```bash
-stogas encrypt --key providers --organization <organization-id> \
-  --purpose byok/google-cloud --input key.json
+stogas encrypt --key-file providers.key --organization <organization-id> \
+  --credential google-cloud --input key.json
 ```
 
 For Claude Models on Google Cloud, encrypt a credential document with your workspace ID instead:
@@ -108,8 +108,8 @@ jq --arg workspace wrkspc_... '{
   privateKey: (.private_key | gsub("-----[A-Z ]+-----|\\s"; "")),
   workspaceId: $workspace
 }' key.json > google.json
-stogas encrypt --key providers --organization <organization-id> \
-  --purpose byok/google-cloud --input google.json
+stogas encrypt --key-file providers.key --organization <organization-id> \
+  --credential google-cloud --input google.json
 ```
 
 Then delete `key.json` and `google.json`, and add what the CLI printed in [BYOK](/docs/byok).

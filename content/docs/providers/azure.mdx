@@ -77,8 +77,8 @@ application, and only a gateway can open it with your key.
    az ad sp create-for-rbac --name stogas-gateway \
      --role 53ca6127-db72-4b80-b1b0-d745d6d5456d \
      --scopes /subscriptions/<subscription-id>/resourceGroups/<group> > app.json
-   stogas encrypt --key providers --organization <organization-id> \
-     --purpose byok/azure --input app.json
+   stogas encrypt --key-file providers.key --organization <organization-id> \
+     --credential azure --input app.json
    ```
 
    Then delete `app.json`, which holds the secret.

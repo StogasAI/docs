@@ -81,13 +81,13 @@ With customer encryption, we store only ciphertext, and each request sends the k
 2. Encrypt the credential on your machine:
 
    ```console
-   stogas encrypt --key providers --organization YOUR_ORGANIZATION_ID --purpose byok/openai
+   stogas encrypt --key-file providers.key --organization YOUR_ORGANIZATION_ID --credential openai
    ```
 
-   The purpose is `byok/` and the provider ID. The CLI asks for the API key without showing it, and
-   prints the credential to add. AWS and Google Cloud take a credential document, and Azure takes
-   an [application](/docs/providers/azure#customer-encryption), which you pass with `--input` and
-   the CLI checks before it encrypts them.
+   The CLI asks for the API key without showing it, and prints the credential to add. AWS and
+   Google Cloud take a credential document, and Azure takes an
+   [application](/docs/providers/azure#customer-encryption), which you pass with `--input` and the
+   CLI checks before it encrypts them.
 
 3. Add what the CLI printed as a customer-encrypted credential. Saving does not contact the
    provider.
@@ -108,9 +108,9 @@ Personal organizations always allow them. To move an organization over:
 2. Put it in place of the stored credential in each key's [list](#order-credentials).
 3. Delete the stored credentials, then turn off **Allow stored credentials**.
 
-After that, the dashboard and the CLI encrypt every secret before it leaves your device. A call to
-the dashboard API that sends a secret in plain text gets `409 STORED_CREDENTIALS_NOT_ALLOWED`, and
-we neither store that secret nor send it to the provider. That request still carried the secret to
+After that, the dashboard takes a provider secret only as `stogas encrypt` prints it. A call to the
+dashboard API that sends a secret in plain text gets `409 STORED_CREDENTIALS_NOT_ALLOWED`, and we
+neither store that secret nor send it to the provider. That request still carried the secret to
 us, so replace it at the provider if your rules forbid that.
 
 ## AWS and Google Cloud

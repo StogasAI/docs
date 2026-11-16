@@ -1,6 +1,6 @@
 ---
 title: Customer encryption
-description: Encrypt provider keys, exports and redactions with a key that only you hold.
+description: Encrypt provider credentials and parts of a policy with a key that only you hold.
 icon: LockKeyhole
 ---
 
@@ -13,9 +13,11 @@ Use it for:
 - **Provider credentials** used by [BYOK](/docs/byok#customer-encryption). An organization can
   [require it](/docs/byok#require-customer-encryption) for every provider credential.
 - **Export and redaction settings**: [Export](/docs/export) destinations and their credentials,
-  and the terms that [PII redaction](/docs/pii-redaction) finds.
+  and the terms that [PII redaction](/docs/pii-redaction) finds. You can encrypt a whole plugin or
+  any value inside it.
 
-Limits, routing, access, delegation and text extraction stay readable.
+Other policy settings stay readable, because we check them when you save and the dashboard shows
+what they do.
 
 ## Create a key
 
@@ -24,148 +26,117 @@ Limits, routing, access, delegation and text extraction stay readable.
 
 ### Generate the key
 
-[Install the CLI](/docs/cli#install) on your own machine, then run:
+[Install the CLI](/docs/cli#install), then run:
 
 ```console
-stogas encryption-key create --organization YOUR_ORGANIZATION_ID --label providers
+stogas encryption-key create --output providers.key
 ```
 
-The command saves the key in your system keychain under the label that you will register it with,
-and prints only its public identifier. Where there is no keychain, as on most servers, write the
-key to a file with `--output org.key` instead. Keep a secure backup, such as a copy that
-`stogas encryption-key export` writes. We cannot recover a lost key.
+The command writes the key to a new file that only you can read, and prints the key's ID. Keep the
+key where your applications read their secrets, and keep a backup, because we cannot recover a lost
+key. To save the key in your system keychain instead, pass `--organization` and `--label` in place
+of `--output`, as [the CLI](/docs/cli#encrypt-secrets) shows.
+
+Settings can also generate a key in your browser and register it. That trusts the page that we
+serve when you open it, while the CLI is a release that you install once and
+[can verify](/docs/cli#verify-it).
 
 </Step>
 <Step>
 
-### Register the identifier
+### Register the ID
 
-Register the identifier under the same label in the dashboard, or with
+Register the ID under a label in Settings, or with
 [Register an encryption key](/docs/reference/dashboard/encryption-keys/registerEncryptionKey).
 Requests send the key under this label, and credentials and policies can use only registered keys.
 Registering and removing keys needs organization management. The key works in requests
 [within three minutes](/docs/policies/scopes#when-changes-take-effect).
 
 A label is a lowercase letter followed by up to 47 lowercase letters, digits, underscores or
-hyphens. Each identifier has one label, and an organization can register up to 32 keys by
-default, as its Limits card in Settings shows. Use separate keys when credentials, exports and
-redactions need different access.
+hyphens. Each ID has one label, and an organization can register up to 32 keys by default, as its
+Limits card in Settings shows. Use separate keys when credentials, exports and redactions need
+different access.
 
 </Step>
 </Steps>
 
 ## Encrypt plugin settings
 
-Encrypt a policy's export or its redaction, each on its own: the export to hide where requests go
-and the tokens that deliver them, the redaction to hide the terms that it finds. Each can use its
-own registered key. Text extraction stays readable, because it is only on or off.
+Write the policy as usual:
 
-<Steps>
-<Step>
-
-### Save the plugin's settings to a file
-
-Save the object inside `plugins.redaction` or `plugins.export`, without the name around it:
-
-```json title="redaction.json"
-{
-	"literals": [{ "values": ["Project Aurora"] }]
-}
-```
-
-```json title="export.json"
-{
-	"destinations": [
-		{
-			"url": "https://receiver.contoso.com/stogas",
-			"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }
-		}
-	]
-}
-```
-
-</Step>
-<Step>
-
-### Encrypt the file
-
-```console
-stogas encrypt --key providers --organization YOUR_ORGANIZATION_ID \
-  --purpose plugins/redaction --input redaction.json --output redaction.encrypted.json
-```
-
-`--key` names the label of a key in your keychain. For a key file, pass `--key-file org.key`
-instead. Before it encrypts a plugin's settings, the command has a gateway check them over a
-verified connection, so a mistake shows now, by name, instead of in the requests that need them.
-Only the gateway sees the settings, and the check needs you signed in with `stogas login` or
-`STOGAS_TOKEN`. A credential is encrypted without connecting anywhere. The command never
-overwrites an existing output file. The `--purpose` decides which input it accepts:
-
-| Purpose             | Input                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `plugins/export`    | The object inside `plugins.export`.                                                                           |
-| `plugins/redaction` | The object inside `plugins.redaction`.                                                                        |
-| `byok/openai`       | An OpenAI API key.                                                                                            |
-| `byok/anthropic`    | An Anthropic API key.                                                                                         |
-| `byok/chutes`       | A Chutes API key.                                                                                             |
-| `byok/aws`          | An [AWS credential document](/docs/providers/aws#customer-encryption).                                        |
-| `byok/azure`        | An [Azure application](/docs/providers/azure#customer-encryption), as `az ad sp create-for-rbac` prints it.   |
-| `byok/google-cloud` | A Google service account key file or [credential document](/docs/providers/google-cloud#customer-encryption). |
-
-For a plugin, the output is the plugin's new value: the envelope in `encrypted`. For a credential,
-it is the envelope in `encryptedSecret`, with the `preview` except for Azure, and for AWS and Google
-Cloud the `target` that you register with it.
-
-</Step>
-<Step>
-
-### Save the encrypted settings
-
-Replace the plugin's value with the output, and keep the policy's other settings:
-
-```jsonc title="Policy shape (replace placeholders)"
+```json title="policy.json"
 {
 	"plugins": {
-		"textExtraction": { "text": "always" },
-		"redaction": {
-			"encrypted": {
-				"version": 1,
-				"keyId": "64_LOWERCASE_HEX_CHARACTERS",
-				"salt": "BASE64URL_32_BYTES",
-				"nonce": "BASE64URL_12_BYTES",
-				"blob": "BASE64URL_CIPHERTEXT_AND_TAG"
-			}
-		}
+		"export": {
+			"destinations": [
+				{
+					"url": "https://receiver.contoso.com/stogas",
+					"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }
+				}
+			]
+		},
+		"redaction": { "literals": [{ "values": ["Project Aurora"] }] }
 	}
 }
 ```
 
-A rule's plugins take the output the same way, as in `rules.night.plugins.export`.
-[Save the policy](/docs/policies/editing). `keyId` selects the registered key. Saving checks the
-readable settings, the envelope format and that the organization registers the key.
+Then encrypt the parts that you want to hide:
 
-</Step>
-<Step>
+```console
+stogas encrypt --key-file providers.key --organization YOUR_ORGANIZATION_ID --policy policy.json \
+  --path /plugins/export/destinations/0 --path /plugins/redaction/literals \
+  --output policy.encrypted.json
+```
 
-### Send the key with each request
+Each part becomes an envelope in its place, and the rest stays as you wrote it:
 
-[Send the key](#send-the-key-with-a-request) with each request. The gateway decrypts and checks
-the settings before it calls the provider, and rejects the request if the key is missing or wrong,
-or the settings are invalid. To find problems first, use the
-[policy check](/docs/policies/editing#check-a-policy-before-saving).
+```jsonc title="policy.encrypted.json (placeholders)"
+{
+	"plugins": {
+		"export": {
+			"destinations": [
+				{
+					"encrypted": {
+						"version": 1,
+						"keyId": "64_LOWERCASE_HEX_CHARACTERS",
+						"salt": "BASE64URL_32_BYTES",
+						"nonce": "BASE64URL_12_BYTES",
+						"blob": "BASE64URL_CIPHERTEXT_AND_TAG"
+					}
+				}
+			]
+		},
+		"redaction": { "literals": { "encrypted": { "version": 1, "keyId": "…" } } }
+	}
+}
+```
 
-</Step>
-</Steps>
+[Save the policy](/docs/policies/editing) from the output. Saving checks the readable settings,
+each envelope's format and that the organization registers its key.
 
-[Policy size limits](/docs/policies/editing#document-rules) count the decrypted plugin bytes.
+- `--path` takes a [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) to the `export` or
+  `redaction` plugin, or to any value inside one, in the policy or in a rule, such as
+  `/rules/night/plugins/export`. Repeat it for more parts. A path above a plugin, such as
+  `/rules/night`, encrypts each export and redaction plugin under it, and without `--path` the
+  command encrypts every one in the policy.
+- Encrypt a destination's `headers` together with its `url`, by encrypting the destination or more.
+  Someone who can edit the policy could otherwise move the headers beside another URL.
+- Before it encrypts the parts, the command has a gateway check the plugins that hold them, over a
+  verified connection, so a mistake shows now instead of in the requests that need them. The check
+  needs you signed in with `stogas login` or `STOGAS_TOKEN`.
+- Keep the policy without encryption, and encrypt from it whenever you change it. The command
+  refuses a plugin that already holds encrypted values, because the check needs all of it.
+- Each plugin can use its own registered key. A request needs the key of each encrypted part that
+  applies to it, as [Send the key with a request](#send-the-key-with-a-request) shows.
 
-Encryption hides only the plugin's settings. Anyone who can read the policy still sees:
+[Policy size limits](/docs/policies/editing#document-rules) count encrypted parts at their
+decrypted size. Anyone who can read the policy still sees:
 
-- which plugins are encrypted
+- the readable settings around each encrypted part, which show where it is
 - each rule's name and `when` condition, which tell when the hidden settings apply
-- the envelope's size, which shows roughly how large the settings are
-  Keep
-  revealing words out of rule names and conditions.
+- each encrypted part's size, rounded up to 256 bytes
+
+Keep revealing words out of rule names and conditions.
 
 ## Send the key with a request
 
@@ -185,15 +156,12 @@ your API key in the `Authorization` header:
   the request with `encryption_key_required`, which names the key's label, before any provider
   call. To let the request use only the candidates whose keys it sends, set
   [`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
-- Each label must match its registered identifier.
+- Each label must match its registered ID.
 - To leave your application's requests unchanged, give the keys to the connection instead.
-  [`stogas serve`](/docs/cli#send-your-encryption-keys) reads them from your keychain or from
-  key files, and an SDK transport takes them as its
+  [`stogas serve`](/docs/cli#send-your-encryption-keys) reads them from key files or your
+  keychain, and an SDK transport takes them as its
   [`encryption_keys` option](/docs/sdk-overview#options). Both add the keys to each request that
   sends none.
-- An application that sends the keys itself needs them. To copy one from your keychain to the
-  secret store that the application reads, pipe `stogas encryption-key export` with `--output -`
-  to it. The CLI never prints a key on the screen.
 - The gateway removes `encryption_keys` before it calls the provider, and never stores the keys.
 - Send keys through the [SDK or CLI](/docs/connection-modes), so that only the verified gateway
   can read them. Ordinary HTTPS does not verify the gateway, and a TLS proxy can read the body.
@@ -203,16 +171,17 @@ your API key in the `Authorization` header:
 
 Anyone with both a key and its ciphertext can decrypt that content. Only separate keys give
 separate access, not separate labels. Removing a member does not make them forget a key they had.
-Each caller must hold every key that the encrypted exports and redactions of their requests need.
+Each caller must hold every key that the encrypted settings of their requests need.
 
 Keep the original policies and provider credentials so you can encrypt them again. To rotate a key:
 
 1. Generate a new key and register it under a new label.
 2. Update your clients to send both keys.
-3. Encrypt the exports, redactions and provider credentials again with the new key, and save
-   them. [List the uses of an encryption key](/docs/reference/dashboard/encryption-keys/listEncryptionKeyUses)
+3. Encrypt the policy settings and provider credentials again with the new key, and save them.
+   [List the uses of an encryption key](/docs/reference/dashboard/encryption-keys/listEncryptionKeyUses)
    names each policy and credential that you can view and that still uses the old key, and where
-   each policy holds it, such as `plugins.redaction` or `rules.night.plugins.export`.
+   each policy holds it, such as `/plugins/redaction` or
+   `/rules/night/plugins/export/destinations/0/url`.
 4. Filter analytics with [`encryption_key:`](/docs/analytics#filters) and the old key's label to
    check that no recent request could still use it.
 5. Remove the old key's registration, then stop sending it.
@@ -224,6 +193,7 @@ that you can't view.
 ## Encryption details
 
 Each encryption uses a fresh salt and nonce to derive an AES-256-GCM key with HKDF-SHA-256. The
-authenticated context binds the organization, the purpose and the key identifier, so a ciphertext
-cannot be moved to another organization, plugin or credential: a redaction's envelope saved as
-`plugins.export` fails every request that applies it.
+authenticated context binds the organization, the setting and the key ID, so a ciphertext opens
+only as the same setting of the same organization: an export URL's envelope saved as a redaction
+term fails every request that applies it. The CLI pads each policy part with spaces to a multiple
+of 256 bytes before it encrypts it.

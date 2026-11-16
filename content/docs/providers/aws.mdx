@@ -204,8 +204,8 @@ Leave out `workspaceId` unless the credential serves Claude Platform on AWS. Sav
 `aws.json`, then encrypt it:
 
 ```bash
-stogas encrypt --key providers --organization <organization-id> \
-  --purpose byok/aws --input aws.json
+stogas encrypt --key-file providers.key --organization <organization-id> \
+  --credential aws --input aws.json
 ```
 
 Delete `aws.json`, and add what the CLI printed in [BYOK](/docs/byok).
