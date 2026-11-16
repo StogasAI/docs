@@ -233,3 +233,16 @@ the request with 400 where extraction applies.
 | URLs and file IDs                        | The gateway never downloads a file.                                                                 |
 
 To refuse some file types outright, [allow or deny them](/docs/input-files#allow-or-deny-file-types).
+
+## What the request record shows
+
+```jsonc
+"plugins": {
+	"text_extraction": {
+		"files_extracted": 2, // Files sent as text.
+		"duration_us": 1840 // Time spent reading them, in microseconds.
+	}
+}
+```
+
+The [request record](/docs/request-records) has this entry only when a file became text.

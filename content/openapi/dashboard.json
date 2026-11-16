@@ -14496,6 +14496,28 @@
 																	"items_redacted"
 																],
 																"additionalProperties": false
+															},
+															"text_extraction": {
+																"type": "object",
+																"properties": {
+																	"duration_us": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 4294967295,
+																		"description": "Time to read the files as text, in microseconds."
+																	},
+																	"files_extracted": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 4294967295,
+																		"description": "Files that [text extraction](/docs/text-extraction) sent as text. Absent when every file stayed a file."
+																	}
+																},
+																"required": [
+																	"duration_us",
+																	"files_extracted"
+																],
+																"additionalProperties": false
 															}
 														},
 														"additionalProperties": false
