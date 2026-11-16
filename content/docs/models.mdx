@@ -33,9 +33,11 @@ provider after its shutdown
 [falls back](/docs/policies/routing#retries-and-fallbacks) to the next deployment. Policies keep
 retired IDs, which match nothing.
 
-The catalog lists the whole market, so it also lists deployments, routes and providers that
-Stogas does not serve, such as batch APIs. Each one states `stogasSupported: false`, and its
-`notes` give the reason. A request whose `model` field selects only such records gets
+The catalog lists the whole market, so it also lists what we do not serve, such as batch APIs.
+Each deployment states `stogasByok`, which is `true` when we serve it with
+[your own credential](/docs/byok), and `stogasManaged`, which is `true` when we serve it with our
+own provider account. A credential reaches only the deployments that we serve with its kind, and a
+request whose `model` field selects only deployments that we serve in neither way gets
 `model_unavailable`.
 
 Some deployments work only for accounts that the provider has approved. The catalog marks

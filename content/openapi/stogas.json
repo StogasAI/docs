@@ -198,13 +198,15 @@
 													"sha256": "89abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
 													"size": 236710,
 													"through": null,
-													"stogasSupported": true
+													"stogasByok": true,
+													"stogasManaged": false
 												},
 												{
 													"sha256": "76543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba98",
 													"size": 182340,
 													"through": "2027-03-31",
-													"stogasSupported": true
+													"stogasByok": true,
+													"stogasManaged": false
 												}
 											],
 											"periods": [
@@ -238,7 +240,8 @@
 															"openai-chat-completions",
 															"openai-responses"
 														],
-														"stogasSupported": true
+														"stogasByok": true,
+														"stogasManaged": false
 													},
 													"openai-gpt-6.1-sol": {
 														"modelId": "gpt-6.1-sol",
@@ -248,7 +251,8 @@
 															"openai-chat-completions",
 															"openai-responses"
 														],
-														"stogasSupported": true
+														"stogasByok": true,
+														"stogasManaged": false
 													}
 												},
 												"groups": {},
@@ -265,7 +269,8 @@
 														"part": 1,
 														"releaseDate": "2024-05-13",
 														"retirementDate": "2027-03-31",
-														"stogasSupported": true
+														"stogasByok": true,
+														"stogasManaged": false
 													},
 													"gpt-6.1-sol": {
 														"aliases": [],
@@ -277,7 +282,8 @@
 														"part": 0,
 														"releaseDate": "2026-10-01",
 														"retirementDate": null,
-														"stogasSupported": true
+														"stogasByok": true,
+														"stogasManaged": false
 													}
 												},
 												"providers": {},
@@ -1384,7 +1390,8 @@
 								"sha256",
 								"size",
 								"through",
-								"stogasSupported"
+								"stogasByok",
+								"stogasManaged"
 							],
 							"additionalProperties": false,
 							"properties": {
@@ -1406,9 +1413,13 @@
 									"format": "date",
 									"description": "The latest retirement date of a record in the part, or `null` when a record in it has none. Every record in the part has retired once this date has."
 								},
-								"stogasSupported": {
+								"stogasByok": {
 									"type": "boolean",
-									"description": "Whether Stogas serves the records in the part. The gateway never reads a part that Stogas does not serve, and a reader that shows only what Stogas serves can skip it."
+									"description": "Whether Stogas serves a record in the part with your own credential."
+								},
+								"stogasManaged": {
+									"type": "boolean",
+									"description": "Whether Stogas serves a record in the part with its own provider account. The gateway never reads a part that Stogas serves in neither way, and a reader that shows only what Stogas serves can skip it."
 								}
 							}
 						}
@@ -1505,14 +1516,18 @@
 									"type": "object",
 									"required": [
 										"retirementDate",
-										"stogasSupported"
+										"stogasByok",
+										"stogasManaged"
 									],
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
 										},
-										"stogasSupported": {
-											"$ref": "#/components/schemas/CatalogStogasSupported"
+										"stogasByok": {
+											"$ref": "#/components/schemas/CatalogStogasByok"
+										},
+										"stogasManaged": {
+											"$ref": "#/components/schemas/CatalogStogasManaged"
 										}
 									},
 									"additionalProperties": true
@@ -1531,14 +1546,18 @@
 									"type": "object",
 									"required": [
 										"retirementDate",
-										"stogasSupported"
+										"stogasByok",
+										"stogasManaged"
 									],
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
 										},
-										"stogasSupported": {
-											"$ref": "#/components/schemas/CatalogStogasSupported"
+										"stogasByok": {
+											"$ref": "#/components/schemas/CatalogStogasByok"
+										},
+										"stogasManaged": {
+											"$ref": "#/components/schemas/CatalogStogasManaged"
 										}
 									},
 									"additionalProperties": true
@@ -1557,14 +1576,18 @@
 									"type": "object",
 									"required": [
 										"retirementDate",
-										"stogasSupported"
+										"stogasByok",
+										"stogasManaged"
 									],
 									"properties": {
 										"retirementDate": {
 											"$ref": "#/components/schemas/CatalogRetirementDate"
 										},
-										"stogasSupported": {
-											"$ref": "#/components/schemas/CatalogStogasSupported"
+										"stogasByok": {
+											"$ref": "#/components/schemas/CatalogStogasByok"
+										},
+										"stogasManaged": {
+											"$ref": "#/components/schemas/CatalogStogasManaged"
 										}
 									},
 									"additionalProperties": true
@@ -1599,7 +1622,8 @@
 					"part",
 					"releaseDate",
 					"retirementDate",
-					"stogasSupported"
+					"stogasByok",
+					"stogasManaged"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -1633,8 +1657,11 @@
 					"retirementDate": {
 						"$ref": "#/components/schemas/CatalogRetirementDate"
 					},
-					"stogasSupported": {
-						"$ref": "#/components/schemas/CatalogStogasSupported"
+					"stogasByok": {
+						"$ref": "#/components/schemas/CatalogStogasByok"
+					},
+					"stogasManaged": {
+						"$ref": "#/components/schemas/CatalogStogasManaged"
 					}
 				}
 			},
@@ -1646,7 +1673,8 @@
 					"part",
 					"providerId",
 					"retirementDate",
-					"stogasSupported"
+					"stogasByok",
+					"stogasManaged"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -1667,8 +1695,11 @@
 					"retirementDate": {
 						"$ref": "#/components/schemas/CatalogRetirementDate"
 					},
-					"stogasSupported": {
-						"$ref": "#/components/schemas/CatalogStogasSupported"
+					"stogasByok": {
+						"$ref": "#/components/schemas/CatalogStogasByok"
+					},
+					"stogasManaged": {
+						"$ref": "#/components/schemas/CatalogStogasManaged"
 					}
 				}
 			},
@@ -1680,7 +1711,8 @@
 					"part",
 					"retirementDate",
 					"routeIds",
-					"stogasSupported"
+					"stogasByok",
+					"stogasManaged"
 				],
 				"additionalProperties": false,
 				"properties": {
@@ -1702,8 +1734,11 @@
 							"type": "string"
 						}
 					},
-					"stogasSupported": {
-						"$ref": "#/components/schemas/CatalogStogasSupported"
+					"stogasByok": {
+						"$ref": "#/components/schemas/CatalogStogasByok"
+					},
+					"stogasManaged": {
+						"$ref": "#/components/schemas/CatalogStogasManaged"
 					}
 				}
 			},
@@ -6310,9 +6345,13 @@
 					}
 				}
 			},
-			"CatalogStogasSupported": {
+			"CatalogStogasByok": {
 				"type": "boolean",
-				"description": "Whether Stogas serves the record. The catalog lists the whole market, so it also lists what Stogas does not serve, and the record's `notes` say why. A provider that Stogas does not serve passes that to its routes, and a route to its deployments. A model, provider, author or group goes unserved once Stogas serves none of its deployments, routes or models. A request that names only records that Stogas does not serve fails with `model_unavailable`."
+				"description": "Whether Stogas serves the record with [your own credential](/docs/byok) for the provider. A provider offers it, and its routes and deployments can withdraw it. A model, provider, author or group offers it once one of its deployments, routes or models does. The catalog lists the whole market, so it also lists what Stogas serves in neither way, such as batch APIs. A request whose `model` field selects only such records fails with `model_unavailable`."
+			},
+			"CatalogStogasManaged": {
+				"type": "boolean",
+				"description": "Whether Stogas serves the record with its own provider account. A provider offers it, and its routes and deployments can withdraw it, as with `stogasByok`."
 			}
 		}
 	}
