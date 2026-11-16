@@ -162,11 +162,14 @@ token limit, or when the wait is longer than a minute.
 
 ### 502 Bad gateway
 
-| Code                       | Meaning                                                                                                                                                                |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `upstream_outcome_unknown` | A provider call failed after the gateway sent the request, so the provider may have run it. The message names the attempt and its deployment. See [Retries](#retries). |
-| `upstream_protocol_error`  | The provider sent an invalid response over its confidential connection.                                                                                                |
-| `null`                     | Another provider failure.                                                                                                                                              |
+| Code                          | Meaning                                                                                                                                                                |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `upstream_outcome_unknown`    | A provider call failed after the gateway sent the request, so the provider may have run it. The message names the attempt and its deployment. See [Retries](#retries). |
+| `upstream_protocol_error`     | The provider sent an invalid response over its confidential connection.                                                                                                |
+| `upstream_response_invalid`   | The provider's response broke the format of its API, such as a finished tool call whose arguments are not a JSON object.                                               |
+| `upstream_execution_invalid`  | The provider reported that it ran the request differently from its deployment, such as at another service tier.                                                        |
+| `upstream_response_too_large` | The provider's response exceeded the gateway's response size limit.                                                                                                    |
+| `null`                        | Another provider failure.                                                                                                                                              |
 
 ### 503 Service unavailable
 
