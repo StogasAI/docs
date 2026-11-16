@@ -143,6 +143,76 @@ its namespace.
 - `tool_choice` can name only top-level tools.
 - [Policies](#restrict-tools-with-a-policy) read a tool in a namespace by its own name.
 
+## Tool search
+
+On OpenAI models[^tool-search], a `tool_search` tool keeps tools with `defer_loading` out of the
+input until the model searches for them:
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Find customer 42.",
+	"tools": [
+		{
+			"type": "namespace",
+			"name": "crm",
+			"description": "Tools for the customer database.",
+			"tools": [
+				{
+					"type": "function",
+					"name": "find_customer",
+					"defer_loading": true,
+					"parameters": {
+						"type": "object",
+						"properties": { "id": { "type": "string" } },
+						"required": ["id"]
+					}
+				}
+			]
+		},
+		{ "type": "tool_search" }
+	]
+}
+```
+
+The reply holds a `tool_search_call` and a `tool_search_output` that loads the tools, and then the
+model's call. Send all of them back in `input` with the rest of the reply.
+
+With `"execution": "client"`, your app runs the search. Give the tool a `description` and
+`parameters` for the model. Answer its `tool_search_call` in the next request with the call and a
+`tool_search_output` that names the same `call_id` and holds the tools to load:
+
+```jsonc
+"input": [
+	{ "role": "user", "content": "Find customer 42." },
+	{
+		"type": "tool_search_call",
+		"call_id": "call_1",
+		"execution": "client",
+		"arguments": { "goal": "Look up a customer" }
+	},
+	{
+		"type": "tool_search_output",
+		"call_id": "call_1",
+		"execution": "client",
+		"tools": [
+			{
+				"type": "namespace",
+				"name": "crm",
+				"description": "Tools for the customer database.",
+				"tools": [{ "type": "function", "name": "find_customer", "defer_loading": true }]
+			}
+		]
+	}
+]
+```
+
+- A request takes one `tool_search` tool, and a deferred tool needs it.
+- A `tool_search_output` loads `function`, `custom` and `namespace` tools, which the model then
+  calls as tools of the request. Your app's search can load tools that `tools` does not declare.
+- A search costs only its tokens.
+- MCP tools cannot be deferred.
+
 ## Hosted tools
 
 | Tool                 | Endpoint                             |
@@ -393,7 +463,8 @@ This one refuses one tool of a server. A server whose `allowed_tools` names no t
   hosts. A `server_url` without a host matches no server in a list.
 - `tool_choice: "none"` empties the lists, because the model can call no tool. A choice of one
   function still counts every function, and a choice of one MCP server every server.
-- `request.clientTools` lists the tools of a namespace by their own names, without the namespace.
+- `request.clientTools` lists the tools of a namespace by their own names, without the namespace,
+  and the tools that a [tool search](#tool-search) in `input` loaded.
 - A provider's shell or file editing tool[^provider-tools] counts under its name: `shell`,
   `apply_patch`, `bash` or `str_replace_based_edit_tool`.
 - Your application names its tools, so a filter on `request.clientTools` cannot stop an
@@ -407,7 +478,7 @@ These tools return `400` before the gateway calls a provider:
 - File search and hosted retrieval
 - Code interpreter, hosted shell and standalone code execution
 - Computer use and image generation
-- Provider memory and tool loading
+- Provider memory
 
 Anthropic's MCP connector runs every call without your approval and is not eligible for zero data
 retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
@@ -425,6 +496,8 @@ retention[^anthropic-mcp], so remote MCP works only on OpenAI models.
     [through Chat Completions](/docs/providers#responses-through-chat-completions).
 
 [^lists]: [Anthropic](/docs/providers/anthropic#tools) returns `400` for both lists in one tool.
+
+[^tool-search]: [OpenAI](/docs/providers/openai#tools). Other models return `400` for deferred tools.
 
 [^replay]: [Claude](/docs/providers/anthropic#tools) reads a search again only with the encrypted content of its results.
 

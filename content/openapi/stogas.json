@@ -3404,7 +3404,7 @@
 			},
 			"ResponsesInputItem": {
 				"type": "object",
-				"description": "An output item: a message, a tool call, reasoning, a hosted tool call or an MCP item.",
+				"description": "An output item: a message, a tool call, reasoning, a hosted tool call, a tool search or an MCP item.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -3415,6 +3415,8 @@
 							"message",
 							"web_search_call",
 							"web_fetch_call",
+							"tool_search_call",
+							"tool_search_output",
 							"function_call",
 							"function_call_output",
 							"custom_tool_call",
@@ -3445,11 +3447,27 @@
 					"call_id": {
 						"type": "string"
 					},
+					"execution": {
+						"type": "string",
+						"enum": [
+							"server",
+							"client"
+						],
+						"description": "Where a `tool_search_call` or `tool_search_output` runs: `server` for OpenAI's own search, or `client` for a search that your app runs and answers by `call_id`."
+					},
 					"name": {
 						"type": "string"
 					},
 					"arguments": {
-						"type": "string"
+						"description": "Function arguments encoded as a JSON object string, or the arguments of a `tool_search_call` as an object.",
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "object"
+							}
+						]
 					},
 					"output": {
 						"description": "Tool output payload for function_call_output and related output items."
@@ -3462,6 +3480,13 @@
 					},
 					"encrypted_content": {
 						"type": "string"
+					},
+					"tools": {
+						"type": "array",
+						"description": "The tools that a `tool_search_output` loads.",
+						"items": {
+							"type": "object"
+						}
 					}
 				}
 			},
@@ -3574,7 +3599,7 @@
 			"ResponsesRequestInputItem": {
 				"type": "object",
 				"additionalProperties": false,
-				"description": "An input item: a message, a tool call, a tool output, reasoning, a hosted tool call or an MCP item from an earlier response, or tools that a client declares during the conversation. Send items back as the reply returned them.",
+				"description": "An input item: a message, a tool call, a tool output, reasoning, a hosted tool call, a tool search or an MCP item from an earlier response, or tools that a client declares during the conversation. Send items back as the reply returned them.",
 				"properties": {
 					"id": {
 						"type": "string"
@@ -3598,6 +3623,8 @@
 							"mcp_approval_response",
 							"web_search_call",
 							"web_fetch_call",
+							"tool_search_call",
+							"tool_search_output",
 							"additional_tools"
 						]
 					},
@@ -3636,6 +3663,14 @@
 					"call_id": {
 						"type": "string"
 					},
+					"execution": {
+						"type": "string",
+						"enum": [
+							"server",
+							"client"
+						],
+						"description": "Where a `tool_search_call` or `tool_search_output` ran: `server` for OpenAI's own search, which has no `call_id`, or `client` for a search that your app ran."
+					},
 					"server_label": {
 						"type": "string",
 						"description": "The MCP server of an `mcp_list_tools`, `mcp_call` or `mcp_approval_request` item."
@@ -3649,8 +3684,15 @@
 						"description": "The namespace of a called function, as the reply names it."
 					},
 					"arguments": {
-						"type": "string",
-						"description": "Function arguments encoded as a JSON object string."
+						"description": "Function arguments encoded as a JSON object string, or the arguments of a `tool_search_call` as an object.",
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "object"
+							}
+						]
 					},
 					"input": {
 						"type": "string"
@@ -3881,7 +3923,7 @@
 					},
 					"tools": {
 						"type": "array",
-						"description": "The tools of an `additional_tools` item, which count as tools of the request, or the tools that an `mcp_list_tools` item lists. Codex declares tools in `additional_tools` for some models.",
+						"description": "The tools of an `additional_tools` item, which count as tools of the request, the tools that an `mcp_list_tools` item lists, or the function, custom and namespace tools that a `tool_search_output` loads. Codex declares tools in `additional_tools` for some models.",
 						"items": {
 							"type": "object"
 						}
@@ -3924,6 +3966,13 @@
 						"enum": [
 							"explicit"
 						]
+					},
+					"ttl": {
+						"type": "string",
+						"enum": [
+							"30m"
+						],
+						"description": "The minimum lifetime of the cached prefix. Defaults to `prompt_cache_options.ttl`."
 					}
 				},
 				"required": [
@@ -4611,6 +4660,10 @@
 							}
 						}
 					},
+					"prompt_cache_breakpoint": {
+						"$ref": "#/components/schemas/PromptCacheBreakpoint",
+						"description": "Marks the end of a cached prefix when `prompt_cache_options` is explicit."
+					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
 						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
@@ -4676,6 +4729,10 @@
 							}
 						]
 					},
+					"prompt_cache_breakpoint": {
+						"$ref": "#/components/schemas/PromptCacheBreakpoint",
+						"description": "Marks the end of a cached prefix when `prompt_cache_options` is explicit."
+					},
 					"cache_control": {
 						"$ref": "#/components/schemas/AnthropicCacheControl",
 						"description": "Anthropic prompt caching for this block. See [Prompt caching](/docs/prompt-caching)."
@@ -4711,6 +4768,10 @@
 								"minLength": 1
 							}
 						}
+					},
+					"prompt_cache_breakpoint": {
+						"$ref": "#/components/schemas/PromptCacheBreakpoint",
+						"description": "Marks the end of a cached prefix when `prompt_cache_options` is explicit."
 					}
 				},
 				"description": "Audio input, on deployments that accept audio. Chat Completions only."

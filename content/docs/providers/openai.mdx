@@ -54,15 +54,20 @@ also let you mark where the cache ends:
 ```
 
 The gateway sends `prompt_cache_key`, `prompt_cache_options`, `prompt_cache_breakpoint` and
-`prompt_cache_retention` as you set them. See
+`prompt_cache_retention` as you set them, except that `ttl` takes only `30m`. See
 [OpenAI's guide](https://developers.openai.com/api/docs/guides/prompt-caching) for their values.
 
 ## Tools
 
 Besides `function` tools, Responses accepts `custom` tools,
-[namespaces](/docs/model-tools#group-tools-in-namespaces), `web_search` and
+[namespaces](/docs/model-tools#group-tools-in-namespaces),
+[tool search](/docs/model-tools#tool-search), `web_search` and
 [remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models, such as
 `gpt-5-search-api`, take `web_search_options` on Chat Completions instead of `tools`.
+
+- Tool search works on GPT-5.4 and later models, except `gpt-5.4-nano`.
+- `web_search` takes `search_content_types`. With `["text", "image"]`, a search can return images
+  too.
 
 ### Shell and apply_patch
 
