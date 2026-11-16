@@ -59,6 +59,21 @@ requirement off until the next test.
 Members who can manage the organization never need a sign-in, so a broken connection can't lock
 everyone out. API keys don't use single sign-on.
 
+## Choose who can join
+
+| Allow invite links | SCIM          | Who can join                                                            |
+| ------------------ | ------------- | ----------------------------------------------------------------------- |
+| On                 | Not connected | Anyone with an invitation link, and people at your verified domains     |
+| On                 | Connected     | Anyone with an invitation link, and active users that the provider sent |
+| Off                | Not connected | Only people at your verified domains                                    |
+| Off                | Connected     | Only active users that the provider sent                                |
+
+People from your provider join through the [single sign-on invite](/docs/members#invitations).
+Turning **Allow invite links** off deletes the organization's invitation links, and you can do it
+once a test sign-in succeeds. Saving another issuer, client ID or protocol allows links again until
+the next test. A person who joins with a link still signs in through your provider while single
+sign-on is required.
+
 ## Access tokens
 
 While single sign-on is required, an access token can act in the organization only if you created
