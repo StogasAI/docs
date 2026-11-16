@@ -338,7 +338,7 @@ test('dashboard API pages document the operation without a playground', async ({
 	await expect(main).toContainText('/api/{orgId}/keys');
 	await expect(main).toContainText('Read and write');
 	await expect(page.getByRole('button', { name: 'Try in Playground', exact: true })).toHaveCount(0);
-	await expect(main).not.toContainText('Live endpoint');
+	await expect(main).not.toContainText('playground sends real requests');
 	await expect(page.locator('.stogas-api-operation-examples pre').first()).toContainText(
 		'https://app.stogas.ai/api/'
 	);

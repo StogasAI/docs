@@ -16,7 +16,7 @@ export const messages = {
 	onThisPage: 'On this page',
 	outlineProgress: 'Page outline progress',
 	apiPlaygroundEndpoint:
-		'Live endpoint: https://api.stogas.ai. Use a key for this API environment. Sending inference incurs usage charges.',
+		'The playground sends real requests to https://api.stogas.ai, and inference is charged to your key.',
 	searchFailed: 'Search could not load. Check your connection and reload the page to try again.',
 	copyMarkdown: 'Copy Markdown',
 	copying: 'Copying…',
