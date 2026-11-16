@@ -12206,6 +12206,22 @@
 													"label": {
 														"type": "string",
 														"maxLength": 1024
+													},
+													"startedAt": {
+														"default": null,
+														"description": "When the group's first request in the period arrived.",
+														"type": [
+															"string",
+															"null"
+														]
+													},
+													"endedAt": {
+														"default": null,
+														"description": "When the group's last request in the period ended.",
+														"type": [
+															"string",
+															"null"
+														]
 													}
 												},
 												"required": [
@@ -12238,7 +12254,9 @@
 													"clientToolCalls",
 													"totalReasoningTokens",
 													"key",
-													"label"
+													"label",
+													"startedAt",
+													"endedAt"
 												],
 												"additionalProperties": false
 											}
