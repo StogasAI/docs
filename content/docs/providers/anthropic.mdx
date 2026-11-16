@@ -40,7 +40,7 @@ for the credential, which saves this rule in its policy:
 
 ## Prompt caching
 
-Anthropic caches only what you mark. Add a top-level `cache_control` to cache the longest reusable
+Anthropic [caches only what you mark](https://platform.claude.com/docs/en/build-with-claude/prompt-caching). Add a top-level `cache_control` to cache the longest reusable
 prefix:
 
 ```json
@@ -60,12 +60,12 @@ prefix:
 
 These fields work only on Anthropic deployments:
 
-| Field                | Use                                                              |
-| -------------------- | ---------------------------------------------------------------- |
-| `top_k`              | Sample from the top K tokens.                                    |
-| `stop_sequences`     | Another name for `stop`. Do not send both.                       |
-| `task_budget`        | Tell the model how many tokens an agent task can use.            |
-| `context_management` | Clear old thinking or tool results, or compact the conversation. |
+| Field                | Use                                                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `top_k`              | Sample from the top K tokens.                                                                                                             |
+| `stop_sequences`     | Another name for `stop`. Do not send both.                                                                                                |
+| `task_budget`        | Tell the model how many tokens an agent task can use.                                                                                     |
+| `context_management` | [Clear old thinking or tool results](https://platform.claude.com/docs/en/build-with-claude/context-editing), or compact the conversation. |
 
 ```json title="Task budget and context editing"
 {
@@ -192,11 +192,6 @@ Send text files, including Markdown and CSV, as `text/plain`, for example
 
 ## Refusals
 
-When Claude refuses before it writes any output, the request returns `200` with the finish reason
+When Claude [refuses](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback)
+before it writes any output, the request returns `200` with the finish reason
 `content_filter`.
-
-## References
-
-- [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
-- [Anthropic context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing)
-- [Anthropic refusals](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback)

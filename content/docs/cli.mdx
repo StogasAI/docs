@@ -225,10 +225,16 @@ These commands make no network requests unless a description says so.
 | `stogas download-evidence --boot <sha256> [--output <dir>]`  | Downloads the boot record and evidence that a receipt names                                                                                |
 | `stogas verify-release <dir> [--evidence <file>]`            | Checks a [downloaded SDK release](/docs/reproducible-builds#verify-an-sdk-download). Downloads current evidence without `--evidence`.      |
 
-`proof` also takes `--stream` for an SSE response, `--proof <file>` for a `stogas` object saved on
-its own or a [request record's proof](/docs/receipts#prove-a-request-log), and `--share <dir>` to
-write a proof that someone else can check, with `--hide request` or `--hide response` to leave a
-side out of it. Without `--request`, the request stays unchecked. See
+`proof` also takes these flags. Without `--request`, the request stays unchecked.
+
+| Flag                                | Use                                                                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `--stream`                          | Check an SSE response.                                                                                      |
+| `--proof <file>`                    | Read a `stogas` object saved on its own, or a [request record's proof](/docs/receipts#prove-a-request-log). |
+| `--share <dir>`                     | Write a proof that someone else can check.                                                                  |
+| `--hide request`, `--hide response` | Leave that side out of a shared proof.                                                                      |
+
+See
 [Share a proof](/docs/receipts#share-a-proof).
 
 ## Encrypt secrets
@@ -356,9 +362,8 @@ stogas api POST {org}/keys --input key.json
 stogas api GET {org}/analytics -f filter='outcome:failed' -F limit=20
 ```
 
-The CLI sends the request with your token and the API version that it was built for, and prints
-the response: formatted JSON or text on a
-terminal, and the exact bytes otherwise, ready for `jq` or a file. A binary response, such as a
+The CLI sends the request with your token and the API version that it was built for. It prints
+formatted JSON or text on a terminal, and the exact bytes otherwise, ready for `jq` or a file. A binary response, such as a
 Parquet export, needs a file. The path is under `/api/`, which you can leave out. `{org}` in the
 path or in a `-F` value becomes the ID of the organization that `--organization` or `STOGAS_ORG`
 names, or of your personal organization without either. A refused request prints the response and

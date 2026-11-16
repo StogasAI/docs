@@ -18,16 +18,20 @@ Azure bills you for inference, and we charge the [BYOK fee](/docs/byok#billing).
 | `-anthropic-hosted`    | Claude hosted by Anthropic                 | Anthropic                              |
 | `-fireworks-hosted-us` | US Data Zone Standard, hosted by Fireworks | United States                          |
 
-For example, `azure-gpt-5.5-2026-04-23-us` runs GPT-5.5 only in the United States. Instant access
-needs a Foundry project in West US 3 that the credential can reach.
+For example, `azure-gpt-5.5-2026-04-23-us` runs GPT-5.5 only in the United States. Microsoft
+describes each
+[deployment type](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types).
+[Instant access](https://learn.microsoft.com/en-us/azure/foundry/concepts/instant-models) needs a Foundry project in West US 3 that the credential can reach.
 
 `-fireworks-hosted-us` runs MiniMax M3 with Fireworks. Microsoft shares request data
 with Fireworks, which runs the model under its own compliance and data handling rules.
 
 ## Connect your account
 
-Create an Entra application that trusts your organization's [issuer](/docs/byok#federation), and
-give it the **Foundry User** role on your model accounts, or on a resource group or subscription
+Create an Entra application that
+[trusts](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation) your
+organization's [issuer](/docs/byok#federation), and give it the
+[**Foundry User**](https://learn.microsoft.com/en-us/azure/foundry/concepts/rbac-foundry) role on your model accounts, or on a resource group or subscription
 that holds them. [BYOK](/docs/byok) shows the issuer URL and the subject when you add an Azure
 credential.
 
@@ -119,14 +123,6 @@ own cache. Azure returns `400` for `prompt_cache_retention` on a model that is n
 
 ## Claude on Azure
 
-Claude accepts the same request fields as on [Anthropic](/docs/providers/anthropic), except
-`task_budget`. Claude that Azure runs, in deployments without `-anthropic-hosted`, takes no file
+[Claude on Azure](https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry)
+accepts the same request fields as on [Anthropic](/docs/providers/anthropic), except `task_budget`. Claude that Azure runs, in deployments without `-anthropic-hosted`, takes no file
 IDs, so send files inline or by URL.
-
-## References
-
-- [Workload identity federation in Entra](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation)
-- [Foundry roles](https://learn.microsoft.com/en-us/azure/foundry/concepts/rbac-foundry)
-- [Foundry deployment types](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types)
-- [Foundry Instant access](https://learn.microsoft.com/en-us/azure/foundry/concepts/instant-models)
-- [Claude in Microsoft Foundry](https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry)

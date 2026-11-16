@@ -16,13 +16,15 @@ Agent Platform, the service that Google called Vertex AI until April 2026.
 | `-anthropic-hosted`    | Claude Models on Google Cloud (Anthropic managed)               | Anthropic, in any country       |
 | `-anthropic-hosted-us` | Claude Models on Google Cloud (Anthropic managed), US inference | Anthropic, in the United States |
 
-Claude Models on Google Cloud (Anthropic managed) serves the same models as Anthropic's own API,
+[Claude Models on Google Cloud (Anthropic managed)](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/anthropic-managed)
+serves the same models as Anthropic's own API,
 except Claude Mythos before 5.2. Fast is available there for Claude Fable 5.2, Claude Mythos 5.2 and
 Claude Opus 5.5, and models before Claude 4.6 have no US-only inference there.
 
 ## Create a credential
 
-A workload identity pool holds no secret. Google Cloud trusts your organization's
+A [workload identity pool](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-other-providers)
+holds no secret. Google Cloud trusts your organization's
 [issuer](/docs/byok#federation), and the gateway exchanges its tokens for access that lasts one
 hour.
 
@@ -131,7 +133,8 @@ Then delete `key.json` and `google.json`, and add what the CLI printed in [BYOK]
    ```
 
 Google keeps the prompts and responses of Claude Fable for up to 30 days, and shares them with
-Anthropic to monitor abuse.
+Anthropic to
+[monitor abuse](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/abuse-monitoring).
 [`deployment.dataHandling.sharedWith`](/docs/policies/routing-fields#companies) of these deployments
 is `['anthropic']`.
 
@@ -157,11 +160,3 @@ spec:
 ```bash
 gcloud org-policies set-policy policy.yaml
 ```
-
-## References
-
-- [Workload identity federation](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-other-providers)
-- [Claude on Agent Platform](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/google-managed)
-- [Claude Models on Google Cloud (Anthropic managed)](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/anthropic-managed)
-- [Abuse monitoring on Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/abuse-monitoring)
-- [Sharing requests and responses with partners](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/multimodal/request-response-logging)

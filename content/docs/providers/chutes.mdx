@@ -4,7 +4,7 @@ description: Open models in Intel TDX and NVIDIA confidential GPUs, reached with
 icon: logo:chutes
 ---
 
-Chutes runs open models such as Kimi, Qwen, GLM and DeepSeek. Most of them run in trusted execution
+[Chutes](https://chutes.ai/docs) runs open models such as Kimi, Qwen, GLM and DeepSeek. Most of them run in trusted execution
 environments (TEEs) built on Intel TDX and NVIDIA confidential GPUs, which the gateway reaches with
 end-to-end encryption. The rest are [Standard models](#standard-models). Every new API key can use
 Chutes through our account. To use your own Chutes account instead, add a key in [BYOK](/docs/byok).
@@ -77,8 +77,8 @@ These fields differ between TEE and Standard deployments:
 | `hosting`                        | `chutes`        | `unknown`            |
 
 Chutes' terms let it, its network operators and its model providers keep content for as long as
-processing needs it, and they name no storage place or retention period, so the catalog lists the
-storage location as `unknown` and retention as missing on every Chutes deployment. To keep requests
+processing needs it, and they name no storage place or retention period. The catalog therefore lists
+the storage location as `unknown` and no retention on every Chutes deployment. To keep requests
 on TEE deployments, filter on `deployment.dataHandling.endToEndEncrypted`.
 
 ## Supported requests
@@ -118,7 +118,3 @@ When your client disconnects, or a [timeout](/docs/policies/timeouts) ends a str
 deployment, the gateway stops the Chutes call. You pay for the usage up to the stop, because each
 encrypted chunk carries the usage so far. Buffered requests and Standard models report usage only
 when the call ends, so their calls run to the end and you pay for their full usage.
-
-## References
-
-- [Chutes documentation](https://chutes.ai/docs)

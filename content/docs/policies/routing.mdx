@@ -243,8 +243,8 @@ By default, the gateway makes no retries and up to 2 fallbacks. The failure deci
   request.
 - A candidate that the gateway refuses before its call counts as a fallback.
 - When a provider asks for more than 8 seconds on your own credential, the gateway node that got
-  the answer passes over that credential and deployment for later requests until the wait ends,
-  without a call, while another candidate remains. The candidate still counts as a fallback, a
+  the answer makes no call with that credential and deployment until the wait ends, while another
+  candidate remains. The candidate still counts as a fallback, a
   request's last candidate still gets its call, and a successful call ends the wait early.
 - When no candidate succeeds, the response has the error that ended the request, or the first
   candidate's error unless a later one passes sooner when you wait. See

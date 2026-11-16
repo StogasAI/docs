@@ -25,7 +25,8 @@ deployment ID:
 | Ultrafast | Highest price, fastest responses | `service_tier: "ultrafast"` or an `-ultrafast` ID |
 | Pro       | More compute per request         | `"reasoning": { "mode": "pro" }` or a `-pro` ID   |
 
-Pro combines with Flex or Fast, for example `openai-gpt-5.6-sol-pro-fast`.
+Pro combines with [Flex](https://developers.openai.com/api/docs/guides/flex-processing) or
+[Fast](https://developers.openai.com/api/docs/guides/priority-processing), for example `openai-gpt-5.6-sol-pro-fast`.
 
 ## Prompt caching
 
@@ -114,7 +115,8 @@ in your application, then send the conversation again with each call and its `sh
 
 ## Files
 
-OpenAI reads only the text of a file that is not a PDF, so convert a document to PDF to keep its
+OpenAI [reads only the text](https://developers.openai.com/api/docs/guides/file-inputs) of a file
+that is not a PDF, so convert a document to PDF to keep its
 images and charts. It reads at most the first 1,000 rows of each sheet of a spreadsheet, CSV and TSV
 included, and adds a summary that its model writes. To send every row of a spreadsheet, a CSV or
 another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
@@ -138,10 +140,3 @@ another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 - Async tool calls (`async: true`) and `configuration_update` input items.
 - Hosted file search, code interpreter, shell containers, computer use and image generation.
 - WebSocket mode and the Scale tier.
-
-## References
-
-- [OpenAI Flex processing](https://developers.openai.com/api/docs/guides/flex-processing)
-- [OpenAI Fast processing](https://developers.openai.com/api/docs/guides/priority-processing)
-- [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
-- [OpenAI file inputs](https://developers.openai.com/api/docs/guides/file-inputs)
