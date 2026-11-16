@@ -15,7 +15,8 @@ call to the provider. The provider bills you, and we charge a [2% fee](#billing)
 | Customer encrypted | Encrypted on your device  | Every provider | Your API key and encryption key |
 
 New keys start with Stogas-managed Chutes. Every other provider needs a credential of your own.
-Each [provider page](/docs/providers) shows what its credential needs.
+Each [provider page](/docs/providers) shows what its credential needs. A stored credential for a
+cloud account can hold no secret at all, through [federation](#federation).
 
 ## Checks
 
@@ -33,6 +34,44 @@ model that your provider account can't use. The request's
 [result](/docs/request-records#provider-results) names the refusal, and
 [Analytics](/docs/analytics) filtered by the credential shows every refused call. To limit a
 credential to some models yourself, give it a [policy](/docs/policies/scopes).
+
+## Federation
+
+```json title="Token that the gateway signs for your cloud"
+{
+	"iss": "https://app.stogas.ai/api/federation/<organization-id>",
+	"sub": "organization:<organization-id>",
+	"aud": "sts.amazonaws.com",
+	"iat": 1795000000,
+	"nbf": 1795000000,
+	"exp": 1795000300,
+	"jti": "0d6f3a52c1b94e7f8a21"
+}
+```
+
+A cloud account can trust your organization instead of giving us a secret. The gateway signs a
+token as your organization, and your cloud exchanges it for access that lasts up to one hour. The
+credential that you save names only what to sign in to, such as a role, so nothing in it can leak
+or needs rotation. The provider pages of the clouds that support federation show the setup.
+
+| Value      | What it is                                               |
+| ---------- | -------------------------------------------------------- |
+| Issuer     | `https://app.stogas.ai/api/federation/<organization-id>` |
+| Subject    | `organization:<organization-id>`                         |
+| Audience   | Set by your cloud. Its provider page gives the value     |
+| Signature  | RS256. `kid` names the key                               |
+| Token life | 5 minutes                                                |
+| Discovery  | `<issuer>/.well-known/openid-configuration`              |
+| Keys       | `https://app.stogas.ai/api/federation/jwks`              |
+
+- Each organization has its own issuer, so a cloud that trusts yours accepts no other
+  organization's token.
+- The subject is the organization. Every member who can add a credential can use what trusts it,
+  so give the role or account in your cloud only the access that the organization needs.
+- Let your cloud read the keys from the issuer. We replace them without notice, and a copy that you
+  upload stops working.
+- To revoke the access, remove the trust in your cloud. Access that your cloud already gave ends
+  within one hour.
 
 ## Customer encryption
 

@@ -22,6 +22,47 @@ Claude Opus 5.5, and models before Claude 4.6 have no US-only inference there.
 
 ## Create a credential
 
+A workload identity pool holds no secret. Google Cloud trusts your organization's
+[issuer](/docs/byok#federation), and the gateway exchanges its tokens for access that lasts one
+hour.
+
+1. Create a pool and a provider for your organization's issuer. [BYOK](/docs/byok) shows the
+   issuer URL and the subject when you add a Google Cloud credential.
+
+   ```bash
+   gcloud iam workload-identity-pools create stogas \
+     --project=PROJECT_ID --location=global
+   gcloud iam workload-identity-pools providers create-oidc stogas \
+     --project=PROJECT_ID --location=global --workload-identity-pool=stogas \
+     --issuer-uri=https://app.stogas.ai/api/federation/<organization-id> \
+     --attribute-mapping=google.subject=assertion.sub
+   ```
+
+   Leave the allowed audiences empty. The gateway sends the provider's default audience.
+
+2. Give your organization the roles it needs:
+
+   ```bash
+   gcloud projects add-iam-policy-binding PROJECT_ID \
+     --member="principal://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/stogas/subject/organization:<organization-id>" \
+     --role=roles/aiplatform.user
+   ```
+
+   `roles/aiplatform.user` serves Agent Platform. For Claude Models on Google Cloud, grant
+   `roles/claude.user` too.
+
+3. Add the project ID and the provider's path in [BYOK](/docs/byok), with your workspace ID for
+   Claude Models on Google Cloud:
+
+   ```text
+   projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/stogas/providers/stogas
+   ```
+
+To reach Google Cloud as a service account instead, grant your organization
+`roles/iam.workloadIdentityUser` on the service account and add its email with the credential.
+
+### Use a key file instead
+
 1. Create a service account with the roles it needs, and a key for it:
 
    ```bash
@@ -32,9 +73,6 @@ Claude Opus 5.5, and models before Claude 4.6 have no US-only inference there.
    gcloud iam service-accounts keys create key.json \
      --iam-account=stogas-gateway@PROJECT_ID.iam.gserviceaccount.com
    ```
-
-   `roles/aiplatform.user` serves Agent Platform. For Claude Models on Google Cloud, grant
-   `roles/claude.user` too.
 
 2. Add `key.json` in [BYOK](/docs/byok), with your workspace ID for Claude Models on Google Cloud,
    then delete `key.json`.
@@ -47,7 +85,10 @@ blocks them, `iam.disableServiceAccountKeyCreation` or
 
 ## Customer encryption
 
-With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts the key file:
+With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts a credential
+document, which for a workload identity pool holds `schema`, `projectId` and
+`workloadIdentityProvider`, with `serviceAccountEmail` and `workspaceId` when you use them. It also
+encrypts a key file as Google Cloud downloaded it:
 
 ```bash
 stogas encrypt --key providers --organization <organization-id> \
@@ -119,6 +160,7 @@ gcloud org-policies set-policy policy.yaml
 
 ## References
 
+- [Workload identity federation](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-other-providers)
 - [Claude on Agent Platform](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/google-managed)
 - [Claude Models on Google Cloud (Anthropic managed)](https://platform.claude.com/docs/en/build-with-claude/claude-models-on-google-cloud/anthropic-managed)
 - [Abuse monitoring on Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/abuse-monitoring)

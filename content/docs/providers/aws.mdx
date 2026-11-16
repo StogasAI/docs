@@ -25,6 +25,55 @@ no Fast tier. Models before Claude 4.6 have no US-only inference there.
 
 ## Create a credential
 
+A role holds no secret. AWS trusts your organization's [issuer](/docs/byok#federation), and the
+gateway assumes the role for one hour at a time.
+
+1. Add your organization's issuer to IAM. [BYOK](/docs/byok) shows the issuer URL and the subject
+   when you add an AWS credential.
+
+   ```bash
+   aws iam create-open-id-connect-provider \
+     --url https://app.stogas.ai/api/federation/<organization-id> \
+     --client-id-list sts.amazonaws.com
+   ```
+
+2. Save this trust policy as `trust.json`:
+
+   ```json title="trust.json"
+   {
+   	"Version": "2012-10-17",
+   	"Statement": [
+   		{
+   			"Effect": "Allow",
+   			"Principal": {
+   				"Federated": "arn:aws:iam::<account-id>:oidc-provider/app.stogas.ai/api/federation/<organization-id>"
+   			},
+   			"Action": "sts:AssumeRoleWithWebIdentity",
+   			"Condition": {
+   				"StringEquals": {
+   					"app.stogas.ai/api/federation/<organization-id>:aud": "sts.amazonaws.com",
+   					"app.stogas.ai/api/federation/<organization-id>:sub": "organization:<organization-id>"
+   				}
+   			}
+   		}
+   	]
+   }
+   ```
+
+3. Save the policy from [Grant access](#grant-access) as `policy.json`, and create the role:
+
+   ```bash
+   aws iam create-role --role-name stogas-gateway \
+     --assume-role-policy-document file://trust.json
+   aws iam put-role-policy --role-name stogas-gateway \
+     --policy-name stogas-claude --policy-document file://policy.json
+   ```
+
+4. Add the role's ARN in [BYOK](/docs/byok) with a commercial Region, such as `us-east-1`. A
+   Claude Platform on AWS workspace must be in that Region.
+
+### Use a key instead
+
 1. Save the policy from [Grant access](#grant-access) as `policy.json`, and give it to a new IAM
    user:
 
@@ -48,8 +97,9 @@ no Fast tier. Models before Claude 4.6 have no US-only inference there.
 3. Add the key in [BYOK](/docs/byok) with a commercial Region, such as `us-east-1`. A Claude
    Platform on AWS workspace must be in that Region.
 
-| Key                                              | Serves                                               |
+| Credential                                       | Serves                                               |
 | ------------------------------------------------ | ---------------------------------------------------- |
+| IAM role                                         | Bedrock, and Claude Platform on AWS with a workspace |
 | IAM access key                                   | Bedrock, and Claude Platform on AWS with a workspace |
 | Bedrock API key                                  | Bedrock                                              |
 | Claude Platform on AWS API key, with a workspace | Claude Platform on AWS                               |
@@ -70,7 +120,7 @@ and from `eu-west-2` the EU profile also runs in London.
 
 ## Grant access
 
-The IAM user that owns the key needs this policy:
+The role, or the IAM user that owns the key, needs this policy:
 
 ```json title="IAM policy"
 {
@@ -116,6 +166,14 @@ them with Anthropic. Claude Mythos also needs Anthropic's approval for your acco
 With [customer encryption](/docs/byok#customer-encryption), the CLI encrypts a credential
 document that holds the same fields:
 
+```json tab="Role"
+{
+	"schema": "stogas.aws-byok.v1",
+	"region": "us-east-1",
+	"roleArn": "arn:aws:iam::123456789012:role/stogas-gateway"
+}
+```
+
 ```json tab="Access key"
 {
 	"schema": "stogas.aws-byok.v1",
@@ -154,5 +212,6 @@ are not available.
 
 - [Claude in Amazon Bedrock](https://platform.claude.com/docs/en/build-with-claude/claude-in-amazon-bedrock)
 - [Claude Platform on AWS](https://platform.claude.com/docs/en/build-with-claude/claude-platform-on-aws)
+- [OpenID Connect identity providers in IAM](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html)
 - [Inference profile permissions](https://docs.aws.amazon.com/bedrock/latest/userguide/inference-profiles-prereq.html)
 - [Bedrock data retention](https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html)

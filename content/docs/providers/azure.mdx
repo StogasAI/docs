@@ -26,8 +26,30 @@ with Fireworks, which runs the model under its own compliance and data handling 
 
 ## Connect your account
 
-Create an Entra application with a client secret, and give it the **Foundry User** role on your
-model accounts, or on a resource group or subscription that holds them:
+Create an Entra application that trusts your organization's [issuer](/docs/byok#federation), and
+give it the **Foundry User** role on your model accounts, or on a resource group or subscription
+that holds them. [BYOK](/docs/byok) shows the issuer URL and the subject when you add an Azure
+credential.
+
+```bash
+appId=$(az ad app create --display-name stogas-gateway --query appId --output tsv)
+az ad sp create --id $appId
+az role assignment create --assignee $appId \
+  --role 53ca6127-db72-4b80-b1b0-d745d6d5456d \
+  --scope /subscriptions/<subscription-id>/resourceGroups/<group>
+az ad app federated-credential create --id $appId --parameters '{
+  "name": "stogas",
+  "issuer": "https://app.stogas.ai/api/federation/<organization-id>",
+  "subject": "organization:<organization-id>",
+  "audiences": ["api://AzureADTokenExchange"]
+}'
+```
+
+Enter your tenant ID and `$appId` in [BYOK](/docs/byok) as the tenant ID and client ID. The
+application has no secret. Entra can take a few minutes to accept a new federated credential, so
+finding your accounts can fail until then.
+
+### Use a client secret instead
 
 ```bash
 az ad sp create-for-rbac --name stogas-gateway \
@@ -44,7 +66,8 @@ With [customer encryption](/docs/byok#customer-encryption), we store only the en
 application, and only a gateway can open it with your key.
 
 1. Save the application, then encrypt it. The CLI also takes `tenantId`, `clientId` and
-   `clientSecret` in a JSON object.
+   `clientSecret` in a JSON object, without `clientSecret` for an application that trusts your
+   organization's issuer.
 
    ```bash
    az ad sp create-for-rbac --name stogas-gateway \
@@ -102,6 +125,7 @@ IDs, so send files inline or by URL.
 
 ## References
 
+- [Workload identity federation in Entra](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation)
 - [Foundry roles](https://learn.microsoft.com/en-us/azure/foundry/concepts/rbac-foundry)
 - [Foundry deployment types](https://learn.microsoft.com/en-us/azure/foundry/foundry-models/concepts/deployment-types)
 - [Foundry Instant access](https://learn.microsoft.com/en-us/azure/foundry/concepts/instant-models)
