@@ -246,10 +246,6 @@ By default, the gateway makes no retries and up to 2 fallbacks. The failure deci
   the answer passes over that credential and deployment for later requests until the wait ends,
   without a call, while another candidate remains. The candidate still counts as a fallback, a
   request's last candidate still gets its call, and a successful call ends the wait early.
-- When three calls in a row on your own credential fail before the provider receives them or with
-  an unknown outcome, the gateway node passes over that credential and deployment in the same way
-  for 30 seconds. One request then tests the deployment. Each failed test makes the next wait 30
-  seconds longer, up to 5 minutes, and any answer from the provider ends the wait.
 - When no candidate succeeds, the response has the error that ended the request, or the first
   candidate's error unless a later one passes sooner when you wait. See
   [Retries](/docs/reference/errors#retries).
