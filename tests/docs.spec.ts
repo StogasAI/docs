@@ -824,6 +824,8 @@ test('sidebar shows a draggable native scrollbar only when its links overflow', 
 		const x = box!.x + box!.width - (await gutter()) / 2;
 		await page.mouse.move(x, box!.y + 20);
 		await page.mouse.down();
+		// Hold the thumb for a frame before it moves, as a person does.
+		await page.evaluate(() => new Promise(requestAnimationFrame));
 		await page.mouse.move(x, box!.y + 120, { steps: 8 });
 		await page.mouse.up();
 		// The page reports the scroll a frame after the drag.
