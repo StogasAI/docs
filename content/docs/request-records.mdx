@@ -89,8 +89,6 @@ OpenAI rate limited the first call, so the gateway called Azure:
 	"node_id": "amber-falcon-69f9fdca1fa162f4d0ec706c70b3729d77cff726031f28d8c0b8a3586d50aeae",
 	"performance": {
 		"total_ms": 1975,
-		"provider_ms": 1944,
-		"provider_start_ms": 14,
 		"rate_limit_wait_ms": 0,
 		"first_output_ms": 702,
 		"ttft_ms": 702
@@ -418,19 +416,20 @@ The [example](#example) record has this timeline:
 
 ```text title="Request clock of the example"
    0 ms  The gateway receives the request.
-  14 ms  The OpenAI call starts.               provider_start_ms
+  14 ms  The OpenAI call starts.               provider_attempts[0].start_ms
  110 ms  OpenAI answers 429.
- 118 ms  The Azure call starts.
+ 118 ms  The Azure call starts.                provider_attempts[1].start_ms
  702 ms  The first token arrives.              first_output_ms, ttft_ms
-1958 ms  The Azure call ends.                  provider_ms = 1958 - 14
+1958 ms  The Azure call ends.                  provider_attempts[1].start_ms + latency_ms
 1975 ms  The gateway writes the record.        total_ms
 ```
 
-`provider_ms` includes upstream connection setup, waits between calls and, for streams, response
+Provider time runs from the start of the first call to the end of the last, here 1958 - 14 =
+1944 ms. It includes the waits between calls, upstream connection setup and, for streams, response
 backpressure. `rate_limit_wait_ms` is how long the
-[platform request limit](/docs/policies/limits#requests) held the first call, before
-`provider_start_ms`. The rest of the time is gateway preparation and response processing, which
-analytics shows as gateway duration.
+[platform request limit](/docs/policies/limits#requests) held the request before its first call.
+The rest of the time is gateway preparation and response processing, which analytics shows as
+gateway duration.
 
 `first_output_ms` is when the provider's first output reached the gateway, and `ttft_ms` is when the
 gateway passed the first generated token on to your client, so `ttft_ms` is never earlier. Output
@@ -527,8 +526,6 @@ For example, 99 matching credit rejections in one minute produce five single rec
 	"node_id": "amber-falcon-69f9fdca1fa162f4d0ec706c70b3729d77cff726031f28d8c0b8a3586d50aeae",
 	"performance": {
 		"total_ms": 0,
-		"provider_ms": 0,
-		"provider_start_ms": null,
 		"rate_limit_wait_ms": 0,
 		"first_output_ms": null,
 		"ttft_ms": null

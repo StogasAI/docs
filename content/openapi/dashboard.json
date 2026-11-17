@@ -14165,26 +14165,6 @@
 																"maximum": 4294967295,
 																"description": "The full request on the gateway."
 															},
-															"provider_ms": {
-																"type": "integer",
-																"minimum": 0,
-																"maximum": 4294967295,
-																"description": "Provider calls, from the start of the first to the end of the last, with the waits between them."
-															},
-															"provider_start_ms": {
-																"default": null,
-																"description": "When the first provider call started. `null` if not recorded.",
-																"anyOf": [
-																	{
-																		"type": "integer",
-																		"minimum": 0,
-																		"maximum": 4294967295
-																	},
-																	{
-																		"type": "null"
-																	}
-																]
-															},
 															"rate_limit_wait_ms": {
 																"default": 0,
 																"description": "How long the request waited before its first provider call, or in all without one, because the organization was over its [platform rate](/docs/policies/limits#requests).",
@@ -14292,8 +14272,6 @@
 														},
 														"required": [
 															"total_ms",
-															"provider_ms",
-															"provider_start_ms",
 															"rate_limit_wait_ms",
 															"first_output_ms",
 															"ttft_ms",
