@@ -56,27 +56,24 @@ length from 15 minutes to 30 days. A new length also applies to current sign-ins
 all members ends every sign-in at once. Saving another issuer, client ID or protocol turns the
 requirement off until the next test.
 
-Members who can manage the organization never need a sign-in, so a broken connection can't lock
-everyone out. API keys don't use single sign-on.
+Members whose role has **Organization → Skip single sign-on** need no sign-in, for example
+contractors who have no account at your provider. **Organization → Manage** includes it, so a
+broken connection can't lock everyone out. API keys don't use single sign-on.
 
 ## Choose who can join
 
-| Allow invite links | SCIM          | Who can join                                                            |
-| ------------------ | ------------- | ----------------------------------------------------------------------- |
-| On                 | Not connected | Anyone with an invitation link, and people at your verified domains     |
-| On                 | Connected     | Anyone with an invitation link, and active users that the provider sent |
-| Off                | Not connected | Only people at your verified domains                                    |
-| Off                | Connected     | Only active users that the provider sent                                |
+| SCIM          | Who can join                                                            |
+| ------------- | ----------------------------------------------------------------------- |
+| Not connected | Anyone with an invitation link, and people at your verified domains     |
+| Connected     | Anyone with an invitation link, and active users that the provider sent |
 
 Each person who joins through your provider takes one of the **Seats for single sign-on**, from 0
 to 1,000, and nobody joins that way at 0. These seats count as [used seats](/docs/members#invitations)
 while you hold them. Changing them needs **Members → Manage**. Holding more also needs free seats, a
 verified domain, a test sign-in that succeeded and the permissions to assign the default role.
 
-Turning **Allow invite links** off deletes the organization's invitations, and nobody can create
-one until you turn it on again. You can turn it off once a test sign-in succeeds. Saving another
-issuer, client ID or protocol allows links again until the next test. A person who joins with a
-link still signs in through your provider while single sign-on is required.
+While single sign-on is required, a person who joins with a link opens the organization after
+your provider signs them in, or once a role lets them skip single sign-on.
 
 ## Access tokens
 
@@ -84,7 +81,7 @@ While single sign-on is required, an access token can act in the organization on
 it, or approved its `stogas login`, after signing in through the provider. The token keeps working
 when that sign-in's length ends, until a manager signs out all members or saves another issuer, or
 you leave the organization. Other tokens get `403 SSO_REQUIRED`, and tokens of members who can
-manage the organization need no sign-in. To refuse every access token, turn off **Allow access
+skip single sign-on need no sign-in. To refuse every access token, turn off **Allow access
 tokens**.
 
 A manager's access token can manage every single sign-on setting through the

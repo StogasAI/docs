@@ -29,13 +29,28 @@ by default, plus one for each $100 it has added to its balance in total. A seat 
 its member leaves or is removed. For more seats, email [ops@stogas.ai](mailto:ops@stogas.ai).
 
 Joining assigns the organization's current default role, so creating or changing an invitation also
-needs the permissions to assign that role. An invitation has at most 30 uses, and an organization
-can [turn invitations off](/docs/single-sign-on#choose-who-can-join).
+needs the permissions to assign that role. An invitation has at most 30 uses.
 
 An invitation is deleted when its last use is taken or it expires. Until then, you can change its
 name, uses and expiry. It needs at least one unused use, added uses need free seats, and a new
 expiry is 1 minute to 30 days from the time you change it. Deleting an invitation stops further
 joins, and members who already joined stay.
+
+## Require two-factor authentication
+
+| Member's sign-in                                             | Opens the organization |
+| ------------------------------------------------------------ | ---------------------- |
+| An account with a passkey or an authenticator app            | Yes                    |
+| The organization's [identity provider](/docs/single-sign-on) | Yes                    |
+| A password alone                                             | No                     |
+
+**Settings → Require two-factor authentication** needs **Organization → Manage** and a passkey or
+an authenticator app on your own account. Refused requests get `403 TWO_FACTOR_REQUIRED`. A
+member's access tokens follow the member's account, and a token that the identity provider's
+sign-in authorized keeps working.
+
+Members with **Members → Manage** or **Organization → Manage** see which accounts have a passkey
+or an authenticator app, and `two-factor:false` finds the members without one.
 
 ## Pictures
 
@@ -98,27 +113,28 @@ access to someone else.
 
 ### Organization permissions
 
-| Permission               | Dashboard             | Allows                                                                                                                                                             |
-| ------------------------ | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `activity.read`          | Activity → Read       | Read and export [Activity](/docs/activity).                                                                                                                        |
-| `analytics.read_own`     | Analytics → Read own  | Read the requests of your own member keys.                                                                                                                         |
-| `analytics.read_all`     | Analytics → Read all  | Read every request in the organization.                                                                                                                            |
-| `api_keys.read_all`      | API keys → Read all   | Read every API key, grant and folder, every policy except credential policies, and every request.                                                                  |
-| `api_keys.use_all`       | API keys → Use all    | Reveal every service-key secret, and create your own keys from any grant.                                                                                          |
-| `api_keys.manage_all`    | API keys → Manage all | Create, edit and delete every API key, grant and folder, and edit every policy except credential policies.                                                         |
-| `api_keys.manage_access` | API keys → Admin all  | Use and manage every API key, grant and folder, and give others access to them.                                                                                    |
-| `billing.read`           | Billing → Read        | Read the balance, payments, invoices, receipts and billing details.                                                                                                |
-| `billing.manage`         | Billing → Manage      | Save billing details, and get the payment addresses that add credit.                                                                                               |
-| `byok.read_all`          | BYOK → Read all       | Read every provider credential and its policy.                                                                                                                     |
-| `byok.use_all`           | BYOK → Use all        | Assign any provider credential to the keys you manage.                                                                                                             |
-| `byok.manage_all`        | BYOK → Manage all     | Create, edit, replace, disable and delete every provider credential, and edit its policy.                                                                          |
-| `byok.manage_access`     | BYOK → Admin all      | Use and manage every provider credential, and give others access to it.                                                                                            |
-| `members.read`           | Members → Read        | Read members and roles.                                                                                                                                            |
-| `members.manage`         | Members → Manage      | Invite and remove members, read, change and delete invitations, assign the roles that the [rules](#roles) allow, and remove any member's picture.                  |
-| `organization.manage`    | Organization → Manage | Change the organization's name, picture and settings, and set up single sign-on. Members with it open the organization without single sign-on when it is required. |
-| `roles.manage`           | Roles → Manage        | Create, edit and delete roles, including roles with permissions you do not hold. With `members.manage`, assign any role.                                           |
+| Permission               | Dashboard                          | Allows                                                                                                                                            |
+| ------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activity.read`          | Activity → Read                    | Read and export [Activity](/docs/activity).                                                                                                       |
+| `analytics.read_own`     | Analytics → Read own               | Read the requests of your own member keys.                                                                                                        |
+| `analytics.read_all`     | Analytics → Read all               | Read every request in the organization.                                                                                                           |
+| `api_keys.read_all`      | API keys → Read all                | Read every API key, grant and folder, every policy except credential policies, and every request.                                                 |
+| `api_keys.use_all`       | API keys → Use all                 | Reveal every service-key secret, and create your own keys from any grant.                                                                         |
+| `api_keys.manage_all`    | API keys → Manage all              | Create, edit and delete every API key, grant and folder, and edit every policy except credential policies.                                        |
+| `api_keys.manage_access` | API keys → Admin all               | Use and manage every API key, grant and folder, and give others access to them.                                                                   |
+| `billing.read`           | Billing → Read                     | Read the balance, payments, invoices, receipts and billing details.                                                                               |
+| `billing.manage`         | Billing → Manage                   | Save billing details, and get the payment addresses that add credit.                                                                              |
+| `byok.read_all`          | BYOK → Read all                    | Read every provider credential and its policy.                                                                                                    |
+| `byok.use_all`           | BYOK → Use all                     | Assign any provider credential to the keys you manage.                                                                                            |
+| `byok.manage_all`        | BYOK → Manage all                  | Create, edit, replace, disable and delete every provider credential, and edit its policy.                                                         |
+| `byok.manage_access`     | BYOK → Admin all                   | Use and manage every provider credential, and give others access to it.                                                                           |
+| `members.read`           | Members → Read                     | Read members and roles.                                                                                                                           |
+| `members.manage`         | Members → Manage                   | Invite and remove members, read, change and delete invitations, assign the roles that the [rules](#roles) allow, and remove any member's picture. |
+| `organization.skip_sso`  | Organization → Skip single sign-on | Open the organization without single sign-on when it is required.                                                                                 |
+| `organization.manage`    | Organization → Manage              | Change the organization's name, picture and settings, and set up single sign-on.                                                                  |
+| `roles.manage`           | Roles → Manage                     | Create, edit and delete roles, including roles with permissions you do not hold. With `members.manage`, assign any role.                          |
 
 A role also gets the permissions that its permissions include. In API keys and BYOK, Admin all
 includes Use all and Manage all, and each of those includes Read all. Billing → Manage includes
-Billing → Read, Analytics → Read all includes Read own, and Members → Manage and Roles → Manage
-include Members → Read.
+Billing → Read, Analytics → Read all includes Read own, Members → Manage and Roles → Manage
+include Members → Read, and Organization → Manage includes Skip single sign-on.

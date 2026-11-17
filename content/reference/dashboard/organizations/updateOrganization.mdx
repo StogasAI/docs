@@ -1,15 +1,20 @@
 ---
 title: Change organization settings
-description: "Changing name, allowAccessTokens, allowPlaygroundAssistant or
-  allowStoredCredentials needs organization management. displayName is your name
-  in this organization. With allowAccessTokens false, members' access tokens get
-  403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once.
-  allowPlaygroundAssistant lets members turn on the Playground assistant, which
-  reads the organization as them and sends what it reads to the model through
-  their own API key. With allowStoredCredentials false, the organization keeps
-  only provider credentials that its own encryption keys encrypt: adding a
-  stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off
-  gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains."
+description: "Changing name, allowAccessTokens, allowPlaygroundAssistant,
+  allowStoredCredentials or requireTwoFactor needs organization management.
+  displayName is your name in this organization. With allowAccessTokens false,
+  members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization
+  at once. allowPlaygroundAssistant lets members turn on the Playground
+  assistant, which reads the organization as them and sends what it reads to the
+  model through their own API key. With allowStoredCredentials false, the
+  organization keeps only provider credentials that its own encryption keys
+  encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED,
+  and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored
+  credential remains. With requireTwoFactor true, a member whose account has no
+  passkey or authenticator app gets 403 TWO_FACTOR_REQUIRED for this
+  organization, unless its identity provider signed the session in or authorized
+  the access token. Turning it on needs a passkey or an authenticator app on
+  your own account, and gets 409 TWO_FACTOR_MISSING without one."
 full: true
 _openapi:
   preload:
@@ -20,18 +25,23 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: "Changing name, allowAccessTokens, allowPlaygroundAssistant or
-          allowStoredCredentials needs organization management. displayName is
-          your name in this organization. With allowAccessTokens false, members'
-          access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization
-          at once. allowPlaygroundAssistant lets members turn on the Playground
+      - content: "Changing name, allowAccessTokens, allowPlaygroundAssistant,
+          allowStoredCredentials or requireTwoFactor needs organization
+          management. displayName is your name in this organization. With
+          allowAccessTokens false, members' access tokens get 403
+          ACCESS_TOKENS_NOT_ALLOWED for this organization at once.
+          allowPlaygroundAssistant lets members turn on the Playground
           assistant, which reads the organization as them and sends what it
           reads to the model through their own API key. With
           allowStoredCredentials false, the organization keeps only provider
           credentials that its own encryption keys encrypt: adding a stored
           credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off
-          gets 409 STORED_CREDENTIALS_EXIST while any stored credential
-          remains."
+          gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains.
+          With requireTwoFactor true, a member whose account has no passkey or
+          authenticator app gets 403 TWO_FACTOR_REQUIRED for this organization,
+          unless its identity provider signed the session in or authorized the
+          access token. Turning it on needs a passkey or an authenticator app on
+          your own account, and gets 409 TWO_FACTOR_MISSING without one."
 ---
 
 export default function Layout(props) {
