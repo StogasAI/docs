@@ -189,6 +189,20 @@ empty.[^no-request-id]
 When every call fails, the error that you received can be an earlier call's. See
 [Retries](/docs/reference/errors#retries).
 
+### Outcomes
+
+[Analytics](/docs/analytics#filters) and [export samples](/docs/export#send-some-of-the-records)
+name how a request ended. A record has the first outcome in this table that fits it:
+
+| Outcome     | Record                                                               |
+| ----------- | -------------------------------------------------------------------- |
+| `rejected`  | `gateway_error` is set and `provider_attempts` is empty.             |
+| `failed`    | `gateway_error` is set.                                              |
+| `cancelled` | `cancelled` is `true`.                                               |
+| `unknown`   | No provider call was made, or the result of the last one is unknown. |
+| `success`   | The last provider call succeeded.                                    |
+| `failed`    | The last provider call has another [result](#provider-results).      |
+
 ### Provider results
 
 The gateway sets each call's `status` from the provider's structured error type, code and HTTP

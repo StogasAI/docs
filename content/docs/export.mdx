@@ -40,12 +40,46 @@ Add a destination to a [policy](/docs/policies/editing):
 - Headers go only to your webhook. To keep them private,
   [encrypt the export](/docs/customer-encryption#encrypt-plugin-settings).
 - Destinations from every policy that applies to a request add together, up to eight. Destinations
-  with the same URL and headers get one record, which has bodies if any of them sends bodies.
+  with the same URL and headers get one record. They get it if any of them would, and it has bodies
+  if any of them sends bodies.
 - An empty `destinations` array replaces
   [default export destinations](/docs/policies/rules#defaults), but it cannot
   remove a destination that another scope requires.
 - A [request policy](/docs/policies/request-policies) can add a destination when delegation permits
   `plugins.export` or `plugins`.
+
+## Send some of the records
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"export": {
+			"destinations": [
+				// One record in ten.
+				{ "url": "https://receiver.contoso.com/sample", "sample": 0.1 },
+				// Every failure and rejection, and no other record.
+				{ "url": "https://receiver.contoso.com/alerts", "sample": { "failed": 1, "rejected": 1 } },
+				// Every failure, and one success in twenty.
+				{ "url": "https://receiver.contoso.com/review", "sample": { "failed": 1, "success": 0.05 } }
+			]
+		}
+	}
+}
+```
+
+`sample` is the share of records that a destination gets, above 0 and at most 1. An object gives
+a share for each [outcome](/docs/request-records#outcomes) that the destination gets, and the
+destination gets no record of an outcome that the object leaves out.
+
+- The gateway chooses by request ID, so destinations with the same share get the same records, and
+  a higher share gets every record that a lower share gets.
+- You can repeat the choice. Take the first eight hexadecimal digits of the SHA-256 of the
+  `request_id` as a number and divide it by 2<sup>32</sup>. The destination gets the record when the
+  result is below the share for the record's outcome.
+- A request that no destination can get is not copied, so a low share also lowers the time that
+  export adds to requests.
+- To export only some models, providers or keys, put the destination in a
+  [rule](/docs/policies/rules) or in the policy of a key or folder.
 
 ## Record format
 
@@ -124,10 +158,12 @@ short, and an export never makes a request fail.
 
 To find records that did not arrive, compare the `request_id` values that your receiver accepted
 with the [request records](/docs/request-records) of the requests that your export policies cover.
-The record of each request that ran has a `plugins.export` entry, even when the gateway
-dropped its export. Its `duration_us` is the time that export added to the request, mostly to
-describe attached files. Rejections have no plugin entries, and each of their records is exported,
-including the [grouped](/docs/request-records#grouped-rejections) record of repeated ones.
+The record of each request that ran has a `plugins.export` entry when a destination's
+[sample](#send-some-of-the-records) includes it, even when the gateway dropped its export. Its
+`duration_us` is the time that export added to the request, mostly to describe attached files.
+Rejections have no plugin entries. Each of their records is exported to the destinations whose
+sample includes it, including the [grouped](/docs/request-records#grouped-rejections) record of
+repeated ones.
 
 [^chutes]:
     On [Chutes](/docs/providers/chutes#when-the-client-stops-early) TEE deployments, the gateway

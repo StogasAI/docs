@@ -1305,9 +1305,101 @@
 																}
 															},
 															"content": {
+																"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
 																"anyOf": [
 																	{
 																		"type": "boolean"
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"encrypted": {
+																				"type": "object",
+																				"properties": {
+																					"version": {
+																						"type": "number",
+																						"const": 1
+																					},
+																					"keyId": {
+																						"type": "string",
+																						"pattern": "^[0-9a-f]{64}$"
+																					},
+																					"salt": {
+																						"type": "string",
+																						"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																					},
+																					"nonce": {
+																						"type": "string",
+																						"pattern": "^[A-Za-z0-9_-]{16}$"
+																					},
+																					"blob": {
+																						"type": "string",
+																						"minLength": 22,
+																						"maxLength": 349547,
+																						"pattern": "^[A-Za-z0-9_-]+$"
+																					}
+																				},
+																				"required": [
+																					"version",
+																					"keyId",
+																					"salt",
+																					"nonce",
+																					"blob"
+																				],
+																				"additionalProperties": false
+																			}
+																		},
+																		"required": [
+																			"encrypted"
+																		],
+																		"additionalProperties": false,
+																		"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																	}
+																]
+															},
+															"sample": {
+																"description": "The share of records to send, above 0 and at most 1. Defaults to 1, which sends every record. An object gives a share for each outcome (success, failed, cancelled, rejected or unknown) and sends no record of the outcomes that it leaves out.",
+																"anyOf": [
+																	{
+																		"anyOf": [
+																			{
+																				"type": "number",
+																				"exclusiveMinimum": 0,
+																				"maximum": 1
+																			},
+																			{
+																				"type": "object",
+																				"properties": {
+																					"success": {
+																						"type": "number",
+																						"exclusiveMinimum": 0,
+																						"maximum": 1
+																					},
+																					"failed": {
+																						"type": "number",
+																						"exclusiveMinimum": 0,
+																						"maximum": 1
+																					},
+																					"cancelled": {
+																						"type": "number",
+																						"exclusiveMinimum": 0,
+																						"maximum": 1
+																					},
+																					"rejected": {
+																						"type": "number",
+																						"exclusiveMinimum": 0,
+																						"maximum": 1
+																					},
+																					"unknown": {
+																						"type": "number",
+																						"exclusiveMinimum": 0,
+																						"maximum": 1
+																					}
+																				},
+																				"additionalProperties": false,
+																				"minProperties": 1
+																			}
+																		]
 																	},
 																	{
 																		"type": "object",
@@ -2776,9 +2868,101 @@
 																			}
 																		},
 																		"content": {
+																			"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
 																			"anyOf": [
 																				{
 																					"type": "boolean"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			]
+																		},
+																		"sample": {
+																			"description": "The share of records to send, above 0 and at most 1. Defaults to 1, which sends every record. An object gives a share for each outcome (success, failed, cancelled, rejected or unknown) and sends no record of the outcomes that it leaves out.",
+																			"anyOf": [
+																				{
+																					"anyOf": [
+																						{
+																							"type": "number",
+																							"exclusiveMinimum": 0,
+																							"maximum": 1
+																						},
+																						{
+																							"type": "object",
+																							"properties": {
+																								"success": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"failed": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"cancelled": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"rejected": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"unknown": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								}
+																							},
+																							"additionalProperties": false,
+																							"minProperties": 1
+																						}
+																					]
 																				},
 																				{
 																					"type": "object",
