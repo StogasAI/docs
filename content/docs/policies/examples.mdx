@@ -85,16 +85,17 @@ Every request skips deployments whose provider does not commit to zero data rete
 }
 ```
 
-### Keep inference in Europe
+### Keep data in Europe
 
-`processingWithin` lists where a deployment processes requests and every place that contains it,
-so this accepts deployments in Europe, in the EU or in one European country. See
-[location values](/docs/policies/routing-fields#location-values).
+`processingWithin` and `storageWithin` list where a deployment processes and keeps content, each
+with every place that contains it. This accepts deployments in Europe, in the EU or in one European
+country, and deployments that keep nothing. To choose only where models run, keep the first check.
+See [location values](/docs/policies/routing-fields#location-values).
 
 ```json title="Organization policy"
 {
 	"routing": {
-		"filter": "'europe' in deployment.dataHandling.processingWithin"
+		"filter": "'europe' in deployment.dataHandling.processingWithin && 'europe' in deployment.dataHandling.storageWithin"
 	}
 }
 ```

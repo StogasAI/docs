@@ -105,8 +105,9 @@ which lies in `europe`, which lies in `world`. A
 [place's page](https://stogas.ai/locations/apac) shows its countries.
 `processingWithin` and `storageWithin` list a deployment's location with every place that contains
 it, so `'europe' in deployment.dataHandling.processingWithin` accepts deployments that process in
-`europe`, in `eu` or in a European country. `unknown` and `none` lie in no other place, and `world`
-only in itself, so the check refuses them.
+`europe`, in `eu` or in a European country. `unknown` lies in no other place, and `world` only in
+itself, so the check refuses them. `none` lies in every place, so a check on `storageWithin` also
+accepts deployments that keep nothing.
 
 Location values are case-sensitive: countries are uppercase and regions lowercase. Saving a policy
 fails when it names a location that the catalog does not list, and the error names the place that
