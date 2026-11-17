@@ -13,7 +13,7 @@ import { messages } from '@/lib/messages';
 import { useStogasOrigin } from './stogas-link';
 import { useMemo } from 'react';
 
-const PRODUCTION_API = 'https://api.stogas.ai';
+const PRODUCTION = { api: 'https://api.stogas.ai', app: 'https://app.stogas.ai' };
 
 function PlaygroundEndpoint() {
 	const t = useTranslations();
@@ -26,15 +26,19 @@ function PlaygroundEndpoint() {
 }
 
 /**
- * The document with the gateway of the page's own environment as its server, so that the
- * playground and the request samples of staging Docs call the staging gateway.
+ * The document with the gateway and the dashboard of the page's own environment as its servers,
+ * so that the playground and the request samples of staging Docs call staging.
  */
-function withServer<Payload extends OpenAPIPageProps_Spec['payload']>(
+function withServers<Payload extends OpenAPIPageProps_Spec['payload']>(
 	payload: Payload,
-	origin: string
+	origins: typeof PRODUCTION
 ): Payload {
-	if (origin === PRODUCTION_API) return payload;
-	return JSON.parse(JSON.stringify(payload).replaceAll(PRODUCTION_API, origin)) as Payload;
+	if (origins.api === PRODUCTION.api) return payload;
+	return JSON.parse(
+		JSON.stringify(payload)
+			.replaceAll(PRODUCTION.api, origins.api)
+			.replaceAll(PRODUCTION.app, origins.app)
+	) as Payload;
 }
 
 const options = {
@@ -82,8 +86,12 @@ export function OpenAPIPageClient({
 	...props
 }: OpenAPIPageProps_Spec & { playground: boolean }) {
 	const Page = playground ? PlaygroundPage : ReferencePage;
-	const origin = useStogasOrigin('api');
-	const payload = useMemo(() => withServer(props.payload, origin), [props.payload, origin]);
+	const api = useStogasOrigin('api');
+	const app = useStogasOrigin('app');
+	const payload = useMemo(
+		() => withServers(props.payload, { api, app }),
+		[props.payload, api, app]
+	);
 	// The playground reads its server once, so a page that learns its environment starts again.
-	return <Page key={origin} {...props} payload={payload} />;
+	return <Page key={api} {...props} payload={payload} />;
 }
