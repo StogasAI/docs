@@ -86,8 +86,8 @@ Send the conversation again, with the model's call and your result after it:
 </Steps>
 
 On Responses, the call is a `function_call` output item, and you send the result as a
-`function_call_output` input item with the same `call_id`. Its `output` must be a string. A list of
-content parts, such as an image, returns `400`.
+`function_call_output` input item with the same `call_id`. Its `output` is a string, or a list of
+text, image and file parts ([Files in tool results](/docs/input-files#files-in-tool-results)).
 
 Request records link each call to the request that sends its result by a
 [hash of the call ID](/docs/request-records#tool-calls), so analytics shows how long your app took.

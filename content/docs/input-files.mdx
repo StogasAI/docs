@@ -4,7 +4,8 @@ description: Send images and documents to models that accept them, inline, by UR
 icon: Paperclip
 ---
 
-Add images and documents to a message as content blocks. The gateway sends the request only to
+Add images and documents to a user message or a [tool result](#files-in-tool-results) as content
+blocks. The gateway sends the request only to
 [candidates that can read every attachment](#when-no-candidate-reads-a-file). The provider checks
 the file itself.
 
@@ -121,16 +122,56 @@ A deployment that reads no text files gets the file as prompt text where a polic
 [text extraction](/docs/text-extraction), as a new organization's policy does. Text extraction also
 turns Word, Excel and PowerPoint files into text.
 
+## Files in tool results
+
+```jsonc tab="Responses"
+{
+	"type": "function_call_output",
+	"call_id": "call_1",
+	"output": [
+		{ "type": "input_text", "text": "The page after the click." },
+		{ "type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo..." },
+		{
+			"type": "input_file",
+			"filename": "report.pdf",
+			"file_data": "data:application/pdf;base64,JVBERi0..."
+		}
+	]
+}
+```
+
+```jsonc tab="Chat Completions"
+{
+	"role": "tool",
+	"tool_call_id": "call_1",
+	"content": [
+		{ "type": "text", "text": "The page after the click." },
+		{ "type": "image_url", "image_url": { "url": "data:image/png;base64,iVBORw0KGgo..." } },
+		{
+			"type": "file",
+			"file": { "filename": "report.pdf", "file_data": "data:application/pdf;base64,JVBERi0..." }
+		}
+	]
+}
+```
+
+A tool result takes images and documents, with the sources, formats, policies and
+[limits](#limits) of a user message. It takes no audio. Only deployments with the
+`toolResultAttachments` capability read them, and the request
+[leaves the others out](#when-no-candidate-reads-a-file). A text or Office file that a policy
+[extracts](/docs/text-extraction) is text, so every deployment reads it.
+
 ## Supported formats
 
 Each catalog route lists the document types that it reads as `documentFormats`, and each
 deployment lists its input types as `inputModalities`. Search the
 [catalog](https://stogas.ai/catalog) to find them:
 
-| Search                                  | Finds                        |
-| --------------------------------------- | ---------------------------- |
-| `deployment.inputModalities:image`      | Deployments that read images |
-| `route.documentFormats.extensions:.pdf` | Routes that read PDFs        |
+| Search                                               | Finds                                             |
+| ---------------------------------------------------- | ------------------------------------------------- |
+| `deployment.inputModalities:image`                   | Deployments that read images                      |
+| `route.documentFormats.extensions:.pdf`              | Routes that read PDFs                             |
+| `deployment.capabilities.toolResultAttachments:true` | Deployments that read attachments in tool results |
 
 The provider can convert a document before the model reads it, so a model that reads only text can
 still accept a PDF. The [provider pages](/docs/providers) list each provider's file rules.
@@ -188,6 +229,8 @@ an attachment when:
 
 - Its deployment or route does not take the input type or the [source](#send-a-document). See
   [Supported formats](#supported-formats).
+- The attachment is in a [tool result](#files-in-tool-results), and its deployment reads only text
+  there.
 - The attachment is a `file_id`, and the candidate's credential is not [BYOK](/docs/byok).
 - Its policy [refuses the attachment's type](#allow-or-deny-file-types).
 - Its policy sets [ASCII-only input](/docs/pii-redaction#ascii-only-input) or
