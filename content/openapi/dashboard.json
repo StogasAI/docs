@@ -7469,6 +7469,388 @@
 			}
 		},
 		"/api/{orgId}/sso/provider": {
+			"put": {
+				"operationId": "setIdentityProvider",
+				"tags": [
+					"Single sign-on"
+				],
+				"summary": "Set the identity provider",
+				"description": "Connects an OpenID Connect or SAML provider, or changes the connected one. Another issuer or protocol unlinks every member, and another issuer, client ID or protocol turns off required single sign-on until a manager signs in through the provider in the dashboard. Omit clientSecret to keep the stored one.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"oneOf": [
+									{
+										"type": "object",
+										"properties": {
+											"protocol": {
+												"type": "string",
+												"const": "oidc"
+											},
+											"issuer": {
+												"type": "string",
+												"maxLength": 512
+											},
+											"clientId": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 255
+											},
+											"clientSecret": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 4096
+											}
+										},
+										"required": [
+											"protocol",
+											"issuer",
+											"clientId"
+										],
+										"additionalProperties": false
+									},
+									{
+										"type": "object",
+										"properties": {
+											"protocol": {
+												"type": "string",
+												"const": "saml"
+											},
+											"issuer": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 512
+											},
+											"signInUrl": {
+												"type": "string",
+												"maxLength": 2048
+											},
+											"certificate": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 16384
+											}
+										},
+										"required": [
+											"protocol",
+											"issuer",
+											"signInUrl",
+											"certificate"
+										],
+										"additionalProperties": false
+									}
+								]
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"redirectUri": {
+											"type": "string",
+											"format": "uri"
+										},
+										"saml": {
+											"type": "object",
+											"properties": {
+												"entityId": {
+													"type": "string",
+													"format": "uri"
+												},
+												"acsUrl": {
+													"type": "string",
+													"format": "uri"
+												}
+											},
+											"required": [
+												"entityId",
+												"acsUrl"
+											],
+											"additionalProperties": false
+										},
+										"scimBaseUrl": {
+											"type": "string",
+											"format": "uri"
+										},
+										"domains": {
+											"maxItems": 10,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"record": {
+														"type": "object",
+														"properties": {
+															"name": {
+																"type": "string"
+															},
+															"value": {
+																"type": "string"
+															}
+														},
+														"required": [
+															"name",
+															"value"
+														],
+														"additionalProperties": false
+													},
+													"verifiedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"domain",
+													"record",
+													"verifiedAt"
+												],
+												"additionalProperties": false
+											}
+										},
+										"provider": {
+											"anyOf": [
+												{
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"allowInviteLinks": {
+																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "oidc"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"clientId": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"allowInviteLinks",
+																"joinSeats",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"clientId"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"requireSso": {
+																	"type": "boolean"
+																},
+																"signInMinutes": {
+																	"type": "integer",
+																	"minimum": 15,
+																	"maximum": 43200
+																},
+																"allowInviteLinks": {
+																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
+																"testedAt": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"format": "date-time"
+																		},
+																		{
+																			"type": "null"
+																		}
+																	]
+																},
+																"updatedAt": {
+																	"type": "string",
+																	"format": "date-time"
+																},
+																"protocol": {
+																	"type": "string",
+																	"const": "saml"
+																},
+																"issuer": {
+																	"type": "string"
+																},
+																"signInUrl": {
+																	"type": "string"
+																},
+																"certificate": {
+																	"type": "string"
+																}
+															},
+															"required": [
+																"requireSso",
+																"signInMinutes",
+																"allowInviteLinks",
+																"joinSeats",
+																"testedAt",
+																"updatedAt",
+																"protocol",
+																"issuer",
+																"signInUrl",
+																"certificate"
+															],
+															"additionalProperties": false
+														}
+													]
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
+										"scim": {
+											"anyOf": [
+												{
+													"type": "object",
+													"properties": {
+														"createdAt": {
+															"type": "string",
+															"format": "date-time"
+														},
+														"rotatedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"usedAt": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"format": "date-time"
+																},
+																{
+																	"type": "null"
+																}
+															]
+														},
+														"users": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														},
+														"activeUsers": {
+															"type": "integer",
+															"minimum": 0,
+															"maximum": 50000
+														}
+													},
+													"required": [
+														"createdAt",
+														"rotatedAt",
+														"usedAt",
+														"users",
+														"activeUsers"
+													],
+													"additionalProperties": false
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"redirectUri",
+										"saml",
+										"scimBaseUrl",
+										"domains",
+										"provider",
+										"scim"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
 			"delete": {
 				"operationId": "deleteIdentityProvider",
 				"tags": [

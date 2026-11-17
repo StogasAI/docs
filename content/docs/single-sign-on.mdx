@@ -87,9 +87,9 @@ you leave the organization. Other tokens get `403 SSO_REQUIRED`, and tokens of m
 manage the organization need no sign-in. To refuse every access token, turn off **Allow access
 tokens**.
 
-A manager's access token can manage domains, the sign-in rules, SCIM and member sign-outs through
-the [Dashboard API](/docs/reference/dashboard). Connecting or changing the identity provider needs
-the dashboard, because whoever sets its certificate or secret can sign in as every linked member.
+A manager's access token can manage every single sign-on setting through the
+[Dashboard API](/docs/reference/dashboard), including the identity provider. A new issuer, client
+ID or protocol still waits for a test sign-in in the dashboard.
 
 ## Provisioning
 
@@ -164,14 +164,26 @@ verifies the same domain with its own record, the domain moves to that organizat
 
 ## Accounts
 
+| You signed in with                                     | You can open           |
+| ------------------------------------------------------ | ---------------------- |
+| Your provider                                          | That organization only |
+| Your provider, then your passkey or authenticator code | Your whole account     |
+| Your password                                          | Your whole account     |
+
 Single sign-on is another way to sign in to a Stogas account, and every account has a password,
-including accounts created through single sign-on. Leaving the organization or disconnecting the
-provider therefore never locks anyone out.
+including an account created through single sign-on, which shows it once. Keep that password. Your
+provider vouches for you in its own organization only, so your personal organization, your other
+organizations and your account settings return `428 PASSWORD_REQUIRED` until you enter it. After
+you leave the organization, or after it disconnects the provider, the password is the only way to
+sign in.
+
+Signed in through your provider alone, `stogas login` creates a token for that organization only,
+and replacing or deleting the identity provider asks for your password first.
 
 A sensitive change, such as creating an API key, asks you to confirm it's you. An account without a
-passkey or authenticator app confirms with its password or with a new sign-in at the provider. The
-provider must sign you in again and state when it did, in the `auth_time` claim or the SAML
-`AuthnInstant`. Microsoft Entra ID sends `auth_time` only when you add it as an optional claim of
+passkey or authenticator app confirms with its password. For a change in the organization, a new
+sign-in at its provider also confirms. The provider must sign you in again and state when it did,
+in the `auth_time` claim or the SAML `AuthnInstant`. Microsoft Entra ID sends `auth_time` only when you add it as an optional claim of
 the ID token, and Google doesn't sign people in again on request, so its members confirm with the
 password.
 
