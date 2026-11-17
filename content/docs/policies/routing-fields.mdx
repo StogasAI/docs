@@ -146,6 +146,35 @@ that you accept:
 deployment.companies.all(company, company in ['amazon', 'anthropic', 'google', 'microsoft', 'openai'])
 ```
 
+### Certifications
+
+```cel title="Only services with a SOC 2 Type 2 report and an ISO 27001 certificate"
+'soc2-type2' in deployment.dataHandling.certifications
+  && 'iso-27001' in deployment.dataHandling.certifications
+```
+
+`dataHandling.certifications` lists the independent audits and government authorizations of the
+service that processes the request. The catalog lists one only where the company that runs the
+model names that service in the scope of the audit, so the list can be shorter than the company's
+own list of certificates. An empty list means that the company publishes none for the service, and
+a rule that requires one refuses the deployment.
+
+| Value                                                           | Meaning                                                                 |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `soc2-type2`                                                    | SOC 2 Type 2 report                                                     |
+| `iso-27001`, `iso-27017`, `iso-27018`, `iso-27701`, `iso-42001` | ISO/IEC certificate of that number                                      |
+| `pci-dss`                                                       | PCI DSS attestation of compliance                                       |
+| `csa-star-level-2`                                              | CSA STAR Level 2 attestation or certification                           |
+| `hipaa-eligible`                                                | The company signs a HIPAA business associate agreement for the service. |
+| `fedramp-moderate`, `fedramp-high`                              | FedRAMP authorization. A High deployment also lists Moderate.           |
+| `dod-il2`, `dod-il4`, `dod-il5`                                 | US DoD provisional authorization. A deployment lists each lower level.  |
+
+The list describes the provider's service and not Stogas. `hipaa-eligible` does not mean that an
+agreement is in place. You sign your own agreement with the company, which needs
+[your own provider credentials](/docs/byok). A request that lets the model call a hosted tool loses
+the entries that do not cover the tool. Saving a policy fails when it names a value outside this
+table.
+
 ### Upstream details
 
 Most of these fields belong to one provider, which the description names. They are missing on
