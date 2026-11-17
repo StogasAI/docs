@@ -252,10 +252,13 @@ By default, the gateway makes no retries and up to 2 fallbacks. The failure deci
 - Each call is one of the request's [provider attempts](/docs/request-records), with its start
   time and duration. A request makes at most twelve calls: three candidates with four calls each.
 
-<Callout type="warn"> When the provider may have run the request, the gateway makes no retry or
-fallback. A second call could run it twice, and the provider can bill your own credential for
-both. The [error](/docs/reference/errors#502-bad-gateway) names the attempt and its deployment.
-Send the request again only if a second run is acceptable. </Callout>
+<Callout type="warn">
+	{' '}
+	When the provider may have run the request, the gateway makes no retry or fallback. A second call
+	could run it twice, and the provider can bill your own credential for both. The
+	[error](/docs/reference/errors#502-bad-gateway) names the attempt and its deployment. Send the
+	request again only if a second run is acceptable.{' '}
+</Callout>
 
 When several policies set a field, the smallest value applies. Credential policies, and rules
 whose `when` reads `author`, `model`, `deployment`, `route` or `provider` fields, can set `retries`

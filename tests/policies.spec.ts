@@ -77,7 +77,7 @@ test('policy topics retain complete field exports and working links to their own
 			schema.properties.limits.additionalProperties,
 			schema.properties.limits.additionalProperties.properties.per
 		],
-		'/docs/policies/access': [schema.properties.access.properties.deny.items],
+		'/docs/policies/access': [schema.properties.access.properties.schedule.properties.deny.items],
 		'/docs/pii-redaction': [
 			schema.properties.plugins.properties.redaction.anyOf[0]!.properties.literals!.anyOf[0]!.items!
 				.anyOf[0]!,

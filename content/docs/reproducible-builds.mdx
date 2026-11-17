@@ -115,14 +115,17 @@ No output means the builds match. The manifest's launch measurement is the value
 </Step>
 </Steps>
 
-<Callout title="Prebuilt Guix packages"> Guix downloads its own prebuilt packages, such as GCC and
-Rust, from one of its two build farms and checks their signatures. The farms build each package
-separately. The build script takes packages from `bordeaux.guix.gnu.org`, and GitHub's release
-build takes them from `ci.guix.gnu.org`. A package that the farms built differently therefore
-enters the two builds as different bytes. A package that only one farm has is built from source on
-the other side. Matching manifests therefore show that no single farm's package changed the image.
-To build every tool on your machine instead, run the Guix daemon with `--no-substitutes`. Guix
-then builds its compilers from the small binary seed. This takes much longer. </Callout>
+<Callout title="Prebuilt Guix packages">
+	{' '}
+	Guix downloads its own prebuilt packages, such as GCC and Rust, from one of its two build farms
+	and checks their signatures. The farms build each package separately. The build script takes
+	packages from `bordeaux.guix.gnu.org`, and GitHub's release build takes them from
+	`ci.guix.gnu.org`. A package that the farms built differently therefore enters the two builds as
+	different bytes. A package that only one farm has is built from source on the other side. Matching
+	manifests therefore show that no single farm's package changed the image. To build every tool on
+	your machine instead, run the Guix daemon with `--no-substitutes`. Guix then builds its compilers
+	from the small binary seed. This takes much longer.{' '}
+</Callout>
 
 ## Check the GitHub build proof
 
