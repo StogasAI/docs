@@ -15,12 +15,13 @@ like the rest of the prompt.
 }
 ```
 
-Each file family has its own mode:
+Each key names a kind of file, and its value is the mode of those files:
 
-| Family   | Files                                                                            |
-| -------- | -------------------------------------------------------------------------------- |
-| `text`   | [UTF-8 text files](#what-counts-as-a-text-file)                                  |
-| `office` | [Word, Excel, PowerPoint and OpenDocument files](#what-counts-as-an-office-file) |
+| Key                              | Files                                                                            |
+| -------------------------------- | -------------------------------------------------------------------------------- |
+| `text`                           | [UTF-8 text files](#what-counts-as-a-text-file)                                  |
+| `office`                         | [Word, Excel, PowerPoint and OpenDocument files](#what-counts-as-an-office-file) |
+| A media type, such as `text/csv` | [Files of that one type](#set-one-media-type)                                    |
 
 | Mode     | A deployment that reads the file | Any other deployment       |
 | -------- | -------------------------------- | -------------------------- |
@@ -29,13 +30,38 @@ Each file family has its own mode:
 | `always` | The file becomes text            | The file becomes text      |
 
 [PII redaction](/docs/pii-redaction) and [ASCII-only input](/docs/pii-redaction#ascii-only-input)
-read only text. With either, `auto` turns every file of the family into text, and `off` refuses
+read only text. With either, `auto` turns every file that it covers into text, and `off` refuses
 one.
 
 A file that stays a file goes to the provider [as a type that it reads](/docs/input-files#text-files).
 `always` gives every candidate the same prompt, whichever provider serves the request.
 
-## A family that no policy sets is off
+## Set one media type
+
+```json title="Policy"
+{
+	"plugins": {
+		"textExtraction": {
+			"office": "auto",
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "always"
+		}
+	}
+}
+```
+
+This policy turns every Excel workbook into text, and other Office files only where the deployment
+does not read them. In one policy, the mode of a media type applies to its files in place of the
+mode of their family.
+
+- A key is a lowercase media type without parameters that a family holds: a
+  [text type](#what-counts-as-a-text-file) or an [Office type](#what-counts-as-an-office-file). A
+  class such as `text/*`, a filename extension and any other type fail when you save the policy.
+- The gateway reads the type from the data URL or `file_type`. A text file with no type is
+  `text/plain`, and an Office file with no type has the type of its filename extension.
+- Text formats have no signature, so a client can send a CSV file as `text/plain`. Set `text` where
+  the mode must not depend on the type that a client declares.
+
+## A file that no policy sets is off
 
 The gateway changes a file only when a policy says so. A new organization's policy starts with this
 [default rule](/docs/policies/rules#defaults), which you can edit or remove:
@@ -51,9 +77,26 @@ The gateway changes a file only when a policy says so. A new organization's poli
 }
 ```
 
+A required mode for a family, or for one of its media types, replaces the default modes of that
+family. To change one media type and keep the rest of a default, repeat the family:
+
+```json title="Key policy"
+{
+	"plugins": { "textExtraction": { "text": "auto", "text/csv": "always" } }
+}
+```
+
 ## How policies combine
 
-When several policies set a family, the strongest mode applies: `always`, then `auto`, then `off`.
+When several policies set a mode for a file, the strongest applies: `always`, then `auto`, then
+`off`. A policy that sets a family and not the file's media type gives the file its family mode.
+
+| Organization policy | Key policy             | CSV files | Other text files |
+| ------------------- | ---------------------- | --------- | ---------------- |
+| `"text": "auto"`    | `"text/csv": "always"` | `always`  | `auto`           |
+| `"text": "always"`  | `"text/csv": "off"`    | `always`  | `always`         |
+| `"text/csv": "off"` | `"text": "auto"`       | `auto`    | `auto`           |
+
 Each family combines on its own, so `"office": "always"` in one policy leaves the `text` mode of
 another policy in place.
 
@@ -204,9 +247,21 @@ Mention the beta users.
 
 ### What counts as an Office file
 
-- A zip archive whose data URL or `file_type` names an Office Open XML or OpenDocument type.
+- A zip archive whose data URL or `file_type` names one of these types.
 - A zip archive with no type, `application/octet-stream` or `application/zip`, whose filename has
-  one of the extensions above.
+  one of these extensions.
+
+| Extension | Media type                                                                  |
+| --------- | --------------------------------------------------------------------------- |
+| `.docx`   | `application/vnd.openxmlformats-officedocument.wordprocessingml.document`   |
+| `.docm`   | `application/vnd.ms-word.document.macroenabled.12`                          |
+| `.odt`    | `application/vnd.oasis.opendocument.text`                                   |
+| `.xlsx`   | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`         |
+| `.xlsm`   | `application/vnd.ms-excel.sheet.macroenabled.12`                            |
+| `.ods`    | `application/vnd.oasis.opendocument.spreadsheet`                            |
+| `.pptx`   | `application/vnd.openxmlformats-officedocument.presentationml.presentation` |
+| `.pptm`   | `application/vnd.ms-powerpoint.presentation.macroenabled.12`                |
+| `.odp`    | `application/vnd.oasis.opendocument.presentation`                           |
 
 The content must match the declared format. A spreadsheet that is named `report.docx` fails the
 request with 400.

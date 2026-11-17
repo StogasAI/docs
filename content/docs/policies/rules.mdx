@@ -89,17 +89,17 @@ default orders only the deployments that the key's criteria leave tied. See
 [Orders from several policies](/docs/policies/routing#orders-from-several-policies). Other settings
 replace defaults of the same kind:
 
-| Kind               | Includes                                        |
-| ------------------ | ----------------------------------------------- |
-| Each access field  | `deny` or `networks`                            |
-| Input              | All of `input`                                  |
-| Each timeout       | `totalSeconds` or `outputIdleSeconds`           |
-| Each routing field | One field, except `sort`, whose criteria add up |
-| Each plugin        | `redaction` or `export`, encrypted or not       |
-| Each file family   | `text` or `office` of `textExtraction`          |
+| Kind               | Includes                                                     |
+| ------------------ | ------------------------------------------------------------ |
+| Each access field  | `deny` or `networks`                                         |
+| Input              | All of `input`                                               |
+| Each timeout       | `totalSeconds` or `outputIdleSeconds`                        |
+| Each routing field | One field, except `sort`, whose criteria add up              |
+| Each plugin        | `redaction` or `export`, encrypted or not                    |
+| Each file family   | `text` or `office` of `textExtraction`, with its media types |
 
 - A required plugin setting replaces only the default of the same plugin. A required text
-  extraction mode replaces the default mode of the same file family, and leaves the other family,
+  extraction mode replaces the default modes of the same file family, and leaves the other family,
   default redaction and default export destinations in place.
 - When several policies set defaults of the same kind, they
   [combine](/docs/policies/scopes#how-settings-combine) like required settings. Default sort
@@ -117,15 +117,20 @@ counts further requirements that replace the same setting.
 Set a neutral value. It replaces the defaults of its kind and never removes a required setting of
 another policy:
 
-| Kind                  | Neutral value                                     |
-| --------------------- | ------------------------------------------------- |
-| Input                 | `"input": { "asciiOnly": false }`                 |
-| Deny periods          | `"access": { "deny": [] }`                        |
-| Networks              | `"access": { "networks": ["0.0.0.0/0", "::/0"] }` |
-| Routing filter        | `"filter": "true"`                                |
-| Allowed catalog nodes | `"allowedCatalogNodes": {}`                       |
-| Text extraction       | `"textExtraction": { "text": "off" }`             |
-| Redaction             | `"redaction": {}`                                 |
+| Kind                    | Neutral value                                     |
+| ----------------------- | ------------------------------------------------- |
+| Input                   | `"input": { "asciiOnly": false }`                 |
+| Deny periods            | `"access": { "deny": [] }`                        |
+| Networks                | `"access": { "networks": ["0.0.0.0/0", "::/0"] }` |
+| Each timeout            | `3600`                                            |
+| Routing filter          | `"filter": "true"`                                |
+| Allowed catalog nodes   | `"allowedCatalogNodes": {}`                       |
+| Retries                 | `"retries": 3`                                    |
+| Fallbacks               | `"fallbacks": 2`                                  |
+| Missing encryption keys | `"missingEncryptionKeys": "skip"`                 |
+| Text extraction         | `"textExtraction": { "text": "off" }`             |
+| Redaction               | `"redaction": {}`                                 |
+| Export                  | `"export": { "destinations": [] }`                |
 
 ## What rules can contain
 

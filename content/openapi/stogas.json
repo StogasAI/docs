@@ -5556,11 +5556,122 @@
 											"auto",
 											"always"
 										]
+									},
+									"application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+										"description": "Word documents (.docx).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.ms-word.document.macroenabled.12": {
+										"description": "Word documents with macros (.docm).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.oasis.opendocument.text": {
+										"description": "OpenDocument text documents (.odt).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+										"description": "Excel workbooks (.xlsx).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.ms-excel.sheet.macroenabled.12": {
+										"description": "Excel workbooks with macros (.xlsm).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.oasis.opendocument.spreadsheet": {
+										"description": "OpenDocument spreadsheets (.ods).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+										"description": "PowerPoint presentations (.pptx).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.ms-powerpoint.presentation.macroenabled.12": {
+										"description": "PowerPoint presentations with macros (.pptm).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
+									"application/vnd.oasis.opendocument.presentation": {
+										"description": "OpenDocument presentations (.odp).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
 									}
 								},
-								"additionalProperties": false,
+								"additionalProperties": {
+									"type": "string",
+									"enum": [
+										"off",
+										"auto",
+										"always"
+									]
+								},
 								"minProperties": 1,
-								"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
+								"propertyNames": {
+									"anyOf": [
+										{
+											"enum": [
+												"text",
+												"office",
+												"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+												"application/vnd.ms-word.document.macroenabled.12",
+												"application/vnd.oasis.opendocument.text",
+												"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+												"application/vnd.ms-excel.sheet.macroenabled.12",
+												"application/vnd.oasis.opendocument.spreadsheet",
+												"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+												"application/vnd.ms-powerpoint.presentation.macroenabled.12",
+												"application/vnd.oasis.opendocument.presentation"
+											]
+										},
+										{
+											"maxLength": 255,
+											"pattern": "^(?:text/[a-z0-9!#$&^_.+-]+|[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]*\\+(?:json|xml)|application/(?:csv|ecmascript|graphql|javascript|json|json5|jsonl|sql|toml|typescript|x-awk|x-bash|x-diff|x-graphql|x-httpd-php|x-httpd-php-source|x-javascript|x-json5|x-latex|x-ndjson|x-patch|x-perl|x-php|x-powershell|x-ruby|x-rust|x-scala|x-sh|x-shellscript|x-sql|x-subrip|x-terraform|x-tex|x-toml|x-yaml|xml|yaml))$"
+										}
+									]
+								},
+								"description": "Turn inline files into prompt text before input checks and redaction. A key is a file family, `text` or `office`, or one media type of a family, such as `text/csv`, whose mode applies to its files in place of the family mode of the same policy. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a file that no policy sets. The strongest required mode of each file applies."
 							},
 							"redaction": {
 								"anyOf": [
@@ -6998,11 +7109,122 @@
 														"auto",
 														"always"
 													]
+												},
+												"application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+													"description": "Word documents (.docx).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.ms-word.document.macroenabled.12": {
+													"description": "Word documents with macros (.docm).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.oasis.opendocument.text": {
+													"description": "OpenDocument text documents (.odt).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+													"description": "Excel workbooks (.xlsx).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.ms-excel.sheet.macroenabled.12": {
+													"description": "Excel workbooks with macros (.xlsm).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.oasis.opendocument.spreadsheet": {
+													"description": "OpenDocument spreadsheets (.ods).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.openxmlformats-officedocument.presentationml.presentation": {
+													"description": "PowerPoint presentations (.pptx).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.ms-powerpoint.presentation.macroenabled.12": {
+													"description": "PowerPoint presentations with macros (.pptm).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
+												"application/vnd.oasis.opendocument.presentation": {
+													"description": "OpenDocument presentations (.odp).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
 												}
 											},
-											"additionalProperties": false,
+											"additionalProperties": {
+												"type": "string",
+												"enum": [
+													"off",
+													"auto",
+													"always"
+												]
+											},
 											"minProperties": 1,
-											"description": "Turn inline files into prompt text before input checks and redaction, by file family. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a family that no policy sets. The strongest required mode of each family applies."
+											"propertyNames": {
+												"anyOf": [
+													{
+														"enum": [
+															"text",
+															"office",
+															"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+															"application/vnd.ms-word.document.macroenabled.12",
+															"application/vnd.oasis.opendocument.text",
+															"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+															"application/vnd.ms-excel.sheet.macroenabled.12",
+															"application/vnd.oasis.opendocument.spreadsheet",
+															"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+															"application/vnd.ms-powerpoint.presentation.macroenabled.12",
+															"application/vnd.oasis.opendocument.presentation"
+														]
+													},
+													{
+														"maxLength": 255,
+														"pattern": "^(?:text/[a-z0-9!#$&^_.+-]+|[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]*\\+(?:json|xml)|application/(?:csv|ecmascript|graphql|javascript|json|json5|jsonl|sql|toml|typescript|x-awk|x-bash|x-diff|x-graphql|x-httpd-php|x-httpd-php-source|x-javascript|x-json5|x-latex|x-ndjson|x-patch|x-perl|x-php|x-powershell|x-ruby|x-rust|x-scala|x-sh|x-shellscript|x-sql|x-subrip|x-terraform|x-tex|x-toml|x-yaml|xml|yaml))$"
+													}
+												]
+											},
+											"description": "Turn inline files into prompt text before input checks and redaction. A key is a file family, `text` or `office`, or one media type of a family, such as `text/csv`, whose mode applies to its files in place of the family mode of the same policy. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a file that no policy sets. The strongest required mode of each file applies."
 										},
 										"redaction": {
 											"anyOf": [
