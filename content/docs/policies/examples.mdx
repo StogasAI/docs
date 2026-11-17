@@ -85,12 +85,16 @@ Every request skips deployments whose provider does not commit to zero data rete
 }
 ```
 
-### Keep data in Europe
+### Use providers in Europe
 
 `processingWithin` and `storageWithin` list where a deployment processes and keeps content, each
 with every place that contains it. This accepts deployments in Europe, in the EU or in one European
 country, and deployments that keep nothing. To choose only where models run, keep the first check.
 See [location values](/docs/policies/routing-fields#location-values).
+
+The filter chooses the provider's deployment. Each request also passes through a gateway, and your
+request records stay with your account, both in the region that the sign-in page shows, which is
+the United States today.
 
 ```json title="Organization policy"
 {
