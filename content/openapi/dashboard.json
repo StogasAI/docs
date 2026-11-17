@@ -294,44 +294,10 @@
 														"type": "string"
 													},
 													"access": {
-														"anyOf": [
-															{
-																"type": "string",
-																"enum": [
-																	"read",
-																	"write"
-																]
-															},
-															{
-																"type": "object",
-																"propertyNames": {
-																	"type": "string",
-																	"enum": [
-																		"account",
-																		"activity",
-																		"analytics",
-																		"apiKeys",
-																		"balance",
-																		"byok",
-																		"encryptionKeys",
-																		"folders",
-																		"grants",
-																		"invites",
-																		"members",
-																		"organizations",
-																		"policies",
-																		"roles",
-																		"singleSignOn"
-																	]
-																},
-																"additionalProperties": {
-																	"type": "string",
-																	"enum": [
-																		"read",
-																		"write"
-																	]
-																}
-															}
+														"type": "string",
+														"enum": [
+															"read",
+															"write"
 														]
 													},
 													"organizationIds": {
@@ -710,7 +676,7 @@
 																"enum": [
 																	"permission",
 																	"policy",
-																	"token_access"
+																	"read_only_token"
 																]
 															},
 															{
@@ -1064,7 +1030,7 @@
 													"enum": [
 														"permission",
 														"policy",
-														"token_access"
+														"read_only_token"
 													]
 												},
 												{
@@ -20645,7 +20611,7 @@
 				"type": "http",
 				"scheme": "bearer",
 				"bearerFormat": "Stogas access token",
-				"description": "Send an access token as `Authorization: Bearer <token>`. Create one on the **Account** page, or sign in with `stogas login`. The scope `write` needs a token with **Read and write** access, and `all-organizations` a token for **All organizations**. A token that names sections reaches only the operations under those headings of this reference."
+				"description": "Send an access token as `Authorization: Bearer <token>`. Create one on the **Account** page, or sign in with `stogas login`. The scope `write` needs a token with **Read and write** access, and `all-organizations` a token for **All organizations**."
 			}
 		},
 		"parameters": {
