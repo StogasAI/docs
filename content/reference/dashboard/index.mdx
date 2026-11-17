@@ -18,6 +18,9 @@ do not let web pages on other sites call the API, so call it from a server or a 
 
 - A **Read only** token can call only `GET` operations. Operations with the scope `write` return
   `403 TOKEN_READ_ONLY` to it.
+- A token for **Chosen sections** reaches only the operations under those headings of this
+  reference, each as **Read only** or **Read and write**. Every other operation returns
+  `403 TOKEN_SECTION_NOT_ALLOWED` to it. A token still does only what your roles allow.
 - A token for **Selected organizations** covers up to 30 of them and gets `404` for every other
   organization. Operations with the scope `all-organizations` return
   `403 TOKEN_ORGANIZATIONS_LIMITED` to it.
@@ -35,9 +38,8 @@ do not let web pages on other sites call the API, so call it from a server or a 
   `401 TOKEN_EXPOSED` and the place where GitHub found it until you reveal or rotate the new one on
   the **Account** page.
 
-Tokens cannot create, reveal or rotate tokens, change sign-in methods, delete the account, use the
-Playground, or connect or change an organization's
-[identity provider](/docs/single-sign-on#access-tokens). Use the dashboard for those.
+Tokens cannot create, reveal or rotate tokens, change sign-in methods, delete the account or use
+the Playground. Use the dashboard for those.
 
 ## Organizations
 

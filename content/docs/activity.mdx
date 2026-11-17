@@ -11,8 +11,8 @@ Each event keeps the names it had, so renaming or deleting a resource does not e
 
 ## Refused attempts
 
-Activity also records an attempt that the member's roles, a parent policy or a read-only access
-token refused. The event names the resources that the request named, even IDs that do not exist in
+Activity also records an attempt that the member's roles, a parent policy or the access of an
+access token refused. The event names the resources that the request named, even IDs that do not exist in
 the organization. Attempts that fail for other reasons, such as invalid input or a missing resource,
 are not recorded. Neither are attempts by people outside the organization, or with an access token
 that does not cover it.
@@ -67,7 +67,7 @@ change that happens has its event.
 
 CSV exports keep lists, names and changes as JSON text, and put an apostrophe before text that a
 spreadsheet would run as a formula, such as `=SUM(A1)`. For a change that happened, `refusal` is
-`null`, or empty in CSV. For a refused attempt it is `permission`, `policy` or `read_only_token`.
+`null`, or empty in CSV. For a refused attempt it is `permission`, `policy` or `token_access`.
 
 We keep every version of every policy while your organization exists, so an event or a request
 record always shows the policies that it names.
