@@ -1,6 +1,6 @@
 ---
 title: Access and expiration
-description: Enable or disable a scope, expire access, block requests on a weekly schedule, or accept them only from your networks.
+description: Enable or disable a scope, expire access, block requests on a weekly schedule, or allow and deny client networks.
 icon: CalendarClock
 ---
 
@@ -132,12 +132,31 @@ error gives that reason instead.
 
 ## Networks
 
-This policy accepts requests only from one address and two ranges:
+This policy accepts requests only from one address and two ranges, except one part of the first
+range:
 
 ```json title="policy.json"
 {
 	"access": {
-		"networks": ["203.0.113.7", "198.51.100.0/24", "2001:db8:5::/48"]
+		"networks": {
+			"allow": ["203.0.113.7", "198.51.100.0/24", "2001:db8:5::/48"],
+			"deny": ["198.51.100.128/25"]
+		}
+	}
+}
+```
+
+| List    | Effect                                                            |
+| ------- | ----------------------------------------------------------------- |
+| `allow` | Only requests from these networks pass.                           |
+| `deny`  | Requests from these networks fail, even where `allow` holds them. |
+
+Use `deny` alone to refuse some networks and accept every other one:
+
+```json title="policy.json"
+{
+	"access": {
+		"networks": { "deny": ["192.0.2.0/24"] }
 	}
 }
 ```
@@ -150,21 +169,26 @@ This policy accepts requests only from one address and two ranges:
 - The API accepts connections over IPv4 only, so your requests come from an IPv4 address even on
   a network with IPv6.
 - Requests to the [onion address](/docs/sdk-overview#connect-through-a-proxy-or-tor) have no
-  client address, so only a list that holds `0.0.0.0/0` and `::/0` allows them.
-- A request from any other address fails with `403 network_denied`, and the message names the
-  address that the gateway saw. An address that you add applies
+  client address. They pass only when no policy denies a network and every `allow` list holds
+  `0.0.0.0/0` and `::/0`.
+- A refused request fails with `403 network_denied`, and the message names the address that the
+  gateway saw. An address that you allow, or remove from `deny`, applies
   [within three minutes](/docs/policies/scopes#when-changes-take-effect).
 - A list can hold as many entries as the [policy size](/docs/policies/editing#document-rules)
-  allows.
+  allows. To follow a published list of ranges, such as a cloud provider's, save the policy again
+  through the [dashboard API](/docs/reference/dashboard) when the list changes.
+- A policy whose `deny` holds every network of its `allow` cannot be saved. Disable the resource
+  to block every request.
 
 ## How networks combine
 
-Every policy that lists networks must hold the client's address. Two lists that share no address
-block every request.
+The client's address must be in every `allow` list and in no `deny` list of the policies that
+apply. Two `allow` lists that share no address block every request, and no `allow` list takes
+back an address that another policy denies.
 
 A [default rule](/docs/policies/rules#defaults) can list networks, and they apply until a required
-policy lists its own. To replace them without a restriction, list every address:
-`["0.0.0.0/0", "::/0"]`.
+policy sets `access.networks`. To replace them without a restriction, set an empty `deny` list:
+`{ "deny": [] }`.
 
 Networks in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's policy
 block only the deployments and credentials it applies to. The gateway tries the others, and fails
