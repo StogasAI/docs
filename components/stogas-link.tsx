@@ -137,6 +137,20 @@ function resolveStogasHref(href: string | undefined): string | undefined {
 	);
 }
 
+/**
+ * The origin of a Stogas service in the environment that serves the page: production's until the
+ * page knows its host, as the static HTML has it.
+ */
+export function useStogasOrigin(segment: Segment) {
+	const [environment, setEnvironment] = useState(getFallbackEnvironment);
+	useEffect(() => {
+		setEnvironment(
+			detectPage(window.location.hostname, process.env.NODE_ENV === 'development').environment
+		);
+	}, []);
+	return `https://${DEPLOYMENTS[environment][segment]}`;
+}
+
 export function StogasLink({
 	href,
 	onClick,

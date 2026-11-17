@@ -10,12 +10,31 @@ import { codeThemes } from '@/lib/highlight';
 import { OpenAPICodeBlock } from './openapi-code-block';
 import { useTranslations } from '@fuma-translate/react';
 import { messages } from '@/lib/messages';
+import { useStogasOrigin } from './stogas-link';
+import { useMemo } from 'react';
+
+const PRODUCTION_API = 'https://api.stogas.ai';
 
 function PlaygroundEndpoint() {
 	const t = useTranslations();
+	const origin = useStogasOrigin('api');
 	return (
-		<p className="text-fd-muted-foreground mb-3 text-sm">{t(messages.apiPlaygroundEndpoint)}</p>
+		<p className="text-fd-muted-foreground mb-3 text-sm">
+			{t(messages.apiPlaygroundEndpoint, { variables: { origin } })}
+		</p>
 	);
+}
+
+/**
+ * The document with the gateway of the page's own environment as its server, so that the
+ * playground and the request samples of staging Docs call the staging gateway.
+ */
+function withServer<Payload extends OpenAPIPageProps_Spec['payload']>(
+	payload: Payload,
+	origin: string
+): Payload {
+	if (origin === PRODUCTION_API) return payload;
+	return JSON.parse(JSON.stringify(payload).replaceAll(PRODUCTION_API, origin)) as Payload;
 }
 
 const options = {
@@ -63,5 +82,8 @@ export function OpenAPIPageClient({
 	...props
 }: OpenAPIPageProps_Spec & { playground: boolean }) {
 	const Page = playground ? PlaygroundPage : ReferencePage;
-	return <Page {...props} />;
+	const origin = useStogasOrigin('api');
+	const payload = useMemo(() => withServer(props.payload, origin), [props.payload, origin]);
+	// The playground reads its server once, so a page that learns its environment starts again.
+	return <Page key={origin} {...props} payload={payload} />;
 }

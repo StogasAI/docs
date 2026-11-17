@@ -47,7 +47,8 @@ them with `approvalRequired`, and the routing filter `!deployment.approvalRequir
 
 Type words to search names, IDs and aliases, or filter on a field that the search suggests, such as
 `provider:azure` or any [routing field](/docs/policies/routing-fields). The search takes the
-[filter syntax](/docs/reference/filters).
+[filter syntax](/docs/reference/filters). Words match as the `model` field does, so
+`claude-opus-4.5` finds `claude-opus-4-5`.
 
 | Search                                              | Finds                                        |
 | --------------------------------------------------- | -------------------------------------------- |
@@ -94,8 +95,10 @@ group ID alone, such as `gpt-6`, returns `invalid_request` with a message that s
 
 An alias is another name for one model. It is a name that the author's API accepts for it, such as
 `gpt-5.5` for `gpt-5.5-2026-04-23` or `claude-haiku-4-5-20251001` for `claude-haiku-4-5`, or the
-model ID with its version moved one word, such as `claude-4.5-haiku`. When the author points a name
-at a newer model, a catalog update moves the alias. To stay on one model, send its model ID.
+model ID with its version moved one word, such as `claude-4.5-haiku`. No alias only respells an ID
+with dots, underscores or capitals, because every ID already matches those spellings. When the
+author points a name at a newer model, a catalog update moves the alias. To stay on one model, send
+its model ID.
 
 A deployment ID stays fixed: the gateway never moves the request to another tier, region or
 provider.
