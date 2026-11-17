@@ -30,6 +30,10 @@ A parent policy can [limit which sections](/docs/policies/delegation) anyone can
   that it has not saved before, and one member can add half of each. A save past a limit fails
   with `429 POLICY_VERSION_LIMIT`, whose message says when the same save fits. A return to an
   earlier policy adds a version and no content, and clearing a policy adds no version.
+- Your organization keeps up to 1,024 MiB of policy history, which counts each policy content once
+  and 640 bytes for each version. At that limit a save of content that the history does not hold
+  fails with `409 POLICY_HISTORY_LIMIT`, and you can still return to an earlier policy or clear
+  one. We can raise the limit for your organization.
 - A parent save can make a policy below it invalid. That policy stays readable so that its manager
   can fix it.
 - Enabled state and expiration are settings of the resource, not of its policy.
