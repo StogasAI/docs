@@ -195,3 +195,8 @@ Send text files, including Markdown and CSV, as `text/plain`, for example
 When Claude [refuses](https://platform.claude.com/docs/en/build-with-claude/refusals-and-fallback)
 before it writes any output, the request returns `200` with the finish reason
 `content_filter`.
+
+When Claude's filter blocks its own output, Claude answers `400` with the
+message `Output blocked by content filtering policy`. The request fails with
+`400`, and its [provider result](/docs/request-records#provider-results) is
+`content_filter`, so it counts toward the refusal rate.
