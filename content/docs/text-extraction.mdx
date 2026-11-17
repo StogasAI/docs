@@ -9,6 +9,9 @@ Office files such as Word, Excel and PowerPoint, and PDFs. The text works on any
 one that accepts no documents, and goes through [PII redaction](/docs/pii-redaction) and input
 checks like the rest of the prompt.
 
+Text extraction reads only the text that a file already holds. It is not OCR, so a scanned page or
+a photo of a document gives no text.
+
 ```json title="Policy"
 {
 	"plugins": { "textExtraction": { "text": "auto", "office": "always", "pdf": "auto" } }
@@ -302,7 +305,7 @@ Total: 12 EUR
   reads a PDF also sees each page as an image, so use `auto` and a deployment that
   [reads PDFs](/docs/input-files#supported-formats) where the model must see them.
 - A PDF in which no page has text, such as a scan, fails the request with 400 where extraction
-  applies.
+  applies. Send a scan to a deployment that [reads PDFs](/docs/input-files#supported-formats).
 - A PDF that restricts printing or copying opens without a password and is read. A PDF that needs
   a password to open fails the request with 400 where extraction applies.
 
