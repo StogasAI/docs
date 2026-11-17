@@ -66,10 +66,19 @@ async function expectReadingRegion(page: Page, id: string) {
 }
 
 // Base UI shows the response status indicator only after hydration; earlier clicks are lost.
+// The test server's loopback address reads as the local environment, whose services hydrated
+// samples and the playground name. The static HTML names production's.
+const LOCAL_API = 'https://api.stogas.localhost';
+const LOCAL_DASHBOARD = 'https://app.stogas.localhost';
+
 async function waitForHydration(page: Page) {
 	await expect(
 		page.locator('.stogas-api-operation-main [role="tablist"] > [role="presentation"]').first()
 	).toBeVisible();
+	// A reference page starts again once it learns its environment, which drops earlier clicks.
+	await expect(page.locator('.stogas-api-operation-examples pre').first()).toContainText(
+		'.stogas.localhost/'
+	);
 }
 
 // The playground loads on demand and hydrates apart from the page; a click before then is lost.
@@ -287,6 +296,7 @@ test('collapsed desktop sidebar keeps an accurate action name and expanded state
 
 test('provider routing alternatives name and expose their object fields', async ({ page }) => {
 	await page.goto('/docs/reference/openai-compatible/createChatCompletion');
+	await waitForHydration(page);
 	const row = page
 		.getByRole('button', { name: 'Copy Link: provider', exact: true })
 		.locator('../..');
@@ -340,7 +350,7 @@ test('dashboard API pages document the operation without a playground', async ({
 	await expect(page.getByRole('button', { name: 'Try in Playground', exact: true })).toHaveCount(0);
 	await expect(main).not.toContainText('playground sends real requests');
 	await expect(page.locator('.stogas-api-operation-examples pre').first()).toContainText(
-		'https://app.stogas.ai/api/'
+		`${LOCAL_DASHBOARD}/api/`
 	);
 	expect(
 		(
@@ -544,7 +554,7 @@ test('copy controls copy their example and clear native scrollbars, and statuses
 	const examples = page.locator('.stogas-api-operation-examples');
 	const copies = examples.getByRole('button', { name: /^Cop(?:y|ied) Text$/ });
 	await expect(copies).toHaveCount(2);
-	expect(await copiedText(copies.first())).toContain('https://api.stogas.ai/v1/chat/completions');
+	expect(await copiedText(copies.first())).toContain(`${LOCAL_API}/v1/chat/completions`);
 	expect(JSON.parse(await copiedText(copies.last()))).toHaveProperty('choices');
 	const status = examples.getByRole('combobox', { name: 'Response status' });
 	await status.click();
@@ -686,7 +696,7 @@ test('request editor blocks invalid drafts and sends exact nested JSON and decim
 	page
 }) => {
 	const requests: unknown[] = [];
-	await page.route('https://api.stogas.ai/v1/chat/completions', async (route) => {
+	await page.route(`${LOCAL_API}/v1/chat/completions`, async (route) => {
 		requests.push(route.request().postDataJSON());
 		await route.fulfill({ contentType: 'application/json', body: '{"id":"test-response"}' });
 	});
