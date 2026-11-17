@@ -91,7 +91,7 @@ replace defaults of the same kind:
 
 | Kind               | Includes                                                            |
 | ------------------ | ------------------------------------------------------------------- |
-| Each access field  | `deny` or `networks`                                                |
+| Each access field  | `schedule` or `networks`                                            |
 | Input              | All of `input`                                                      |
 | Each timeout       | `totalSeconds` or `outputIdleSeconds`                               |
 | Each routing field | One field, except `sort`, whose criteria add up                     |
@@ -120,7 +120,7 @@ another policy:
 | Kind                    | Neutral value                              |
 | ----------------------- | ------------------------------------------ |
 | Input                   | `"input": { "asciiOnly": false }`          |
-| Deny periods            | `"access": { "deny": [] }`                 |
+| Deny periods            | `"access": { "schedule": { "deny": [] } }` |
 | Networks                | `"access": { "networks": { "deny": [] } }` |
 | Each timeout            | `3600`                                     |
 | Routing filter          | `"filter": "true"`                         |

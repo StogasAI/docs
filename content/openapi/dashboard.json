@@ -5226,7 +5226,7 @@
 																	"type": "string",
 																	"enum": [
 																		"access",
-																		"access.deny",
+																		"access.schedule",
 																		"access.networks",
 																		"input",
 																		"limits",
@@ -5325,7 +5325,7 @@
 																	"type": "string",
 																	"enum": [
 																		"access",
-																		"access.deny",
+																		"access.schedule",
 																		"access.networks",
 																		"input",
 																		"limits",
@@ -20919,7 +20919,7 @@
 												"type": "string",
 												"enum": [
 													"access",
-													"access.deny",
+													"access.schedule",
 													"access.networks",
 													"input",
 													"limits",
@@ -21018,7 +21018,7 @@
 												"type": "string",
 												"enum": [
 													"access",
-													"access.deny",
+													"access.schedule",
 													"access.networks",
 													"input",
 													"limits",
@@ -22115,54 +22115,64 @@
 										"access": {
 											"type": "object",
 											"properties": {
-												"deny": {
-													"type": "array",
-													"items": {
-														"type": "object",
-														"properties": {
-															"days": {
-																"minItems": 1,
-																"maxItems": 7,
-																"type": "array",
-																"items": {
-																	"type": "string",
-																	"enum": [
-																		"mon",
-																		"tue",
-																		"wed",
-																		"thu",
-																		"fri",
-																		"sat",
-																		"sun"
-																	]
+												"schedule": {
+													"type": "object",
+													"properties": {
+														"deny": {
+															"type": "array",
+															"items": {
+																"type": "object",
+																"properties": {
+																	"days": {
+																		"minItems": 1,
+																		"maxItems": 7,
+																		"type": "array",
+																		"items": {
+																			"type": "string",
+																			"enum": [
+																				"mon",
+																				"tue",
+																				"wed",
+																				"thu",
+																				"fri",
+																				"sat",
+																				"sun"
+																			]
+																		},
+																		"uniqueItems": true
+																	},
+																	"end": {
+																		"type": "string",
+																		"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+																		"description": "The end must be later than the start. Split an overnight period into two entries."
+																	},
+																	"start": {
+																		"type": "string",
+																		"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+																	},
+																	"timeZone": {
+																		"type": "string",
+																		"maxLength": 64,
+																		"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+																		"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
+																	}
 																},
-																"uniqueItems": true
+																"required": [
+																	"days",
+																	"end",
+																	"start",
+																	"timeZone"
+																],
+																"additionalProperties": false
 															},
-															"end": {
-																"type": "string",
-																"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
-																"description": "The end must be later than the start. Split an overnight period into two entries."
-															},
-															"start": {
-																"type": "string",
-																"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
-															},
-															"timeZone": {
-																"type": "string",
-																"maxLength": 64,
-																"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-																"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-															}
-														},
-														"required": [
-															"days",
-															"end",
-															"start",
-															"timeZone"
-														],
-														"additionalProperties": false
+															"description": "Weekly periods when the gateway refuses requests. Deny periods of several policies join."
+														}
 													},
-													"description": "Weekly periods when the gateway refuses requests."
+													"required": [
+														"deny"
+													],
+													"additionalProperties": false,
+													"description": "Limit requests by the time of the week."
 												},
 												"networks": {
 													"type": "object",
@@ -23832,7 +23842,7 @@
 												"type": "string",
 												"enum": [
 													"access",
-													"access.deny",
+													"access.schedule",
 													"access.networks",
 													"input",
 													"limits",
@@ -25021,7 +25031,7 @@
 									"type": "string",
 									"enum": [
 										"access",
-										"access.deny",
+										"access.schedule",
 										"access.networks",
 										"input",
 										"limits",
@@ -25096,7 +25106,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"limits",
@@ -25137,7 +25147,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"limits",
@@ -25178,7 +25188,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"limits",
@@ -25219,7 +25229,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"limits",
@@ -25260,7 +25270,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"limits",
@@ -25301,7 +25311,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"limits",
@@ -25342,7 +25352,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"timeouts",
@@ -25701,54 +25711,63 @@
 					"access": {
 						"type": "object",
 						"properties": {
-							"deny": {
-								"minItems": 1,
-								"type": "array",
-								"items": {
-									"type": "object",
-									"properties": {
-										"days": {
-											"minItems": 1,
-											"maxItems": 7,
-											"type": "array",
-											"items": {
-												"type": "string",
-												"enum": [
-													"mon",
-													"tue",
-													"wed",
-													"thu",
-													"fri",
-													"sat",
-													"sun"
-												]
+							"schedule": {
+								"type": "object",
+								"properties": {
+									"deny": {
+										"minItems": 1,
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"days": {
+													"minItems": 1,
+													"maxItems": 7,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"mon",
+															"tue",
+															"wed",
+															"thu",
+															"fri",
+															"sat",
+															"sun"
+														]
+													},
+													"uniqueItems": true
+												},
+												"end": {
+													"type": "string",
+													"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+													"description": "The end must be later than the start. Split an overnight period into two entries."
+												},
+												"start": {
+													"type": "string",
+													"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+												},
+												"timeZone": {
+													"type": "string",
+													"maxLength": 64,
+													"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+													"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
+												}
 											},
-											"uniqueItems": true
-										},
-										"end": {
-											"type": "string",
-											"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
-											"description": "The end must be later than the start. Split an overnight period into two entries."
-										},
-										"start": {
-											"type": "string",
-											"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
-										},
-										"timeZone": {
-											"type": "string",
-											"maxLength": 64,
-											"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-											"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
+											"required": [
+												"days",
+												"end",
+												"start",
+												"timeZone"
+											],
+											"additionalProperties": false
 										}
-									},
-									"required": [
-										"days",
-										"end",
-										"start",
-										"timeZone"
-									],
-									"additionalProperties": false
-								}
+									}
+								},
+								"required": [
+									"deny"
+								],
+								"additionalProperties": false
 							},
 							"networks": {
 								"type": "object",
@@ -26450,7 +26469,7 @@
 													"type": "string",
 													"enum": [
 														"access",
-														"access.deny",
+														"access.schedule",
 														"access.networks",
 														"input",
 														"limits",
@@ -26494,7 +26513,7 @@
 															"type": "string",
 															"enum": [
 																"access",
-																"access.deny",
+																"access.schedule",
 																"access.networks",
 																"input",
 																"limits",
@@ -26550,7 +26569,7 @@
 																"type": "string",
 																"enum": [
 																	"access",
-																	"access.deny",
+																	"access.schedule",
 																	"access.networks",
 																	"input",
 																	"limits",
@@ -26603,7 +26622,7 @@
 													"type": "string",
 													"enum": [
 														"access",
-														"access.deny",
+														"access.schedule",
 														"access.networks",
 														"input",
 														"limits",
@@ -26647,7 +26666,7 @@
 															"type": "string",
 															"enum": [
 																"access",
-																"access.deny",
+																"access.schedule",
 																"access.networks",
 																"input",
 																"limits",
@@ -26703,7 +26722,7 @@
 																"type": "string",
 																"enum": [
 																	"access",
-																	"access.deny",
+																	"access.schedule",
 																	"access.networks",
 																	"input",
 																	"limits",
@@ -26756,7 +26775,7 @@
 													"type": "string",
 													"enum": [
 														"access",
-														"access.deny",
+														"access.schedule",
 														"access.networks",
 														"input",
 														"limits",
@@ -26800,7 +26819,7 @@
 															"type": "string",
 															"enum": [
 																"access",
-																"access.deny",
+																"access.schedule",
 																"access.networks",
 																"input",
 																"limits",
@@ -26856,7 +26875,7 @@
 																"type": "string",
 																"enum": [
 																	"access",
-																	"access.deny",
+																	"access.schedule",
 																	"access.networks",
 																	"input",
 																	"limits",
@@ -26909,7 +26928,7 @@
 													"type": "string",
 													"enum": [
 														"access",
-														"access.deny",
+														"access.schedule",
 														"access.networks",
 														"input",
 														"limits",
@@ -26953,7 +26972,7 @@
 															"type": "string",
 															"enum": [
 																"access",
-																"access.deny",
+																"access.schedule",
 																"access.networks",
 																"input",
 																"limits",
@@ -27009,7 +27028,7 @@
 																"type": "string",
 																"enum": [
 																	"access",
-																	"access.deny",
+																	"access.schedule",
 																	"access.networks",
 																	"input",
 																	"limits",
@@ -27062,7 +27081,7 @@
 													"type": "string",
 													"enum": [
 														"access",
-														"access.deny",
+														"access.schedule",
 														"access.networks",
 														"input",
 														"limits",
@@ -27106,7 +27125,7 @@
 															"type": "string",
 															"enum": [
 																"access",
-																"access.deny",
+																"access.schedule",
 																"access.networks",
 																"input",
 																"limits",
@@ -27162,7 +27181,7 @@
 																"type": "string",
 																"enum": [
 																	"access",
-																	"access.deny",
+																	"access.schedule",
 																	"access.networks",
 																	"input",
 																	"limits",
@@ -27215,7 +27234,7 @@
 													"type": "string",
 													"enum": [
 														"access",
-														"access.deny",
+														"access.schedule",
 														"access.networks",
 														"input",
 														"limits",
@@ -27259,7 +27278,7 @@
 															"type": "string",
 															"enum": [
 																"access",
-																"access.deny",
+																"access.schedule",
 																"access.networks",
 																"input",
 																"limits",
@@ -27315,7 +27334,7 @@
 																"type": "string",
 																"enum": [
 																	"access",
-																	"access.deny",
+																	"access.schedule",
 																	"access.networks",
 																	"input",
 																	"limits",
@@ -27366,7 +27385,7 @@
 											"type": "string",
 											"enum": [
 												"access",
-												"access.deny",
+												"access.schedule",
 												"access.networks",
 												"input",
 												"timeouts",
@@ -27420,54 +27439,64 @@
 					"access": {
 						"type": "object",
 						"properties": {
-							"deny": {
-								"type": "array",
-								"items": {
-									"type": "object",
-									"properties": {
-										"days": {
-											"minItems": 1,
-											"maxItems": 7,
-											"type": "array",
-											"items": {
-												"type": "string",
-												"enum": [
-													"mon",
-													"tue",
-													"wed",
-													"thu",
-													"fri",
-													"sat",
-													"sun"
-												]
+							"schedule": {
+								"type": "object",
+								"properties": {
+									"deny": {
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"days": {
+													"minItems": 1,
+													"maxItems": 7,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"mon",
+															"tue",
+															"wed",
+															"thu",
+															"fri",
+															"sat",
+															"sun"
+														]
+													},
+													"uniqueItems": true
+												},
+												"end": {
+													"type": "string",
+													"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+													"description": "The end must be later than the start. Split an overnight period into two entries."
+												},
+												"start": {
+													"type": "string",
+													"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+												},
+												"timeZone": {
+													"type": "string",
+													"maxLength": 64,
+													"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+													"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
+												}
 											},
-											"uniqueItems": true
+											"required": [
+												"days",
+												"end",
+												"start",
+												"timeZone"
+											],
+											"additionalProperties": false
 										},
-										"end": {
-											"type": "string",
-											"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
-											"description": "The end must be later than the start. Split an overnight period into two entries."
-										},
-										"start": {
-											"type": "string",
-											"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
-										},
-										"timeZone": {
-											"type": "string",
-											"maxLength": 64,
-											"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-											"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-										}
-									},
-									"required": [
-										"days",
-										"end",
-										"start",
-										"timeZone"
-									],
-									"additionalProperties": false
+										"description": "Weekly periods when the gateway refuses requests. Deny periods of several policies join."
+									}
 								},
-								"description": "Weekly periods when the gateway refuses requests."
+								"required": [
+									"deny"
+								],
+								"additionalProperties": false,
+								"description": "Limit requests by the time of the week."
 							},
 							"networks": {
 								"type": "object",
@@ -29151,54 +29180,64 @@
 								"access": {
 									"type": "object",
 									"properties": {
-										"deny": {
-											"type": "array",
-											"items": {
-												"type": "object",
-												"properties": {
-													"days": {
-														"minItems": 1,
-														"maxItems": 7,
-														"type": "array",
-														"items": {
-															"type": "string",
-															"enum": [
-																"mon",
-																"tue",
-																"wed",
-																"thu",
-																"fri",
-																"sat",
-																"sun"
-															]
+										"schedule": {
+											"type": "object",
+											"properties": {
+												"deny": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"days": {
+																"minItems": 1,
+																"maxItems": 7,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"enum": [
+																		"mon",
+																		"tue",
+																		"wed",
+																		"thu",
+																		"fri",
+																		"sat",
+																		"sun"
+																	]
+																},
+																"uniqueItems": true
+															},
+															"end": {
+																"type": "string",
+																"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+																"description": "The end must be later than the start. Split an overnight period into two entries."
+															},
+															"start": {
+																"type": "string",
+																"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+															},
+															"timeZone": {
+																"type": "string",
+																"maxLength": 64,
+																"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+																"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
+															}
 														},
-														"uniqueItems": true
+														"required": [
+															"days",
+															"end",
+															"start",
+															"timeZone"
+														],
+														"additionalProperties": false
 													},
-													"end": {
-														"type": "string",
-														"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
-														"description": "The end must be later than the start. Split an overnight period into two entries."
-													},
-													"start": {
-														"type": "string",
-														"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
-													},
-													"timeZone": {
-														"type": "string",
-														"maxLength": 64,
-														"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
-														"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
-													}
-												},
-												"required": [
-													"days",
-													"end",
-													"start",
-													"timeZone"
-												],
-												"additionalProperties": false
+													"description": "Weekly periods when the gateway refuses requests. Deny periods of several policies join."
+												}
 											},
-											"description": "Weekly periods when the gateway refuses requests."
+											"required": [
+												"deny"
+											],
+											"additionalProperties": false,
+											"description": "Limit requests by the time of the week."
 										},
 										"networks": {
 											"type": "object",

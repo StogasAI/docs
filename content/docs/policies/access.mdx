@@ -6,7 +6,7 @@ icon: CalendarClock
 
 Every resource that applies to a request must be enabled and unexpired. Enabled state and
 expiration are settings of the resource. Deny periods and networks are in its policy, under
-`access.deny` and `access.networks`.
+`access.schedule` and `access.networks`.
 
 ## Enable or disable access
 
@@ -63,14 +63,16 @@ This policy blocks new requests before 08:00 on weekdays in New York:
 ```json title="policy.json"
 {
 	"access": {
-		"deny": [
-			{
-				"days": ["mon", "tue", "wed", "thu", "fri"],
-				"start": "00:00",
-				"end": "08:00",
-				"timeZone": "America/New_York"
-			}
-		]
+		"schedule": {
+			"deny": [
+				{
+					"days": ["mon", "tue", "wed", "thu", "fri"],
+					"start": "00:00",
+					"end": "08:00",
+					"timeZone": "America/New_York"
+				}
+			]
+		}
 	}
 }
 ```
@@ -80,9 +82,9 @@ required. The start is included and the end is excluded, so the example permits 
 if all other policies allow them. Use `00:00` to `24:00` to deny an entire day.
 
 Outside the deny periods, this setting adds no restriction. To allow only business hours, deny
-the hours outside that schedule and deny weekends. There is no separate `allow` schedule.
+the hours outside them and deny weekends. A schedule has no `allow` list.
 
-Each entry under `access.deny` accepts:
+Each entry under `access.schedule.deny` accepts:
 
 <PolicyFields section="accessPeriod" />
 
@@ -93,20 +95,22 @@ A period cannot cross midnight. Split Friday 20:00 through Saturday 08:00 into t
 ```json title="policy.json"
 {
 	"access": {
-		"deny": [
-			{
-				"days": ["fri"],
-				"start": "20:00",
-				"end": "24:00",
-				"timeZone": "UTC"
-			},
-			{
-				"days": ["sat"],
-				"start": "00:00",
-				"end": "08:00",
-				"timeZone": "UTC"
-			}
-		]
+		"schedule": {
+			"deny": [
+				{
+					"days": ["fri"],
+					"start": "20:00",
+					"end": "24:00",
+					"timeZone": "UTC"
+				},
+				{
+					"days": ["sat"],
+					"start": "00:00",
+					"end": "08:00",
+					"timeZone": "UTC"
+				}
+			]
+		}
 	}
 }
 ```
@@ -121,8 +125,8 @@ local hour that is skipped never occurs. Use `UTC` for a schedule that does not 
 
 ## How periods combine
 
-Every required deny period from every policy applies. An empty `deny` array replaces default
-periods only. A permitted [request policy](/docs/policies/request-policies) can add periods.
+Every required deny period from every policy applies. A schedule with an empty `deny` list
+replaces default periods only. A permitted [request policy](/docs/policies/request-policies) can add periods.
 
 A deny period in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's
 policy blocks only the deployments and credentials it applies to. The gateway tries the others,

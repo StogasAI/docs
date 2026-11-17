@@ -150,26 +150,28 @@ Requests work from 08:00 to 18:00 Berlin time, Monday to Friday.
 ```json title="Organization policy"
 {
 	"access": {
-		"deny": [
-			{
-				"days": ["mon", "tue", "wed", "thu", "fri"],
-				"start": "00:00",
-				"end": "08:00",
-				"timeZone": "Europe/Berlin"
-			},
-			{
-				"days": ["mon", "tue", "wed", "thu", "fri"],
-				"start": "18:00",
-				"end": "24:00",
-				"timeZone": "Europe/Berlin"
-			},
-			{
-				"days": ["sat", "sun"],
-				"start": "00:00",
-				"end": "24:00",
-				"timeZone": "Europe/Berlin"
-			}
-		]
+		"schedule": {
+			"deny": [
+				{
+					"days": ["mon", "tue", "wed", "thu", "fri"],
+					"start": "00:00",
+					"end": "08:00",
+					"timeZone": "Europe/Berlin"
+				},
+				{
+					"days": ["mon", "tue", "wed", "thu", "fri"],
+					"start": "18:00",
+					"end": "24:00",
+					"timeZone": "Europe/Berlin"
+				},
+				{
+					"days": ["sat", "sun"],
+					"start": "00:00",
+					"end": "24:00",
+					"timeZone": "Europe/Berlin"
+				}
+			]
+		}
 	}
 }
 ```
