@@ -5368,7 +5368,7 @@
 					"Policies"
 				],
 				"summary": "Change a policy",
-				"description": "Replacing the policy needs its current revision. A policy can add or change only the sections that all of its parent policies let it set, and it can always remove a section. When new delegation rules stop permitting sections that policies below this one have saved, those policies keep the sections, which still apply. The notes field of this policy counts them. An organization can save 10,000 policy versions or 64 MiB of policies in any 24 hours, and a change past either limit fails with 429.",
+				"description": "Replacing the policy needs its current revision. A policy can add or change only the sections that all of its parent policies let it set, and it can always remove a section. When new delegation rules stop permitting sections that policies below this one have saved, those policies keep the sections, which still apply. The notes field of this policy counts them. In any 24 hours an organization can save 10,000 policy versions and 16 MiB of policy content that it has not saved before, and one member half of each. A change past a limit fails with 429.",
 				"security": [
 					{
 						"accessToken": [
@@ -6299,6 +6299,11 @@
 																"allowInviteLinks": {
 																	"type": "boolean"
 																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
 																"testedAt": {
 																	"anyOf": [
 																		{
@@ -6329,6 +6334,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -6350,6 +6356,11 @@
 																},
 																"allowInviteLinks": {
 																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
 																},
 																"testedAt": {
 																	"anyOf": [
@@ -6384,6 +6395,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -6622,6 +6634,11 @@
 																"allowInviteLinks": {
 																	"type": "boolean"
 																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
 																"testedAt": {
 																	"anyOf": [
 																		{
@@ -6652,6 +6669,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -6673,6 +6691,11 @@
 																},
 																"allowInviteLinks": {
 																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
 																},
 																"testedAt": {
 																	"anyOf": [
@@ -6707,6 +6730,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -6933,6 +6957,11 @@
 																"allowInviteLinks": {
 																	"type": "boolean"
 																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
 																"testedAt": {
 																	"anyOf": [
 																		{
@@ -6963,6 +6992,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -6984,6 +7014,11 @@
 																},
 																"allowInviteLinks": {
 																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
 																},
 																"testedAt": {
 																	"anyOf": [
@@ -7018,6 +7053,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -7243,6 +7279,11 @@
 																"allowInviteLinks": {
 																	"type": "boolean"
 																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
 																"testedAt": {
 																	"anyOf": [
 																		{
@@ -7273,6 +7314,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -7294,6 +7336,11 @@
 																},
 																"allowInviteLinks": {
 																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
 																},
 																"testedAt": {
 																	"anyOf": [
@@ -7328,6 +7375,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -7427,7 +7475,7 @@
 					"Single sign-on"
 				],
 				"summary": "Delete the identity provider",
-				"description": "Turns single sign-on off, disconnects SCIM and deletes the invitations that single sign-on gave.",
+				"description": "Turns single sign-on off, disconnects SCIM and frees the seats held for people who join through the identity provider.",
 				"security": [
 					{
 						"accessToken": [
@@ -7545,6 +7593,11 @@
 																"allowInviteLinks": {
 																	"type": "boolean"
 																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
 																"testedAt": {
 																	"anyOf": [
 																		{
@@ -7575,6 +7628,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -7596,6 +7650,11 @@
 																},
 																"allowInviteLinks": {
 																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
 																},
 																"testedAt": {
 																	"anyOf": [
@@ -7630,6 +7689,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -7761,6 +7821,11 @@
 									},
 									"allowInviteLinks": {
 										"type": "boolean"
+									},
+									"joinSeats": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 1000
 									}
 								},
 								"additionalProperties": false
@@ -7870,6 +7935,11 @@
 																"allowInviteLinks": {
 																	"type": "boolean"
 																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
 																"testedAt": {
 																	"anyOf": [
 																		{
@@ -7900,6 +7970,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -7921,6 +7992,11 @@
 																},
 																"allowInviteLinks": {
 																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
 																},
 																"testedAt": {
 																	"anyOf": [
@@ -7955,6 +8031,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -8178,6 +8255,11 @@
 																		"allowInviteLinks": {
 																			"type": "boolean"
 																		},
+																		"joinSeats": {
+																			"type": "integer",
+																			"minimum": 0,
+																			"maximum": 1000
+																		},
 																		"testedAt": {
 																			"anyOf": [
 																				{
@@ -8208,6 +8290,7 @@
 																		"requireSso",
 																		"signInMinutes",
 																		"allowInviteLinks",
+																		"joinSeats",
 																		"testedAt",
 																		"updatedAt",
 																		"protocol",
@@ -8229,6 +8312,11 @@
 																		},
 																		"allowInviteLinks": {
 																			"type": "boolean"
+																		},
+																		"joinSeats": {
+																			"type": "integer",
+																			"minimum": 0,
+																			"maximum": 1000
 																		},
 																		"testedAt": {
 																			"anyOf": [
@@ -8263,6 +8351,7 @@
 																		"requireSso",
 																		"signInMinutes",
 																		"allowInviteLinks",
+																		"joinSeats",
 																		"testedAt",
 																		"updatedAt",
 																		"protocol",
@@ -8485,6 +8574,11 @@
 																"allowInviteLinks": {
 																	"type": "boolean"
 																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
+																},
 																"testedAt": {
 																	"anyOf": [
 																		{
@@ -8515,6 +8609,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -8536,6 +8631,11 @@
 																},
 																"allowInviteLinks": {
 																	"type": "boolean"
+																},
+																"joinSeats": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 1000
 																},
 																"testedAt": {
 																	"anyOf": [
@@ -8570,6 +8670,7 @@
 																"requireSso",
 																"signInMinutes",
 																"allowInviteLinks",
+																"joinSeats",
 																"testedAt",
 																"updatedAt",
 																"protocol",
@@ -17824,12 +17925,6 @@
 											"minimum": 0,
 											"maximum": 9007199254740991
 										},
-										"hasSingleSignOnInvite": {
-											"type": "boolean"
-										},
-										"inviteLinksAllowed": {
-											"type": "boolean"
-										},
 										"items": {
 											"maxItems": 100,
 											"type": "array",
@@ -17849,15 +17944,8 @@
 														]
 													},
 													"code": {
-														"anyOf": [
-															{
-																"type": "string",
-																"minLength": 1
-															},
-															{
-																"type": "null"
-															}
-														]
+														"type": "string",
+														"minLength": 1
 													},
 													"createdAt": {
 														"type": "string",
@@ -17894,9 +17982,6 @@
 														"minimum": 1,
 														"maximum": 9007199254740991
 													},
-													"singleSignOn": {
-														"type": "boolean"
-													},
 													"usedCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -17911,7 +17996,6 @@
 													"expiresAt",
 													"id",
 													"maxUses",
-													"singleSignOn",
 													"usedCount"
 												],
 												"additionalProperties": false
@@ -17923,7 +18007,7 @@
 												"null"
 											]
 										},
-										"reservedInviteUses": {
+										"reservedSeats": {
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 9007199254740991
@@ -17931,12 +18015,6 @@
 										"retrievedAt": {
 											"type": "string",
 											"format": "date-time"
-										},
-										"singleSignOnDomains": {
-											"type": "array",
-											"items": {
-												"type": "string"
-											}
 										},
 										"total": {
 											"type": "integer",
@@ -17946,13 +18024,10 @@
 									},
 									"required": [
 										"filteredCount",
-										"hasSingleSignOnInvite",
-										"inviteLinksAllowed",
 										"items",
 										"nextCursor",
-										"reservedInviteUses",
+										"reservedSeats",
 										"retrievedAt",
-										"singleSignOnDomains",
 										"total"
 									],
 									"additionalProperties": false
@@ -17971,7 +18046,7 @@
 					"Invites"
 				],
 				"summary": "Create an invite",
-				"description": "An invite has one use unless you set maxUses. It lasts until its uses run out or a member deletes it, or until expiresInSeconds passes if you set it. Until then, each unused use holds a seat. With singleSignOn, the invite has no link: people with an email address at a verified domain join when the organization's identity provider signs them in. An organization has one such invite at a time.",
+				"description": "An invite has one use unless you set maxUses. It lasts until its uses run out or a member deletes it, or until expiresInSeconds passes if you set it. Until then, each unused use holds a seat.",
 				"security": [
 					{
 						"accessToken": [
@@ -18014,10 +18089,7 @@
 									"maxUses": {
 										"type": "integer",
 										"minimum": 1,
-										"maximum": 1000
-									},
-									"singleSignOn": {
-										"type": "boolean"
+										"maximum": 30
 									}
 								},
 								"additionalProperties": false
@@ -18046,15 +18118,8 @@
 											]
 										},
 										"code": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1
-												},
-												{
-													"type": "null"
-												}
-											]
+											"type": "string",
+											"minLength": 1
 										},
 										"expiresAt": {
 											"anyOf": [
@@ -18076,9 +18141,6 @@
 											"minimum": 1,
 											"maximum": 9007199254740991
 										},
-										"singleSignOn": {
-											"type": "boolean"
-										},
 										"usedCount": {
 											"type": "integer",
 											"minimum": 0,
@@ -18091,7 +18153,6 @@
 										"expiresAt",
 										"id",
 										"maxUses",
-										"singleSignOn",
 										"usedCount"
 									],
 									"additionalProperties": false
@@ -18171,7 +18232,7 @@
 									"maxUses": {
 										"type": "integer",
 										"minimum": 1,
-										"maximum": 1000
+										"maximum": 30
 									}
 								},
 								"additionalProperties": false
@@ -18200,15 +18261,8 @@
 											]
 										},
 										"code": {
-											"anyOf": [
-												{
-													"type": "string",
-													"minLength": 1
-												},
-												{
-													"type": "null"
-												}
-											]
+											"type": "string",
+											"minLength": 1
 										},
 										"expiresAt": {
 											"anyOf": [
@@ -18230,9 +18284,6 @@
 											"minimum": 1,
 											"maximum": 9007199254740991
 										},
-										"singleSignOn": {
-											"type": "boolean"
-										},
 										"usedCount": {
 											"type": "integer",
 											"minimum": 0,
@@ -18245,7 +18296,6 @@
 										"expiresAt",
 										"id",
 										"maxUses",
-										"singleSignOn",
 										"usedCount"
 									],
 									"additionalProperties": false
@@ -18426,8 +18476,8 @@
 									"type": "object",
 									"properties": {
 										"limits": {
-											"minItems": 8,
-											"maxItems": 8,
+											"minItems": 9,
+											"maxItems": 9,
 											"type": "array",
 											"items": {
 												"type": "object",
@@ -18442,7 +18492,8 @@
 															"seats",
 															"roles",
 															"byokKeys",
-															"encryptionKeys"
+															"encryptionKeys",
+															"azureTargets"
 														]
 													},
 													"limit": {
@@ -18678,6 +18729,9 @@
 											"minimum": 0,
 											"maximum": 9007199254740991
 										},
+										"inviteLinksAllowed": {
+											"type": "boolean"
+										},
 										"items": {
 											"maxItems": 100,
 											"type": "array",
@@ -18785,7 +18839,7 @@
 												"null"
 											]
 										},
-										"reservedInviteUses": {
+										"reservedSeats": {
 											"type": "integer",
 											"minimum": 0,
 											"maximum": 9007199254740991
@@ -18807,11 +18861,12 @@
 									},
 									"required": [
 										"filteredCount",
+										"inviteLinksAllowed",
 										"items",
 										"memberCount",
 										"membersManagerCount",
 										"nextCursor",
-										"reservedInviteUses",
+										"reservedSeats",
 										"retrievedAt",
 										"rolesManagerCount",
 										"seatLimit"
@@ -21959,9 +22014,101 @@
 																								}
 																							},
 																							"content": {
+																								"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
 																								"anyOf": [
 																									{
 																										"type": "boolean"
+																									},
+																									{
+																										"type": "object",
+																										"properties": {
+																											"encrypted": {
+																												"type": "object",
+																												"properties": {
+																													"version": {
+																														"type": "number",
+																														"const": 1
+																													},
+																													"keyId": {
+																														"type": "string",
+																														"pattern": "^[0-9a-f]{64}$"
+																													},
+																													"salt": {
+																														"type": "string",
+																														"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																													},
+																													"nonce": {
+																														"type": "string",
+																														"pattern": "^[A-Za-z0-9_-]{16}$"
+																													},
+																													"blob": {
+																														"type": "string",
+																														"minLength": 22,
+																														"maxLength": 349547,
+																														"pattern": "^[A-Za-z0-9_-]+$"
+																													}
+																												},
+																												"required": [
+																													"version",
+																													"keyId",
+																													"salt",
+																													"nonce",
+																													"blob"
+																												],
+																												"additionalProperties": false
+																											}
+																										},
+																										"required": [
+																											"encrypted"
+																										],
+																										"additionalProperties": false,
+																										"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																									}
+																								]
+																							},
+																							"sample": {
+																								"description": "The share of records to send, above 0 and at most 1. Defaults to 1, which sends every record. An object gives a share for each outcome (success, failed, cancelled, rejected or unknown) and sends no record of the outcomes that it leaves out.",
+																								"anyOf": [
+																									{
+																										"anyOf": [
+																											{
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											{
+																												"type": "object",
+																												"properties": {
+																													"success": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"failed": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"cancelled": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"rejected": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"unknown": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													}
+																												},
+																												"additionalProperties": false,
+																												"minProperties": 1
+																											}
+																										]
 																									},
 																									{
 																										"type": "object",
@@ -23302,9 +23449,101 @@
 																						}
 																					},
 																					"content": {
+																						"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
 																						"anyOf": [
 																							{
 																								"type": "boolean"
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						]
+																					},
+																					"sample": {
+																						"description": "The share of records to send, above 0 and at most 1. Defaults to 1, which sends every record. An object gives a share for each outcome (success, failed, cancelled, rejected or unknown) and sends no record of the outcomes that it leaves out.",
+																						"anyOf": [
+																							{
+																								"anyOf": [
+																									{
+																										"type": "number",
+																										"exclusiveMinimum": 0,
+																										"maximum": 1
+																									},
+																									{
+																										"type": "object",
+																										"properties": {
+																											"success": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"failed": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"cancelled": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"rejected": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"unknown": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											}
+																										},
+																										"additionalProperties": false,
+																										"minProperties": 1
+																									}
+																								]
 																							},
 																							{
 																								"type": "object",
@@ -24566,6 +24805,48 @@
 												"content": {
 													"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
 													"type": "boolean"
+												},
+												"sample": {
+													"description": "The share of records to send, above 0 and at most 1. Defaults to 1, which sends every record. An object gives a share for each outcome (success, failed, cancelled, rejected or unknown) and sends no record of the outcomes that it leaves out.",
+													"anyOf": [
+														{
+															"type": "number",
+															"exclusiveMinimum": 0,
+															"maximum": 1
+														},
+														{
+															"type": "object",
+															"properties": {
+																"success": {
+																	"type": "number",
+																	"exclusiveMinimum": 0,
+																	"maximum": 1
+																},
+																"failed": {
+																	"type": "number",
+																	"exclusiveMinimum": 0,
+																	"maximum": 1
+																},
+																"cancelled": {
+																	"type": "number",
+																	"exclusiveMinimum": 0,
+																	"maximum": 1
+																},
+																"rejected": {
+																	"type": "number",
+																	"exclusiveMinimum": 0,
+																	"maximum": 1
+																},
+																"unknown": {
+																	"type": "number",
+																	"exclusiveMinimum": 0,
+																	"maximum": 1
+																}
+															},
+															"additionalProperties": false,
+															"minProperties": 1
+														}
+													]
 												}
 											},
 											"required": [
@@ -26708,9 +26989,101 @@
 																			}
 																		},
 																		"content": {
+																			"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
 																			"anyOf": [
 																				{
 																					"type": "boolean"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			]
+																		},
+																		"sample": {
+																			"description": "The share of records to send, above 0 and at most 1. Defaults to 1, which sends every record. An object gives a share for each outcome (success, failed, cancelled, rejected or unknown) and sends no record of the outcomes that it leaves out.",
+																			"anyOf": [
+																				{
+																					"anyOf": [
+																						{
+																							"type": "number",
+																							"exclusiveMinimum": 0,
+																							"maximum": 1
+																						},
+																						{
+																							"type": "object",
+																							"properties": {
+																								"success": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"failed": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"cancelled": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"rejected": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								"unknown": {
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								}
+																							},
+																							"additionalProperties": false,
+																							"minProperties": 1
+																						}
+																					]
 																				},
 																				{
 																					"type": "object",
@@ -28179,9 +28552,101 @@
 																						}
 																					},
 																					"content": {
+																						"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
 																						"anyOf": [
 																							{
 																								"type": "boolean"
+																							},
+																							{
+																								"type": "object",
+																								"properties": {
+																									"encrypted": {
+																										"type": "object",
+																										"properties": {
+																											"version": {
+																												"type": "number",
+																												"const": 1
+																											},
+																											"keyId": {
+																												"type": "string",
+																												"pattern": "^[0-9a-f]{64}$"
+																											},
+																											"salt": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																											},
+																											"nonce": {
+																												"type": "string",
+																												"pattern": "^[A-Za-z0-9_-]{16}$"
+																											},
+																											"blob": {
+																												"type": "string",
+																												"minLength": 22,
+																												"maxLength": 349547,
+																												"pattern": "^[A-Za-z0-9_-]+$"
+																											}
+																										},
+																										"required": [
+																											"version",
+																											"keyId",
+																											"salt",
+																											"nonce",
+																											"blob"
+																										],
+																										"additionalProperties": false
+																									}
+																								},
+																								"required": [
+																									"encrypted"
+																								],
+																								"additionalProperties": false,
+																								"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																							}
+																						]
+																					},
+																					"sample": {
+																						"description": "The share of records to send, above 0 and at most 1. Defaults to 1, which sends every record. An object gives a share for each outcome (success, failed, cancelled, rejected or unknown) and sends no record of the outcomes that it leaves out.",
+																						"anyOf": [
+																							{
+																								"anyOf": [
+																									{
+																										"type": "number",
+																										"exclusiveMinimum": 0,
+																										"maximum": 1
+																									},
+																									{
+																										"type": "object",
+																										"properties": {
+																											"success": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"failed": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"cancelled": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"rejected": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											"unknown": {
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											}
+																										},
+																										"additionalProperties": false,
+																										"minProperties": 1
+																									}
+																								]
 																							},
 																							{
 																								"type": "object",

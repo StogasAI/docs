@@ -6,8 +6,8 @@ icon: LogIn
 
 An external organization can connect one identity provider, such as Okta, Microsoft Entra ID or
 Google Workspace, through OpenID Connect or SAML 2.0. Members can then sign in through it, the
-organization can require that, and people at its verified domains can join through a single
-sign-on invite. Set it up in **Settings → Single sign-on**, which needs **Organization → Manage**.
+organization can require that, and people at its verified domains can join. Set it up in
+**Settings → Single sign-on**, which needs **Organization → Manage**.
 
 ## Register Stogas with your provider
 
@@ -68,11 +68,15 @@ everyone out. API keys don't use single sign-on.
 | Off                | Not connected | Only people at your verified domains                                    |
 | Off                | Connected     | Only active users that the provider sent                                |
 
-People from your provider join through the [single sign-on invite](/docs/members#invitations).
-Turning **Allow invite links** off deletes the organization's invitation links, and you can do it
-once a test sign-in succeeds. Saving another issuer, client ID or protocol allows links again until
-the next test. A person who joins with a link still signs in through your provider while single
-sign-on is required.
+Each person who joins through your provider takes one of the **Seats for single sign-on**, from 0
+to 1,000, and nobody joins that way at 0. These seats count as [used seats](/docs/members#invitations)
+while you hold them. Changing them needs **Members → Manage**. Holding more also needs free seats, a
+verified domain, a test sign-in that succeeded and the permissions to assign the default role.
+
+Turning **Allow invite links** off deletes the organization's invitations, and nobody can create
+one until you turn it on again. You can turn it off once a test sign-in succeeds. Saving another
+issuer, client ID or protocol allows links again until the next test. A person who joins with a
+link still signs in through your provider while single sign-on is required.
 
 ## Access tokens
 
@@ -121,13 +125,13 @@ secret and its tokens at once.
 
 While SCIM is connected:
 
-- A person joins through the single sign-on invite only when the provider sent an active user whose
-  `userName` or primary email is the address that the person signs in with.
+- A person joins through your provider only when it sent an active user whose `userName` or
+  primary email is the address that the person signs in with.
 - When the provider deactivates or deletes a user, the member who signs in as that person is
   removed, as when an admin [removes a member](/docs/members#remove-access). [Activity](/docs/activity) names
   **Identity provider** as the actor. The last member who can manage roles stays.
-- A user that the provider activates again is not a member. The person joins again through the
-  invite.
+- A user that the provider activates again is not a member. The person joins again and takes a
+  seat for single sign-on.
 - A provisioned user takes no seat until the person joins.
 - A member links to their user by email once. A later change of address at the provider keeps the
   link.
