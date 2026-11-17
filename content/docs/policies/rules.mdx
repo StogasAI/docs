@@ -89,14 +89,14 @@ default orders only the deployments that the key's criteria leave tied. See
 [Orders from several policies](/docs/policies/routing#orders-from-several-policies). Other settings
 replace defaults of the same kind:
 
-| Kind               | Includes                                                     |
-| ------------------ | ------------------------------------------------------------ |
-| Each access field  | `deny` or `networks`                                         |
-| Input              | All of `input`                                               |
-| Each timeout       | `totalSeconds` or `outputIdleSeconds`                        |
-| Each routing field | One field, except `sort`, whose criteria add up              |
-| Each plugin        | `redaction` or `export`, encrypted or not                    |
-| Each file family   | `text` or `office` of `textExtraction`, with its media types |
+| Kind               | Includes                                                            |
+| ------------------ | ------------------------------------------------------------------- |
+| Each access field  | `deny` or `networks`                                                |
+| Input              | All of `input`                                                      |
+| Each timeout       | `totalSeconds` or `outputIdleSeconds`                               |
+| Each routing field | One field, except `sort`, whose criteria add up                     |
+| Each plugin        | `redaction` or `export`, encrypted or not                           |
+| Each file family   | `text`, `office` or `pdf` of `textExtraction`, with its media types |
 
 - A required plugin setting replaces only the default of the same plugin. A required text
   extraction mode replaces the default modes of the same file family, and leaves the other family,

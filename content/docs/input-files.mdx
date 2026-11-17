@@ -158,8 +158,8 @@ turns Word, Excel and PowerPoint files into text.
 A tool result takes images and documents, with the sources, formats, policies and
 [limits](#limits) of a user message. It takes no audio. Only deployments with the
 `toolResultAttachments` capability read them, and the request
-[leaves the others out](#when-no-candidate-reads-a-file). A text or Office file that a policy
-[extracts](/docs/text-extraction) is text, so every deployment reads it.
+[leaves the others out](#when-no-candidate-reads-a-file). A text file, Office file or PDF that a
+policy [extracts](/docs/text-extraction) is text, so every deployment reads it.
 
 ## Supported formats
 
@@ -249,10 +249,9 @@ model, such as `provider:openai gpt-5.6-sol`, or use a key with one credential f
 
 ## Limits
 
-- URLs, file IDs and files other than UTF-8 text files and extracted Office files reserve the
-  deployment's full input limit
-  in the [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their
-  tokens.
+- URLs, file IDs and files other than UTF-8 text files, extracted Office files and extracted
+  PDFs reserve the deployment's full input limit in the
+  [hold](/docs/usage#how-a-request-is-charged), because the gateway cannot count their tokens.
 - Base64 and JSON encoding count toward the [128 MiB request limit](/docs/reference/security#limits).
   The provider applies its own file, page and size limits.
 - Audio input (`input_audio` on Chat Completions) works only on deployments that list `audio` in

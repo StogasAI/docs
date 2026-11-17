@@ -5557,6 +5557,15 @@
 											"always"
 										]
 									},
+									"pdf": {
+										"description": "PDF files that hold text. A scanned PDF holds none.",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
+									},
 									"application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
 										"description": "Word documents (.docx).",
 										"type": "string",
@@ -5637,6 +5646,15 @@
 											"auto",
 											"always"
 										]
+									},
+									"application/pdf": {
+										"description": "PDF files (.pdf).",
+										"type": "string",
+										"enum": [
+											"off",
+											"auto",
+											"always"
+										]
 									}
 								},
 								"additionalProperties": {
@@ -5654,6 +5672,7 @@
 											"enum": [
 												"text",
 												"office",
+												"pdf",
 												"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 												"application/vnd.ms-word.document.macroenabled.12",
 												"application/vnd.oasis.opendocument.text",
@@ -5662,7 +5681,8 @@
 												"application/vnd.oasis.opendocument.spreadsheet",
 												"application/vnd.openxmlformats-officedocument.presentationml.presentation",
 												"application/vnd.ms-powerpoint.presentation.macroenabled.12",
-												"application/vnd.oasis.opendocument.presentation"
+												"application/vnd.oasis.opendocument.presentation",
+												"application/pdf"
 											]
 										},
 										{
@@ -5671,7 +5691,7 @@
 										}
 									]
 								},
-								"description": "Turn inline files into prompt text before input checks and redaction. A key is a file family, `text` or `office`, or one media type of a family, such as `text/csv`, whose mode applies to its files in place of the family mode of the same policy. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a file that no policy sets. The strongest required mode of each file applies."
+								"description": "Turn inline files into prompt text before input checks and redaction. A key is a file family, `text`, `office` or `pdf`, or one media type of a family, such as `text/csv`, whose mode applies to its files in place of the family mode of the same policy. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a file that no policy sets. The strongest required mode of each file applies."
 							},
 							"redaction": {
 								"anyOf": [
@@ -7110,6 +7130,15 @@
 														"always"
 													]
 												},
+												"pdf": {
+													"description": "PDF files that hold text. A scanned PDF holds none.",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
+												},
 												"application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
 													"description": "Word documents (.docx).",
 													"type": "string",
@@ -7190,6 +7219,15 @@
 														"auto",
 														"always"
 													]
+												},
+												"application/pdf": {
+													"description": "PDF files (.pdf).",
+													"type": "string",
+													"enum": [
+														"off",
+														"auto",
+														"always"
+													]
 												}
 											},
 											"additionalProperties": {
@@ -7207,6 +7245,7 @@
 														"enum": [
 															"text",
 															"office",
+															"pdf",
 															"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 															"application/vnd.ms-word.document.macroenabled.12",
 															"application/vnd.oasis.opendocument.text",
@@ -7215,7 +7254,8 @@
 															"application/vnd.oasis.opendocument.spreadsheet",
 															"application/vnd.openxmlformats-officedocument.presentationml.presentation",
 															"application/vnd.ms-powerpoint.presentation.macroenabled.12",
-															"application/vnd.oasis.opendocument.presentation"
+															"application/vnd.oasis.opendocument.presentation",
+															"application/pdf"
 														]
 													},
 													{
@@ -7224,7 +7264,7 @@
 													}
 												]
 											},
-											"description": "Turn inline files into prompt text before input checks and redaction. A key is a file family, `text` or `office`, or one media type of a family, such as `text/csv`, whose mode applies to its files in place of the family mode of the same policy. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a file that no policy sets. The strongest required mode of each file applies."
+											"description": "Turn inline files into prompt text before input checks and redaction. A key is a file family, `text`, `office` or `pdf`, or one media type of a family, such as `text/csv`, whose mode applies to its files in place of the family mode of the same policy. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a file that no policy sets. The strongest required mode of each file applies."
 										},
 										"redaction": {
 											"anyOf": [

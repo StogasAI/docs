@@ -1,17 +1,17 @@
 ---
 title: Text extraction
-description: Turn text and Office files into prompt text that every model reads and redaction scans.
+description: Turn text files, Office files and PDFs into prompt text that every model reads and redaction scans.
 icon: FileText
 ---
 
 Text extraction turns inline files into prompt text: text files such as CSV, JSON and source code,
-and Office files such as Word, Excel and PowerPoint. The text works on any deployment, even one
-that accepts no documents, and goes through [PII redaction](/docs/pii-redaction) and input checks
-like the rest of the prompt.
+Office files such as Word, Excel and PowerPoint, and PDFs. The text works on any deployment, even
+one that accepts no documents, and goes through [PII redaction](/docs/pii-redaction) and input
+checks like the rest of the prompt.
 
 ```json title="Policy"
 {
-	"plugins": { "textExtraction": { "text": "auto", "office": "always" } }
+	"plugins": { "textExtraction": { "text": "auto", "office": "always", "pdf": "auto" } }
 }
 ```
 
@@ -21,6 +21,7 @@ Each key names a kind of file, and its value is the mode of those files:
 | -------------------------------- | -------------------------------------------------------------------------------- |
 | `text`                           | [UTF-8 text files](#what-counts-as-a-text-file)                                  |
 | `office`                         | [Word, Excel, PowerPoint and OpenDocument files](#what-counts-as-an-office-file) |
+| `pdf`                            | [PDFs that hold text](#pdfs)                                                     |
 | A media type, such as `text/csv` | [Files of that one type](#set-one-media-type)                                    |
 
 | Mode     | A deployment that reads the file | Any other deployment       |
@@ -54,8 +55,9 @@ does not read them. In one policy, the mode of a media type applies to its files
 mode of their family.
 
 - A key is a lowercase media type without parameters that a family holds: a
-  [text type](#what-counts-as-a-text-file) or an [Office type](#what-counts-as-an-office-file). A
-  class such as `text/*`, a filename extension and any other type fail when you save the policy.
+  [text type](#what-counts-as-a-text-file), an [Office type](#what-counts-as-an-office-file) or
+  `application/pdf`. A class such as `text/*`, a filename extension and any other type fail when
+  you save the policy.
 - The gateway reads the type from the data URL or `file_type`. A text file with no type is
   `text/plain`, and an Office file with no type has the type of its filename extension.
 - Text formats have no signature, so a client can send a CSV file as `text/plain`. Set `text` where
@@ -71,7 +73,7 @@ The gateway changes a file only when a policy says so. A new organization's poli
 	"rules": {
 		"default_extraction": {
 			"mode": "default",
-			"plugins": { "textExtraction": { "text": "auto", "office": "auto" } }
+			"plugins": { "textExtraction": { "text": "auto", "office": "auto", "pdf": "auto" } }
 		}
 	}
 }
@@ -276,11 +278,59 @@ request with 400.
 A file beyond a limit, a file that is not a readable archive and a file whose XML is not UTF-8 fail
 the request with 400 where extraction applies.
 
+## PDFs
+
+```txt
+invoice.pdf (application/pdf)
+## Page 1
+
+Invoice 4471
+Acme, Inc.
+
+## Page 2
+
+[This page has no text]
+
+## Page 3
+
+Total: 12 EUR
+```
+
+- Each page gives its text in reading order under a heading with its number. A page that holds
+  only images or drawings gives `[This page has no text]`.
+- Images, charts, drawings, comments, attachments and bookmarks are left out. A provider that
+  reads a PDF also sees each page as an image, so use `auto` and a deployment that
+  [reads PDFs](/docs/input-files#supported-formats) where the model must see them.
+- A PDF in which no page has text, such as a scan, fails the request with 400 where extraction
+  applies.
+- A PDF that restricts printing or copying opens without a password and is read. A PDF that needs
+  a password to open fails the request with 400 where extraction applies.
+
+### What counts as a PDF
+
+- A file whose data URL or `file_type` names `application/pdf`.
+- A file with no type, or with `application/octet-stream`, whose filename ends in `.pdf`.
+
+The content must start with the PDF signature, `%PDF-`.
+
+### Limits
+
+| Limit                           | Value      |
+| ------------------------------- | ---------- |
+| Pages in one file               | 2,000      |
+| Text from one file              | 8 MiB      |
+| Memory to read one file         | 1 GiB      |
+| Processor time to read one file | 20 seconds |
+
+A file beyond a limit and a file that is not a readable PDF fail the request with 400 where
+extraction applies. When the gateway cannot start reading a PDF within 20 seconds, the request
+fails with 503 and the code `gateway_capacity_exceeded`, and you can send it again.
+
 ## What stays a file
 
 | Input                                    | Why                                                                                                 |
 | ---------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| PDFs and other binary formats            | The provider reads them. [Find a route](/docs/input-files#supported-formats) that lists the format. |
+| Other binary formats                     | The provider reads them. [Find a route](/docs/input-files#supported-formats) that lists the format. |
 | `.doc`, `.xls` and `.ppt` files          | The Office 97 to 2003 formats are binary.                                                           |
 | Password-protected Office files          | Their content is encrypted.                                                                         |
 | RTF, Protocol Buffers and email messages | They hold binary data or encoded parts, not plain text.                                             |
