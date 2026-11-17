@@ -280,7 +280,7 @@ code that your own `stogas login` printed, since approving a code signs in the C
 Each sign-in creates an access token named `Stogas CLI on <host>` unless you name it otherwise. The
 CLI keeps it in the system keychain, where signing in again replaces it and `logout` deletes it.
 Where there is no keychain, as on most servers, the CLI prints the token for you to set as
-`STOGAS_TOKEN`, and the token stays valid until it expires or you delete it.
+`STOGAS_TOKEN`. The token stays valid until it expires or you delete it.
 
 For servers and CI, create an access token with only the access that the job needs, and set it as
 `STOGAS_TOKEN`. The CLI then uses it, and `register`, `login` and `logout` refuse to run. See
@@ -344,8 +344,8 @@ IDs. A stored credential needs nothing else. For a customer-encrypted credential
 key saved for the organization under the label that it registered. Otherwise pass the key's file
 with `--key-file`, or enter the key when prompted, once for each key. The CLI sends the key over a
 verified connection to a gateway, the only place that can open the credential, and the gateway saves
-the result. An Azure credential's check also finds its account's deployments, and the CLI prints how
-many targets are selected, how many of those are unavailable, and how many models have none, with a
+the result. An Azure credential's check also finds its account's deployments. The CLI prints how
+many targets are selected, how many of those are unavailable and how many models have none, with a
 link to choose them. You need permission to manage the credentials. A failed check leaves the others
 to run, and the command then exits with status 1. Without `--organization`, the credentials are in
 your personal organization.

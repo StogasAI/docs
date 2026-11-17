@@ -212,11 +212,12 @@ A retry from your client is a new request, billed on its own. When a request end
 run. Check the request in [Analytics](/docs/analytics), and send it again only if a second run is
 acceptable.
 
-When a provider answers `429`, `503` or `529` with a wait, the gateway passes on what remains of
-it in `Retry-After`, as it does its own waits: in whole seconds, and up to a second apart for
-requests refused together. A response that a retry cannot pass, or that a retry could run twice,
-has `X-Should-Retry: false`: a `424`, an error that only another deployment avoids, a wait longer
-than a minute, and any error after a provider may have run the request, such as
-`upstream_outcome_unknown` or a `request_timeout` while generation continues. A response that a
-retry can pass, although its status is one that clients do not retry, has `X-Should-Retry: true`. The OpenAI and Anthropic SDKs read
-both headers, and E2EE responses carry them too.
+When a provider answers `429`, `503` or `529` with a wait, the gateway passes on what remains of it
+in `Retry-After`. It follows the rules of the gateway's own waits: whole seconds, and up to a second
+apart for requests refused together. A response that a retry cannot pass, or that a retry could run
+twice, has `X-Should-Retry: false`. These are a `424`, an error that only another deployment avoids,
+a wait longer than a minute, and any error after a provider may have run the request. Examples of
+the last are `upstream_outcome_unknown` and a `request_timeout` while generation continues. A
+response that a retry can pass, although its status is one that clients do not retry, has
+`X-Should-Retry: true`. The OpenAI and Anthropic SDKs read both headers, and E2EE responses carry
+them too.

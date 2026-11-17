@@ -182,10 +182,10 @@ and replacing or deleting the identity provider asks for your password first.
 
 A sensitive change, such as creating an API key, asks you to confirm it's you. An account without a
 passkey or authenticator app confirms with its password. For a change in the organization, a new
-sign-in at its provider also confirms. The provider must sign you in again and state when it did,
-in the `auth_time` claim or the SAML `AuthnInstant`. Microsoft Entra ID sends `auth_time` only when you add it as an optional claim of
-the ID token, and Google doesn't sign people in again on request, so its members confirm with the
-password.
+sign-in at its provider also confirms. The provider must sign you in again and state when it did, in
+the `auth_time` claim or the SAML `AuthnInstant`. Microsoft Entra ID sends `auth_time` only when you
+add it as an optional claim of the ID token. Google doesn't sign people in again on request, so its
+members confirm with the password.
 
 An account links to its person by the provider's subject identifier, or by the Name ID with SAML,
 never the email, which some providers let people change. A provider that gives each client its own

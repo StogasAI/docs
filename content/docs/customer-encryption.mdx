@@ -194,6 +194,6 @@ that you can't view.
 
 Each encryption uses a fresh salt and nonce to derive an AES-256-GCM key with HKDF-SHA-256. The
 authenticated context binds the organization, the setting and the key ID, so a ciphertext opens
-only as the same setting of the same organization: an export URL's envelope saved as a redaction
-term fails every request that applies it. The CLI pads each policy part with spaces to a multiple
-of 256 bytes before it encrypts it.
+only as the same setting of the same organization. For example, an export URL's envelope saved as
+a redaction term fails every request that applies it. The CLI pads each policy part with spaces
+to a multiple of 256 bytes before it encrypts it.

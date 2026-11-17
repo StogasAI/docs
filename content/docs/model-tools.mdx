@@ -313,13 +313,13 @@ move to another model.
 
 ### Data handling of hosted tools
 
-A hosted tool can send request content to services other than the model. Anthropic's web search
-and web fetch can run anywhere, and a fetched site's owner can keep the URLs that the tool fetches.
-Your [routing policies](/docs/policies/routing) read a deployment's
-[data handling](/docs/policies/routing-fields#data-handling) joined with that of each hosted tool
-that the request lets the model call, and the catalog shows each tool's data handling with its
-route. For example, this filter keeps only deployments that process content in the US, so a request
-that lets Claude call `web_search` goes to no Claude deployment, since the search can run anywhere:
+A hosted tool can send request content to services other than the model. Anthropic's web search and
+web fetch can run anywhere, and a fetched site's owner can keep the URLs that the tool fetches.
+Your [routing policies](/docs/policies/routing) read a deployment's [data
+handling](/docs/policies/routing-fields#data-handling) joined with that of each hosted tool that
+the request lets the model call. The catalog shows each tool's data handling with its route. For
+example, this filter keeps only deployments that process content in the US. A request that lets
+Claude call `web_search` then goes to no Claude deployment, since the search can run anywhere:
 
 ```json title="policy.json"
 {

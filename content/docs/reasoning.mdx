@@ -205,8 +205,8 @@ In a tool loop, send the model's reasoning back with the tool results:
 - The gateway also accepts OpenRouter's reasoning: its `reasoning_details`, and its reasoning items
   with `format` and `signature`.
 - A signed or encrypted entry that you change returns `400`[^claude].
-- Each deployment gets only the reasoning that it can read, and the gateway leaves out the rest,
-  such as another model family's reasoning or reasoning that you got from a provider directly. A
+- Each deployment gets only the reasoning that it can read. The gateway leaves out the rest, such
+  as another model family's reasoning or reasoning that you got from a provider directly. A
   conversation can move to another model or credential[^credential], and the model continues
   without what it cannot read.
 

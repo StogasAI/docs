@@ -59,7 +59,7 @@ remain.
 ### Data handling
 
 These fields describe what the provider can do with request and response content. Each value is
-the worst case across every configuration and optional feature that the offering allows: a
+the worst case across every configuration and optional feature that the offering allows. A
 persistent cache that the offering allows counts even when your request does not use it. A more
 private configuration gets a stronger value only when the gateway enforces it on every request. A
 location that the provider does not disclose is `unknown`, and an undisclosed retention period or
@@ -70,16 +70,16 @@ training use is missing.
 Temporary in-memory prompt caching is compatible with zero data retention and is excluded from
 `retentionDays`. Persistent caches are not exempt. `retentionDays` covers routine retention only.
 Exceptional retention, such as a legal hold or review of content flagged for abuse, follows the
-provider's terms, and a provider that keeps flagged content for review does not have zero data
+provider's terms. A provider that keeps flagged content for review does not have zero data
 retention. A promise not to train does not establish zero retention. These facts apply to the
 selected offering and do not cover other provider services.
 
 When a request lets the model call [hosted tools](/docs/model-tools#data-handling-of-hosted-tools),
 these fields join the deployment's data handling with each tool's. A location becomes the smallest
-place that holds both, `retentionDays` becomes the longer period, or missing when either is
-unknown, and `zeroDataRetention`, `endToEndEncrypted`, `tee` and `teeVerified` stay `true` only when
-every tool keeps them. `trainingUse` becomes `true` when a tool can train on content. For example,
-a deployment that processes in `US` with a tool that processes in `DE` reads `world`.
+place that holds both. `retentionDays` becomes the longer period, or missing when either is unknown.
+`zeroDataRetention`, `endToEndEncrypted`, `tee` and `teeVerified` stay `true` only when every tool
+keeps them. `trainingUse` becomes `true` when a tool can train on content. For example, a deployment
+that processes in `US` with a tool that processes in `DE` reads `world`.
 
 `processingLocation` covers model inference and the hosted tools that the model may call. It does
 not cover where the provider's API endpoint receives and routes the request. `tee` and
@@ -100,17 +100,16 @@ read content is trustworthy.
 A value names the widest area where the activity can happen. The catalog lists the places where
 data can be: those that deployments, headquarters and provider accounts name, with the places that
 contain them. Each region lists every country that it covers, including countries that the catalog
-does not list, and a place lies in each region that lists all of its countries: `DE` lies in `eu`,
-which lies in `europe`, which lies in `world`. A
-[place's page](https://stogas.ai/locations/apac) shows its countries.
-`processingWithin` and `storageWithin` list a deployment's location with every place that contains
-it, so `'europe' in deployment.dataHandling.processingWithin` accepts deployments that process in
-`europe`, in `eu` or in a European country. `unknown` lies in no other place, and `world` only in
-itself, so the check refuses them. `none` lies in every place, so a check on `storageWithin` also
-accepts deployments that keep nothing.
+does not list. A place lies in each region that lists all of its countries: `DE` lies in `eu`,
+which lies in `europe`, which lies in `world`. A [place's page](https://stogas.ai/locations/apac)
+shows its countries. `processingWithin` and `storageWithin` list a deployment's location with
+every place that contains it, so `'europe' in deployment.dataHandling.processingWithin` accepts
+deployments that process in `europe`, in `eu` or in a European country. `unknown` lies in no other
+place, and `world` only in itself, so the check refuses them. `none` lies in every place, so a
+check on `storageWithin` also accepts deployments that keep nothing.
 
 Location values are case-sensitive: countries are uppercase and regions lowercase. Saving a policy
-fails when it names a location that the catalog does not list, and the error names the place that
+fails when it names a location that the catalog does not list. The error names the place that
 differs only in case, such as `eu` for `EU`.
 
 `processingLocation` and `storageLocation` compare as exact text:
@@ -155,9 +154,9 @@ deployment.companies.all(company, company in ['amazon', 'anthropic', 'google', '
 
 `dataHandling.certifications` lists the independent audits and government authorizations of the
 service that processes the request. The catalog lists one only where the company that runs the
-model names that service in the scope of the audit, so the list can be shorter than the company's
-own list of certificates. An empty list means that the company publishes none for the service, and
-a rule that requires one refuses the deployment.
+model names that service in the scope of the audit. The list can therefore be shorter than the
+company's own list of certificates. An empty list means that the company publishes none for the
+service, and a rule that requires one refuses the deployment.
 
 | Value                                                           | Meaning                                                                 |
 | --------------------------------------------------------------- | ----------------------------------------------------------------------- |

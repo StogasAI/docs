@@ -69,7 +69,7 @@ finish on the old session. Error responses, including rate limits and provider e
 a session.
 
 The SDK sends a request once more, on a new connection or session, only when the gateway refused it
-before starting it: for example, because the gateway is shutting down for an update or closed the
+before starting it. For example, the gateway is shutting down for an update, or it closed the
 connection as the request arrived. With E2EE, the refusal arrives inside the encrypted session, so
 no proxy can fake it. If no new connection or session can start, you get the gateway's `503`
 response. If a connection or session ends during a request, that request fails, and your OpenAI

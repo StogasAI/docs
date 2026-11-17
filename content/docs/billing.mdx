@@ -58,9 +58,9 @@ cards and bank transfers through [Stripe](https://stripe.com).
 - Your bank holds the amount on your card until we take the payment. We check some payments first,
   and if we decline one or don't take it within 7 days, your bank releases the hold.
 - If a card payment is disputed with its bank, we take its credit out of the balance until the bank
-  decides and restrict the organization: API requests are denied and payments stay pending until
-  we lift the restriction. A dispute that the bank decides for the cardholder removes the credit,
-  as a refund does, which can leave the balance below zero.
+  decides, and we restrict the organization. API requests are denied and payments stay pending until
+  we lift the restriction. A dispute that the bank decides for the cardholder removes the credit, as
+  a refund does, which can leave the balance below zero.
 - A card that its bank reports as stolen cannot pay again.
 
 ### Bank transfers
@@ -119,9 +119,9 @@ Balance changes are every change to your organization's credit except spending, 
 
 ## Billing emails
 
-A saved billing email gets each invoice and receipt with its PDF, a reminder 3 days before an
-unpaid invoice is due on payment terms of 7 days or more, and a notice when an invoice becomes
-overdue. Reply to any of them to reach us.
+A saved billing email gets each invoice and receipt with its PDF. On payment terms of 7 days
+or more, it also gets a reminder 3 days before an unpaid invoice is due. It gets a notice when
+an invoice becomes overdue. Reply to any of them to reach us.
 
 ## Refunds
 

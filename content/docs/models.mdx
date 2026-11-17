@@ -154,18 +154,16 @@ For a model ID, the gateway:
    with the request's `provider.order` after the required ones.
 3. Sends the request to the first deployment.
 
-Only policies order deployments. With the
-[default order](/docs/policies/routing#default-order), the cheapest deployment comes first, with
-input weighed three times output, like
-[`blendedPrice(3, 1)`](/docs/policies/expressions#blended-price). For example, if OpenAI and Azure
-charge the same for a model, a request with credentials for both goes to the Azure deployment, whose
-ID sorts first, then to the OpenAI one, and a dearer `-us` deployment comes after both. When the
-criteria leave deployments tied, the request returns
-[`deployment_ambiguous`](/docs/policies/routing#ties).
+Only policies order deployments. With the [default order](/docs/policies/routing#default-order), the
+cheapest deployment comes first, with input weighed three times output, like [`blendedPrice(3,
+1)`](/docs/policies/expressions#blended-price). For example, OpenAI and Azure charge the same for a
+model, and your request has credentials for both. The request goes to the Azure deployment, whose ID
+sorts first, then to the OpenAI one. A dearer `-us` deployment comes after both. When the criteria
+leave deployments tied, the request returns [`deployment_ambiguous`](/docs/policies/routing#ties).
 
 Chat Completions and Responses requests can leave out `model`. The gateway then considers the
 Standard tier, or the tier in `service_tier`, of every model that your credentials and policies
-allow, except deployments that need approval, and the sort criteria choose the model. With the
+allow, except deployments that need approval. The sort criteria choose the model. With the
 default order, that is the newest model.
 
 There is no automatic preference for the model author's own provider. To limit or order providers

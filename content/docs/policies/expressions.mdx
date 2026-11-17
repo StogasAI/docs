@@ -80,8 +80,8 @@ tokens to blend the prices that a prompt of that size pays:
 blendedPrice(3, 1, 300000) < decimal('5')
 ```
 
-A model that charges $4 for input and $15 for output when the prompt is over 272,000 tokens blends
-to `(3 × 4 + 15) / 4 = $6.75` at 300,000 tokens, so this filter removes it.
+Take a model that charges $4 for input and $15 for output when the prompt is over 272,000 tokens.
+It blends to `(3 × 4 + 15) / 4 = $6.75` at 300,000 tokens, so this filter removes it.
 
 - Weights and the prompt size are constant integers. At least one weight must be positive, and a
   zero weight ignores that price.
