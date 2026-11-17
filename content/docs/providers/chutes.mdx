@@ -28,8 +28,9 @@ key and one-use request tickets.
 ### Check the hardware evidence
 
 The gateway checks a fresh Intel TDX quote against Intel's certificates and revocation lists, and
-the NVIDIA GPU evidence through NVIDIA's attestation service. The quote must have debugging off,
-match a measurement that Chutes publishes for its runtime, and bind the instance's ML-KEM key.
+the NVIDIA GPU evidence through NVIDIA's attestation service. The quote must have debugging and
+migration off, match a measurement that Chutes publishes for its runtime, and bind the instance's
+ML-KEM key.
 
 </Step>
 <Step>
@@ -56,6 +57,9 @@ Chutes decides which TEE measurements are acceptable, and no independent party c
 Chutes' published source code yet. The measurements cover Chutes' runtime, which starts only
 containers signed with keys that Chutes controls, so the quote does not identify the container image
 or the model weights. The catalog therefore lists TEE deployments with `tee: true` and `teeVerified: false`.
+
+A model on several Hopper GPUs, such as H200, sends data between them over NVLink without
+encryption, and Chutes' evidence does not cover the NVSwitches that carry it.
 
 ## Standard models
 
