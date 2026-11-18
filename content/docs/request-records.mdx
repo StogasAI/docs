@@ -607,6 +607,10 @@ For example, 99 matching credit rejections in one minute produce five single rec
 - [Export](/docs/export) sends these same records, the grouped one when the minute ends.
 - A grouped record keeps the first request ID and the first and last times. The other request IDs
   that it counts have no record of their own.
+- When an organization has more than 32 groups in one minute, its later groups get only the shared
+  record.
+- Every key's first group in a minute is recorded. When a key is refused for many different errors
+  or request shapes in the same minute, some of its later groups can go unrecorded.
 - A grouped record has no model or catalog IDs, so it counts toward key and organization totals but
   not model totals.
 - Successful requests and provider errors are never grouped.
