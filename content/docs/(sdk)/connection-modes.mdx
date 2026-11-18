@@ -14,6 +14,9 @@ back to ordinary HTTPS.
 | Native SDKs and the CLI                    | [Attested TLS](#attested-tls)       | Select `e2ee` in the settings |
 | Browsers, Workers and other Fetch runtimes | [E2EE over HTTPS](#e2ee-over-https) | None                          |
 
+To refuse requests that clients send without the SDK or CLI, deny `https` in a
+[policy](/docs/policies/access#connection-modes).
+
 ## Attested TLS
 
 The TLS connection ends inside the verified gateway. The gateway's TLS certificate carries fresh

@@ -1,12 +1,12 @@
 ---
 title: Access and expiration
-description: Enable or disable a scope, expire access, block requests on a weekly schedule, or allow and deny client networks.
+description: Enable or disable a scope, expire access, block requests on a weekly schedule, allow and deny client networks, or require connection modes.
 icon: CalendarClock
 ---
 
 Every resource that applies to a request must be enabled and unexpired. Enabled state and
-expiration are settings of the resource. Deny periods and networks are in its policy, under
-`access.schedule` and `access.networks`.
+expiration are settings of the resource. Deny periods, networks and connection modes are in its
+policy, under `access.schedule`, `access.networks` and `access.transports`.
 
 ## Enable or disable access
 
@@ -125,8 +125,9 @@ local hour that is skipped never occurs. Use `UTC` for a schedule that does not 
 
 ## How periods combine
 
-Every required deny period from every policy applies. A schedule with an empty `deny` list
-replaces default periods only. A permitted [request policy](/docs/policies/request-policies) can add periods.
+Every required deny period from every policy applies. A schedule with an empty `deny` list replaces
+default periods only. A permitted [request policy](/docs/policies/request-policies) can add
+periods.
 
 A deny period in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's
 policy blocks only the deployments and credentials it applies to. The gateway tries the others,
@@ -197,6 +198,53 @@ policy sets `access.networks`. To replace them without a restriction, set an emp
 Networks in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's policy
 block only the deployments and credentials it applies to. The gateway tries the others, and fails
 with `network_denied` when none remain.
+
+## Connection modes
+
+This policy refuses requests that the [SDK or CLI](/docs/connection-modes) does not protect:
+
+```json title="policy.json"
+{
+	"access": {
+		"transports": { "deny": ["https"] }
+	}
+}
+```
+
+| Mode           | Requests                                                                        |
+| -------------- | ------------------------------------------------------------------------------- |
+| `https`        | Ordinary HTTPS, such as an OpenAI client that sends to the API without the SDK. |
+| `attested_tls` | [Attested TLS](/docs/connection-modes#attested-tls).                            |
+| `e2ee`         | [E2EE over HTTPS](/docs/connection-modes#e2ee-over-https).                      |
+
+`allow` and `deny` work as they do for [networks](#networks): a request must use a mode that
+`allow` lists, when the policy has an `allow` list, and no mode that `deny` lists.
+
+- The policy stops clients that send requests without the SDK or CLI, such as a script that a
+  member wrote with an OpenAI client. A refused request fails with `403 transport_denied` before it
+  reaches a provider, and the message names the mode that the gateway saw.
+- The gateway sees the mode of a request, not whether the client checked the gateway's evidence.
+  Someone who intercepts a request can send it on in any mode, so only the check in your client
+  protects a request. The SDK and CLI always check, and never fall back to ordinary HTTPS.
+- A mode that you allow, or remove from `deny`, applies
+  [within three minutes](/docs/policies/scopes#when-changes-take-effect).
+- [Request history](/docs/analytics) shows the mode of each request, so you can find the keys
+  that still use ordinary HTTPS before you deny it.
+- A policy whose `deny` holds every mode of its `allow` cannot be saved. Disable the resource to
+  block every request.
+
+## How connection modes combine
+
+A request must use a mode in every `allow` list and in no `deny` list of the policies that apply.
+Two `allow` lists that share no mode block every request.
+
+A [default rule](/docs/policies/rules#defaults) can list modes, and they apply until a required
+policy sets `access.transports`. To replace them without a restriction, set an empty `deny` list:
+`{ "deny": [] }`.
+
+Modes in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's policy
+block only the deployments and credentials it applies to. The gateway tries the others, and fails
+with `transport_denied` when none remain.
 
 ## Timestamps and time zones
 

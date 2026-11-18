@@ -98,6 +98,8 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 | `<scope>_expired`         | That scope's access has expired.                                                                                                                                               |
 | `organization_restricted` | The organization is restricted, so its requests are refused until the restriction is lifted.                                                                                   |
 | `schedule_denied`         | A [deny period](/docs/policies/access#deny-periods) blocks requests now.                                                                                                       |
+| `network_denied`          | The [networks](/docs/policies/access#networks) of a policy refuse the address that the message names.                                                                          |
+| `transport_denied`        | A [policy](/docs/policies/access#connection-modes) refuses the connection mode that the message names.                                                                         |
 | `dashboard_key_denied`    | Your dashboard session cannot use this key.                                                                                                                                    |
 | `permission_denied`       | The key does not allow a [request policy](/docs/policies/request-policies), or you cannot manage the credential that you [check](/docs/reference/credentials/checkCredential). |
 | `organization_inactive`   | The organization of the credential that you [check](/docs/reference/credentials/checkCredential) is inactive.                                                                  |

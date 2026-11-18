@@ -5154,10 +5154,44 @@
 								},
 								"additionalProperties": false,
 								"description": "Limit requests by the client's address. An entry is an IPv4 or IPv6 address, or a CIDR range."
+							},
+							"transports": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"minItems": 1,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"enum": [
+												"https",
+												"attested_tls",
+												"e2ee"
+											]
+										},
+										"uniqueItems": true,
+										"description": "Accept requests only over these connection modes. Allow lists of several policies intersect."
+									},
+									"deny": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"enum": [
+												"https",
+												"attested_tls",
+												"e2ee"
+											]
+										},
+										"uniqueItems": true,
+										"description": "Refuse requests over these connection modes. Deny lists of several policies join."
+									}
+								},
+								"additionalProperties": false,
+								"description": "Limit requests by connection mode: ordinary HTTPS, attested TLS or E2EE over HTTPS."
 							}
 						},
 						"additionalProperties": false,
-						"description": "When and from where the gateway accepts requests."
+						"description": "When, from where and over which connection modes the gateway accepts requests."
 					},
 					"input": {
 						"type": "object",
@@ -6819,10 +6853,44 @@
 											},
 											"additionalProperties": false,
 											"description": "Limit requests by the client's address. An entry is an IPv4 or IPv6 address, or a CIDR range."
+										},
+										"transports": {
+											"type": "object",
+											"properties": {
+												"allow": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"https",
+															"attested_tls",
+															"e2ee"
+														]
+													},
+													"uniqueItems": true,
+													"description": "Accept requests only over these connection modes. Allow lists of several policies intersect."
+												},
+												"deny": {
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"https",
+															"attested_tls",
+															"e2ee"
+														]
+													},
+													"uniqueItems": true,
+													"description": "Refuse requests over these connection modes. Deny lists of several policies join."
+												}
+											},
+											"additionalProperties": false,
+											"description": "Limit requests by connection mode: ordinary HTTPS, attested TLS or E2EE over HTTPS."
 										}
 									},
 									"additionalProperties": false,
-									"description": "When and from where the gateway accepts requests."
+									"description": "When, from where and over which connection modes the gateway accepts requests."
 								},
 								"input": {
 									"type": "object",
