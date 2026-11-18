@@ -112,8 +112,11 @@ The gateway reads your account's deployments every 10 minutes while requests use
 A reply that Azure answered from the new version before that read reaches you unchanged, and its
 request log names the version that answered.
 
-A check fails when an account has more than 20,000 targets. Requests through an API key whose Azure
-credentials have more than 20,000 chosen targets together fail with `key_configuration_too_large`.
+A check fails when an account has more than 20,000 targets, or when it would take the targets of
+all your organization's Azure credentials past the organization's limit, which is 20,000 by
+default and which we can raise. The credential then keeps the targets of its last check. Requests
+through an API key whose Azure credentials have more than 20,000 chosen targets together fail with
+`key_configuration_too_large`.
 
 ## Prompt caching
 
