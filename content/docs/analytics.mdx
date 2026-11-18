@@ -87,6 +87,8 @@ provider credential that has it, so use an ID to match one.
 | `metadata.<key>:`   | A value of a [metadata](/docs/request-records#metadata) key, such as `metadata.team:search`. Keys and values are case-sensitive. Keys with spaces, quotes, parentheses or `:`, `!`, `<`, `>` or `=` can't be filtered. |
 | `session:`          | A [session](/docs/request-records#sessions) ID, such as `session:chat-42`. Session IDs are case-sensitive.                                                                                                             |
 | `app:`              | The name of the request's [app](/docs/request-records#apps), or its URL when it sent no name, such as `app:"Roo Code"`. App names are case-sensitive.                                                                  |
+| `agent:`            | The name of the [agent](/docs/request-records#agents) that sent the request, such as `agent:review`. Agent names are case-sensitive.                                                                                   |
+| `subagent:`         | `true` for requests of [agents](/docs/request-records#agents) that a session started, otherwise `false`.                                                                                                               |
 | `trace:`            | A [trace](/docs/request-records#traces) ID, such as `trace:4bf92f3577b34da6a3ce929d0e0e4736`.                                                                                                                          |
 | `encryption_key:`   | The identifier of a [customer encryption key](/docs/request-records#encryption-keys) in the request's record, or the label it is registered under.                                                                     |
 | `tool_call:`        | A tool call ID or its [hash](/docs/request-records#tool-calls), such as `tool_call:call_1`. Matches the request that made the call and the one that sent its result. IDs are case-sensitive.                           |
@@ -100,7 +102,8 @@ provider credential that has it, so use an ID to match one.
 values check every provider attempt, including earlier failed ones.
 
 `none` selects requests without a value in `grant:`, `role:`, `model:`, `final_provider:`,
-`final_byok:`, `error:`, `metadata.<key>:`, `session:`, `app:`, `trace:` and `encryption_key:`. For
+`final_byok:`, `error:`, `metadata.<key>:`, `session:`, `app:`, `agent:`, `trace:` and
+`encryption_key:`. For
 example, `error:none` selects requests without a gateway error, and `session:"none"` selects the
 session named none.
 
@@ -111,6 +114,7 @@ Compare numbers with `>`, `>=`, `<` or `<=`:
 | `latency`, `provider_latency`, `gateway_latency`, `ttft` | Milliseconds, or `ms`, `s` and `m`                | `latency>2s`           |
 | `input_tokens`, `output_tokens`                          | Tokens, or `k` and `m` for thousands and millions | `input_tokens>=10k`    |
 | `tokens_per_second`                                      | Generated tokens per second                       | `tokens_per_second<20` |
+| `client_tool_calls`, `hosted_tool_calls`                 | [Tool calls](/docs/request-records#tool-calls)    | `client_tool_calls>0`  |
 | `upstream_cost`, `billed_cost`                           | USD, with or without `$`                          | `billed_cost>$0.05`    |
 
 Each member can run 30 queries a minute and download 3 files a minute. An organization's queries

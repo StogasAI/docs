@@ -11533,6 +11533,43 @@
 														"type": "string",
 														"format": "uuid"
 													},
+													"folder": {
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"color": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"pattern": "^#[0-9a-fA-F]{6}$"
+																			},
+																			{
+																				"type": "null"
+																			}
+																		]
+																	},
+																	"id": {
+																		"type": "string",
+																		"format": "uuid"
+																	},
+																	"name": {
+																		"type": "string",
+																		"minLength": 1
+																	}
+																},
+																"required": [
+																	"color",
+																	"id",
+																	"name"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"grantId": {
 														"anyOf": [
 															{
@@ -11567,6 +11604,7 @@
 												},
 												"required": [
 													"id",
+													"folder",
 													"grantId",
 													"kind",
 													"name",
@@ -12091,6 +12129,7 @@
 										"interface",
 										"app",
 										"session",
+										"agent",
 										"trace",
 										"metadata",
 										"outcome",
@@ -12336,6 +12375,7 @@
 														"interface",
 														"app",
 														"session",
+														"agent",
 														"trace",
 														"metadata",
 														"outcome",
@@ -14380,6 +14420,24 @@
 														"type": "string",
 														"pattern": "^[^\\u0000-\\u001f]*$"
 													},
+													"agent_id": {
+														"default": "",
+														"description": "The [agent](/docs/request-records#agents) that sent the request. Empty for the session's main conversation.",
+														"type": "string",
+														"pattern": "^[^\\u0000-\\u001f]*$"
+													},
+													"parent_agent_id": {
+														"default": "",
+														"description": "The agent that started this agent. Empty when the main conversation did.",
+														"type": "string",
+														"pattern": "^[^\\u0000-\\u001f]*$"
+													},
+													"agent_name": {
+														"default": "",
+														"description": "The agent's name or kind, such as `Explore`. Empty when the client sent none.",
+														"type": "string",
+														"pattern": "^[^\\u0000-\\u001f]*$"
+													},
 													"transport": {
 														"default": "https",
 														"description": "The client's [connection mode](/docs/connection-modes).",
@@ -14971,6 +15029,9 @@
 													"metadata",
 													"app_title",
 													"app_url",
+													"agent_id",
+													"parent_agent_id",
+													"agent_name",
 													"transport",
 													"cancelled",
 													"client_stop_ms",
@@ -15006,6 +15067,43 @@
 																"type": "string",
 																"format": "uuid"
 															},
+															"folder": {
+																"anyOf": [
+																	{
+																		"type": "object",
+																		"properties": {
+																			"color": {
+																				"anyOf": [
+																					{
+																						"type": "string",
+																						"pattern": "^#[0-9a-fA-F]{6}$"
+																					},
+																					{
+																						"type": "null"
+																					}
+																				]
+																			},
+																			"id": {
+																				"type": "string",
+																				"format": "uuid"
+																			},
+																			"name": {
+																				"type": "string",
+																				"minLength": 1
+																			}
+																		},
+																		"required": [
+																			"color",
+																			"id",
+																			"name"
+																		],
+																		"additionalProperties": false
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															},
 															"grantId": {
 																"anyOf": [
 																	{
@@ -15040,6 +15138,7 @@
 														},
 														"required": [
 															"id",
+															"folder",
 															"grantId",
 															"kind",
 															"name",

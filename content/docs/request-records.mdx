@@ -38,6 +38,9 @@ OpenAI rate limited the first call, so the gateway called Azure:
 	"metadata": { "team": "support", "feature": "ticket-summary" },
 	"app_title": "Support Desk",
 	"app_url": "https://desk.example.com",
+	"agent_id": "",
+	"parent_agent_id": "",
+	"agent_name": "",
 	"transport": "https",
 	"cancelled": false,
 	"client_stop_ms": null,
@@ -347,6 +350,43 @@ The gateway reads the first of these sources that has a value:
 - The gateway never sends the session ID to the provider, and PII redaction does not scan it.
 - Rejection records have no session ID.
 
+## Agents
+
+Name the agent that sends each request of a session, so the session page shows which agent made
+each call and Analytics can split spend by agent:
+
+```http title="Request headers of a subagent"
+X-Session-Id: ticket-4821
+Stogas-Agent-Id: researcher-2
+Stogas-Parent-Agent-Id: planner-1
+Stogas-Agent-Name: researcher
+```
+
+| Header                   | Record field      | Value                                                        |
+| ------------------------ | ----------------- | ------------------------------------------------------------ |
+| `Stogas-Agent-Id`        | `agent_id`        | The agent. Leave it out on the main conversation's requests. |
+| `Stogas-Parent-Agent-Id` | `parent_agent_id` | The agent that started this one, unless the main one did.    |
+| `Stogas-Agent-Name`      | `agent_name`      | The agent's name or kind, which many agents can share.       |
+
+Coding agents name their subagents without any setup:
+
+| Client   | `agent_id`              | `parent_agent_id`          | `agent_name`                          |
+| -------- | ----------------------- | -------------------------- | ------------------------------------- |
+| Codex    | `Thread-Id`             | `X-Codex-Parent-Thread-Id` | `X-OpenAI-Subagent`, such as `review` |
+| OpenCode | `X-OpenCode-Session-Id` | `X-Parent-Session-Id`      | None                                  |
+
+The analytics filter [`subagent:true`](/docs/analytics#filters) selects the requests of agents that
+a session started, and [`agent:`](/docs/analytics#filters) and the agent breakdown use the name.
+
+- Each value has up to 256 bytes of UTF-8 and no control characters. The gateway rejects a request
+  whose `Stogas-Agent-*` header is invalid or sent twice, or that names a parent without an agent,
+  and ignores invalid headers from coding agents.
+- An agent or parent ID that equals the session ID names the main conversation.
+- OpenCode names only the parent of each child session, so the requests of a subagent's own
+  subagents form a session named by that subagent's ID.
+- The gateway never sends the headers to the provider.
+- Rejection records have no agent.
+
 ## Traces
 
 OpenTelemetry clients name the trace of each request in a
@@ -518,6 +558,11 @@ For example, 99 matching credit rejections in one minute produce five single rec
 	"trace_id": "",
 	"encryption_key_ids": [],
 	"metadata": {},
+	"app_title": "",
+	"app_url": "",
+	"agent_id": "",
+	"parent_agent_id": "",
+	"agent_name": "",
 	"transport": "https",
 	"cancelled": false,
 	"client_stop_ms": null,
