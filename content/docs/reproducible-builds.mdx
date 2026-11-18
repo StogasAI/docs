@@ -52,10 +52,13 @@ version of every component.
 
 ## Two independent builds
 
-GitHub Actions builds each release tag once and attests the image and its release manifest. We
-build the same tag again on our own machines, and approve the release only when the two
-`release-manifest.json` files match byte for byte. The manifest records the source commit and its SHA-256 digest,
-every input hash, the compiler and tool versions, the image hash and the launch measurement.
+GitHub Actions and GitLab.com's hosted runners each build every release tag and sign a build proof
+for the image and its release manifest. GitHub's build takes prebuilt Guix packages from
+ci.guix.gnu.org and GitLab's from bordeaux.guix.gnu.org, so a package that the two Guix build farms
+built differently changes the manifest. We approve a release only when both proofs name the same
+`release-manifest.json` and image. The manifest records the source commit and its SHA-256 digest,
+every input hash, the compiler and tool versions, the image hash and the launch measurement. For
+releases without `gitlab-attestation.jsonl`, our own machines made the second build.
 
 Your own build is a third, independent check.
 
@@ -127,7 +130,7 @@ No output means the builds match. The manifest's launch measurement is the value
 	from the small binary seed. This takes much longer.{' '}
 </Callout>
 
-## Check the GitHub build proof
+## Check the build proofs
 
 To check that GitHub's release workflow built an image from its tag, without a rebuild, use the
 [GitHub CLI](https://cli.github.com/):
@@ -140,6 +143,15 @@ gh attestation verify gateway.igvm --repo StogasAI/gateway \
 
 The SDK makes the same check, and our approval check, before it trusts a gateway. See
 [Gateway verification](/docs/verification).
+
+GitLab's proof is `gitlab-attestation.jsonl` in the release. Check it with
+[cosign](https://github.com/sigstore/cosign):
+
+```console
+cosign verify-blob-attestation gateway.igvm --bundle gitlab-attestation.jsonl \
+  --type https://slsa.dev/provenance/v1 --certificate-oidc-issuer https://gitlab.com \
+  --certificate-identity https://gitlab.com/stogasai/gateway//.gitlab-ci.yml@refs/tags/v<version>
+```
 
 ## Verify an SDK download
 
