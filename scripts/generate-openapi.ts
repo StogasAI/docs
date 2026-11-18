@@ -1,6 +1,6 @@
-import { generateFiles } from 'fumadocs-openapi';
+import { generateFilesOnly } from 'fumadocs-openapi';
 import { createOpenAPI } from 'fumadocs-openapi/server';
-import { readdir, rm } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openapiDocuments } from '../lib/openapi';
@@ -51,20 +51,37 @@ function formatPage(content: string) {
 		.concat('\n');
 }
 
-/** Removes the generated tag folders, so that the pages of deleted operations go too. */
-async function removeTagFolders(directory: string, keep?: string) {
-	for (const entry of await readdir(directory, { withFileTypes: true })) {
-		if (entry.isDirectory() && entry.name !== keep) {
-			await rm(path.join(directory, entry.name), { recursive: true });
+/** The folders of generated pages, one per tag. The pages beside them are written by hand. */
+async function tagFolders(directory: string, keep?: string) {
+	return (await readdir(directory, { withFileTypes: true }))
+		.filter((entry) => entry.isDirectory() && entry.name !== keep)
+		.map((entry) => path.join(directory, entry.name));
+}
+
+/**
+ * Writes the pages that changed and deletes the pages of deleted operations. Unchanged pages stay
+ * as they are, so a check that reads the reference while this runs never finds a page missing.
+ */
+async function writeReference(files: Map<string, string>) {
+	for (const folder of [
+		...(await tagFolders(reference, 'dashboard')),
+		...(await tagFolders(dashboard))
+	]) {
+		for (const entry of await readdir(folder, { withFileTypes: true })) {
+			const file = path.join(folder, entry.name);
+			if (!files.has(file)) await rm(file, { recursive: true });
 		}
+		if ((await readdir(folder)).length === 0) await rm(folder, { recursive: true });
+	}
+	for (const [file, content] of files) {
+		if ((await readFile(file, 'utf8').catch(() => undefined)) === content) continue;
+		await mkdir(path.dirname(file), { recursive: true });
+		await writeFile(file, content);
 	}
 }
 
 async function main() {
-	// Tag folders hold only generated pages; the pages beside them are written by hand.
-	await removeTagFolders(reference, 'dashboard');
-	await removeTagFolders(dashboard);
-	await generateFiles({
+	const referencePages = await generateFilesOnly({
 		input: createOpenAPI({ input: { stogas: openapiDocuments.stogas } }),
 		output: reference,
 		per: 'operation',
@@ -151,7 +168,7 @@ async function main() {
 			}
 		}
 	});
-	await generateFiles({
+	const dashboardPages = await generateFilesOnly({
 		input: createOpenAPI({ input: { dashboard: openapiDocuments.dashboard } }),
 		output: dashboard,
 		per: 'operation',
@@ -181,6 +198,12 @@ async function main() {
 			}
 		}
 	});
+	await writeReference(
+		new Map([
+			...referencePages.map((file) => [path.join(reference, file.path), file.content] as const),
+			...dashboardPages.map((file) => [path.join(dashboard, file.path), file.content] as const)
+		])
+	);
 	console.log('API documentation generated.');
 }
 
