@@ -25,26 +25,35 @@ claim to the ID token, because Entra ID doesn't send `email_verified`.
 
 ### SAML
 
-| Your provider asks for                   | Give it                                                              |
-| ---------------------------------------- | -------------------------------------------------------------------- |
-| ACS URL, reply URL or single sign-on URL | `https://app.stogas.ai/api/auth/sso/saml/<organization-id>/acs`      |
-| Entity ID, audience or identifier        | `https://app.stogas.ai/api/auth/sso/saml/<organization-id>/metadata` |
-| Name ID                                  | A persistent identifier, or the email address                        |
-| Attributes                               | `email`, and `displayName` or `firstName` and `lastName`             |
+| Your provider asks for                   | Give it                                                               |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| ACS URL, reply URL or single sign-on URL | `https://app.stogas.ai/api/auth/sso/saml/<organization-id>/acs`       |
+| Entity ID, audience or identifier        | `https://app.stogas.ai/api/auth/sso/saml/<organization-id>/metadata`  |
+| Name ID                                  | A persistent identifier, or the email address                         |
+| Attributes                               | `email`, and `displayName` or `firstName` and `lastName`              |
+| Signing or encryption certificate        | The certificate in the metadata, which Settings also offers as a file |
 
 Each organization has its own entity ID, so several organizations can use one Microsoft Entra ID
 tenant. The entity ID is also the address of the service provider metadata. In Stogas, enter the
 provider's issuer, its sign-in URL and its signing certificate as PEM or base64.
 
-| Rule             | Value                                                                                         |
-| ---------------- | --------------------------------------------------------------------------------------------- |
-| Signature        | The response or the assertion, with RSA-SHA256 or RSA-SHA512. SHA-1 is refused.               |
-| Start of sign-in | At Stogas, or from your provider's list of apps after one more click at Stogas                |
-| Name ID          | Any format except transient, which changes at every sign-in.                                  |
-| Email            | The `email` or `mail` attribute, otherwise a Name ID that is an address and is not persistent |
-| Certificates     | 2 at most. To renew, add the new certificate below the current one.                           |
-| Response size    | 128 KiB                                                                                       |
-| Not supported    | Encrypted assertions, signed requests, single logout                                          |
+Each organization also has its own certificate. Stogas signs every sign-in request with its key, and
+your provider can encrypt assertions to it. A provider that reads the metadata has the certificate.
+Upload the file where your provider asks for a signature verification or encryption certificate. The
+certificate is valid for 10 years and stays the same when you change the provider's settings.
+
+| Rule                  | Value                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------- |
+| Signature             | The response or the assertion, with RSA-SHA256 or RSA-SHA512. SHA-1 is refused.                     |
+| Start of sign-in      | At Stogas, or from your provider's list of apps after one more click at Stogas                      |
+| Name ID               | Any format except transient, which changes at every sign-in.                                        |
+| Email                 | The `email` or `mail` attribute, otherwise a Name ID that is an address and is not persistent       |
+| Provider certificates | 2 at most. To renew, add the new certificate below the current one.                                 |
+| Response size         | 128 KiB                                                                                             |
+| Sign-in requests      | Signed with RSA-SHA256. A provider that checks the signature needs your organization's certificate. |
+| Encrypted assertions  | AES-GCM or AES-CBC, with the key under RSA-OAEP. RSA 1.5 is refused.                                |
+| RSA-OAEP hashes       | The same hash for the digest method and the mask generation function, such as SHA-256 for both      |
+| Not supported         | Encrypted Name IDs, single logout                                                                   |
 
 Stogas also reads the attribute names that Microsoft Entra ID sends by default.
 
