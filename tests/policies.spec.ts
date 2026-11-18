@@ -113,8 +113,10 @@ test('policy topics retain complete field exports and working links to their own
 		expect(response.ok()).toBe(true);
 		const markdown = await response.text();
 		expect(markdown).not.toMatch(/<(?:PolicyFields|RoutingFields)/);
-		const json = Array.from(markdown.matchAll(/```json(?: [^\n]*)?\n([\s\S]*?)\n```/g), (m) =>
-			JSON.parse(m[1])
+		// A block ends at a fence with its own indentation, so a block inside a list item ends there.
+		const json = Array.from(
+			markdown.matchAll(/^([ \t]*)```json(?: [^\n]*)?\n([\s\S]*?)\n\1```/gm),
+			(m) => JSON.parse(m[2])
 		);
 		for (const definition of definitions[path] ?? [])
 			expect(json, path).toContainEqual(withoutEnvelopes(definition));
