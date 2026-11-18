@@ -5285,10 +5285,55 @@
 																			}
 																		},
 																		"content": {
-																			"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
+																			"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
 																			"anyOf": [
 																				{
-																					"type": "boolean"
+																					"anyOf": [
+																						{
+																							"type": "boolean"
+																						},
+																						{
+																							"anyOf": [
+																								{
+																									"type": "number",
+																									"exclusiveMinimum": 0,
+																									"maximum": 1
+																								},
+																								{
+																									"type": "object",
+																									"properties": {
+																										"success": {
+																											"type": "number",
+																											"exclusiveMinimum": 0,
+																											"maximum": 1
+																										},
+																										"failed": {
+																											"type": "number",
+																											"exclusiveMinimum": 0,
+																											"maximum": 1
+																										},
+																										"cancelled": {
+																											"type": "number",
+																											"exclusiveMinimum": 0,
+																											"maximum": 1
+																										},
+																										"rejected": {
+																											"type": "number",
+																											"exclusiveMinimum": 0,
+																											"maximum": 1
+																										},
+																										"unknown": {
+																											"type": "number",
+																											"exclusiveMinimum": 0,
+																											"maximum": 1
+																										}
+																									},
+																									"additionalProperties": false,
+																									"minProperties": 1
+																								}
+																							]
+																						}
+																					]
 																				},
 																				{
 																					"type": "object",
@@ -5528,7 +5573,7 @@
 														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 													}
 												],
-												"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if any of them sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+												"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
 											}
 										},
 										"required": [
@@ -6905,10 +6950,55 @@
 																						}
 																					},
 																					"content": {
-																						"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only.",
+																						"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
 																						"anyOf": [
 																							{
-																								"type": "boolean"
+																								"anyOf": [
+																									{
+																										"type": "boolean"
+																									},
+																									{
+																										"anyOf": [
+																											{
+																												"type": "number",
+																												"exclusiveMinimum": 0,
+																												"maximum": 1
+																											},
+																											{
+																												"type": "object",
+																												"properties": {
+																													"success": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"failed": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"cancelled": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"rejected": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													},
+																													"unknown": {
+																														"type": "number",
+																														"exclusiveMinimum": 0,
+																														"maximum": 1
+																													}
+																												},
+																												"additionalProperties": false,
+																												"minProperties": 1
+																											}
+																										]
+																									}
+																								]
 																							},
 																							{
 																								"type": "object",
@@ -7148,7 +7238,7 @@
 																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																}
 															],
-															"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if any of them sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+															"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
 														}
 													},
 													"required": [

@@ -41,7 +41,7 @@ Add a destination to a [policy](/docs/policies/editing):
   [encrypt the export](/docs/customer-encryption#encrypt-plugin-settings).
 - Destinations from every policy that applies to a request add together, up to eight. Destinations
   with the same URL and headers get one record. They get it if any of them would, and it has bodies
-  if any of them sends bodies.
+  if one of them that would get it sends bodies.
 - An empty `destinations` array replaces
   [default export destinations](/docs/policies/rules#defaults), but it cannot
   remove a destination that another scope requires.
@@ -81,6 +81,28 @@ destination gets no record of an outcome that the object leaves out.
 - To export only some models, providers or keys, put the destination in a
   [rule](/docs/policies/rules) or in the policy of a key or folder.
 
+### Send bodies with some of the records
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"export": {
+			"destinations": [
+				// Every record. Bodies with every failure and with one success in a hundred.
+				{
+					"url": "https://receiver.contoso.com/records",
+					"content": { "failed": 1, "success": 0.01 }
+				}
+			]
+		}
+	}
+}
+```
+
+`content` takes a share in the same form as `sample`. The destination gets bodies with that share
+of records, chosen in the same way, and gets the other records without bodies. A record that
+`sample` leaves out is not sent, whatever `content` says.
+
 ## Record format
 
 Each record is the request record with these fields added:
@@ -104,7 +126,7 @@ Each record is the request record with these fields added:
 | `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.                              |
 | `stogas`   | The object that [`Stogas-Metadata: v2`](/docs/receipts) returns, without its `salts`. Every record has it, whether or not the request sent the header. |
 
-- A destination with `"content": false` gets records without `request`, `response` and `events`.
+- A record without bodies has no `request`, `response` or `events`.
 
 - Records don't carry file contents. Each inline file in the request, such as a base64 image,
   audio clip or PDF, is replaced by an object with its declared `media_type`, and the `size` in bytes
@@ -153,6 +175,38 @@ A retry can send a record that your receiver already accepted, so ignore duplica
 `Idempotency-Key` values. The gateway does not store records for later delivery. If the gateway needs
 memory for requests, it drops the oldest records that wait for delivery. It never cuts a record
 short, and an export never makes a request fail.
+
+## Insert records into ClickHouse
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"export": {
+			"destinations": [
+				{
+					"url": "https://YOUR_HOST:8443/?query=INSERT%20INTO%20stogas_records%20FORMAT%20JSONEachRow&date_time_input_format=best_effort&async_insert=1",
+					"headers": { "X-ClickHouse-User": "YOUR_USER", "X-ClickHouse-Key": "YOUR_PASSWORD" }
+				}
+			]
+		}
+	}
+}
+```
+
+```sql
+CREATE TABLE stogas_records (
+	request_id String,
+	created_at DateTime64(3),
+	usage JSON,
+	request JSON,
+	response JSON,
+	events Array(JSON)
+) ENGINE = ReplacingMergeTree ORDER BY request_id
+```
+
+The HTTP interface of ClickHouse reads each record as one row, so the webhook needs no receiver in
+between. Add a column for each field that you keep. ClickHouse ignores the other fields.
+`ReplacingMergeTree` removes the second row that a retry can insert.
 
 ## Find missing records
 
