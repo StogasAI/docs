@@ -64,7 +64,7 @@
 	"deployment.dataHandling.trainingUse": "The provider can train models on content. Missing when unknown.",
 	"deployment.dataHandling.zeroDataRetention": "A zero data retention commitment from the provider covers the offering. Implies storage `none`, retention `0` and no training use.",
 	"deployment.dataHandling.endToEndEncrypted": "Content stays encrypted from the gateway to the provider's inference workload. Ordinary TLS to a provider endpoint is `false`.",
-	"deployment.dataHandling.tee": "Inference runs inside a trusted execution environment.",
+	"deployment.dataHandling.tee": "The provider runs inference inside a trusted execution environment. The provider defines which workloads are accepted there unless `teeVerified` is true.",
 	"deployment.dataHandling.teeVerified": "Stogas verifies the measured workload itself, without relying on measurements that the provider defines. Implies `tee`.",
 	"deployment.dataHandling.sharedWith": "Each company other than the provider's and the hosting that receives the request, or `unknown` for companies that the provider does not name. Does not list the suppliers that a company runs its service on. Hosted tools add the companies that they send content to.",
 	"deployment.dataHandling.certifications": "The independent audits and government authorizations that cover the service, such as `soc2-type2`. Empty when the company that runs the model publishes none. Hosted tools remove the entries that do not cover them. See [Certifications](/docs/policies/routing-fields#certifications).",
