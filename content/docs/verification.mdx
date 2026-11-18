@@ -52,8 +52,8 @@ configuration, and gateways that still use it lose their approval.
 ## Evidence updates
 
 The SDK loads evidence when it starts, and once more if a connection needs newer evidence. It does
-not poll in the background. Evidence comes from `evidence.stogas.ai`, with an independent AWS copy as
-a fallback. The SDK checks everything it downloads, so a server cannot make it trust invalid
+not poll in the background. Evidence comes from `evidence.stogas.ai`, with an independent copy at another cloud provider
+as a fallback. The SDK checks everything it downloads, so a server cannot make it trust invalid
 evidence. Each change to the evidence gets the next revision number. Under one key manifest, the
 SDK rejects evidence older than the newest revision it has seen. Call `refreshEvidence`
 (`refresh_evidence` in Rust and Python, `RefreshEvidence` in Go) to load new evidence now.

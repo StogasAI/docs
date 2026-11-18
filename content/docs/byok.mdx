@@ -10,11 +10,12 @@ call to the provider. The provider bills you, and we charge a [2% fee](#billing)
 
 | Credential         | Where the secret is       | Providers      | Each request sends              |
 | ------------------ | ------------------------- | -------------- | ------------------------------- |
-| Stogas managed     | Our provider account      | Chutes         | Your API key                    |
+| Stogas managed     | Our provider account      | Some           | Your API key                    |
 | Stored             | Saved and encrypted by us | Every provider | Your API key                    |
 | Customer encrypted | Encrypted on your device  | Every provider | Your API key and encryption key |
 
-New keys start with Stogas-managed Chutes. Every other provider needs a credential of your own.
+New keys start with the Stogas-managed credential, which reaches the deployments that the catalog
+marks `stogasManaged`. Every other deployment needs a credential of your own.
 Each [provider page](/docs/providers) shows what its credential needs. A stored credential for a
 cloud account can hold no secret at all, through [federation](#federation).
 

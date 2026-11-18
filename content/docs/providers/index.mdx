@@ -28,14 +28,17 @@ deployments.
 A provider belongs to a company, and another company can run its models.
 [Routing policies](/docs/policies/routing-fields#companies) name each company by its ID.
 
-| Provider     | `provider.companyId` | `deployment.hosting`                  |
-| ------------ | -------------------- | ------------------------------------- |
-| OpenAI       | `openai`             | `openai`                              |
-| Anthropic    | `anthropic`          | `anthropic`                           |
-| Azure        | `microsoft`          | `microsoft`, `anthropic`, `fireworks` |
-| AWS          | `amazon`             | `amazon`, `anthropic`                 |
-| Google Cloud | `google`             | `google`, `anthropic`                 |
-| Chutes       | `chutes`             | `chutes`, `unknown`                   |
+| Provider     | `provider.companyId` |
+| ------------ | -------------------- |
+| OpenAI       | `openai`             |
+| Anthropic    | `anthropic`          |
+| Azure        | `microsoft`          |
+| AWS          | `amazon`             |
+| Google Cloud | `google`             |
+| Chutes       | `chutes`             |
+
+The catalog names the company that runs each deployment in `deployment.hosting`, which is
+`unknown` when the provider does not name it.
 
 ## Request fields
 
@@ -61,7 +64,7 @@ reasoning effort but `none`. OpenAI's Chat Completions refuse function tools whi
 reasons, and only Responses return reasoning summaries and take back earlier reasoning. A request
 that Responses cannot carry keeps Chat Completions, or returns `400` when it asks for summaries.
 Otherwise a deployment that takes the API that you call gets it. A route in `model` chooses the API,
-as in `route:openai-chat-completions gpt-6-luna`.
+as in `route:openai-chat-completions gpt-5.6-sol`.
 
 The request record's `interface` shows the API that you called, and each attempt's
 [catalog chain](/docs/request-records#catalog-history) names the route that the gateway called.

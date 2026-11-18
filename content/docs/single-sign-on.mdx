@@ -192,9 +192,9 @@ in the last 10 minutes. An account without a passkey or authenticator app confir
 password. For a change in the organization, a sign-in at its provider also counts, from the time
 that the provider says it signed you in, which it states in the `auth_time` claim or the SAML
 `AuthnInstant`. A provider that only continues a session it already had proves nothing new, so
-Stogas asks it to sign you in again. Microsoft Entra ID sends `auth_time` only when you add it as an
-optional claim of the ID token. Google doesn't sign people in again on request, so its members
-confirm with the password.
+Stogas asks it to sign you in again. Some providers send `auth_time` only when you add it as an
+optional claim of the ID token. The members of a provider that sends no sign-in time, or that
+doesn't sign people in again on request, confirm with the password.
 
 An account links to its person by the provider's subject identifier, or by the Name ID with SAML,
 never the email, which some providers let people change. A provider that gives each client its own
@@ -206,8 +206,8 @@ their email when the provider sends no name, and can change it later. The member
 email that the provider sent at each member's latest sign-in, and `email:` finds members by it.
 
 A member's [picture](/docs/members#pictures) comes from the provider's `picture` claim when it
-names a JPEG or WebP image over HTTPS. Microsoft Entra ID and SAML providers send none, so their
-members upload their own.
+names a JPEG or WebP image over HTTPS. The members of a provider that sends none, as with SAML,
+upload their own.
 
 Stogas stores the issuer, the client ID and encrypted client secret or the SAML sign-in URL and
 certificate, and each linked member's subject identifier, email, last sign-in and any picture taken

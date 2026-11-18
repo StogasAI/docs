@@ -45,7 +45,7 @@ prefix:
 
 ```json
 {
-	"model": "claude-sonnet-5",
+	"model": "claude-sonnet-5-5",
 	"cache_control": { "type": "ephemeral", "ttl": "1h" },
 	"messages": [{ "role": "user", "content": "<long shared context>" }]
 }
@@ -96,24 +96,21 @@ On Responses, Claude returns each thinking block as its own reasoning item, whos
   continues from, and `reasoning` holds all of it. Later reasoning, such as a note before a tool
   call, is for display.
 - Claude checks that its reasoning comes back after the same system prompt, tools and earlier
-  messages. If one of them changed, Claude Fable 5.2, Mythos 5.2 and Mythos 5.1 return a 400 error,
-  and other models can bill the reasoning. Send the request again without its reasoning to
-  continue.
+  messages. If one of them changed, some models return a 400 error and the others can bill the
+  reasoning. Send the request again without its reasoning to continue.
 - To change instructions during a conversation, add a `system` or `developer` message right after
   the newest user message, tool results or hosted tool call. It must be the last message or come
-  right before Claude's reply. Claude Opus 4.8 and later, Sonnet 5.5 and later, Haiku 5.5 and
-  later, Fable and Mythos accept it on every provider. Other models, and other positions, get a 400
-  error.
+  right before Claude's reply. A model that does not take such a message, and any other position,
+  gets a 400 error.
 - `reasoning.context` takes only `auto`.
 
 ### Progress updates
 
-Claude Fable, Mythos, Opus 5.5 and Sonnet 5.5 can write a short update before a tool call during
-long work. Ask for the updates without the reasoning:
+Some Claude models can write a short update before a tool call during long work. Ask for the updates without the reasoning:
 
 ```json tab="Chat Completions"
 {
-	"model": "claude-fable-5-2",
+	"model": "claude-sonnet-5-5",
 	"messages": [{ "role": "user", "content": "Fix the failing test." }],
 	"reasoning": { "effort": "medium", "display": "updates" }
 }
@@ -121,7 +118,7 @@ long work. Ask for the updates without the reasoning:
 
 ```json tab="Responses"
 {
-	"model": "claude-fable-5-2",
+	"model": "claude-sonnet-5-5",
 	"input": "Fix the failing test.",
 	"reasoning": { "effort": "medium", "summary": "updates" }
 }
@@ -133,7 +130,7 @@ long work. Ask for the updates without the reasoning:
 | `omitted`                            | `none`                        | No reasoning text.                           |
 | `updates`                            | `updates`                     | The updates only.                            |
 
-- Without the field, Claude uses its default, which is `omitted` on Claude 5 models.
+- Without the field, each model uses its own default.
 - On Chat Completions, the updates arrive in `reasoning`, with a blank line between two. On
   Responses, each update is a reasoning item with the update as its summary.
 - The effort is optional. Without it, Claude reasons as much as it does by default.
@@ -151,8 +148,8 @@ long work. Ask for the updates without the reasoning:
   `sources`, and the gateway leaves out a search without it. Codex sends searches back without
   their sources, so Claude does not see the searches of a Codex conversation.
 - A `required` or named `tool_choice` makes Claude call the tool without reasoning first, and
-  returns a 400 error together with a reasoning token budget. Claude Fable 5.2, Mythos 5.2, Fable
-  5.1, Mythos 5.1, Opus 5.5 and Sonnet 5.5 take only `auto` and `none`.
+  returns a 400 error together with a reasoning token budget. Some models take only `auto` and
+  `none`, and return a 400 error for the other choices.
 - `custom` tools are not available.
 - Claude gets each tool of a [namespace](/docs/model-tools#group-tools-in-namespaces) as a
   function, so a call in `input` must name a tool that `tools` declares in its namespace.
@@ -161,7 +158,7 @@ long work. Ask for the updates without the reasoning:
 
 ```jsonc title="Responses"
 {
-	"model": "claude-sonnet-5",
+	"model": "claude-sonnet-5-5",
 	"input": "Fix the failing test.",
 	"tools": [
 		{ "type": "bash_20250124", "name": "bash" },
@@ -177,8 +174,8 @@ Run it in your application and send the result as a `function_call_output` item.
 - Both tools work on Responses, with these versions and names only. The text editor also takes
   `max_characters`, and both take `cache_control`.
 - No other tool can have their names, and `tool_choice` names them as functions.
-- Both tools cost only tokens. Anthropic adds its own instructions to the input of each request:
-  325 tokens for bash and 974 for the text editor on Claude Opus 4.7 and later models.
+- Both tools cost only tokens. Anthropic adds its own instructions for each tool to the input
+  of each request, and your usage counts them.
 - Computer use, the memory tool and tool search are not available.
 - See Anthropic's [bash](https://platform.claude.com/docs/en/agents-and-tools/tool-use/bash-tool)
   and

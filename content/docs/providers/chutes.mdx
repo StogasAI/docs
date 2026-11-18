@@ -4,7 +4,7 @@ description: Open models in Intel TDX and NVIDIA confidential GPUs, reached with
 icon: logo:chutes
 ---
 
-[Chutes](https://chutes.ai/docs) runs open models such as Kimi, Qwen, GLM and DeepSeek. Most of them run in trusted execution
+[Chutes](https://chutes.ai/docs) runs open-weight models. Most of them run in trusted execution
 environments (TEEs) built on Intel TDX and NVIDIA confidential GPUs, which the gateway reaches with
 end-to-end encryption. The rest are [Standard models](#standard-models). Every new API key can use
 Chutes through our account. To use your own Chutes account instead, add a key in [BYOK](/docs/byok).
@@ -54,12 +54,12 @@ plaintext.
 ### What the evidence does not prove
 
 Chutes decides which TEE measurements are acceptable, and no independent party checks them against
-Chutes' published source code yet. The measurements cover Chutes' runtime, which starts only
+Chutes' published source code. The measurements cover Chutes' runtime, which starts only
 containers signed with keys that Chutes controls, so the quote does not identify the container image
 or the model weights. The catalog therefore lists TEE deployments with `tee: true` and `teeVerified: false`.
 
-A model on several Hopper GPUs, such as H200, sends data between them over NVLink without
-encryption, and Chutes' evidence does not cover the NVSwitches that carry it.
+A model that runs on several GPUs can send data between them over NVLink without encryption,
+depending on the GPU generation, and Chutes' evidence does not cover the switches that carry it.
 
 ## Standard models
 
@@ -102,8 +102,8 @@ their Responses equivalents:
 `logprobs`, `n` above 1, `parallel_tool_calls: false`, cache controls, hosted tools, service tiers,
 images, audio and files are not available, even when the model supports them.
 
-**If you omit the output limit, Chutes stops at 1,024 tokens.** Set one for long answers or heavy
-reasoning.
+**If you omit the output limit, Chutes applies a low default of its own.** Set one for long
+answers or heavy reasoning.
 
 ## Retries
 

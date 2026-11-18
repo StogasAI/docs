@@ -62,10 +62,10 @@ The gateway sends `prompt_cache_key`, `prompt_cache_options`, `prompt_cache_brea
 
 Besides `function` tools, Responses accepts `custom` tools,
 [namespaces](/docs/model-tools#group-tools-in-namespaces),
-[tool search](/docs/model-tools#tool-search) and `web_search`. Search models, such as
-`gpt-5-search-api`, take `web_search_options` on Chat Completions instead of `tools`.
+[tool search](/docs/model-tools#tool-search) and `web_search`. Search models take
+`web_search_options` on Chat Completions instead of `tools`.
 
-- Tool search works on GPT-5.4 and later models, except `gpt-5.4-nano`.
+- A model without tool search returns `400` for deferred tools.
 - `web_search` takes `search_content_types`. With `["text", "image"]`, a search can return images
   too.
 
@@ -104,8 +104,8 @@ in your application, then send the conversation again with each call and its `sh
 
 - `shell` runs only in your application: `environment` is `{ "type": "local" }` or left out, with
   optional `skills`. Hosted containers return `400`.
-- Both tools cost only tokens. OpenAI adds its own instructions to the input of each request: about
-  240 tokens for `shell`, 520 more when it lists skills, and about 620 for `apply_patch`.
+- Both tools cost only tokens. OpenAI adds its own instructions for each tool to the input of
+  each request, and your usage counts them.
 - `tool_choice` accepts `{ "type": "shell" }` and `{ "type": "apply_patch" }`, also in
   `allowed_tools`.
 - See OpenAI's [shell](https://developers.openai.com/api/docs/guides/tools-shell) and
@@ -116,7 +116,7 @@ in your application, then send the conversation again with each call and its `sh
 
 OpenAI [reads only the text](https://developers.openai.com/api/docs/guides/file-inputs) of a file
 that is not a PDF, so convert a document to PDF to keep its
-images and charts. It reads at most the first 1,000 rows of each sheet of a spreadsheet, CSV and TSV
+images and charts. It reads only the first rows of each sheet of a spreadsheet, CSV and TSV
 included, and adds a summary that its model writes. To send every row of a spreadsheet, a CSV or
 another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 

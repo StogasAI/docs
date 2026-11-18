@@ -14,14 +14,14 @@ publish.
 
 The gateway VM boots one image with no disk, shell or package manager:
 
-| Layer    | Component                                                                                                                                                        |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Firmware | OVMF from edk2 `stable202608`, built for AMD SEV with its own ACPI tables, to boot only the measured kernel and to run no code from the host                     |
-| Kernel   | Linux-libre 6.18 with a reduced guest configuration, no loadable modules and no console output                                                                   |
-| Boot     | A unified kernel image built with systemd 262 `ukify`                                                                                                            |
-| Init     | A small init process written in Go                                                                                                                               |
-| Clock    | The [ntpd-rs](https://github.com/pendulum-project/ntpd-rs) client, which keeps the guest clock in sync                                                           |
-| Gateway  | The [Stogas gateway](https://github.com/StogasAI/gateway), built with Go 1.27, with the [Rust verifier](https://github.com/StogasAI/stogas) linked in statically |
+| Layer    | Component                                                                                                                                                   |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Firmware | OVMF from edk2, built for AMD SEV with its own ACPI tables, to boot only the measured kernel and to run no code from the host                               |
+| Kernel   | Linux-libre with a reduced guest configuration, no loadable modules and no console output                                                                   |
+| Boot     | A unified kernel image built with systemd's `ukify`                                                                                                         |
+| Init     | A small init process written in Go                                                                                                                          |
+| Clock    | The [ntpd-rs](https://github.com/pendulum-project/ntpd-rs) client, which keeps the guest clock in sync                                                      |
+| Gateway  | The [Stogas gateway](https://github.com/StogasAI/gateway), built with Go, with the [Rust verifier](https://github.com/StogasAI/stogas) linked in statically |
 
 The launch measurement covers all of it. Changing one byte in any layer gives a different
 measurement, which the SDK rejects. Each release's `stogas/release/pins.lock.json` gives the exact
@@ -175,7 +175,7 @@ gh attestation verify <file> --repo StogasAI/stogas \
   --source-ref refs/tags/v<version> --deny-self-hosted-runners
 ```
 
-From 0.1.0-alpha.6 on, GitLab.com's hosted runners also build every release from its tag, and
+GitLab.com's hosted runners also build every release from its tag, and
 `gitlab-attestation.jsonl` holds their proof for every file. Check it with
 [cosign](https://github.com/sigstore/cosign):
 
@@ -187,8 +187,7 @@ cosign verify-blob-attestation <file> --bundle gitlab-attestation.jsonl \
 
 To check both build proofs and our signature at once, put these release files in a directory with
 the files you want to check: `release-manifest.json`, `qualification.json`,
-`github-attestation.jsonl`, `gitlab-attestation.jsonl` and `stogas-signature.json`. Releases before
-0.1.0-alpha.6 have no `gitlab-attestation.jsonl`. Then run:
+`github-attestation.jsonl`, `gitlab-attestation.jsonl` and `stogas-signature.json`. Then run:
 
 ```console
 stogas verify-release <directory>
@@ -205,9 +204,9 @@ We sign an SDK release only when GitLab's build matches GitHub's. GitLab's hoste
 every platform except Apple from the tag, package every file again and sign their own build proof,
 and every file must match GitHub's build byte for byte. Apple's compilers run only on Apple
 hardware, so GitLab packages the compiled Apple libraries from GitHub's build, and its proof lists
-them as inputs. Before 0.1.0-alpha.6, our own machines made this rebuild. A key that our root key
+them as inputs. A key that our root key
 authorizes makes the signature, and Rekor logs it. `qualification.json` records GitHub's tests of the installed
-packages on each platform, including Android 8.0 on an emulator and real iPhones and Android
+packages on each platform, including Android on an emulator and real iPhones and Android
 phones. GitHub makes its build proof only after every test passes, and that one proof covers the
 test report too.
 
