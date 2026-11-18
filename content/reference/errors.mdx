@@ -8,21 +8,29 @@ Errors use the OpenAI error object:
 ```jsonc
 {
 	"error": {
-		"message": "API key spend limit exceeded", // For people. The text can change.
-		"type": "billing_error",
-		"code": "key_spend_limit", // Stable. Handle errors by status and code.
-		"param": null // The request field that caused the error, when known.
+		"message": "prompt is too long: 215000 tokens > 200000 maximum", // For people. The text can change.
+		"type": "invalid_request_error",
+		"code": "context_length_exceeded", // Stable. Handle errors by status and code.
+		"param": null, // The request field that caused the error, when known.
+		"provider": "anthropic" // The provider whose call caused the error.
 	}
 }
 ```
 
-Every gateway error has a code from the lists below. A provider's refusal keeps the provider's
-status, such as `404` or `422`, except that a credential or account failure becomes a
-[`424`](#424-failed-dependency). It keeps the provider's code and message when they help you fix
-the request, and otherwise has `"code": null`. A request that used
-[your own provider credential](/docs/byok) always has the provider's message, up to 2,048 bytes. In
-a `424` and an `upstream_rate_limit_error` it follows ours after a colon. Provider credentials and
-internal details are never shown.
+`provider` is present when a provider's call caused the error: the provider refused the request or
+failed it, or the call to the provider failed. Errors of the gateway itself have no `provider`, and
+each has a code from the lists below.
+
+A provider's refusal keeps the provider's status, such as `404` or `422`, except that a credential
+or account failure becomes a [`424`](#424-failed-dependency). It keeps the provider's code and
+message when they help you fix the request. A refusal without a code of its own gets the code of the
+condition that the gateway recognizes in it, whichever provider sent it: `context_length_exceeded`,
+`content_filter`, `invalid_image` or `request_too_large`. Otherwise it has `"code": null`.
+
+A refusal of a request that used [your own provider credential](/docs/byok) has the provider's
+message, up to 2,048 bytes. In a `424` and an `upstream_rate_limit_error` it follows ours after a
+colon. A provider's server error never shows its message, and provider credentials and internal
+details are never shown.
 
 After a stream starts, its HTTP status cannot change, and an error arrives as an event in the
 stream. See [Streaming](/docs/streaming#handle-errors).
@@ -162,31 +170,31 @@ token limit, or when the wait is longer than a minute.
 
 ### 502 Bad gateway
 
-| Code                          | Meaning                                                                                                                                                                |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `upstream_outcome_unknown`    | A provider call failed after the gateway sent the request, so the provider may have run it. The message names the attempt and its deployment. See [Retries](#retries). |
-| `upstream_protocol_error`     | The provider sent an invalid response over its confidential connection.                                                                                                |
-| `upstream_response_invalid`   | The provider's response broke the format of its API, such as a finished tool call whose arguments are not a JSON object.                                               |
-| `upstream_execution_invalid`  | The provider reported that it ran the request differently from its deployment, such as at another service tier.                                                        |
-| `upstream_response_too_large` | The provider's response exceeded the gateway's response size limit.                                                                                                    |
-| `null`                        | Another provider failure.                                                                                                                                              |
+| Code                          | Meaning                                                                                                                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `upstream_outcome_unknown`    | A provider call failed after the gateway sent the request, so the provider may have run it. The message names the attempt, its deployment and the status that the provider answered with. See [Retries](#retries). |
+| `upstream_protocol_error`     | The provider sent an invalid response over its confidential connection.                                                                                                                                            |
+| `upstream_response_invalid`   | The provider's response broke the format of its API, such as a finished tool call whose arguments are not a JSON object.                                                                                           |
+| `upstream_execution_invalid`  | The provider reported that it ran the request differently from its deployment, such as at another service tier.                                                                                                    |
+| `upstream_response_too_large` | The provider's response exceeded the gateway's response size limit.                                                                                                                                                |
+| `null`                        | Another provider failure.                                                                                                                                                                                          |
 
 ### 503 Service unavailable
 
 Send the request again later. The gateway did not send these requests to a model.
 
-| Code                            | Meaning                                                                                                            |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `gateway_unavailable`           | The gateway is temporarily unavailable.                                                                            |
-| `gateway_draining`              | The gateway is shutting down for an update. Send new work on a new connection.                                     |
-| `gateway_capacity_exceeded`     | The gateway is too busy to accept the request now, or needed the memory a slow upload held.                        |
-| `ip_admission_unavailable`      | The gateway cannot track new IP addresses now.                                                                     |
-| `key_configuration_changed`     | The key changed, and the gateway is loading the new version.                                                       |
-| `byok_unavailable`              | Your provider credential is unavailable.                                                                           |
-| `upstream_capacity_unavailable` | The provider has no capacity now.                                                                                  |
-| `upstream_unreachable`          | A provider call failed before the provider received the request. The message names the attempt and its deployment. |
-| `upstream_verification_failed`  | The provider's confidential evidence did not verify, so the gateway did not send the request.                      |
-| `upstream_configuration_error`  | Our provider configuration is unavailable.                                                                         |
+| Code                            | Meaning                                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `gateway_unavailable`           | The gateway is temporarily unavailable.                                                            |
+| `gateway_draining`              | The gateway is shutting down for an update. Send new work on a new connection.                     |
+| `gateway_capacity_exceeded`     | The gateway is too busy to accept the request now, or needed the memory a slow upload held.        |
+| `ip_admission_unavailable`      | The gateway cannot track new IP addresses now.                                                     |
+| `key_configuration_changed`     | The key changed, and the gateway is loading the new version.                                       |
+| `byok_unavailable`              | Your provider credential is unavailable.                                                           |
+| `upstream_capacity_unavailable` | The provider has no capacity now.                                                                  |
+| `upstream_unreachable`          | A provider call failed before the provider received the request. The message names its deployment. |
+| `upstream_verification_failed`  | The provider's confidential evidence did not verify, so the gateway did not send the request.      |
+| `upstream_configuration_error`  | Our provider configuration is unavailable.                                                         |
 
 ### 504 Gateway timeout
 
