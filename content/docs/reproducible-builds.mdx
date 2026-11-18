@@ -144,7 +144,7 @@ The SDK makes the same check, and our approval check, before it trusts a gateway
 ## Verify an SDK download
 
 Each [SDK release](https://github.com/StogasAI/stogas/releases) lists every file with its SHA-256
-in `release-manifest.json`. GitHub build proofs cover each file, and our signature covers the manifest.
+in `release-manifest.json`. Build proofs from GitHub and GitLab cover each file, and our signature covers the manifest.
 npm, PyPI, crates.io, RubyGems and Maven Central serve the same bytes as the release. NuGet adds its
 own repository signature. Maven Central also serves a Sigstore signature of each file,
 `<file>.sigstore.json`, which
@@ -163,9 +163,20 @@ gh attestation verify <file> --repo StogasAI/stogas \
   --source-ref refs/tags/v<version> --deny-self-hosted-runners
 ```
 
-To check our signature as well, put these release files in a directory with the files you
-want to check: `release-manifest.json`, `qualification.json`, `github-attestation.jsonl` and
-`stogas-signature.json`. Then run:
+From 0.1.0-alpha.6 on, GitLab.com's hosted runners also build every release from its tag, and
+`gitlab-attestation.jsonl` holds their proof for every file. Check it with
+[cosign](https://github.com/sigstore/cosign):
+
+```console
+cosign verify-blob-attestation <file> --bundle gitlab-attestation.jsonl \
+  --type https://slsa.dev/provenance/v1 --certificate-oidc-issuer https://gitlab.com \
+  --certificate-identity https://gitlab.com/stogasai/stogas//.gitlab-ci.yml@refs/tags/v<version>
+```
+
+To check both build proofs and our signature at once, put these release files in a directory with
+the files you want to check: `release-manifest.json`, `qualification.json`,
+`github-attestation.jsonl`, `gitlab-attestation.jsonl` and `stogas-signature.json`. Releases before
+0.1.0-alpha.6 have no `gitlab-attestation.jsonl`. Then run:
 
 ```console
 stogas verify-release <directory>
@@ -178,11 +189,12 @@ them, so it trusts no server for them. To work offline, save
 [CLI](/docs/cli) that you already trust, and check your first CLI download with
 `gh attestation verify`.
 
-We sign an SDK release only after our own machines rebuild every platform except Apple from
-the tag and every file matches GitHub's build byte for byte. Apple's compilers run only on Apple
-hardware, so the compiled Apple libraries come from GitHub's build. We still package them again
-and require the same bytes. A key that our root key authorizes makes the
-signature, and Rekor logs it. `qualification.json` records GitHub's tests of the installed
+We sign an SDK release only when GitLab's build matches GitHub's. GitLab's hosted runners build
+every platform except Apple from the tag, package every file again and sign their own build proof,
+and every file must match GitHub's build byte for byte. Apple's compilers run only on Apple
+hardware, so GitLab packages the compiled Apple libraries from GitHub's build, and its proof lists
+them as inputs. Before 0.1.0-alpha.6, our own machines made this rebuild. A key that our root key
+authorizes makes the signature, and Rekor logs it. `qualification.json` records GitHub's tests of the installed
 packages on each platform, including Android 8.0 on an emulator and real iPhones and Android
 phones. GitHub makes its build proof only after every test passes, and that one proof covers the
 test report too.
@@ -194,13 +206,14 @@ git clone --branch v<version> https://github.com/StogasAI/stogas
 cd stogas
 gh release download v<version> --repo StogasAI/stogas --dir ../release
 python3 release/release.py rebuild ../release --out ../rebuild
+python3 release/release.py compare ../rebuild/release/packages ../release
 ```
 
-You need Git, Python 3, the GitHub CLI, Docker and about 2 GB for the release files. The command
-builds every platform except Apple from the tag in the pinned Docker images that GitHub's build
-used. It packages every language package again and fails unless each file matches the release byte
-for byte. Apple's compilers run only on Apple hardware, so it packages the compiled Apple libraries
-from the release again instead.
+You need Git, Python 3, the GitHub CLI, Docker and about 2 GB for the release files. `rebuild`
+builds every platform except Apple from the tag in the pinned Docker images that GitHub's and
+GitLab's builds used, and packages every language package again. Apple's compilers run only on
+Apple hardware, so it packages the compiled Apple libraries from the release instead. `compare`
+fails unless each file matches the release byte for byte.
 
 The build images run x86-64 tools. On an ARM machine, Docker runs them with emulation, which Docker
 Desktop provides by default. On ARM Linux, install QEMU's `binfmt` handlers first.
