@@ -55,12 +55,13 @@ on the other API, and returns the reply, or each streamed event, on the API that
 | Chat Completions | OpenAI and Azure deployments that take only Responses        | Responses         |
 
 OpenAI and Azure deployments that take both APIs also get a Chat Completions request through
-Responses when it has `reasoning_details`, or when it has `tools` or `reasoning.display` set to
-`summarized` with any reasoning effort but `none`. OpenAI's Chat Completions refuse function tools
-while the model reasons, and only Responses return reasoning summaries and take back earlier
-reasoning. A request that Responses cannot carry keeps Chat Completions, or returns `400` when it
-asks for summaries. Otherwise a deployment that takes the API that you call gets it. A route in
-`model` chooses the API, as in `route:openai-chat-completions gpt-6-luna`.
+Responses when its `reasoning_details` hold encrypted reasoning that the gateway returned from
+OpenAI or Azure, or when it has `tools` or `reasoning.display` set to `summarized` with any
+reasoning effort but `none`. OpenAI's Chat Completions refuse function tools while the model
+reasons, and only Responses return reasoning summaries and take back earlier reasoning. A request
+that Responses cannot carry keeps Chat Completions, or returns `400` when it asks for summaries.
+Otherwise a deployment that takes the API that you call gets it. A route in `model` chooses the API,
+as in `route:openai-chat-completions gpt-6-luna`.
 
 The request record's `interface` shows the API that you called, and each attempt's
 [catalog chain](/docs/request-records#catalog-history) names the route that the gateway called.

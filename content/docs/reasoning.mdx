@@ -148,7 +148,8 @@ or `reasoning.summary` on Responses[^summary]:
 - `summarized` returns the summary in `reasoning`, with a blank line between its parts, and each
   part in a `reasoning.summary` entry of `reasoning_details`. `omitted` returns no summary.
 - Omit the field to keep the provider's default.
-- A model that returns all of its reasoning or none rejects `reasoning.display`.
+- A model without summaries returns all of its reasoning with either value. The gateway leaves out
+  a deployment that does not reason.
 - The summary changes what you see, not what you pay.
 
 ## Send reasoning back
@@ -203,7 +204,7 @@ In a tool loop, send the model's reasoning back with the tool results:
   reasoning to continue from. `reasoning` and `reasoning_content` are two names for the same text.
 - The gateway sends no summary back to a model, which continues from its own reasoning.
 - The gateway also accepts OpenRouter's reasoning: its `reasoning_details`, and its reasoning items
-  with `format` and `signature`.
+  with `format` and `signature`. The `format` of an entry names the model family that can read it.
 - A signed or encrypted entry that you change returns `400`[^claude].
 - Each deployment gets only the reasoning that it can read. The gateway leaves out the rest, such
   as another model family's reasoning or reasoning that you got from a provider directly. A
