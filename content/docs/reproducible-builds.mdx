@@ -221,16 +221,16 @@ python3 release/release.py rebuild ../release --out ../rebuild
 python3 release/release.py compare ../rebuild/release/packages ../release
 ```
 
-You need Git, Python 3, the GitHub CLI, Docker and about 45 GB of free disk space, most of it for
-the build images. A rebuild takes about 75 minutes on an x86-64 machine with 4 or more CPUs.
+You need an x86-64 machine with Git, Python 3, the GitHub CLI, Docker and about 45 GB of free disk
+space, most of it for the build images. A rebuild takes about 75 minutes with 4 or more CPUs.
 `rebuild` builds every platform except Apple from the tag in the pinned Docker images that GitHub's
 and GitLab's builds used, and packages every language package again. Apple's compilers run only on
 Apple hardware, so it packages the compiled Apple libraries from the release instead. `compare`
 fails unless each file matches the release byte for byte.
 
-The build images run x86-64 tools. On an ARM machine, Docker runs them with emulation, which Docker
-Desktop provides by default. On ARM Linux, install QEMU's `binfmt` handlers first. On Windows, run
-the commands in WSL 2, in a directory in WSL's own file system, such as your home directory there.
+The build images run x86-64 tools, and their Rust compiler crashes under QEMU, the x86-64 emulation
+that Docker uses on ARM Linux. On Windows, run the commands in WSL 2, in a directory in WSL's own
+file system, such as your home directory there.
 
 ## Scan an SDK download for vulnerable crates
 
