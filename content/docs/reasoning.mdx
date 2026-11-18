@@ -147,9 +147,11 @@ or `reasoning.summary` on Responses[^summary]:
 
 - `summarized` returns the summary in `reasoning`, with a blank line between its parts, and each
   part in a `reasoning.summary` entry of `reasoning_details`. `omitted` returns no summary.
+- On Responses, `auto`, `concise` and `detailed` ask for a summary, and `none` for no summary.
+- Every model that reasons takes every value, so one setting works for all of your models. A model
+  without summaries returns all of its reasoning with any value. The gateway leaves out a
+  deployment that does not reason.
 - Omit the field to keep the provider's default.
-- A model without summaries returns all of its reasoning with either value. The gateway leaves out
-  a deployment that does not reason.
 - The summary changes what you see, not what you pay.
 
 ## Send reasoning back
@@ -222,14 +224,12 @@ including reasoning.
     [Azure](/docs/providers/azure).
 
 [^summary]:
-    Anthropic models accept `auto`, `none` or `updates` in `reasoning.summary`, and `summarized`,
-    `omitted` or `updates` in `reasoning.display`. See
-    [Anthropic](/docs/providers/anthropic#progress-updates). GPT models accept
-    [OpenAI's values](https://developers.openai.com/api/docs/guides/reasoning#reasoning-summaries)
-    in `reasoning.summary`, and `summarized` or `omitted` in `reasoning.display`. The gateway gets
-    their summaries [through Responses](/docs/providers#chat-completions-through-responses), so
-    `summarized` returns `400` with a field that Responses lack, such as `seed`, `stop` or `n`
-    above 1.
+    Claude models also take `updates` in both fields, for
+    [progress updates](/docs/providers/anthropic#progress-updates), which other models treat as
+    `omitted`, and return the same summary for `auto`, `concise` and `detailed`. The gateway gets
+    the summaries of GPT models
+    [through Responses](/docs/providers#chat-completions-through-responses), so `summarized`
+    returns `400` with a field that Responses lack, such as `seed`, `stop` or `n` above 1.
 
 [^claude]:
     Claude also checks the system prompt, tools and earlier messages before its reasoning. See

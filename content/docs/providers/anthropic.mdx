@@ -124,11 +124,11 @@ Some Claude models can write a short update before a tool call during long work.
 }
 ```
 
-| Chat Completions `reasoning.display` | Responses `reasoning.summary` | The reply shows                              |
-| ------------------------------------ | ----------------------------- | -------------------------------------------- |
-| `summarized`                         | `auto`                        | A summary of the reasoning, and the updates. |
-| `omitted`                            | `none`                        | No reasoning text.                           |
-| `updates`                            | `updates`                     | The updates only.                            |
+| Chat Completions `reasoning.display` | Responses `reasoning.summary`   | The reply shows                              |
+| ------------------------------------ | ------------------------------- | -------------------------------------------- |
+| `summarized`                         | `auto`, `concise` or `detailed` | A summary of the reasoning, and the updates. |
+| `omitted`                            | `none`                          | No reasoning text.                           |
+| `updates`                            | `updates`                       | The updates only.                            |
 
 - Without the field, each model uses its own default.
 - On Chat Completions, the updates arrive in `reasoning`, with a blank line between two. On
