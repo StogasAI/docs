@@ -156,6 +156,8 @@ your API key in the `Authorization` header:
   the request with `encryption_key_required`, which names the key's label, before any provider
   call. To let the request use only the candidates whose keys it sends, set
   [`routing.missingEncryptionKeys`](/docs/policies/routing#missing-encryption-keys) to `skip`.
+- A request can need at most 32 keys, counted over every candidate it could try, and fails with
+  `key_configuration_too_large` when it could need more.
 - Each label must match its registered ID.
 - To leave your application's requests unchanged, give the keys to the connection instead.
   [`stogas serve`](/docs/cli#send-your-encryption-keys) reads them from key files or your
