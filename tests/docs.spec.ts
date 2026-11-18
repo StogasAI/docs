@@ -828,14 +828,20 @@ test('sidebar shows a draggable native scrollbar only when its links overflow', 
 			.poll(() => viewport.evaluate((element: HTMLElement) => element.style.overflowY))
 			.toBe('scroll');
 		await expect(viewport.locator('a[data-active="true"]')).toBeInViewport();
-		await viewport.evaluate((element) => element.scrollTo({ top: 0 }));
+		// Chromium finds a press on a scrollbar in the last frame it drew, so the drag waits until a
+		// frame shows the thumb at the top.
+		await viewport.evaluate(
+			(element) =>
+				new Promise((resolve) => {
+					element.scrollTo({ top: 0 });
+					requestAnimationFrame(() => requestAnimationFrame(resolve));
+				})
+		);
 		const box = await viewport.boundingBox();
 		expect(box).not.toBeNull();
 		const x = box!.x + box!.width - (await gutter()) / 2;
 		await page.mouse.move(x, box!.y + 20);
 		await page.mouse.down();
-		// Hold the thumb for a frame before it moves, as a person does.
-		await page.evaluate(() => new Promise(requestAnimationFrame));
 		await page.mouse.move(x, box!.y + 120, { steps: 8 });
 		await page.mouse.up();
 		// The page reports the scroll a frame after the drag.
