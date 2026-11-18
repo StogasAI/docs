@@ -119,8 +119,8 @@ Each provider counts tokens with its own tokenizer, so the same prompt can have 
 counts on different models. Standard text tokens measure text the same way on every model: **one
 standard text token is 4 bytes of UTF-8 text**, which is close to one token of English text.
 
-`usage.standard_text_tokens` has `input`, `reasoning` and `output`, and `client_stop_output` and
-`client_stop_reasoning` when the client [stopped early](#when-the-client-stops-early).
+The `*_text_bytes` [meters](#meters) count text in bytes, so a meter divided by 4 is its standard
+text tokens.
 
 - Input is the request text after [PII redaction](/docs/pii-redaction), including tool definitions
   and arguments. JSON syntax, property names and attachments do not count.
@@ -134,8 +134,8 @@ price.
 
 If your client disconnects or times out, the provider call still runs to its end and you pay for its
 full usage. Providers report usage only when a call ends.[^chutes] The record keeps when the
-client stopped in `client_stop_ms`, and what it had received by then in `client_stop_output` and
-`client_stop_reasoning`.
+client stopped in `client_stop_ms`, and what it had received by then in the
+`client_stop_output_text_bytes` and `client_stop_reasoning_text_bytes` meters.
 
 ## Input estimates
 

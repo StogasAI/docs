@@ -14449,10 +14449,6 @@
 															"e2ee"
 														]
 													},
-													"cancelled": {
-														"type": "boolean",
-														"description": "Whether the client cancelled the request."
-													},
 													"client_stop_ms": {
 														"anyOf": [
 															{
@@ -14464,7 +14460,7 @@
 																"type": "null"
 															}
 														],
-														"description": "When the client cancelled, on the request clock, or `null`."
+														"description": "When the client cancelled the request, on the request clock, or `null` when it did not."
 													},
 													"catalog_version": {
 														"anyOf": [
@@ -14837,39 +14833,12 @@
 																	],
 																	"additionalProperties": false
 																}
-															},
-															"standard_text_tokens": {
-																"type": "object",
-																"properties": {
-																	"input": {
-																		"type": "string",
-																		"pattern": "^(0|[1-9]\\d*)(\\.(25|5|75))?$"
-																	},
-																	"reasoning": {
-																		"type": "string",
-																		"pattern": "^(0|[1-9]\\d*)(\\.(25|5|75))?$"
-																	},
-																	"output": {
-																		"type": "string",
-																		"pattern": "^(0|[1-9]\\d*)(\\.(25|5|75))?$"
-																	},
-																	"client_stop_reasoning": {
-																		"type": "string",
-																		"pattern": "^(0|[1-9]\\d*)(\\.(25|5|75))?$"
-																	},
-																	"client_stop_output": {
-																		"type": "string",
-																		"pattern": "^(0|[1-9]\\d*)(\\.(25|5|75))?$"
-																	}
-																},
-																"additionalProperties": false
 															}
 														},
 														"required": [
 															"upstream_cost_usd",
 															"billed_cost_usd",
-															"meters",
-															"standard_text_tokens"
+															"meters"
 														],
 														"additionalProperties": false,
 														"description": "[Meters, standard text tokens and cost](/docs/usage)."
@@ -15034,7 +15003,6 @@
 													"parent_agent_id",
 													"agent_name",
 													"transport",
-													"cancelled",
 													"client_stop_ms",
 													"catalog_version",
 													"policy_versions",
