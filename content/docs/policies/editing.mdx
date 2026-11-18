@@ -52,7 +52,8 @@ draft, in order. It calls no model and costs nothing.
   [request policy](/docs/policies/request-policies) or `provider` preference.
 - It uses the current catalog and time, so `access.schedule` periods and rules that read
   `request.time` apply as they would now. It routes as a request from an address that every
-  `access.networks` setting accepts, in a mode that every `access.transports` setting accepts.
+  `access.networks` and `access.countries` setting accepts, in a mode that every
+  `access.transports` setting accepts.
 - It does not check [limits](/docs/policies/limits), your balance or provider errors. Retries and
   fallbacks after a failed call happen only on real requests.
 

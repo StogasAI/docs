@@ -1,12 +1,13 @@
 ---
 title: Access and expiration
-description: Enable or disable a scope, expire access, block requests on a weekly schedule, allow and deny client networks, or require connection modes.
+description: Enable or disable a scope, expire access, block requests on a weekly schedule, allow and deny client networks and countries, or require connection modes.
 icon: CalendarClock
 ---
 
 Every resource that applies to a request must be enabled and unexpired. Enabled state and
-expiration are settings of the resource. Deny periods, networks and connection modes are in its
-policy, under `access.schedule`, `access.networks` and `access.transports`.
+expiration are settings of the resource. Deny periods, networks, countries and connection modes are
+in its policy, under `access.schedule`, `access.networks`, `access.countries` and
+`access.transports`.
 
 ## Enable or disable access
 
@@ -137,16 +138,27 @@ error gives that reason instead.
 
 ## Networks
 
-This policy accepts requests only from one address and two ranges, except one part of the first
-range:
+This policy accepts requests only from one address, two ranges and the onion service, except one
+part of the first range:
 
 ```json title="policy.json"
 {
 	"access": {
 		"networks": {
-			"allow": ["203.0.113.7", "198.51.100.0/24", "2001:db8:5::/48"],
+			"allow": ["203.0.113.7", "198.51.100.0/24", "2001:db8:5::/48", "onion"],
 			"deny": ["198.51.100.128/25"]
 		}
+	}
+}
+```
+
+This one accepts every network except Tor exit relays, VPN and hosting providers, and one
+autonomous system:
+
+```json title="policy.json"
+{
+	"access": {
+		"networks": { "deny": ["tor", "vpn", "hosting", "AS64496"] }
 	}
 }
 ```
@@ -156,28 +168,38 @@ range:
 | `allow` | Only requests from these networks pass.                           |
 | `deny`  | Requests from these networks fail, even where `allow` holds them. |
 
-Use `deny` alone to refuse some networks and accept every other one:
+| Entry                        | Matches                                                                             | Lists           |
+| ---------------------------- | ----------------------------------------------------------------------------------- | --------------- |
+| `203.0.113.7`, `2001:db8::7` | One IPv4 or IPv6 address.                                                           | `allow`, `deny` |
+| `198.51.100.0/24`            | A CIDR range.                                                                       | `allow`, `deny` |
+| `onion`                      | Requests to the [onion address](/docs/sdk-overview#connect-through-a-proxy-or-tor). | `allow`, `deny` |
+| `AS64496`                    | The addresses of an autonomous system.                                              | `deny`          |
+| `tor`                        | Tor exit relays.                                                                    | `deny`          |
+| `vpn`                        | The autonomous systems of VPN providers.                                            | `deny`          |
+| `hosting`                    | The autonomous systems of hosting, cloud and data center providers.                 | `deny`          |
 
-```json title="policy.json"
-{
-	"access": {
-		"networks": { "deny": ["192.0.2.0/24"] }
-	}
-}
-```
+Anyone can send from an autonomous system, a VPN or a cloud provider, so an `allow` list takes only
+addresses, ranges and `onion`, which name networks that you control.
 
-- List IPv4 and IPv6 addresses and CIDR ranges. A range starts at its first address, such as
-  `198.51.100.0/24`, and an IPv4 address takes its IPv4 form, not `::ffff:198.51.100.7`.
+- A range starts at its first address, such as `198.51.100.0/24`, and an IPv4 address takes its
+  IPv4 form, not `::ffff:198.51.100.7`.
 - The gateway reads the address from the connection, never from headers such as
   `X-Forwarded-For`. For a server behind a NAT gateway or proxy, list the address that the NAT
   gateway or proxy sends from.
 - The API accepts connections over IPv4 only, so your requests come from an IPv4 address even on
   a network with IPv6.
-- Requests to the [onion address](/docs/sdk-overview#connect-through-a-proxy-or-tor) have no
-  client address. They pass only when no policy denies a network and every `allow` list holds
-  `0.0.0.0/0` and `::/0`.
+- Requests to the onion address have no client address, so only `onion` matches them. `tor`
+  refuses Tor exit relays and leaves the onion service open, and an `allow` list without `onion`
+  refuses it.
+- `tor` follows the Tor Project's list of exit relays, which the gateway reads again every hour.
+  AS numbers come from [DB-IP](https://db-ip.com)'s monthly data. `vpn` and `hosting` are the
+  autonomous systems that [X4BNet's lists](https://github.com/X4BNet/lists_vpn) name, except
+  AS13335, AS20940, AS36183 and AS54113, through which iCloud Private Relay carries people's
+  traffic. Many VPN services rent servers from hosting providers, so `hosting` refuses more of them
+  than `vpn` does.
 - A refused request fails with `403 network_denied`, and the message names the address that the
-  gateway saw. An address that you allow, or remove from `deny`, applies
+  gateway saw and why, such as `Request is not allowed from 203.0.113.7, a Tor exit relay`. An
+  address that you allow, or remove from `deny`, applies
   [within three minutes](/docs/policies/scopes#when-changes-take-effect).
 - A list can hold as many entries as the [policy size](/docs/policies/editing#document-rules)
   allows. To follow a published list of ranges, such as a cloud provider's, save the policy again
@@ -185,19 +207,44 @@ Use `deny` alone to refuse some networks and accept every other one:
 - A policy whose `deny` holds every network of its `allow` cannot be saved. Disable the resource
   to block every request.
 
-## How networks combine
+## Countries
+
+This policy accepts requests only from the United States and Canada:
+
+```json title="policy.json"
+{
+	"access": {
+		"countries": { "allow": ["US", "CA"] }
+	}
+}
+```
+
+- List uppercase ISO 3166-1 alpha-2 codes, such as `DE`, `GB` for the United Kingdom and `XK` for
+  Kosovo. The `allow` list of the 27 countries of the European Union is
+  `["AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK"]`.
+- The gateway finds the country of the address that it reads from the connection in
+  [DB-IP](https://db-ip.com)'s monthly data. A VPN, proxy or Tor exit relay has the country of its
+  own address, so add `"networks": { "deny": ["tor", "vpn", "hosting"] }` to refuse requests that
+  hide where they come from.
+- Requests to the onion address, and addresses that DB-IP places in no country, are in no country:
+  an `allow` list refuses them and a `deny` list accepts them.
+- A refused request fails with `403 country_denied`, and the message names the address and its
+  country, such as `Request is not allowed from 203.0.113.7 in RU`.
+- A policy whose `deny` holds every country of its `allow` cannot be saved.
+
+## How networks and countries combine
 
 The client's address must be in every `allow` list and in no `deny` list of the policies that
-apply. Two `allow` lists that share no address block every request, and no `allow` list takes
-back an address that another policy denies.
+apply, for networks and for countries. Two `allow` lists that share no network or country block
+every request, and no `allow` list takes back a network or country that another policy denies.
 
-A [default rule](/docs/policies/rules#defaults) can list networks, and they apply until a required
-policy sets `access.networks`. To replace them without a restriction, set an empty `deny` list:
-`{ "deny": [] }`.
+A [default rule](/docs/policies/rules#defaults) can list networks or countries, and they apply
+until a required policy sets `access.networks` or `access.countries`. To replace them without a
+restriction, set an empty `deny` list: `{ "deny": [] }`.
 
-Networks in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's policy
-block only the deployments and credentials it applies to. The gateway tries the others, and fails
-with `network_denied` when none remain.
+Networks and countries in a [conditional rule](/docs/policies/rules#conditional-rules) or a
+credential's policy block only the deployments and credentials it applies to. The gateway tries the
+others, and fails with `network_denied` or `country_denied` when none remain.
 
 ## Connection modes
 
