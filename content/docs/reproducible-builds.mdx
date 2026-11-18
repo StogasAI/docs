@@ -54,11 +54,12 @@ version of every component.
 
 GitHub Actions and GitLab.com's hosted runners each build every release tag and sign a build proof
 for the image and its release manifest. GitHub's build takes prebuilt Guix packages from
-ci.guix.gnu.org and GitLab's from bordeaux.guix.gnu.org, so a package that the two Guix build farms
-built differently changes the manifest. We approve a release only when both proofs name the same
-`release-manifest.json` and image. The manifest records the source commit and its SHA-256 digest,
-every input hash, the compiler and tool versions, the image hash and the launch measurement. For
-releases without `gitlab-attestation.jsonl`, our own machines made the second build.
+ci.guix.gnu.org first and GitLab's from bordeaux.guix.gnu.org first, so a package that both Guix
+build farms publish but built differently changes the manifest. We approve a release only when both
+proofs name the same `release-manifest.json` and image. The manifest records the source commit and
+its SHA-256 digest, every input hash, the compiler and tool versions, the image hash and the launch
+measurement. For releases without `gitlab-attestation.jsonl`, our own machines made the second
+build.
 
 Your own build is a third, independent check.
 
@@ -120,12 +121,12 @@ No output means the builds match. The manifest's launch measurement is the value
 
 <Callout title="Prebuilt Guix packages">
 	{' '}
-	Guix downloads its own prebuilt packages, such as GCC and Rust, from one of its two build farms
-	and checks their signatures. The farms build each package separately. The build script takes
-	packages from `bordeaux.guix.gnu.org`, and GitHub's release build takes them from
-	`ci.guix.gnu.org`. A package that the farms built differently therefore enters the two builds as
-	different bytes. A package that only one farm has is built from source on the other side. Matching
-	manifests therefore show that no single farm's package changed the image. To build every tool on
+	Guix downloads its own prebuilt packages, such as GCC and Rust, from its two build farms and
+	checks their signatures. The farms build each package separately. The build script takes packages
+	from `bordeaux.guix.gnu.org` first, and GitHub's release build takes them from `ci.guix.gnu.org`
+	first. A package that both farms publish but built differently therefore enters the two builds as
+	different bytes, so matching manifests show that neither farm's copy of it changed the image. A
+	package that only one farm publishes enters both builds from that farm. To build every tool on
 	your machine instead, run the Guix daemon with `--no-substitutes`. Guix then builds its compilers
 	from the small binary seed. This takes much longer.{' '}
 </Callout>
