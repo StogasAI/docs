@@ -14636,7 +14636,6 @@
 																		}
 																	],
 																	"description": "The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential."
-																}
 																},
 																"account_options": {
 																	"description": "The [account options](/docs/byok#account-options) of the credential's provider account that changed the data handling of the call. Absent when none did.",
@@ -14659,6 +14658,7 @@
 																		],
 																		"additionalProperties": false
 																	}
+																}
 															},
 															"required": [
 																"catalog_chain_hash",
@@ -21855,10 +21855,6 @@
 						],
 						"additionalProperties": false
 					},
-					"canUse": {
-						"type": "boolean"
-					},
-					"canManage": {
 					"accountOptions": {
 						"type": "object",
 						"properties": {
@@ -21896,6 +21892,10 @@
 						],
 						"additionalProperties": false
 					},
+					"canUse": {
+						"type": "boolean"
+					},
+					"canManage": {
 						"type": "boolean"
 					},
 					"canChangeAccess": {
@@ -22083,11 +22083,11 @@
 				},
 				"required": [
 					"access",
+					"accountOptions",
 					"canUse",
 					"canManage",
 					"canChangeAccess",
 					"assignedKeyCount",
-					"accountOptions",
 					"exclusiveKeyCount",
 					"expiresAt",
 					"checkedAt",
