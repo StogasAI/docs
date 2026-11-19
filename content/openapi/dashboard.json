@@ -11421,6 +11421,9 @@
 										},
 										"member": {
 											"type": "boolean"
+										},
+										"singleSignOn": {
+											"type": "boolean"
 										}
 									},
 									"required": [
@@ -11428,7 +11431,8 @@
 										"organizationName",
 										"organizationPicture",
 										"inviterName",
-										"member"
+										"member",
+										"singleSignOn"
 									],
 									"additionalProperties": false
 								}
@@ -18452,6 +18456,34 @@
 														"minimum": 1,
 														"maximum": 9007199254740991
 													},
+													"roles": {
+														"minItems": 1,
+														"maxItems": 30,
+														"type": "array",
+														"items": {
+															"type": "object",
+															"properties": {
+																"id": {
+																	"type": "string",
+																	"minLength": 1
+																},
+																"isDefault": {
+																	"type": "boolean"
+																},
+																"name": {
+																	"type": "string",
+																	"minLength": 1,
+																	"maxLength": 100
+																}
+															},
+															"required": [
+																"id",
+																"isDefault",
+																"name"
+															],
+															"additionalProperties": false
+														}
+													},
 													"usedCount": {
 														"type": "integer",
 														"minimum": 0,
@@ -18466,6 +18498,7 @@
 													"expiresAt",
 													"id",
 													"maxUses",
+													"roles",
 													"usedCount"
 												],
 												"additionalProperties": false
@@ -18516,7 +18549,7 @@
 					"Invites"
 				],
 				"summary": "Create an invite",
-				"description": "An invite has one use unless you set maxUses. It lasts until its uses run out or a member deletes it, or until expiresInSeconds passes if you set it. Until then, each unused use holds a seat.",
+				"description": "An invite has one use unless you set maxUses, and gives the default role unless you set roleIds. It lasts until its uses run out or a member deletes it, or until expiresInSeconds passes if you set it. Until then, each unused use holds a seat. You can give only roles that you could give a member.",
 				"security": [
 					{
 						"accessToken": [
@@ -18560,6 +18593,15 @@
 										"type": "integer",
 										"minimum": 1,
 										"maximum": 30
+									},
+									"roleIds": {
+										"maxItems": 30,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"format": "uuid"
+										},
+										"uniqueItems": true
 									}
 								},
 								"additionalProperties": false
@@ -18611,6 +18653,34 @@
 											"minimum": 1,
 											"maximum": 9007199254740991
 										},
+										"roles": {
+											"minItems": 1,
+											"maxItems": 30,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"minLength": 1
+													},
+													"isDefault": {
+														"type": "boolean"
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"id",
+													"isDefault",
+													"name"
+												],
+												"additionalProperties": false
+											}
+										},
 										"usedCount": {
 											"type": "integer",
 											"minimum": 0,
@@ -18623,6 +18693,7 @@
 										"expiresAt",
 										"id",
 										"maxUses",
+										"roles",
 										"usedCount"
 									],
 									"additionalProperties": false
@@ -18643,7 +18714,7 @@
 					"Invites"
 				],
 				"summary": "Change an invite",
-				"description": "Changes the name, the number of uses or the expiry, and leaves each field you omit as it is. An invite needs more uses than it has had, and more unused uses need free seats. expiresInSeconds counts from now, and null removes the expiry.",
+				"description": "Changes the name, the number of uses, the expiry or the roles, and leaves each field you omit as it is. An invite needs more uses than it has had, and more unused uses need free seats. expiresInSeconds counts from now, and null removes the expiry. Any change needs the authority to give every role that the invite then gives.",
 				"security": [
 					{
 						"accessToken": [
@@ -18703,6 +18774,15 @@
 										"type": "integer",
 										"minimum": 1,
 										"maximum": 30
+									},
+									"roleIds": {
+										"maxItems": 30,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"format": "uuid"
+										},
+										"uniqueItems": true
 									}
 								},
 								"additionalProperties": false
@@ -18754,6 +18834,34 @@
 											"minimum": 1,
 											"maximum": 9007199254740991
 										},
+										"roles": {
+											"minItems": 1,
+											"maxItems": 30,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"minLength": 1
+													},
+													"isDefault": {
+														"type": "boolean"
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"id",
+													"isDefault",
+													"name"
+												],
+												"additionalProperties": false
+											}
+										},
 										"usedCount": {
 											"type": "integer",
 											"minimum": 0,
@@ -18766,6 +18874,7 @@
 										"expiresAt",
 										"id",
 										"maxUses",
+										"roles",
 										"usedCount"
 									],
 									"additionalProperties": false
