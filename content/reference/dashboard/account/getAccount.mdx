@@ -4,6 +4,8 @@ description: An account that never sent a payment or joined an active
   organization is deleted at expiresAt. In payerLimit, usedUsd is what payments
   to your deposit addresses added in the last 24 hours, across organizations,
   and moreAvailableAt is when the earliest of them stops counting.
+  twoFactorRequiredBy counts the organizations you belong to that require
+  two-factor authentication and names the first in alphabetical order.
 full: true
 _openapi:
   preload:
@@ -18,7 +20,9 @@ _openapi:
           is deleted at expiresAt. In payerLimit, usedUsd is what payments to
           your deposit addresses added in the last 24 hours, across
           organizations, and moreAvailableAt is when the earliest of them stops
-          counting.
+          counting. twoFactorRequiredBy counts the organizations you belong to
+          that require two-factor authentication and names the first in
+          alphabetical order.
 ---
 
 export default function Layout(props) {

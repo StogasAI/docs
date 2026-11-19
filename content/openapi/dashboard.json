@@ -65,10 +65,12 @@
 					"Account"
 				],
 				"summary": "Get your account",
-				"description": "An account that never sent a payment or joined an active organization is deleted at expiresAt. In payerLimit, usedUsd is what payments to your deposit addresses added in the last 24 hours, across organizations, and moreAvailableAt is when the earliest of them stops counting.",
+				"description": "An account that never sent a payment or joined an active organization is deleted at expiresAt. In payerLimit, usedUsd is what payments to your deposit addresses added in the last 24 hours, across organizations, and moreAvailableAt is when the earliest of them stops counting. twoFactorRequiredBy counts the organizations you belong to that require two-factor authentication and names the first in alphabetical order.",
 				"security": [
 					{
-						"accessToken": []
+						"accessToken": [
+							"all-organizations"
+						]
 					}
 				],
 				"parameters": [
@@ -126,11 +128,39 @@
 												"moreAvailableAt"
 											],
 											"additionalProperties": false
+										},
+										"twoFactorRequiredBy": {
+											"type": "object",
+											"properties": {
+												"count": {
+													"type": "integer",
+													"minimum": 0,
+													"maximum": 9007199254740991
+												},
+												"name": {
+													"anyOf": [
+														{
+															"type": "string",
+															"minLength": 1,
+															"maxLength": 100
+														},
+														{
+															"type": "null"
+														}
+													]
+												}
+											},
+											"required": [
+												"count",
+												"name"
+											],
+											"additionalProperties": false
 										}
 									},
 									"required": [
 										"expiresAt",
-										"payerLimit"
+										"payerLimit",
+										"twoFactorRequiredBy"
 									],
 									"additionalProperties": false
 								}
