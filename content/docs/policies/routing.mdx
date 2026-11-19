@@ -8,14 +8,15 @@ A **candidate** is one deployment with one of your provider credentials. For eac
 
 1. Starts with the candidates that can serve the request's `model`, interface, service tier,
    reasoning mode and output limit.
-2. Removes the candidates that `allowedCatalogNodes` or `filter` exclude, and those that cannot
-   read the request's [images and files](/docs/input-files#when-no-candidate-reads-a-file).
+2. Removes the candidates that the [allow and deny lists](#allow-and-deny-lists) or `filter`
+   exclude, and those that cannot read the request's
+   [images and files](/docs/input-files#when-no-candidate-reads-a-file).
 3. Puts the rest in [order](#ordering) and sends the request to the first.
 
 ```jsonc title="policy.json"
 {
 	"routing": {
-		"allowedCatalogNodes": { "providers": ["openai", "chutes"] },
+		"providers": { "allow": ["openai", "chutes"] },
 		"filter": "deployment.dataHandling.trainingUse == false", // Providers that do not train on prompts.
 		"sort": [{ "by": "deployment.pricing.output_tokens.per_mill_tokens", "direction": "asc" }]
 	}
@@ -41,15 +42,26 @@ policy leave no candidate. Sending the request again does not help, and a policy
 request's `model`. A [routing simulation](/docs/policies/editing#simulate-routing) shows the
 candidates that remain with a draft.
 
-## Allowed catalog nodes
+## Allow and deny lists
 
-`allowedCatalogNodes` takes lists of catalog IDs: `authors`, `models`, `deployments`, `routes` and
-`providers`.
+```json title="Models by OpenAI or Anthropic, from any provider but Azure"
+{
+	"routing": {
+		"authors": { "allow": ["openai", "anthropic"] },
+		"providers": { "deny": ["azure"] }
+	}
+}
+```
 
-- A candidate must match every list. Lists from several policies intersect.
+`authors`, `models`, `deployments`, `routes` and `providers` each take catalog IDs in `allow`,
+`deny` or both. A candidate passes when every `allow` names it and no `deny` does.
+
+- Allow lists from several policies intersect, and deny lists join. Allow lists that share no ID
+  leave no candidate.
 - Use exact IDs. Names, aliases and wildcards do not match, and IDs that are not in the current
   catalog match nothing.
-- `"providers": []` allows no provider. `"allowedCatalogNodes": {}` replaces default lists only.
+- `{ "deny": [] }` replaces a [default](/docs/policies/rules#defaults) list of the same kind and
+  removes no candidate.
 
 ## Ordering
 

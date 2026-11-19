@@ -1,4 +1,4 @@
-import schema from '@/content/schemas/key-config-v1.json';
+import schema from '@/content/schemas/policy-v1.json';
 
 export const revalidate = false;
 export const dynamic = 'force-static';

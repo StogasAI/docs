@@ -92,10 +92,10 @@ replace defaults of the same kind:
 | Kind               | Includes                                                            |
 | ------------------ | ------------------------------------------------------------------- |
 | Each access field  | `schedule`, `networks`, `countries` or `transports`                 |
-| Input              | All of `input`                                                      |
+| Each input field   | `asciiOnly` or `mediaTypes`                                         |
 | Each timeout       | `totalSeconds` or `outputIdleSeconds`                               |
 | Each routing field | One field, except `sort`, whose criteria add up                     |
-| Each plugin        | `redaction` or `export`, encrypted or not                           |
+| Each plugin        | `redaction`, `export` or `promptCaching`, encrypted or not          |
 | Each file family   | `text`, `office` or `pdf` of `textExtraction`, with its media types |
 
 - A required plugin setting replaces only the default of the same plugin. A required text
@@ -117,22 +117,24 @@ counts further requirements that replace the same setting.
 Set a neutral value. It replaces the defaults of its kind and never removes a required setting of
 another policy:
 
-| Kind                    | Neutral value                                |
-| ----------------------- | -------------------------------------------- |
-| Input                   | `"input": { "asciiOnly": false }`            |
-| Deny periods            | `"access": { "schedule": { "deny": [] } }`   |
-| Networks                | `"access": { "networks": { "deny": [] } }`   |
-| Countries               | `"access": { "countries": { "deny": [] } }`  |
-| Connection modes        | `"access": { "transports": { "deny": [] } }` |
-| Each timeout            | `3600`                                       |
-| Routing filter          | `"filter": "true"`                           |
-| Allowed catalog nodes   | `"allowedCatalogNodes": {}`                  |
-| Retries                 | `"retries": 3`                               |
-| Fallbacks               | `"fallbacks": 2`                             |
-| Missing encryption keys | `"missingEncryptionKeys": "skip"`            |
-| Text extraction         | `"textExtraction": { "text": "off" }`        |
-| Redaction               | `"redaction": {}`                            |
-| Export                  | `"export": { "destinations": [] }`           |
+| Kind                    | Neutral value                                       |
+| ----------------------- | --------------------------------------------------- |
+| ASCII only              | `"input": { "asciiOnly": false }`                   |
+| Media types             | `"input": { "mediaTypes": { "deny": [] } }`         |
+| Deny periods            | `"access": { "schedule": { "deny": [] } }`          |
+| Networks                | `"access": { "networks": { "deny": [] } }`          |
+| Countries               | `"access": { "countries": { "deny": [] } }`         |
+| Connection modes        | `"access": { "transports": { "deny": [] } }`        |
+| Each timeout            | `3600`                                              |
+| Routing filter          | `"filter": "true"`                                  |
+| Each catalog ID list    | `"providers": { "deny": [] }`, or another kind      |
+| Retries                 | `"retries": 3`                                      |
+| Fallbacks               | `"fallbacks": 2`                                    |
+| Missing encryption keys | `"missingEncryptionKeys": "skip"`                   |
+| Text extraction         | `"textExtraction": { "text": "off" }`               |
+| Redaction               | `"redaction": {}`                                   |
+| Export                  | `"export": { "destinations": [] }`                  |
+| Prompt caching          | `"promptCaching": "off"`                            |
 
 ## What rules can contain
 

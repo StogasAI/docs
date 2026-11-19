@@ -5186,7 +5186,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 27,
+																"maxItems": 33,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5197,6 +5197,8 @@
 																		"access.countries",
 																		"access.transports",
 																		"input",
+																		"input.asciiOnly",
+																		"input.mediaTypes",
 																		"limits",
 																		"timeouts",
 																		"timeouts.totalSeconds",
@@ -5213,7 +5215,11 @@
 																		"routing",
 																		"routing.filter",
 																		"routing.sort",
-																		"routing.allowedCatalogNodes",
+																		"routing.authors",
+																		"routing.models",
+																		"routing.deployments",
+																		"routing.routes",
+																		"routing.providers",
 																		"routing.retries",
 																		"routing.fallbacks",
 																		"routing.missingEncryptionKeys",
@@ -5288,7 +5294,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 27,
+																"maxItems": 33,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5299,6 +5305,8 @@
 																		"access.countries",
 																		"access.transports",
 																		"input",
+																		"input.asciiOnly",
+																		"input.mediaTypes",
 																		"limits",
 																		"timeouts",
 																		"timeouts.totalSeconds",
@@ -5315,7 +5323,11 @@
 																		"routing",
 																		"routing.filter",
 																		"routing.sort",
-																		"routing.allowedCatalogNodes",
+																		"routing.authors",
+																		"routing.models",
+																		"routing.deployments",
+																		"routing.routes",
+																		"routing.providers",
 																		"routing.retries",
 																		"routing.fallbacks",
 																		"routing.missingEncryptionKeys",
@@ -21117,7 +21129,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 27,
+											"maxItems": 33,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -21128,6 +21140,8 @@
 													"access.countries",
 													"access.transports",
 													"input",
+													"input.asciiOnly",
+													"input.mediaTypes",
 													"limits",
 													"timeouts",
 													"timeouts.totalSeconds",
@@ -21144,7 +21158,11 @@
 													"routing",
 													"routing.filter",
 													"routing.sort",
-													"routing.allowedCatalogNodes",
+													"routing.authors",
+													"routing.models",
+													"routing.deployments",
+													"routing.routes",
+													"routing.providers",
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
@@ -21219,7 +21237,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 27,
+											"maxItems": 33,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -21230,6 +21248,8 @@
 													"access.countries",
 													"access.transports",
 													"input",
+													"input.asciiOnly",
+													"input.mediaTypes",
 													"limits",
 													"timeouts",
 													"timeouts.totalSeconds",
@@ -21246,7 +21266,11 @@
 													"routing",
 													"routing.filter",
 													"routing.sort",
-													"routing.allowedCatalogNodes",
+													"routing.authors",
+													"routing.models",
+													"routing.deployments",
+													"routing.routes",
+													"routing.providers",
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
@@ -22243,7 +22267,7 @@
 				"properties": {
 					"$schema": {
 						"type": "string",
-						"const": "https://stogas.ai/schemas/key-config-v1.json"
+						"const": "https://stogas.ai/schemas/policy-v1.json"
 					},
 					"input": {
 						"type": "object",
@@ -24495,10 +24519,11 @@
 										"routing": {
 											"type": "object",
 											"properties": {
-												"allowedCatalogNodes": {
+												"authors": {
 													"type": "object",
 													"properties": {
-														"authors": {
+														"allow": {
+															"minItems": 1,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -24506,9 +24531,10 @@
 																"maxLength": 128,
 																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 															},
-															"uniqueItems": true
+															"uniqueItems": true,
+															"description": "Use only these author IDs. Allow lists of several policies intersect."
 														},
-														"deployments": {
+														"deny": {
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -24516,41 +24542,132 @@
 																"maxLength": 128,
 																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 															},
-															"uniqueItems": true
-														},
-														"models": {
-															"type": "array",
-															"items": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 128,
-																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-															},
-															"uniqueItems": true
-														},
-														"providers": {
-															"type": "array",
-															"items": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 128,
-																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-															},
-															"uniqueItems": true
-														},
-														"routes": {
-															"type": "array",
-															"items": {
-																"type": "string",
-																"minLength": 1,
-																"maxLength": 128,
-																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-															},
-															"uniqueItems": true
+															"uniqueItems": true,
+															"description": "Never use these author IDs. Deny lists of several policies join."
 														}
 													},
 													"additionalProperties": false,
-													"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
+													"description": "Limit candidates by author ID. An ID that the catalog in effect does not list matches nothing."
+												},
+												"models": {
+													"type": "object",
+													"properties": {
+														"allow": {
+															"minItems": 1,
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Use only these model IDs. Allow lists of several policies intersect."
+														},
+														"deny": {
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Never use these model IDs. Deny lists of several policies join."
+														}
+													},
+													"additionalProperties": false,
+													"description": "Limit candidates by model ID. An ID that the catalog in effect does not list matches nothing."
+												},
+												"deployments": {
+													"type": "object",
+													"properties": {
+														"allow": {
+															"minItems": 1,
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Use only these deployment IDs. Allow lists of several policies intersect."
+														},
+														"deny": {
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Never use these deployment IDs. Deny lists of several policies join."
+														}
+													},
+													"additionalProperties": false,
+													"description": "Limit candidates by deployment ID. An ID that the catalog in effect does not list matches nothing."
+												},
+												"routes": {
+													"type": "object",
+													"properties": {
+														"allow": {
+															"minItems": 1,
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Use only these route IDs. Allow lists of several policies intersect."
+														},
+														"deny": {
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Never use these route IDs. Deny lists of several policies join."
+														}
+													},
+													"additionalProperties": false,
+													"description": "Limit candidates by route ID. An ID that the catalog in effect does not list matches nothing."
+												},
+												"providers": {
+													"type": "object",
+													"properties": {
+														"allow": {
+															"minItems": 1,
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Use only these provider IDs. Allow lists of several policies intersect."
+														},
+														"deny": {
+															"type": "array",
+															"items": {
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 128,
+																"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+															},
+															"uniqueItems": true,
+															"description": "Never use these provider IDs. Deny lists of several policies join."
+														}
+													},
+													"additionalProperties": false,
+													"description": "Limit candidates by provider ID. An ID that the catalog in effect does not list matches nothing."
 												},
 												"retries": {
 													"type": "integer",
@@ -24722,7 +24839,7 @@
 								},
 								"replaced": {
 									"minItems": 1,
-									"maxItems": 27,
+									"maxItems": 33,
 									"type": "array",
 									"items": {
 										"type": "object",
@@ -24736,6 +24853,8 @@
 													"access.countries",
 													"access.transports",
 													"input",
+													"input.asciiOnly",
+													"input.mediaTypes",
 													"limits",
 													"timeouts",
 													"timeouts.totalSeconds",
@@ -24752,7 +24871,11 @@
 													"routing",
 													"routing.filter",
 													"routing.sort",
-													"routing.allowedCatalogNodes",
+													"routing.authors",
+													"routing.models",
+													"routing.deployments",
+													"routing.routes",
+													"routing.providers",
 													"routing.retries",
 													"routing.fallbacks",
 													"routing.missingEncryptionKeys",
@@ -25959,7 +26082,7 @@
 					},
 					"setBy": {
 						"minItems": 1,
-						"maxItems": 972,
+						"maxItems": 1188,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -25973,6 +26096,8 @@
 										"access.countries",
 										"access.transports",
 										"input",
+										"input.asciiOnly",
+										"input.mediaTypes",
 										"limits",
 										"timeouts",
 										"timeouts.totalSeconds",
@@ -25989,7 +26114,11 @@
 										"routing",
 										"routing.filter",
 										"routing.sort",
-										"routing.allowedCatalogNodes",
+										"routing.authors",
+										"routing.models",
+										"routing.deployments",
+										"routing.routes",
+										"routing.providers",
 										"routing.retries",
 										"routing.fallbacks",
 										"routing.missingEncryptionKeys",
@@ -26040,7 +26169,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26051,6 +26180,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"limits",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -26067,7 +26198,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
@@ -26084,7 +26219,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26095,6 +26230,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"limits",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -26111,7 +26248,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
@@ -26128,7 +26269,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26139,6 +26280,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"limits",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -26155,7 +26298,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
@@ -26172,7 +26319,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26183,6 +26330,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"limits",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -26199,7 +26348,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
@@ -26216,7 +26369,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26227,6 +26380,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"limits",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -26243,7 +26398,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
@@ -26260,7 +26419,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26271,6 +26430,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"limits",
 												"timeouts",
 												"timeouts.totalSeconds",
@@ -26287,7 +26448,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys",
@@ -26298,13 +26463,13 @@
 									}
 								]
 							},
-							"request": {
+							"requests": {
 								"anyOf": [
 									{
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26315,6 +26480,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"timeouts",
 												"timeouts.totalSeconds",
 												"timeouts.outputIdleSeconds",
@@ -26330,7 +26497,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys"
@@ -27518,58 +27689,122 @@
 					"routing": {
 						"type": "object",
 						"properties": {
-							"allowedCatalogNodes": {
+							"authors": {
 								"type": "object",
 								"properties": {
-									"authors": {
+									"allow": {
 										"type": "array",
 										"items": {
 											"type": "string",
 											"minLength": 1,
 											"maxLength": 128,
 											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
+										}
 									},
-									"deployments": {
+									"deny": {
 										"type": "array",
 										"items": {
 											"type": "string",
 											"minLength": 1,
 											"maxLength": 128,
 											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
+										}
+									}
+								},
+								"additionalProperties": false
+							},
+							"models": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										}
 									},
-									"models": {
+									"deny": {
 										"type": "array",
 										"items": {
 											"type": "string",
 											"minLength": 1,
 											"maxLength": 128,
 											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
+										}
+									}
+								},
+								"additionalProperties": false
+							},
+							"deployments": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										}
 									},
-									"providers": {
+									"deny": {
 										"type": "array",
 										"items": {
 											"type": "string",
 											"minLength": 1,
 											"maxLength": 128,
 											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
+										}
+									}
+								},
+								"additionalProperties": false
+							},
+							"routes": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										}
 									},
-									"routes": {
+									"deny": {
 										"type": "array",
 										"items": {
 											"type": "string",
 											"minLength": 1,
 											"maxLength": 128,
 											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
+										}
+									}
+								},
+								"additionalProperties": false
+							},
+							"providers": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										}
+									},
+									"deny": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										}
 									}
 								},
 								"additionalProperties": false
@@ -28015,7 +28250,7 @@
 				"properties": {
 					"$schema": {
 						"type": "string",
-						"const": "https://stogas.ai/schemas/key-config-v1.json"
+						"const": "https://stogas.ai/schemas/policy-v1.json"
 					},
 					"delegation": {
 						"type": "object",
@@ -28028,7 +28263,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 27,
+												"maxItems": 33,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28039,6 +28274,8 @@
 														"access.countries",
 														"access.transports",
 														"input",
+														"input.asciiOnly",
+														"input.mediaTypes",
 														"limits",
 														"timeouts",
 														"timeouts.totalSeconds",
@@ -28055,7 +28292,11 @@
 														"routing",
 														"routing.filter",
 														"routing.sort",
-														"routing.allowedCatalogNodes",
+														"routing.authors",
+														"routing.models",
+														"routing.deployments",
+														"routing.routes",
+														"routing.providers",
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
@@ -28075,7 +28316,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 27,
+														"maxItems": 33,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28086,6 +28327,8 @@
 																"access.countries",
 																"access.transports",
 																"input",
+																"input.asciiOnly",
+																"input.mediaTypes",
 																"limits",
 																"timeouts",
 																"timeouts.totalSeconds",
@@ -28102,7 +28345,11 @@
 																"routing",
 																"routing.filter",
 																"routing.sort",
-																"routing.allowedCatalogNodes",
+																"routing.authors",
+																"routing.models",
+																"routing.deployments",
+																"routing.routes",
+																"routing.providers",
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
@@ -28134,7 +28381,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 27,
+															"maxItems": 33,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28145,6 +28392,8 @@
 																	"access.countries",
 																	"access.transports",
 																	"input",
+																	"input.asciiOnly",
+																	"input.mediaTypes",
 																	"limits",
 																	"timeouts",
 																	"timeouts.totalSeconds",
@@ -28161,7 +28410,11 @@
 																	"routing",
 																	"routing.filter",
 																	"routing.sort",
-																	"routing.allowedCatalogNodes",
+																	"routing.authors",
+																	"routing.models",
+																	"routing.deployments",
+																	"routing.routes",
+																	"routing.providers",
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
@@ -28190,7 +28443,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 27,
+												"maxItems": 33,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28201,6 +28454,8 @@
 														"access.countries",
 														"access.transports",
 														"input",
+														"input.asciiOnly",
+														"input.mediaTypes",
 														"limits",
 														"timeouts",
 														"timeouts.totalSeconds",
@@ -28217,7 +28472,11 @@
 														"routing",
 														"routing.filter",
 														"routing.sort",
-														"routing.allowedCatalogNodes",
+														"routing.authors",
+														"routing.models",
+														"routing.deployments",
+														"routing.routes",
+														"routing.providers",
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
@@ -28237,7 +28496,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 27,
+														"maxItems": 33,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28248,6 +28507,8 @@
 																"access.countries",
 																"access.transports",
 																"input",
+																"input.asciiOnly",
+																"input.mediaTypes",
 																"limits",
 																"timeouts",
 																"timeouts.totalSeconds",
@@ -28264,7 +28525,11 @@
 																"routing",
 																"routing.filter",
 																"routing.sort",
-																"routing.allowedCatalogNodes",
+																"routing.authors",
+																"routing.models",
+																"routing.deployments",
+																"routing.routes",
+																"routing.providers",
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
@@ -28296,7 +28561,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 27,
+															"maxItems": 33,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28307,6 +28572,8 @@
 																	"access.countries",
 																	"access.transports",
 																	"input",
+																	"input.asciiOnly",
+																	"input.mediaTypes",
 																	"limits",
 																	"timeouts",
 																	"timeouts.totalSeconds",
@@ -28323,7 +28590,11 @@
 																	"routing",
 																	"routing.filter",
 																	"routing.sort",
-																	"routing.allowedCatalogNodes",
+																	"routing.authors",
+																	"routing.models",
+																	"routing.deployments",
+																	"routing.routes",
+																	"routing.providers",
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
@@ -28352,7 +28623,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 27,
+												"maxItems": 33,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28363,6 +28634,8 @@
 														"access.countries",
 														"access.transports",
 														"input",
+														"input.asciiOnly",
+														"input.mediaTypes",
 														"limits",
 														"timeouts",
 														"timeouts.totalSeconds",
@@ -28379,7 +28652,11 @@
 														"routing",
 														"routing.filter",
 														"routing.sort",
-														"routing.allowedCatalogNodes",
+														"routing.authors",
+														"routing.models",
+														"routing.deployments",
+														"routing.routes",
+														"routing.providers",
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
@@ -28399,7 +28676,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 27,
+														"maxItems": 33,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28410,6 +28687,8 @@
 																"access.countries",
 																"access.transports",
 																"input",
+																"input.asciiOnly",
+																"input.mediaTypes",
 																"limits",
 																"timeouts",
 																"timeouts.totalSeconds",
@@ -28426,7 +28705,11 @@
 																"routing",
 																"routing.filter",
 																"routing.sort",
-																"routing.allowedCatalogNodes",
+																"routing.authors",
+																"routing.models",
+																"routing.deployments",
+																"routing.routes",
+																"routing.providers",
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
@@ -28458,7 +28741,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 27,
+															"maxItems": 33,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28469,6 +28752,8 @@
 																	"access.countries",
 																	"access.transports",
 																	"input",
+																	"input.asciiOnly",
+																	"input.mediaTypes",
 																	"limits",
 																	"timeouts",
 																	"timeouts.totalSeconds",
@@ -28485,7 +28770,11 @@
 																	"routing",
 																	"routing.filter",
 																	"routing.sort",
-																	"routing.allowedCatalogNodes",
+																	"routing.authors",
+																	"routing.models",
+																	"routing.deployments",
+																	"routing.routes",
+																	"routing.providers",
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
@@ -28514,7 +28803,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 27,
+												"maxItems": 33,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28525,6 +28814,8 @@
 														"access.countries",
 														"access.transports",
 														"input",
+														"input.asciiOnly",
+														"input.mediaTypes",
 														"limits",
 														"timeouts",
 														"timeouts.totalSeconds",
@@ -28541,7 +28832,11 @@
 														"routing",
 														"routing.filter",
 														"routing.sort",
-														"routing.allowedCatalogNodes",
+														"routing.authors",
+														"routing.models",
+														"routing.deployments",
+														"routing.routes",
+														"routing.providers",
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
@@ -28561,7 +28856,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 27,
+														"maxItems": 33,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28572,6 +28867,8 @@
 																"access.countries",
 																"access.transports",
 																"input",
+																"input.asciiOnly",
+																"input.mediaTypes",
 																"limits",
 																"timeouts",
 																"timeouts.totalSeconds",
@@ -28588,7 +28885,11 @@
 																"routing",
 																"routing.filter",
 																"routing.sort",
-																"routing.allowedCatalogNodes",
+																"routing.authors",
+																"routing.models",
+																"routing.deployments",
+																"routing.routes",
+																"routing.providers",
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
@@ -28620,7 +28921,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 27,
+															"maxItems": 33,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28631,6 +28932,8 @@
 																	"access.countries",
 																	"access.transports",
 																	"input",
+																	"input.asciiOnly",
+																	"input.mediaTypes",
 																	"limits",
 																	"timeouts",
 																	"timeouts.totalSeconds",
@@ -28647,7 +28950,11 @@
 																	"routing",
 																	"routing.filter",
 																	"routing.sort",
-																	"routing.allowedCatalogNodes",
+																	"routing.authors",
+																	"routing.models",
+																	"routing.deployments",
+																	"routing.routes",
+																	"routing.providers",
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
@@ -28676,7 +28983,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 27,
+												"maxItems": 33,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28687,6 +28994,8 @@
 														"access.countries",
 														"access.transports",
 														"input",
+														"input.asciiOnly",
+														"input.mediaTypes",
 														"limits",
 														"timeouts",
 														"timeouts.totalSeconds",
@@ -28703,7 +29012,11 @@
 														"routing",
 														"routing.filter",
 														"routing.sort",
-														"routing.allowedCatalogNodes",
+														"routing.authors",
+														"routing.models",
+														"routing.deployments",
+														"routing.routes",
+														"routing.providers",
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
@@ -28723,7 +29036,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 27,
+														"maxItems": 33,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28734,6 +29047,8 @@
 																"access.countries",
 																"access.transports",
 																"input",
+																"input.asciiOnly",
+																"input.mediaTypes",
 																"limits",
 																"timeouts",
 																"timeouts.totalSeconds",
@@ -28750,7 +29065,11 @@
 																"routing",
 																"routing.filter",
 																"routing.sort",
-																"routing.allowedCatalogNodes",
+																"routing.authors",
+																"routing.models",
+																"routing.deployments",
+																"routing.routes",
+																"routing.providers",
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
@@ -28782,7 +29101,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 27,
+															"maxItems": 33,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28793,6 +29112,8 @@
 																	"access.countries",
 																	"access.transports",
 																	"input",
+																	"input.asciiOnly",
+																	"input.mediaTypes",
 																	"limits",
 																	"timeouts",
 																	"timeouts.totalSeconds",
@@ -28809,7 +29130,11 @@
 																	"routing",
 																	"routing.filter",
 																	"routing.sort",
-																	"routing.allowedCatalogNodes",
+																	"routing.authors",
+																	"routing.models",
+																	"routing.deployments",
+																	"routing.routes",
+																	"routing.providers",
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
@@ -28838,7 +29163,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 27,
+												"maxItems": 33,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28849,6 +29174,8 @@
 														"access.countries",
 														"access.transports",
 														"input",
+														"input.asciiOnly",
+														"input.mediaTypes",
 														"limits",
 														"timeouts",
 														"timeouts.totalSeconds",
@@ -28865,7 +29192,11 @@
 														"routing",
 														"routing.filter",
 														"routing.sort",
-														"routing.allowedCatalogNodes",
+														"routing.authors",
+														"routing.models",
+														"routing.deployments",
+														"routing.routes",
+														"routing.providers",
 														"routing.retries",
 														"routing.fallbacks",
 														"routing.missingEncryptionKeys",
@@ -28885,7 +29216,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 27,
+														"maxItems": 33,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28896,6 +29227,8 @@
 																"access.countries",
 																"access.transports",
 																"input",
+																"input.asciiOnly",
+																"input.mediaTypes",
 																"limits",
 																"timeouts",
 																"timeouts.totalSeconds",
@@ -28912,7 +29245,11 @@
 																"routing",
 																"routing.filter",
 																"routing.sort",
-																"routing.allowedCatalogNodes",
+																"routing.authors",
+																"routing.models",
+																"routing.deployments",
+																"routing.routes",
+																"routing.providers",
 																"routing.retries",
 																"routing.fallbacks",
 																"routing.missingEncryptionKeys",
@@ -28944,7 +29281,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 27,
+															"maxItems": 33,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28955,6 +29292,8 @@
 																	"access.countries",
 																	"access.transports",
 																	"input",
+																	"input.asciiOnly",
+																	"input.mediaTypes",
 																	"limits",
 																	"timeouts",
 																	"timeouts.totalSeconds",
@@ -28971,7 +29310,11 @@
 																	"routing",
 																	"routing.filter",
 																	"routing.sort",
-																	"routing.allowedCatalogNodes",
+																	"routing.authors",
+																	"routing.models",
+																	"routing.deployments",
+																	"routing.routes",
+																	"routing.providers",
 																	"routing.retries",
 																	"routing.fallbacks",
 																	"routing.missingEncryptionKeys",
@@ -28992,13 +29335,13 @@
 									}
 								]
 							},
-							"request": {
+							"requests": {
 								"anyOf": [
 									{
 										"type": "boolean"
 									},
 									{
-										"maxItems": 27,
+										"maxItems": 33,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -29009,6 +29352,8 @@
 												"access.countries",
 												"access.transports",
 												"input",
+												"input.asciiOnly",
+												"input.mediaTypes",
 												"timeouts",
 												"timeouts.totalSeconds",
 												"timeouts.outputIdleSeconds",
@@ -29024,7 +29369,11 @@
 												"routing",
 												"routing.filter",
 												"routing.sort",
-												"routing.allowedCatalogNodes",
+												"routing.authors",
+												"routing.models",
+												"routing.deployments",
+												"routing.routes",
+												"routing.providers",
 												"routing.retries",
 												"routing.fallbacks",
 												"routing.missingEncryptionKeys"
@@ -31202,10 +31551,11 @@
 					"routing": {
 						"type": "object",
 						"properties": {
-							"allowedCatalogNodes": {
+							"authors": {
 								"type": "object",
 								"properties": {
-									"authors": {
+									"allow": {
+										"minItems": 1,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -31213,9 +31563,10 @@
 											"maxLength": 128,
 											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 										},
-										"uniqueItems": true
+										"uniqueItems": true,
+										"description": "Use only these author IDs. Allow lists of several policies intersect."
 									},
-									"deployments": {
+									"deny": {
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -31223,41 +31574,132 @@
 											"maxLength": 128,
 											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 										},
-										"uniqueItems": true
-									},
-									"models": {
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128,
-											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
-									},
-									"providers": {
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128,
-											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
-									},
-									"routes": {
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 128,
-											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-										},
-										"uniqueItems": true
+										"uniqueItems": true,
+										"description": "Never use these author IDs. Deny lists of several policies join."
 									}
 								},
 								"additionalProperties": false,
-								"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
+								"description": "Limit candidates by author ID. An ID that the catalog in effect does not list matches nothing."
+							},
+							"models": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"minItems": 1,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Use only these model IDs. Allow lists of several policies intersect."
+									},
+									"deny": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Never use these model IDs. Deny lists of several policies join."
+									}
+								},
+								"additionalProperties": false,
+								"description": "Limit candidates by model ID. An ID that the catalog in effect does not list matches nothing."
+							},
+							"deployments": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"minItems": 1,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Use only these deployment IDs. Allow lists of several policies intersect."
+									},
+									"deny": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Never use these deployment IDs. Deny lists of several policies join."
+									}
+								},
+								"additionalProperties": false,
+								"description": "Limit candidates by deployment ID. An ID that the catalog in effect does not list matches nothing."
+							},
+							"routes": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"minItems": 1,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Use only these route IDs. Allow lists of several policies intersect."
+									},
+									"deny": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Never use these route IDs. Deny lists of several policies join."
+									}
+								},
+								"additionalProperties": false,
+								"description": "Limit candidates by route ID. An ID that the catalog in effect does not list matches nothing."
+							},
+							"providers": {
+								"type": "object",
+								"properties": {
+									"allow": {
+										"minItems": 1,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Use only these provider IDs. Allow lists of several policies intersect."
+									},
+									"deny": {
+										"type": "array",
+										"items": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128,
+											"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+										},
+										"uniqueItems": true,
+										"description": "Never use these provider IDs. Deny lists of several policies join."
+									}
+								},
+								"additionalProperties": false,
+								"description": "Limit candidates by provider ID. An ID that the catalog in effect does not list matches nothing."
 							},
 							"retries": {
 								"type": "integer",
@@ -33584,10 +34026,11 @@
 								"routing": {
 									"type": "object",
 									"properties": {
-										"allowedCatalogNodes": {
+										"authors": {
 											"type": "object",
 											"properties": {
-												"authors": {
+												"allow": {
+													"minItems": 1,
 													"type": "array",
 													"items": {
 														"type": "string",
@@ -33595,9 +34038,10 @@
 														"maxLength": 128,
 														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 													},
-													"uniqueItems": true
+													"uniqueItems": true,
+													"description": "Use only these author IDs. Allow lists of several policies intersect."
 												},
-												"deployments": {
+												"deny": {
 													"type": "array",
 													"items": {
 														"type": "string",
@@ -33605,41 +34049,132 @@
 														"maxLength": 128,
 														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
 													},
-													"uniqueItems": true
-												},
-												"models": {
-													"type": "array",
-													"items": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128,
-														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-													},
-													"uniqueItems": true
-												},
-												"providers": {
-													"type": "array",
-													"items": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128,
-														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-													},
-													"uniqueItems": true
-												},
-												"routes": {
-													"type": "array",
-													"items": {
-														"type": "string",
-														"minLength": 1,
-														"maxLength": 128,
-														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
-													},
-													"uniqueItems": true
+													"uniqueItems": true,
+													"description": "Never use these author IDs. Deny lists of several policies join."
 												}
 											},
 											"additionalProperties": false,
-											"description": "A candidate must match each list that is present. Lists share the policy byte budget. An empty object replaces default lists without removing other required lists."
+											"description": "Limit candidates by author ID. An ID that the catalog in effect does not list matches nothing."
+										},
+										"models": {
+											"type": "object",
+											"properties": {
+												"allow": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Use only these model IDs. Allow lists of several policies intersect."
+												},
+												"deny": {
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Never use these model IDs. Deny lists of several policies join."
+												}
+											},
+											"additionalProperties": false,
+											"description": "Limit candidates by model ID. An ID that the catalog in effect does not list matches nothing."
+										},
+										"deployments": {
+											"type": "object",
+											"properties": {
+												"allow": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Use only these deployment IDs. Allow lists of several policies intersect."
+												},
+												"deny": {
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Never use these deployment IDs. Deny lists of several policies join."
+												}
+											},
+											"additionalProperties": false,
+											"description": "Limit candidates by deployment ID. An ID that the catalog in effect does not list matches nothing."
+										},
+										"routes": {
+											"type": "object",
+											"properties": {
+												"allow": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Use only these route IDs. Allow lists of several policies intersect."
+												},
+												"deny": {
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Never use these route IDs. Deny lists of several policies join."
+												}
+											},
+											"additionalProperties": false,
+											"description": "Limit candidates by route ID. An ID that the catalog in effect does not list matches nothing."
+										},
+										"providers": {
+											"type": "object",
+											"properties": {
+												"allow": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Use only these provider IDs. Allow lists of several policies intersect."
+												},
+												"deny": {
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128,
+														"pattern": "^[a-z0-9][a-z0-9._:-]*$"
+													},
+													"uniqueItems": true,
+													"description": "Never use these provider IDs. Deny lists of several policies join."
+												}
+											},
+											"additionalProperties": false,
+											"description": "Limit candidates by provider ID. An ID that the catalog in effect does not list matches nothing."
 										},
 										"retries": {
 											"type": "integer",

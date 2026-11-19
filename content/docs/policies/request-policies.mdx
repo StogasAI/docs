@@ -10,20 +10,20 @@ setting from a saved policy.
 
 ## Grant permission
 
-Request policies are off until a saved policy allows them. Set `delegation.request` on any saved
+Request policies are off until a saved policy allows them. Set `delegation.requests` on any saved
 scope that applies to the key:
 
 ```json title="Saved policy"
 {
 	"delegation": {
-		"request": ["routing.filter", "routing.sort", "plugins.redaction"]
+		"requests": ["routing.filter", "routing.sort", "plugins.redaction"]
 	}
 }
 ```
 
 - Use `true` for every section, or a list of section paths. A path such as `routing` allows the
   whole section.
-- When several policies set `delegation.request`, a section must be allowed by all of them.
+- When several policies set `delegation.requests`, a section must be allowed by all of them.
 - A rule needs permission for every setting in it, whether or not its condition matches.
 - An encrypted export or redaction needs permission for that plugin and for `plugins.encrypted`,
   which lets it hide its settings.
@@ -76,5 +76,5 @@ resource.
 
 | Status | Cause                                                                         |
 | ------ | ----------------------------------------------------------------------------- |
-| `403`  | `permission_denied`: a section is not allowed by `delegation.request`.        |
+| `403`  | `permission_denied`: a section is not allowed by `delegation.requests`.        |
 | `400`  | The policy is invalid, too large, or its sort conflicts with a required sort. |

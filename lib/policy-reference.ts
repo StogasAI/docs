@@ -1,4 +1,4 @@
-import policy from '@/content/schemas/key-config-v1.json';
+import policy from '@/content/schemas/policy-v1.json';
 import { withoutEnvelopes } from '@/lib/policy-settings';
 
 const sections = {

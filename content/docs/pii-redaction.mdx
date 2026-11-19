@@ -273,7 +273,7 @@ To reject a prompt that contains non-ASCII text, instead of redacting it:
 The check reads the [scanned fields](#what-is-scanned) before redaction, and refuses the
 attachments that redaction refuses. JSON escapes such as `\u00e9` count as non-ASCII. Any scope
 can require the check, and a child scope cannot turn it off.
-A request policy can set it when `delegation.request` permits `input`.
+A request policy can set it when `delegation.requests` permits `input.asciiOnly`.
 
 ## Errors
 

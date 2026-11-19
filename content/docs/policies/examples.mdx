@@ -108,7 +108,7 @@ request records stay with your account, both in the region that the sign-in page
 ```json title="Organization policy"
 {
 	"routing": {
-		"allowedCatalogNodes": { "providers": ["openai", "anthropic"] }
+		"providers": { "allow": ["openai", "anthropic"] }
 	}
 }
 ```
@@ -322,7 +322,7 @@ Requests can send their own redaction settings in a [request policy](/docs/polic
 ```json title="Organization policy"
 {
 	"delegation": {
-		"request": ["plugins.redaction"]
+		"requests": ["plugins.redaction"]
 	}
 }
 ```

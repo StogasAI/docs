@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import schema from '../content/schemas/key-config-v1.json';
+import schema from '../content/schemas/policy-v1.json';
 import routingRegistry from '../content/schemas/routing-fields.json';
 import navigation from '../content/docs/policies/meta.json';
 import { withoutEnvelopes } from '../lib/policy-settings';
