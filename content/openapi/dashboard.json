@@ -24773,6 +24773,78 @@
 											"minProperties": 1,
 											"description": "Which deployments and credentials requests may use and in which order, and how often a request retries or falls back."
 										},
+										"exclude": {
+											"type": "object",
+											"properties": {
+												"folders": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"allOf": [
+															{
+																"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+															},
+															{
+																"pattern": "^[0-9a-f-]+$"
+															}
+														]
+													},
+													"uniqueItems": true
+												},
+												"grants": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"allOf": [
+															{
+																"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+															},
+															{
+																"pattern": "^[0-9a-f-]+$"
+															}
+														]
+													},
+													"uniqueItems": true
+												},
+												"members": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"allOf": [
+															{
+																"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+															},
+															{
+																"pattern": "^[0-9a-f-]+$"
+															}
+														]
+													},
+													"uniqueItems": true
+												},
+												"keys": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"allOf": [
+															{
+																"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+															},
+															{
+																"pattern": "^[0-9a-f-]+$"
+															}
+														]
+													},
+													"uniqueItems": true
+												}
+											},
+											"additionalProperties": false,
+											"minProperties": 1,
+											"description": "Skip this rule for keys in these folders or grants, keys of these members, and these keys. An organization policy can list all four, a folder policy its grants and keys and any member, and a grant policy its keys and any member. A rule that sets routing.sort takes none."
+										},
 										"when": {
 											"type": "string",
 											"minLength": 1,
@@ -24789,6 +24861,37 @@
 										}
 									},
 									"additionalProperties": false
+								},
+								"skipped": {
+									"type": "object",
+									"properties": {
+										"scope": {
+											"type": "string",
+											"enum": [
+												"folder",
+												"grant",
+												"member",
+												"key"
+											]
+										},
+										"id": {
+											"type": "string",
+											"allOf": [
+												{
+													"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+												},
+												{
+													"pattern": "^[0-9a-f-]+$"
+												}
+											]
+										}
+									},
+									"required": [
+										"scope",
+										"id"
+									],
+									"additionalProperties": false,
+									"description": "The resource of this key that the rule excludes. The rule does not apply to the key."
 								},
 								"replaced": {
 									"minItems": 1,
@@ -34339,6 +34442,78 @@
 									"additionalProperties": false,
 									"minProperties": 1,
 									"description": "Which deployments and credentials requests may use and in which order, and how often a request retries or falls back."
+								},
+								"exclude": {
+									"type": "object",
+									"properties": {
+										"folders": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"allOf": [
+													{
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+													},
+													{
+														"pattern": "^[0-9a-f-]+$"
+													}
+												]
+											},
+											"uniqueItems": true
+										},
+										"grants": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"allOf": [
+													{
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+													},
+													{
+														"pattern": "^[0-9a-f-]+$"
+													}
+												]
+											},
+											"uniqueItems": true
+										},
+										"members": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"allOf": [
+													{
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+													},
+													{
+														"pattern": "^[0-9a-f-]+$"
+													}
+												]
+											},
+											"uniqueItems": true
+										},
+										"keys": {
+											"minItems": 1,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"allOf": [
+													{
+														"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+													},
+													{
+														"pattern": "^[0-9a-f-]+$"
+													}
+												]
+											},
+											"uniqueItems": true
+										}
+									},
+									"additionalProperties": false,
+									"minProperties": 1,
+									"description": "Skip this rule for keys in these folders or grants, keys of these members, and these keys. An organization policy can list all four, a folder policy its grants and keys and any member, and a grant policy its keys and any member. A rule that sets routing.sort takes none."
 								},
 								"when": {
 									"type": "string",

@@ -270,38 +270,20 @@ See [Rules](/docs/policies/rules) for conditions and defaults.
 
 ### Exempt one key from an organization setting
 
-A required setting applies to every key below it, and no policy can exempt itself. Make the
-setting a default instead. A key then leaves it by requiring the
-[neutral value](/docs/policies/rules#replace-a-default-without-adding-a-restriction).
-
 ```json title="Organization policy"
 {
 	"rules": {
 		"redact_email": {
-			"mode": "default",
+			"exclude": { "keys": ["0195ef30-7b1a-7000-8000-000000000001"] },
 			"plugins": { "redaction": { "presets": ["email_address"] } }
-		}
-	},
-	"delegation": {
-		"keys": {
-			"default": ["limits"],
-			"exceptions": {
-				"0195ef30-7b1a-7000-8000-000000000001": ["limits", "plugins.redaction"]
-			}
 		}
 	}
 }
 ```
 
-```json title="Policy of the exempt key"
-{
-	"plugins": { "redaction": {} }
-}
-```
-
-The delegation lets only that key set redaction. Restrict the other resource types in the same
-way, because a redaction setting in a folder, grant, role, member or credential policy also
-replaces the default for the keys that it covers.
+Every other key redacts email addresses. The listed key skips the rule, and only the members who
+can edit the organization policy can change the list. See
+[Exclusions](/docs/policies/rules#exclusions) to exempt a folder, a grant or a member's keys.
 
 ### Let key managers change only limits
 

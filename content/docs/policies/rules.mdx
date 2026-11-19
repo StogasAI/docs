@@ -7,10 +7,11 @@ icon: Split
 Settings at the top level of a policy apply to every request. Put settings in a named rule under
 `rules` to change that:
 
-| Rule        | Field               | Settings apply                                              |
-| ----------- | ------------------- | ----------------------------------------------------------- |
-| Conditional | `when`              | Only to requests and deployments that match a condition     |
-| Default     | `"mode": "default"` | Only when no other policy requires the same kind of setting |
+| Rule            | Field               | Settings apply                                              |
+| --------------- | ------------------- | ----------------------------------------------------------- |
+| Conditional     | `when`              | Only to requests and deployments that match a condition     |
+| With exclusions | `exclude`           | To every key except the ones that the rule lists            |
+| Default         | `"mode": "default"` | Only when no other policy requires the same kind of setting |
 
 ```json title="Organization policy"
 {
@@ -66,6 +67,48 @@ gateway tries the others.
 - Limits in a rule count only the requests that the rule matches. See
   [Conditional limits](/docs/policies/limits#conditional-limits).
 
+## Exclusions
+
+```json title="Organization policy"
+{
+	"rules": {
+		"redact_email": {
+			"exclude": {
+				"keys": ["0195ef30-7b1a-7000-8000-000000000001"],
+				"grants": ["0195ef30-7b1a-7000-8000-000000000002"]
+			},
+			"plugins": { "redaction": { "presets": ["email_address"] } }
+		}
+	}
+}
+```
+
+Every key in the organization redacts email addresses, except the listed key and the keys under
+the listed grant. `exclude` lists resources by ID, and a key skips the whole rule when a list names
+the key, its folder, its grant or its owner:
+
+| List      | Keys that skip the rule              | Policies that can use it                    |
+| --------- | ------------------------------------ | ------------------------------------------- |
+| `folders` | Every key in the folder              | Organization                                |
+| `grants`  | The member keys under the grant      | Organization, and the grant's folder        |
+| `members` | The member keys that the member owns | Organization, folder and grant              |
+| `keys`    | The key                              | Organization, and the key's folder or grant |
+
+- A skipped rule requires nothing for the key, so [defaults](#defaults) of the same kind apply to
+  it again.
+- Limits in the rule do not count the key's requests. When you remove the exclusion, the limits
+  count only the key's later requests. Changing the lists keeps the limits' usage.
+- Only the members who can edit the policy can change its lists. Role, member, credential, key and
+  request policies cannot use `exclude`, so no key can exempt itself.
+- Everyone who can create a key in a listed folder or under a listed grant can create a key that
+  skips the rule.
+- An ID that you add must name an existing resource under the policy. A list keeps the ID of a
+  resource that is deleted later, and that ID matches nothing.
+- A rule can have both `when` and `exclude`. A rule that sets `routing.sort` cannot have
+  `exclude`.
+- In a **Combined policy**, a rule that the key skips has `skipped`, which names the listed
+  resource. The combined policy leaves out the lists themselves.
+
 ## Defaults
 
 A setting is required unless it is in a rule with `"mode": "default"`. A default applies only when
@@ -117,24 +160,24 @@ counts further requirements that replace the same setting.
 Set a neutral value. It replaces the defaults of its kind and never removes a required setting of
 another policy:
 
-| Kind                    | Neutral value                                       |
-| ----------------------- | --------------------------------------------------- |
-| ASCII only              | `"input": { "asciiOnly": false }`                   |
-| Media types             | `"input": { "mediaTypes": { "deny": [] } }`         |
-| Deny periods            | `"access": { "schedule": { "deny": [] } }`          |
-| Networks                | `"access": { "networks": { "deny": [] } }`          |
-| Countries               | `"access": { "countries": { "deny": [] } }`         |
-| Connection modes        | `"access": { "transports": { "deny": [] } }`        |
-| Each timeout            | `3600`                                              |
-| Routing filter          | `"filter": "true"`                                  |
-| Each catalog ID list    | `"providers": { "deny": [] }`, or another kind      |
-| Retries                 | `"retries": 3`                                      |
-| Fallbacks               | `"fallbacks": 2`                                    |
-| Missing encryption keys | `"missingEncryptionKeys": "skip"`                   |
-| Text extraction         | `"textExtraction": { "text": "off" }`               |
-| Redaction               | `"redaction": {}`                                   |
-| Export                  | `"export": { "destinations": [] }`                  |
-| Prompt caching          | `"promptCaching": "off"`                            |
+| Kind                    | Neutral value                                  |
+| ----------------------- | ---------------------------------------------- |
+| ASCII only              | `"input": { "asciiOnly": false }`              |
+| Media types             | `"input": { "mediaTypes": { "deny": [] } }`    |
+| Deny periods            | `"access": { "schedule": { "deny": [] } }`     |
+| Networks                | `"access": { "networks": { "deny": [] } }`     |
+| Countries               | `"access": { "countries": { "deny": [] } }`    |
+| Connection modes        | `"access": { "transports": { "deny": [] } }`   |
+| Each timeout            | `3600`                                         |
+| Routing filter          | `"filter": "true"`                             |
+| Each catalog ID list    | `"providers": { "deny": [] }`, or another kind |
+| Retries                 | `"retries": 3`                                 |
+| Fallbacks               | `"fallbacks": 2`                               |
+| Missing encryption keys | `"missingEncryptionKeys": "skip"`              |
+| Text extraction         | `"textExtraction": { "text": "off" }`          |
+| Redaction               | `"redaction": {}`                              |
+| Export                  | `"export": { "destinations": [] }`             |
+| Prompt caching          | `"promptCaching": "off"`                       |
 
 ## What rules can contain
 
