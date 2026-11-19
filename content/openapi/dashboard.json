@@ -14110,6 +14110,7 @@
 																			"permission_denied",
 																			"platform_rate_limited",
 																			"provider_not_allowed",
+																			"provider_state_unsupported",
 																			"provider_unavailable",
 																			"rate_limit_exceeded",
 																			"request_body_timeout",
@@ -14333,6 +14334,19 @@
 																	"5m",
 																	"1h"
 																]
+															},
+															"provider_state": {
+																"minItems": 1,
+																"maxItems": 3,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"enum": [
+																		"store",
+																		"previous_response_id",
+																		"conversation"
+																	]
+																}
 															}
 														},
 														"additionalProperties": false

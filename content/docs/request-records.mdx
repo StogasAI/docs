@@ -273,7 +273,7 @@ keeps only its type:
 | Sampling         | `temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `repetition_penalty`, `seed`    |
 | Response content | `response_format`, `include`, `logprobs`, `top_logprobs`                                                  |
 | Tools            | `tool_choice`, `parallel_tool_calls`, `max_tool_calls`, `hosted_tools`                                    |
-| Context          | `truncation`                                                                                              |
+| Context          | `truncation`, `provider_state`                                                                            |
 | Access programs  | `cyber_access_program`, the OpenAI program that the request chose                                         |
 
 Other fields record the remaining settings:
@@ -285,7 +285,10 @@ Other fields record the remaining settings:
 | Caching                        | `prompt_caching`, the lifetime of the gateway's [cache marks](/docs/prompt-caching#cache-requests-that-mark-nothing), and the cache meters in [`usage`](/docs/usage#meters) |
 
 `hosted_tools` lists the [hosted tools](/docs/model-tools#hosted-tools) that the request let the
-model call, such as `["web_search"]`, and is missing when there were none.
+model call, such as `["web_search"]`, and is missing when there were none. `provider_state` names
+the fields that kept or read content in your provider account, such as
+`["store", "previous_response_id"]`, and is missing when there were none. See
+[Stored responses](/docs/providers/openai#stored-responses).
 
 The record never keeps prompts, instructions, stop sequences, tool definitions, schemas or
 identifiers such as `user`. It also leaves out a text value that is longer than 64 characters or

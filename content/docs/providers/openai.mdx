@@ -114,6 +114,41 @@ in your application, then send the conversation again with each call and its `sh
   [apply_patch](https://developers.openai.com/api/docs/guides/tools-apply-patch) guides for the
   call and result fields.
 
+## Stored responses
+
+```json title="A request that continues a stored response"
+{
+	"model": "provider:openai gpt-5.6-sol",
+	"previous_response_id": "resp_123",
+	"input": [{ "type": "function_call_output", "call_id": "call_1", "output": "42" }]
+}
+```
+
+`store: true`, `previous_response_id` and `conversation` keep or read content in your OpenAI
+account, on the Responses API of OpenAI's models. `store: true` also works on Chat Completions. A
+request that no candidate can serve this way fails with `provider_state_unsupported`, and `param`
+names the field.
+
+- The gateway sends `store: false` unless the request sends `store: true`. A request with
+  `previous_response_id` or `conversation` and no `store` stores its response, as OpenAI does by
+  default, so that the next request can continue it. Send `store: true` with the first request of
+  a chain.
+- A request that reads stored content fails when more than one of your credentials can serve it.
+  Name the provider in the model, such as `provider:openai gpt-5.6-sol`, or use a key with one
+  credential for the model.
+- Tool results in `input` can answer calls of the stored response, and an `mcp_approval_response`
+  can answer an approval request of it.
+- The [hold](/docs/usage#input-estimates) covers the deployment's full input limit, because the
+  gateway cannot count stored content.
+- A request that stores content has unknown retention and no zero data retention in
+  [data handling](/docs/policies/routing-fields#data-handling), whatever the
+  [account options](/docs/byok#account-options). The `request.store` and `request.storedInput`
+  [request fields](/docs/policies/routing-fields#request) let a policy refuse such requests.
+- [ASCII-only input](/docs/pii-redaction#ascii-only-input) and [PII redaction](/docs/pii-redaction)
+  cannot read stored content, so a candidate whose policy sets either refuses a request that reads
+  it.
+- `metadata` reaches OpenAI only with a request that stores, where it labels what OpenAI keeps.
+
 ## Files
 
 OpenAI [reads only the text](https://developers.openai.com/api/docs/guides/file-inputs) of a file
@@ -136,8 +171,7 @@ another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 ## Not available
 
 - Audio and image output, and the `audio` request field.
-- Stored conversations: `store: true`, `previous_response_id`, `conversation` and `background`. The
-  gateway always sends `store: false`.
+- Prompt templates (`prompt`) and background mode (`background: true`).
 - Async tool calls (`async: true`) and `configuration_update` input items.
 - Hosted file search, code interpreter, shell containers, computer use and image generation.
 - WebSocket mode and the Scale tier.

@@ -1969,9 +1969,8 @@
 					},
 					"store": {
 						"type": "boolean",
-						"const": false,
 						"default": false,
-						"description": "Only `false` is accepted. The gateway never asks a provider to store a response."
+						"description": "Keep the completion in your own OpenAI or Azure account. It needs your own credential. See [Stored responses](/docs/providers/openai#stored-responses)."
 					},
 					"frequency_penalty": {
 						"type": "number",
@@ -2000,7 +1999,7 @@
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs, counting those of the `Stogas-Request-Metadata` header: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. A key here replaces the same key in the header. The gateway does not send metadata to the provider.",
+						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs, counting those of the `Stogas-Request-Metadata` header: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. A key here replaces the same key in the header. The provider receives metadata only with a request that stores, where it labels what the provider keeps.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",
@@ -2828,9 +2827,37 @@
 					},
 					"store": {
 						"type": "boolean",
-						"const": false,
-						"default": false,
-						"description": "Only `false` is accepted. The gateway never asks a provider to store a response."
+						"description": "Keep the response in your own OpenAI or Azure account. It needs your own credential. Omitted, it is `true` for a request that continues a stored response or a conversation, and `false` otherwise. See [Stored responses](/docs/providers/openai#stored-responses)."
+					},
+					"previous_response_id": {
+						"type": [
+							"string",
+							"null"
+						],
+						"description": "Continue a response that your own OpenAI or Azure account stored. See [Stored responses](/docs/providers/openai#stored-responses)."
+					},
+					"conversation": {
+						"oneOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"id"
+								],
+								"additionalProperties": false
+							},
+							{
+								"type": "null"
+							}
+						],
+						"description": "A conversation in your own OpenAI or Azure account, which keeps every turn of the request. See [Stored responses](/docs/providers/openai#stored-responses)."
 					},
 					"include": {
 						"type": "array",
@@ -2856,7 +2883,7 @@
 					},
 					"metadata": {
 						"type": "object",
-						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs, counting those of the `Stogas-Request-Metadata` header: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. A key here replaces the same key in the header. The gateway does not send metadata to the provider.",
+						"description": "Labels that the request record keeps for analytics filters, downloads and exports. Up to 16 pairs, counting those of the `Stogas-Request-Metadata` header: keys have 1 to 64 bytes and values up to 512 bytes in UTF-8, without control characters. A key here replaces the same key in the header. The provider receives metadata only with a request that stores, where it labels what the provider keeps.",
 						"maxProperties": 16,
 						"propertyNames": {
 							"type": "string",

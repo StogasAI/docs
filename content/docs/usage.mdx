@@ -40,7 +40,7 @@ The gateway prices the reported usage at catalog rates, charges it, and releases
 </Steps>
 
 - A lower `max_completion_tokens` or `max_output_tokens` lowers the hold, so a request fits more
-  easily under a balance or limit.
+  easily under a balance or limit.[^output-limit]
 - Settlement charges actual usage even when it is more than the hold. Your balance can go below
   zero, or past an invoiced organization's credit limit, and then new requests fail until you add
   credit.
@@ -146,10 +146,15 @@ always uses the provider's count.
 
 - The estimate is never more than the deployment's input limit. A large prompt can therefore hold
   the full input limit.
-- URLs, file IDs and files other than UTF-8 [text files](/docs/input-files#text-files) hold the
-  full input limit, because the gateway cannot count them.
+- URLs, file IDs, files other than UTF-8 [text files](/docs/input-files#text-files) and
+  [stored responses](/docs/providers/openai#stored-responses) that a request continues hold the full
+  input limit, because the gateway cannot count them.
 - Hosted tools add their own [holds](/docs/model-tools#holds-for-hosted-tools).
 - Text is never sampled or cut to lower a hold.
+
+[^output-limit]:
+    On [Azure](/docs/providers/azure#models-of-other-authors), a model can reason past the output
+    limit, and its requests then hold the deployment's full output limit.
 
 [^chutes]:
     On [Chutes](/docs/providers/chutes#when-the-client-stops-early) TEE deployments, the gateway

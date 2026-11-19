@@ -1,11 +1,11 @@
 ---
 title: Azure
-description: Use GPT, Claude and open models from your own Microsoft Foundry deployments.
+description: Use models of OpenAI, Anthropic and other authors from your own Microsoft Foundry deployments.
 icon: logo:azure
 ---
 
-Azure deployments run GPT, Claude and open models from your Microsoft Foundry deployments,
-including Azure OpenAI. The gateway calls them with a Microsoft Entra application that you create.
+Azure deployments run models of OpenAI, Anthropic and other authors from your Microsoft Foundry
+deployments, including Azure OpenAI. The gateway calls them with a Microsoft Entra application that you create.
 Azure bills you for inference, and we charge the [BYOK fee](/docs/byok#billing).
 
 | Deployment ID suffix | Azure deployment type             | Where inference runs                    |
@@ -131,8 +131,21 @@ GPT deployments take the same cache fields as [OpenAI](/docs/providers/openai#pr
 DeepSeek deployments cache automatically and receive `prompt_cache_key`, which gives each key its
 own cache. Azure returns `400` for `prompt_cache_retention` on a model that is not GPT.
 
+## Stored responses
+
+GPT deployments pass `store`, `previous_response_id` and `conversation` to Azure under the same
+rules as [OpenAI](/docs/providers/openai#stored-responses).
+
 ## Claude on Azure
 
 [Claude on Azure](https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry)
 accepts the same request fields as on [Anthropic](/docs/providers/anthropic). Claude that Azure
 runs, in deployments without `-anthropic-hosted`, takes no file IDs, so send files inline or by URL.
+
+## Models of other authors
+
+- Mistral's models take a message `name` only on tool results, as on Mistral's own API. A `name`
+  on another message gets `400`.
+- When a deployment's [`notes`](/docs/policies/routing-fields) say that its model reasons past the
+  output limit, its requests hold the deployment's full output limit, and you pay for all of the
+  model's output.
