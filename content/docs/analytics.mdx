@@ -45,7 +45,10 @@ output. Generation speed divides generated tokens by the full request duration.
   Other. To chart other groups, sort the breakdown by another metric or filter for them, such as
   `key:checkout OR key:search`.
 - Hiding a group in the legend only takes it off the chart. Totals and shares still count it.
-- Model groups combine revisions of the same model.
+- Model groups combine revisions of the same model. Model and deployment groups use the last
+  provider attempt.
+- Folder groups use the folder that held the key when the request ran, so the requests of a key that
+  moves stay with its earlier folder. A member key is in its grant's folder.
 - Language groups need the [language classifier](/docs/classification). Requests that ran without
   it count as No language.
 - Session and trace groups also show when each one started and how long it ran, from the start of
@@ -68,8 +71,8 @@ output. Generation speed divides generated tokens by the full request duration.
 
 The search and the API's `filter` parameter take these fields in the
 [filter syntax](/docs/reference/filters). Text without a field searches request, API key, grant
-and provider credential IDs, model names, providers, results, interfaces, error codes and HTTP
-statuses. Filters match whole values, so `:` and `=`
+and provider credential IDs, model names, deployment IDs, providers, results, interfaces, error
+codes and HTTP statuses. Filters match whole values, so `:` and `=`
 are the same, and names and the listed values ignore case. A name matches every API key, member or
 provider credential that has it, so use an ID to match one.
 
@@ -77,8 +80,10 @@ provider credential that has it, so use an ID to match one.
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `key:`              | An API key ID or name.                                                                                                                                                                                                 |
 | `grant:`, `member:` | Member keys under a grant, or keys owned by a member.                                                                                                                                                                  |
+| `folder:`           | The folder that held the key when the request ran, by name or ID.                                                                                                                                                      |
 | `role:`             | Member keys whose member held a role, by name or ID, when the request ran.                                                                                                                                             |
 | `model:`            | A model ID. Suggestions include current catalog names.                                                                                                                                                                 |
+| `deployment:`       | The [deployment](/docs/models#choose-a-model) ID of the last provider attempt, such as `openai-gpt-5.6-sol`.                                                                                                           |
 | `provider:`         | Any provider attempt.                                                                                                                                                                                                  |
 | `final_provider:`   | The last provider attempt.                                                                                                                                                                                             |
 | `byok:`             | A provider credential name or ID used by any attempt, or `stogas` for a Stogas-managed credential.                                                                                                                     |
@@ -106,7 +111,8 @@ provider credential that has it, so use an ID to match one.
 `status:success` matches completed requests with no cancellation or gateway error. Other `status:`
 values check every provider attempt, including earlier failed ones.
 
-`none` selects requests without a value in `grant:`, `role:`, `model:`, `final_provider:`,
+`none` selects requests without a value in `grant:`, `folder:`, `role:`, `model:`, `deployment:`,
+`final_provider:`,
 `final_byok:`, `error:`, `metadata.<key>:`, `session:`, `app:`, `agent:`, `trace:`,
 `encryption_key:`, `input_language:` and `output_language:`. For example, `error:none` selects
 requests without a gateway error, and `session:"none"` selects the session named none.

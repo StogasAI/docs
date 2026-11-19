@@ -11780,7 +11780,7 @@
 					"Analytics"
 				],
 				"summary": "List filter options",
-				"description": "Lists the API keys, grants, members, roles, BYOK credentials and encryption keys that you can filter requests by. Each list holds at most 1,000 records and `truncated` names the lists that stop there. Filters accept the names and IDs that a list leaves out.",
+				"description": "Lists the API keys, grants, folders, members, roles, BYOK credentials and encryption keys that you can filter requests by. Each list holds at most 1,000 records and `truncated` names the lists that stop there. Filters accept the names and IDs that a list leaves out.",
 				"security": [
 					{
 						"accessToken": []
@@ -11911,6 +11911,40 @@
 												"required": [
 													"id",
 													"label"
+												],
+												"additionalProperties": false
+											}
+										},
+										"folders": {
+											"maxItems": 1000,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"color": {
+														"anyOf": [
+															{
+																"type": "string",
+																"pattern": "^#[0-9a-fA-F]{6}$"
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"name": {
+														"type": "string",
+														"minLength": 1
+													}
+												},
+												"required": [
+													"color",
+													"id",
+													"name"
 												],
 												"additionalProperties": false
 											}
@@ -12068,6 +12102,7 @@
 												"enum": [
 													"api_keys",
 													"encryption_keys",
+													"folders",
 													"grants",
 													"members",
 													"roles",
@@ -12079,6 +12114,7 @@
 									"required": [
 										"api_keys",
 										"encryption_keys",
+										"folders",
 										"grants",
 										"members",
 										"roles",
@@ -12400,9 +12436,11 @@
 										"time",
 										"key",
 										"grant",
+										"folder",
 										"member",
 										"role",
 										"model",
+										"deployment",
 										"provider",
 										"byok",
 										"interface",
@@ -12604,9 +12642,11 @@
 														"time",
 														"key",
 														"grant",
+														"folder",
 														"member",
 														"role",
 														"model",
+														"deployment",
 														"provider",
 														"byok",
 														"interface",
@@ -15557,6 +15597,39 @@
 														"additionalProperties": false
 													}
 												},
+												"folders": {
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"color": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"pattern": "^#[0-9a-fA-F]{6}$"
+																	},
+																	{
+																		"type": "null"
+																	}
+																]
+															},
+															"id": {
+																"type": "string",
+																"format": "uuid"
+															},
+															"name": {
+																"type": "string",
+																"minLength": 1
+															}
+														},
+														"required": [
+															"color",
+															"id",
+															"name"
+														],
+														"additionalProperties": false
+													}
+												},
 												"grants": {
 													"type": "array",
 													"items": {
@@ -15662,12 +15735,13 @@
 														"minLength": 1,
 														"maxLength": 128
 													},
-													"description": "The keys, grants and credentials that the requests name and that have been deleted since, and the encryption keys that the organization no longer registers."
+													"description": "The keys, grants, folders and credentials that the requests name and that have been deleted since, and the encryption keys that the organization no longer registers."
 												}
 											},
 											"required": [
 												"api_keys",
 												"encryption_keys",
+												"folders",
 												"grants",
 												"upstream_byok",
 												"deleted"
