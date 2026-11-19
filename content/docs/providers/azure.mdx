@@ -118,6 +118,13 @@ default and which we can raise. The credential then keeps the targets of its las
 through an API key whose Azure credentials have more than 20,000 chosen targets together fail with
 `key_configuration_too_large`.
 
+## Account options
+
+Each [check](/docs/byok#checks) reads from your account whether Azure stores content for abuse
+monitoring. When Microsoft has turned that storage off for the account, the credential shows the
+[account option](/docs/byok#account-options) as reported by Azure, and you do not turn it on
+yourself.
+
 ## Prompt caching
 
 GPT deployments take the same cache fields as [OpenAI](/docs/providers/openai#prompt-caching).

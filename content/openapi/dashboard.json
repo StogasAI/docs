@@ -10494,6 +10494,16 @@
 							"schema": {
 								"type": "object",
 								"properties": {
+									"accountOptions": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string",
+											"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+										},
+										"additionalProperties": {
+											"type": "boolean"
+										}
+									},
 									"azure": {
 										"type": "object",
 										"properties": {
@@ -14626,6 +14636,28 @@
 																	],
 																	"description": "The [provider credential](/docs/byok) ID, or `null` for a Stogas-managed credential."
 																}
+																},
+																"account_options": {
+																	"description": "The [account options](/docs/byok#account-options) of the credential's provider account that changed the data handling of the call. Absent when none did.",
+																	"type": "array",
+																	"items": {
+																		"type": "object",
+																		"properties": {
+																			"id": {
+																				"type": "string",
+																				"description": "The option's ID in the catalog."
+																			},
+																			"declared": {
+																				"type": "boolean",
+																				"description": "`true` when only the credential states the option, and `false` when the provider reported it."
+																			}
+																		},
+																		"required": [
+																			"id",
+																			"declared"
+																		],
+																		"additionalProperties": false
+																	}
 															},
 															"required": [
 																"catalog_chain_hash",
@@ -21823,6 +21855,43 @@
 						"type": "boolean"
 					},
 					"canManage": {
+					"accountOptions": {
+						"type": "object",
+						"properties": {
+							"declared": {
+								"type": "object",
+								"propertyNames": {
+									"type": "string",
+									"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+								},
+								"additionalProperties": {
+									"type": "boolean"
+								}
+							},
+							"reported": {
+								"anyOf": [
+									{
+										"type": "object",
+										"propertyNames": {
+											"type": "string",
+											"pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+										},
+										"additionalProperties": {
+											"type": "boolean"
+										}
+									},
+									{
+										"type": "null"
+									}
+								]
+							}
+						},
+						"required": [
+							"declared",
+							"reported"
+						],
+						"additionalProperties": false
+					},
 						"type": "boolean"
 					},
 					"canChangeAccess": {
@@ -22014,6 +22083,7 @@
 					"canManage",
 					"canChangeAccess",
 					"assignedKeyCount",
+					"accountOptions",
 					"exclusiveKeyCount",
 					"expiresAt",
 					"checkedAt",

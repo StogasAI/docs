@@ -125,6 +125,47 @@ Region, such as `{"hosting":["amazon","anthropic"],"region":"us-east-1"}`. Routi
 instead of the secret. To keep a customer-encrypted credential off a hosting, remove the hosting
 from its target.
 
+## Account options
+
+```cel title="A filter that an account with zero data retention passes"
+deployment.dataHandling.zeroDataRetention == true
+```
+
+An account option is something that your provider account has and that changes how the provider
+handles your requests, such as a zero data retention agreement or a business associate agreement.
+The catalog states the data handling of an account without options. Turn on the options that your
+account has when you edit the credential.
+[Data handling fields](/docs/policies/routing-fields#data-handling) then hold what your account
+gets for requests through that credential.
+
+Each provider's page in the [catalog](https://stogas.ai/catalog) lists its options, with the routes
+that each one covers and the facts that it sets.
+
+- An option changes only the deployments that list it under `accountOptions`. A provider can leave
+  a deployment out of an agreement, such as a preview.
+- An option sets whole values. A [hosted tool](/docs/model-tools#data-handling-of-hosted-tools)
+  that the request lets the model call still joins its own data handling afterward, so a tool
+  that stores content removes zero data retention.
+- An option can add the certification [`hipaa`](/docs/policies/routing-fields#certifications) to
+  deployments that list `hipaa-eligible`.
+- Options that are values of one setting exclude each other.
+- Stogas-managed credentials have no options.
+
+### Declared and reported options
+
+Some providers report an option when we [check](#checks) the credential. The credential then shows
+the report and follows it. You can change any option, and your choice replaces the report.
+
+We cannot verify an option that you turn on yourself. Turn one on only when your account has it,
+because policies and request records then state its data handling as fact.
+[`credential.declaredAccountOptions`](/docs/policies/routing-fields#credential) lists the options
+that you turned on and the provider did not report, so a policy can refuse them.
+
+- A change needs **Manage** on the credential. [Activity](/docs/activity) records the option's ID
+  with its old and new value.
+- Each provider attempt in a [request record](/docs/request-records#account-options) lists the
+  options that applied.
+
 ## Order credentials
 
 Each API key has an ordered credential list for each provider. [Routing](/docs/policies/routing)

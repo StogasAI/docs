@@ -11,6 +11,7 @@ export type RoutingFieldGroup =
 	| 'upstream'
 	| 'pricing'
 	| 'route-provider'
+	| 'credential'
 	| 'request';
 
 function groupOf(field: string): RoutingFieldGroup {

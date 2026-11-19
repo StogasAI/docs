@@ -5,7 +5,7 @@ icon: ListTree
 ---
 
 Filters, sorts and rule conditions read these fields for each [candidate](/docs/policies/routing):
-its author, model, deployment, route and provider, and the request. Deployment fields hold the
+its author, model, deployment, route, provider and credential, and the request. Deployment fields hold the
 deployment's values on the candidate's route. For example, `deployment.contextWindowTokens >= 128000`
 keeps deployments with a context window of at least 128,000 tokens.
 
@@ -74,8 +74,10 @@ provider's terms. A provider that keeps flagged content for review does not have
 retention. A promise not to train does not establish zero retention. These facts apply to the
 selected offering and do not cover other provider services.
 
+A credential's [account options](/docs/byok#account-options) set these fields for its candidates.
+
 When a request lets the model call [hosted tools](/docs/model-tools#data-handling-of-hosted-tools),
-these fields join the deployment's data handling with each tool's. A location becomes the smallest
+these fields join that data handling with each tool's. A location becomes the smallest
 place that holds both. `retentionDays` becomes the longer period, or missing when either is unknown.
 `zeroDataRetention`, `endToEndEncrypted`, `tee` and `teeVerified` stay `true` only when every tool
 keeps them. `trainingUse` becomes `true` when a tool can train on content. For example, a deployment
@@ -126,7 +128,7 @@ deployment.hosting == provider.companyId
 Each provider and each author belongs to a company, which its `companyId` names. `hosting` names
 the company that runs the model: the provider's own company, or another company that the provider
 sells access to. `dataHandling.sharedWith` names each other company that receives the request,
-such as Anthropic, which receives Claude Fable requests on Google Cloud to monitor abuse.
+such as a model's developer that monitors requests for abuse.
 `companies` lists every company that receives the request: the provider's company, the hosting and
 each company in `sharedWith`.
 
@@ -165,13 +167,16 @@ service, and a rule that requires one refuses the deployment.
 | `pci-dss`                                                       | PCI DSS attestation of compliance                                       |
 | `csa-star-level-2`                                              | CSA STAR Level 2 attestation or certification                           |
 | `hipaa-eligible`                                                | The company signs a HIPAA business associate agreement for the service. |
+| `hipaa`                                                         | Your provider account has an agreement that covers the request.         |
 | `fedramp-moderate`, `fedramp-high`                              | FedRAMP authorization. A High deployment also lists Moderate.           |
 | `dod-il2`, `dod-il4`, `dod-il5`                                 | US DoD provisional authorization. A deployment lists each lower level.  |
 
 The list describes the provider's service and not Stogas. `hipaa-eligible` does not mean that an
 agreement is in place. You sign your own agreement with the company, which needs
-[your own provider credentials](/docs/byok). A request that lets the model call a hosted tool loses
-the entries that do not cover the tool. Saving a policy fails when it names a value outside this
+[your own provider credentials](/docs/byok). Then turn on the agreement's
+[account option](/docs/byok#account-options) on the credential, and requests through it also list
+`hipaa`. A request that lets the model call a hosted tool loses the entries that do not cover the
+tool. Saving a policy fails when it names a value outside this
 table.
 
 ### Upstream details
@@ -186,6 +191,25 @@ deployments of other providers.
 A route connects a provider to the interfaces that it serves. A route ID is not an HTTP path.
 
 <RoutingFields group="route-provider" />
+
+## Credential
+
+```cel title="Only credentials whose account has zero data retention"
+'zero-data-retention' in credential.accountOptions
+```
+
+These fields describe the candidate's [credential](/docs/byok).
+
+<RoutingFields group="credential" />
+
+Data handling fields already include what an account option changes, so
+`deployment.dataHandling.zeroDataRetention == true` accepts the same candidates without naming an
+option. Use these fields to require one option by its ID, or to refuse options that only the owner
+declared:
+
+```cel title="Only options that the provider reported"
+credential.declaredAccountOptions.size() == 0
+```
 
 ## Request
 

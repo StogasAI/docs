@@ -230,6 +230,16 @@ status. Only failures that providers mark in no other way are read from the star
 | `invalid_response`                                                                 | The response could not be used.                                           |
 | `cancelled`, `unknown`, `provider_error`                                           | The call was cancelled, its outcome is unknown, or it failed another way. |
 
+### Account options
+
+```json title="An attempt through a credential with one declared option"
+{ "account_options": [{ "id": "zero-data-retention", "declared": true }] }
+```
+
+An attempt lists the credential's [account options](/docs/byok#account-options) that applied to its
+deployment. `declared` is `true` when the credential's owner turned the option on and the provider
+did not report it. An attempt without options omits the field.
+
 ## Request settings
 
 `request_settings` records the settings that control what the model generates, as the gateway sent
@@ -451,8 +461,9 @@ resolved one. It is omitted when both are the same.
 
 A chain states its route's [hosted tools](/docs/model-tools#hosted-tools) and what each changes,
 whether or not a request can call them. `request_settings.hosted_tools` lists the tools that your
-request let the model call. A call's data handling is its chain's, changed by each listed tool,
-such as a longer retention with web search.
+request let the model call. A call's data handling is its chain's, changed by each of the
+attempt's [account options](#account-options) and then by each listed tool, such as a longer
+retention with web search.
 
 Paste a chain hash into catalog search to open its historical settings and the catalog releases
 that contain it. Lookup checks the content against the hash and never falls back to the current
