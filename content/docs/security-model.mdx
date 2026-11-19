@@ -27,7 +27,8 @@ read the request.
 
 - **AMD:** the processor, its firmware and AMD's signing keys.
 - **The gateway source code**, which is public. You can [rebuild it](/docs/reproducible-builds) to
-  the same launch measurement, so you do not have to trust the builds that we or GitHub publish.
+  the same launch measurement, so you do not have to trust the builds that we, GitHub or GitLab
+  publish.
 - **Our signing keys**, which approve releases, catalogs and hardware policies. Every approval is
   in the public, append-only Rekor log.
 - **The model provider**, which receives the prompt under its [data terms](/docs/providers).
@@ -47,7 +48,7 @@ read the request.
 - **All software we release is reproducible.** Gateway images and SDK packages
   [rebuild](/docs/reproducible-builds) from public source to the same bytes.
 - **We don't trust our own infrastructure.** Any of our servers, our database, our hosting
-  providers, GitHub, Sigstore, Rekor or the evidence hosts can be compromised. None of them alone
+  providers, GitHub, GitLab, Sigstore, Rekor or the evidence hosts can be compromised. None of them alone
   can read your data or get a gateway approved that differs from its public source. The evidence
   hosts can delay an update but cannot change it.
 - **Strict hardware settings.** Each release fixes the VM's policy, such as debugging and migration
@@ -104,10 +105,10 @@ does not need to poll for changes.
 
 ### Build proofs
 
-GitHub attests both the IGVM and manifest of each gateway release, which links them to the public
-source tag and workflow. We approve the release only after our own independent build matches. The
-SDK requires both, so neither GitHub nor we alone can get an image approved that differs from its
-public source.
+GitHub Actions and GitLab.com's hosted runners each build every gateway release and catalog from
+its public source tag and sign a build proof for its files. We approve a release only when both
+proofs name the same files. The SDK requires both proofs and our approval, so none of GitHub,
+GitLab and us alone can get an image approved that differs from its public source.
 
 </Step>
 <Step>
@@ -139,7 +140,7 @@ yourself.
 | E2EE                                                                 | X-Wing (X25519 and ML-KEM-768), then a ratchet with ML-KEM-768   | Yes          |
 | Our signatures on key manifests, evidence, boot records and receipts | Composite ML-DSA-65 and Ed25519                                  | Yes          |
 | Gateway to provider                                                  | X25519MLKEM768 where the [provider](/docs/providers) supports it | Varies       |
-| AMD reports, GitHub build proofs and Rekor                           | Classical signatures                                             | No           |
+| AMD reports, build proofs and Rekor                                  | Classical signatures                                             | No           |
 
-Hybrid key exchange protects recorded traffic from future quantum computers, but AMD, GitHub and
+Hybrid key exchange protects recorded traffic from future quantum computers, but AMD, Sigstore and
 Rekor sign with classical algorithms, so the chain of trust as a whole is not quantum safe.

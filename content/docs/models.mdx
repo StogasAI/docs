@@ -21,7 +21,8 @@ you can send, and each group in the form `group:claude`. [`/v1/catalog`](/docs/r
 authors, groups and providers, a summary of every model, route and deployment, current or retired,
 and scheduled changes. [`/v1/catalog/parts/{sha256}`](/docs/reference/catalog/getCatalogPart)
 returns the parts that the root names, which hold models, routes and deployments in full with their
-prices. These endpoints are public.
+prices. These endpoints are public, and the [SDK](/docs/sdk-overview) reads them from the verified
+gateway.
 
 A deployment, a route or a provider can have a retirement date, which the provider names for the
 shutdown of a model, an API or its whole service. Requests continue until that date has ended in

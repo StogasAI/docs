@@ -1,6 +1,6 @@
 ---
 title: Reproducible builds
-description: Rebuild the gateway image and SDK packages from public source, and check that they match what runs.
+description: Rebuild the gateway image, a catalog and the SDK packages from public source, and check that they match what runs.
 icon: Hammer
 ---
 
@@ -141,9 +141,6 @@ gh attestation verify gateway.igvm --repo StogasAI/gateway \
   --source-ref refs/tags/v<version> --deny-self-hosted-runners
 ```
 
-The SDK makes the same check, and our approval check, before it trusts a gateway. See
-[Gateway verification](/docs/verification).
-
 GitLab's proof is `gitlab-attestation.jsonl` in the release. Check it with
 [cosign](https://github.com/sigstore/cosign):
 
@@ -151,6 +148,40 @@ GitLab's proof is `gitlab-attestation.jsonl` in the release. Check it with
 cosign verify-blob-attestation gateway.igvm --bundle gitlab-attestation.jsonl \
   --type https://slsa.dev/provenance/v1 --certificate-oidc-issuer https://gitlab.com \
   --certificate-identity https://gitlab.com/stogasai/gateway//.gitlab-ci.yml@refs/tags/v<version>
+```
+
+Our signed evidence lists both proofs with each release. The SDK checks both, and our approval,
+before it trusts a gateway. See [Gateway verification](/docs/verification).
+
+## Rebuild a catalog
+
+```console
+git clone --branch catalog-v<sequence> https://github.com/StogasAI/catalog
+cd catalog
+node source/scripts/build.mjs --check
+node source/scripts/create-proposal.mjs <sequence> release-proposal
+gh release download catalog-v<sequence> --repo StogasAI/catalog --dir ../release
+cmp release-proposal/catalog-release.json ../release/catalog-release.json
+cmp release-proposal/catalog.json ../release/catalog.json
+```
+
+You need Git, Node.js, the GitHub CLI and the [CUE](https://cuelang.org) release that
+`source/scripts/gitlab.sh` downloads. `build.mjs --check` compiles the catalog from its records
+and fails unless the committed catalog equals the result. The manifest `catalog-release.json` names
+the source commit and the SHA-256 of the root `catalog.json`, and the root names every part by its
+SHA-256, so equal files mean an equal catalog.
+
+GitHub Actions and GitLab.com's hosted runners each build every catalog release from its tag and
+sign a build proof for the manifest and the root. We approve a catalog only when both proofs name
+the files of our own build. Check the proofs as for a gateway release:
+
+```console
+gh attestation verify catalog.json --repo StogasAI/catalog \
+  --signer-workflow StogasAI/catalog/.github/workflows/catalog-release.yml \
+  --source-ref refs/tags/catalog-v<sequence> --deny-self-hosted-runners
+cosign verify-blob-attestation catalog.json --bundle gitlab-attestation.jsonl \
+  --type https://slsa.dev/provenance/v1 --certificate-oidc-issuer https://gitlab.com \
+  --certificate-identity https://gitlab.com/stogasai/catalog//.gitlab-ci.yml@refs/tags/catalog-v<sequence>
 ```
 
 ## Verify an SDK download
@@ -230,6 +261,21 @@ fails unless each file matches the release byte for byte.
 The build images run x86-64 tools, and their Rust compiler crashes under QEMU, the x86-64 emulation
 that Docker uses on ARM Linux. On Windows, run the commands in WSL 2, in a directory in WSL's own
 file system, such as your home directory there.
+
+## Closed-source components
+
+| Release                                        | Closed-source code in its files                                            |
+| ---------------------------------------------- | -------------------------------------------------------------------------- |
+| Gateway image                                  | None                                                                       |
+| Catalog                                        | None                                                                       |
+| SDK and CLI for Linux, Android and WebAssembly | None                                                                       |
+| Go package for Windows                         | None. It links the open-source mingw-w64 runtime                           |
+| CLI and every other SDK package for Windows    | Microsoft's C runtime, linked statically from Microsoft's Visual C++ files |
+| SDK and CLI for macOS and iOS                  | None, but Apple's closed-source Xcode compiles and links them              |
+
+No one but Apple can inspect the tools that produce the Apple files, and only GitHub's macOS
+runners build them. On Windows and Apple systems our files also call the system's own libraries,
+as every program there does.
 
 ## Scan an SDK download for vulnerable crates
 

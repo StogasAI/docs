@@ -64,8 +64,9 @@ To load it now, call the transport's refresh method, such as `refresh_evidence()
 - JavaScript keeps each encrypted upload in memory until it is sent, so limit how many large uploads
   run at once.
 - More connections do not spread requests across gateways.
-- The SDK serves Chat Completions, Responses, policy validation and routing simulation. A request to
-  another path fails before your API key leaves your process.
+- The SDK serves Chat Completions, Responses, policy validation, routing simulation and, with
+  `GET`, [`/v1/models`, `/v1/catalog` and `/v1/catalog/parts/{sha256}`](/docs/models#find-a-model).
+  A request to another path fails before your API key leaves your process.
 
 ## Connect through a proxy or Tor
 
@@ -161,8 +162,8 @@ change.
 | `invalid_origin`            | The request comes from a browser origin that the transport does not allow.                                        |
 | `invalid_preflight`         | The transport refused a browser's preflight request.                                                              |
 | `invalid_path`              | The path does not start with the local URL, or has a query.                                                       |
-| `unsupported_path`          | The local URL serves only chat completions, responses, policy validation and routing simulation.                  |
-| `unsupported_method`        | The request does not use `POST`.                                                                                  |
+| `unsupported_path`          | The local URL serves only chat completions, responses, policy validation, routing simulation and catalog reads.   |
+| `unsupported_method`        | The request does not use `POST`, or a catalog read does not use `GET`.                                            |
 | `invalid_refresh`           | A request to refresh evidence does not use `POST`, or comes from a browser.                                       |
 | `deadline`                  | The request body did not arrive in time.                                                                          |
 | `request_body`              | The request body exceeds its size limit or was interrupted.                                                       |

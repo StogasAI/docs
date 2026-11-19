@@ -17,7 +17,7 @@ clock, so a wrong clock makes verification fail.
 | Evidence document, signed by an online key                            | Which gateway releases, catalogs and hardware policies are approved                       |
 | Rekor inclusion proofs for the key manifest and the evidence document | Both are in the public [Sigstore Rekor](https://docs.sigstore.dev/logging/overview/) log  |
 | Sigstore's current keys, signed by Sigstore's root keys               | Which Rekor keys check the inclusion proofs                                               |
-| GitHub build proofs in the evidence document                          | Each approved release was [built from its public source](/docs/reproducible-builds)       |
+| GitHub and GitLab build proofs in the evidence document               | Each approved release was [built from its public source](/docs/reproducible-builds)       |
 | AMD certificate chain and revocation list                             | The hardware report comes from a genuine AMD chip that AMD has not revoked                |
 | SEV-SNP hardware report                                               | The VM booted an approved release, with debugging and migration off, on approved firmware |
 | A fresh challenge from your client, signed into the report            | The report was made now, for this connection, and binds the connection's keys             |
@@ -73,11 +73,11 @@ The dashboard's Trust Center shows the current evidence and its history, checked
 with the same verifier.
 
 - Rekor logs the hash of the whole signed evidence document, so one entry covers every catalog,
-  gateway release, hardware policy and Sigstore key in it. The key manifest and each GitHub build
-  proof have their own entries.
-- Staging releases are built without GitHub, so a build placeholder lists their files instead. We
-  approve a release only after our own build matches GitHub's, but our signature cannot prove that
-  this build happened. To check a release yourself, see
+  gateway release, hardware policy and Sigstore key in it. The key manifest and each build proof
+  have their own entries.
+- Staging releases are built without GitHub and GitLab, so a build placeholder lists their files
+  instead. We approve a release only when GitHub's proof and GitLab's name the same files. To
+  check a release yourself, see
   [Reproducible builds](/docs/reproducible-builds).
 - AMD signs its own certificates and revocation lists, so they need no Rekor entry.
 - History lists each release, catalog and key manifest at the evidence revision that first listed
