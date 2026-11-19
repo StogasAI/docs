@@ -278,11 +278,11 @@ keeps only its type:
 
 Other fields record the remaining settings:
 
-| Setting                        | Field                                             |
-| ------------------------------ | ------------------------------------------------- |
-| Streaming                      | `stream`                                          |
-| Service tier, speed and region | Each attempt's [catalog chain](#catalog-history)  |
-| Caching                        | The cache meters in [`usage`](/docs/usage#meters) |
+| Setting                        | Field                                                                                                                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Streaming                      | `stream`                                                                                                                                                                    |
+| Service tier, speed and region | Each attempt's [catalog chain](#catalog-history)                                                                                                                            |
+| Caching                        | `prompt_caching`, the lifetime of the gateway's [cache marks](/docs/prompt-caching#cache-requests-that-mark-nothing), and the cache meters in [`usage`](/docs/usage#meters) |
 
 `hosted_tools` lists the [hosted tools](/docs/model-tools#hosted-tools) that the request let the
 model call, such as `["web_search"]`, and is missing when there were none.

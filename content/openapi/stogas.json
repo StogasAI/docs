@@ -6243,6 +6243,15 @@
 									}
 								]
 							},
+							"promptCaching": {
+								"type": "string",
+								"enum": [
+									"off",
+									"5m",
+									"1h"
+								],
+								"description": "Cache a request that marks nothing to cache on deployments that cache only what a request marks. `5m` or `1h` is how long each cache entry lasts, and an hour costs more to write. `off` is the same as no setting. The longest required lifetime applies."
+							},
 							"textExtraction": {
 								"type": "object",
 								"properties": {
@@ -8494,6 +8503,15 @@
 													"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 												}
 											]
+										},
+										"promptCaching": {
+											"type": "string",
+											"enum": [
+												"off",
+												"5m",
+												"1h"
+											],
+											"description": "Cache a request that marks nothing to cache on deployments that cache only what a request marks. `5m` or `1h` is how long each cache entry lasts, and an hour costs more to write. `off` is the same as no setting. The longest required lifetime applies."
 										},
 										"textExtraction": {
 											"type": "object",
