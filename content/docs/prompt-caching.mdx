@@ -17,14 +17,13 @@ documents, at the start of the prompt. Put the parts that change at the end.
 Each provider decides what it caches and how you control it. [Compare providers](/docs/providers)
 summarizes the controls, and each provider's page has the details.
 
-The gateway forwards the cache fields of the selected provider. It does not convert one provider's
-controls into another's: a request with a cache field that its provider does not take returns `400`.
-The exception is `prompt_cache_key`, which only helps a provider send requests that share a prefix
-to the same cache. Every model accepts it, and only the models whose provider uses it receive it.
+The gateway sends each cache field only to the deployments whose provider takes it, and does not
+convert one provider's controls into another's. Another deployment runs the request without the
+field and caches as it does by default, so a request can carry the controls of every provider that
+it may reach.
 
-When you send cache controls, pin the request to one provider with a
-[deployment ID](/docs/models#choose-a-model) or `provider.only`. Pinning also keeps requests that
-share a prefix on the same cache.
+To keep requests that share a prefix on the same cache, pin them to one provider with a
+[deployment ID](/docs/models#choose-a-model) or `provider.only`.
 
 ## Cache requests that mark nothing
 

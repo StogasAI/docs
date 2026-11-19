@@ -64,20 +64,17 @@ Some models also have a Pro deployment[^pro], which does more work per request a
 
 ## How the gateway converts an effort
 
-| The deployment                       | The gateway                                                      |
-| ------------------------------------ | ---------------------------------------------------------------- |
-| Lists the effort                     | Sends it unchanged.                                              |
-| Lists other levels                   | Sends the nearest level. A tie goes to the higher level.         |
-| Has reasoning on or off only         | Turns reasoning on for any effort, and off for `none`.           |
-| Accepts only a token budget          | Converts the effort to a budget, as described below.             |
-| Does not reason                      | Accepts `none`, and leaves the deployment out for other efforts. |
-| Requires reasoning                   | Leaves the deployment out for `none`.                            |
-| Requires reasoning but has no levels | Leaves the deployment out for any effort.                        |
+| The deployment               | The gateway                                                 |
+| ---------------------------- | ----------------------------------------------------------- |
+| Lists the effort             | Sends it unchanged.                                         |
+| Lists other levels           | Sends the nearest level. A tie goes to the higher level.    |
+| Has reasoning on or off only | Turns reasoning on for any effort, and off for `none`.      |
+| Accepts only a token budget  | Converts the effort to a budget, as described below.        |
+| Does not reason              | Runs the request without reasoning.                         |
+| Always reasons               | Sends its lowest level, or its smallest budget, for `none`. |
 
-The request uses its other candidates. When the effort leaves out every candidate, the request fails
-with `400`.
-
-For example, `minimal` on a deployment with `low`, `medium` and `high` becomes `low`.
+One effort therefore works for every model, and no effort leaves a deployment out. For example,
+`minimal` on a deployment with `low`, `medium` and `high` becomes `low`.
 
 ## Check a deployment
 
@@ -105,8 +102,13 @@ Some deployments accept a maximum number of reasoning tokens:
 }
 ```
 
-The budget must be within the deployment's `reasoningMaxTokens`. Send a budget or an effort, not
-both.
+Send a budget or an effort, not both, and keep the budget below the request's output limit.
+
+- A budget outside the deployment's `reasoningMaxTokens` becomes the nearest bound.
+- A deployment that takes only levels gets `low` for a budget of up to 25% of the output limit,
+  `medium` up to 60% and `high` above that, or its nearest level.
+- When the output limit leaves no room for the deployment's smallest budget, the request runs
+  without reasoning, or returns `400` on a deployment that always reasons.
 
 When a deployment accepts only a budget, the gateway converts the effort to a position between the
 deployment's `minimum` and the output limit:
@@ -148,9 +150,8 @@ or `reasoning.summary` on Responses[^summary]:
 - `summarized` returns the summary in `reasoning`, with a blank line between its parts, and each
   part in a `reasoning.summary` entry of `reasoning_details`. `omitted` returns no summary.
 - On Responses, `auto`, `concise` and `detailed` ask for a summary, and `none` for no summary.
-- Every model that reasons takes every value, so one setting works for all of your models. A model
-  without summaries returns all of its reasoning with any value. The gateway leaves out a
-  deployment that does not reason.
+- Every model takes every value, so one setting works for all of your models. A model without
+  summaries returns all of its reasoning with any value.
 - Omit the field to keep the provider's default.
 - The summary changes what you see, not what you pay.
 
@@ -228,8 +229,8 @@ including reasoning.
     [progress updates](/docs/providers/anthropic#progress-updates), which other models treat as
     `omitted`, and return the same summary for `auto`, `concise` and `detailed`. The gateway gets
     the summaries of GPT models
-    [through Responses](/docs/providers#chat-completions-through-responses), so `summarized`
-    returns `400` with a field that Responses lack, such as `seed`, `stop` or `n` above 1.
+    [through Responses](/docs/providers#chat-completions-through-responses), so a request
+    with a field that Responses lack, such as `stop` or `n` above 1, returns no summary.
 
 [^claude]:
     Claude also checks the system prompt, tools and earlier messages before its reasoning. See

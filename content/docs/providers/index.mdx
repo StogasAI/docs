@@ -43,9 +43,11 @@ The catalog names the company that runs each deployment in `deployment.hosting`,
 ## Request fields
 
 The gateway checks each request against the selected deployment before it calls the provider. A
-field that the provider cannot accept, or that the gateway cannot price, returns `400` with no
-charge, and so does an unknown top-level field. The
-[compatibility notes](/docs/reference/provider-behavior) list fields that the gateway never accepts.
+field that the deployment cannot honor, or that the gateway cannot price, returns `400` with no
+charge, and so does an unknown top-level field. A deployment runs a request without a
+[setting that it lacks](/docs/reference/provider-behavior#settings-that-a-deployment-lacks), such
+as `seed`. The [compatibility notes](/docs/reference/provider-behavior) list fields that the
+gateway never accepts.
 
 ## Translated requests
 
@@ -62,7 +64,7 @@ Responses when its `reasoning_details` hold encrypted reasoning that the gateway
 OpenAI or Azure, or when it has `tools` or `reasoning.display` set to `summarized` with any
 reasoning effort but `none`. OpenAI's Chat Completions refuse function tools while the model
 reasons, and only Responses return reasoning summaries and take back earlier reasoning. A request
-that Responses cannot carry keeps Chat Completions, or returns `400` when it asks for summaries.
+that Responses cannot carry keeps Chat Completions, which return no reasoning summaries.
 Otherwise a deployment that takes the API that you call gets it. A route in `model` chooses the API,
 as in `route:openai-chat-completions gpt-5.6-sol`.
 
@@ -76,7 +78,7 @@ another deployment can serve it.
 A translated request returns `400` for what Chat Completions cannot carry:
 
 - `include` values other than `message.output_text.logprobs` and `reasoning.encrypted_content`
-- `max_tool_calls`, and `truncation` set to `auto`
+- `max_tool_calls`
 - hosted and custom tools, such as `web_search`, and tool choices that name them
 - a `reasoning.summary` other than `auto` or `none`
 - input items other than messages, function calls, their outputs and reasoning
@@ -85,7 +87,7 @@ A translated request returns `400` for what Chat Completions cannot carry:
 - `stream_options.include_obfuscation` set to `true`
 
 The deployment's Chat Completions limits apply as well, so Chutes returns `400` for log
-probabilities and `text.verbosity`. Reasoning comes back as text, which `reasoning.encrypted_content`
+probabilities. Reasoning comes back as text, which `reasoning.encrypted_content`
 does not change. A streamed reply sends reasoning as `response.reasoning_text` events, and its
 function calls arrive whole when the reply ends. Log probabilities cover only the output text, so
 a reply that also has reasoning or tool calls has none when the provider's tokens do not join into
@@ -95,10 +97,8 @@ exactly that text.
 
 A translated request returns `400` for what Responses cannot carry:
 
-- `seed`, `stop`, `logit_bias` and `prediction`
+- `stop`, `logit_bias` and `web_search_options`
 - `n` above 1
-- message `name`
-- `prompt_cache_breakpoint` in a tool message
 
 OpenAI and Azure deployments return their reasoning encrypted in `reasoning_details`. Send it back
 unchanged in the assistant message, and the model continues from that reasoning.

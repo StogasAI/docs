@@ -1974,7 +1974,7 @@
 					},
 					"frequency_penalty": {
 						"type": "number",
-						"description": "Lowers the chance of repeating tokens by how often they appear. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "Lowers the chance of repeating tokens by how often they appear. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"logit_bias": {
 						"type": "object",
@@ -2045,11 +2045,11 @@
 					},
 					"presence_penalty": {
 						"type": "number",
-						"description": "Lowers the chance of repeating tokens that already appear. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "Lowers the chance of repeating tokens that already appear. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"repetition_penalty": {
 						"type": "number",
-						"description": "Penalizes tokens that already appear, where `1` means no penalty. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "Penalizes tokens that already appear, where `1` means no penalty. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"prompt_cache_key": {
 						"type": "string",
@@ -2199,7 +2199,7 @@
 					},
 					"seed": {
 						"type": "integer",
-						"description": "Asks the provider to sample the same way each time. Results can still differ."
+						"description": "Asks the provider to sample the same way each time. Results can still differ. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"service_tier": {
 						"type": [
@@ -2252,7 +2252,7 @@
 					"temperature": {
 						"type": "number",
 						"default": 1,
-						"description": "Passed to the provider as is. The provider decides which values its model accepts."
+						"description": "The provider decides which values its model accepts. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"tool_choice": {
 						"type": [
@@ -2274,11 +2274,11 @@
 					},
 					"top_k": {
 						"type": "integer",
-						"description": "Sample from the K most likely tokens. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "Sample from the K most likely tokens. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"top_p": {
 						"type": "number",
-						"description": "Passed to the provider as is. The provider decides which values its model accepts."
+						"description": "The provider decides which values its model accepts. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"safety_identifier": {
 						"type": [
@@ -2296,11 +2296,11 @@
 					},
 					"verbosity": {
 						"type": "string",
-						"description": "How long the answer is: `low`, `medium` or `high`. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "How long the answer is: `low`, `medium` or `high`. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"reasoning_display": {
 						"type": "string",
-						"description": "Anthropic only: `summarized`, `omitted` or `updates`. See [Anthropic](/docs/providers/anthropic#progress-updates)."
+						"description": "`summarized`, `omitted` or `updates`. See [Reasoning](/docs/reasoning#show-or-hide-the-reasoning-summary)."
 					},
 					"web_search_options": {
 						"type": "object",
@@ -3001,15 +3001,15 @@
 					"temperature": {
 						"type": "number",
 						"default": 1,
-						"description": "Passed to the provider as is. The provider decides which values its model accepts."
+						"description": "The provider decides which values its model accepts. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"frequency_penalty": {
 						"type": "number",
-						"description": "Lowers the chance of repeating tokens by how often they appear. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "Lowers the chance of repeating tokens by how often they appear. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"presence_penalty": {
 						"type": "number",
-						"description": "Lowers the chance of repeating tokens that already appear. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "Lowers the chance of repeating tokens that already appear. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"text": {
 						"type": "object",
@@ -3046,18 +3046,18 @@
 					},
 					"top_k": {
 						"type": "integer",
-						"description": "Sample from the K most likely tokens. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "Sample from the K most likely tokens. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"top_p": {
 						"type": "number",
-						"description": "Passed to the provider as is. The provider decides which values its model accepts."
+						"description": "The provider decides which values its model accepts. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"tool_choice": {
 						"type": [
 							"string",
 							"object"
 						],
-						"description": "`auto`, `none`, `required`, one named tool, or `allowed_tools`. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "`auto`, `none`, `required`, one named tool, or `allowed_tools`. Not every provider accepts every choice; see [Providers](/docs/providers)."
 					},
 					"tools": {
 						"type": "array",
@@ -3068,7 +3068,7 @@
 					},
 					"truncation": {
 						"type": "string",
-						"description": "What the provider does with input longer than the context window. Not every provider accepts it; see [Providers](/docs/providers)."
+						"description": "What the provider does with input longer than the context window. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
 					},
 					"safety_identifier": {
 						"type": [
@@ -4066,7 +4066,7 @@
 			},
 			"AnthropicTaskBudget": {
 				"type": "object",
-				"description": "Anthropic only. See [Anthropic request fields](/docs/providers/anthropic#anthropic-request-fields). It guides the model and does not lower the hold.",
+				"description": "Guides the model and does not lower the hold. See [Anthropic request fields](/docs/providers/anthropic#anthropic-request-fields). A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks).",
 				"properties": {
 					"type": {
 						"type": "string",

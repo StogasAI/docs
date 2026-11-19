@@ -4,8 +4,10 @@ description: Where the API differs from calling a provider directly.
 ---
 
 The gateway accepts the OpenAI Chat Completions and Responses formats for every provider. It checks
-each request against the selected deployment before it calls the provider. A field that the
-deployment cannot accept, or that the gateway cannot price, returns `400` and costs nothing. Each
+each request against the selected deployment before it calls the provider. A field that decides
+what the reply holds, which tools the model can call, what the request costs or where its data is
+kept returns `400` when the deployment cannot honor it, and costs nothing. A
+[setting that only tunes the reply](#settings-that-a-deployment-lacks) never fails a request. Each
 [provider page](/docs/providers) lists the fields and tools that only that provider accepts.
 
 ## Rejected fields
@@ -33,6 +35,44 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
 | Responses        | `response_format`, `verbosity`         | `text.format` and `text.verbosity`                                   |
 | Responses        | `web_search_options`                   | A `web_search` tool                                                  |
 
+## Settings that a deployment lacks
+
+```json
+{
+	"model": "gpt-5.6-sol",
+	"messages": [{ "role": "user", "content": "Name three rivers." }],
+	"temperature": 0.2,
+	"seed": 7,
+	"verbosity": "low"
+}
+```
+
+A setting tunes how the model samples, how much it writes or reasons, or how the provider caches
+the prompt. A deployment that has no control for a setting runs the request without it, so one set
+of settings works for every model and a fallback never fails over one of them.
+
+| Left out where a deployment lacks it                                                                   | Returns `400` where a deployment lacks it  |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
+| `temperature`, `top_p`, `top_k`, `frequency_penalty`, `presence_penalty`, `repetition_penalty`, `seed` | `logit_bias`, `logprobs`, `top_logprobs`   |
+| `verbosity`, `prediction`, `task_budget`, `truncation`                                                 | `response_format`, `tools`, `tool_choice`  |
+| `cache_control`, `prompt_cache_retention`, `prompt_cache_options`, `prompt_cache_breakpoint`           | `web_search_options`, `context_management` |
+| A message's `name`                                                                                     | `include`, images and files                |
+
+- A [reasoning](/docs/reasoning) control becomes the nearest setting of each deployment.
+- A value in the wrong form returns `400` on every deployment, so a request never depends on
+  which deployment runs it.
+- The [request record](/docs/request-records) shows the settings that the provider received.
+- The catalog says which deployments take a setting. To use only those, filter on the field in a
+  [routing policy](/docs/policies/routing):
+
+```json title="Only deployments that take a seed"
+{
+	"routing": {
+		"filter": "deployment.sampling.seed"
+	}
+}
+```
+
 ## Fields that the gateway changes
 
 - An unknown top-level field returns `400` with the field in `param`, as on OpenAI. `null` counts as
@@ -55,8 +95,9 @@ deployment cannot accept, or that the gateway cannot price, returns `400` and co
   go to the request record, not to the provider.
 - `max_tokens` is another name for `max_completion_tokens` on Chat Completions.
 - Streamed Chat Completions always include usage.
-- Sampling values, such as `temperature`, go to the provider unchanged. The provider decides which
+- Sampling values, such as `temperature`, reach the provider unchanged. The provider decides which
   values its model accepts.
+- `stop_sequences` is another name for `stop` on Chat Completions.
 
 ## Conversation state
 

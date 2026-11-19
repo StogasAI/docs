@@ -144,8 +144,8 @@ runs, in deployments without `-anthropic-hosted`, takes no file IDs, so send fil
 
 ## Models of other authors
 
-- Mistral's models take a message `name` only on tool results, as on Mistral's own API. A `name`
-  on another message gets `400`.
+- Mistral's models take a message `name` only on tool results, as on Mistral's own API. They run
+  a request without the `name` of another message.
 - When a deployment's [`notes`](/docs/policies/routing-fields) say that its model reasons past the
   output limit, its requests hold the deployment's full output limit, and you pay for all of the
   model's output.

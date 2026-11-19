@@ -58,7 +58,7 @@ prefix:
 
 ## Anthropic request fields
 
-These fields work only on Anthropic deployments:
+Claude takes these fields:
 
 | Field                | Use                                                                                                                                       |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,6 +66,10 @@ These fields work only on Anthropic deployments:
 | `stop_sequences`     | Another name for `stop`. Do not send both.                                                                                                |
 | `task_budget`        | Tell the model how many tokens an agent task can use.                                                                                     |
 | `context_management` | [Clear old thinking or tool results](https://platform.claude.com/docs/en/build-with-claude/context-editing), or compact the conversation. |
+
+A deployment that lacks `top_k` or `task_budget` runs the request
+[without it](/docs/reference/provider-behavior#settings-that-a-deployment-lacks). A model that is
+not Claude returns `400` for `context_management`.
 
 ```json title="Task budget and context editing"
 {
@@ -102,7 +106,6 @@ On Responses, Claude returns each thinking block as its own reasoning item, whos
   the newest user message, tool results or hosted tool call. It must be the last message or come
   right before Claude's reply. A model that does not take such a message, and any other position,
   gets a 400 error.
-- `reasoning.context` takes only `auto`.
 
 ### Progress updates
 
@@ -151,6 +154,8 @@ Some Claude models can write a short update before a tool call during long work.
   returns a 400 error together with a reasoning token budget. Some models take only `auto` and
   `none`, and return a 400 error for the other choices.
 - `custom` tools and remote MCP servers are not available.
+- Claude gets only the tools that an `allowed_tools` choice lists. A list that changes between
+  requests changes the start of the prompt, so Claude reads less of it from its cache.
 - Claude gets each tool of a [namespace](/docs/model-tools#group-tools-in-namespaces) as a
   function, so a call in `input` must name a tool that `tools` declares in its namespace.
 
