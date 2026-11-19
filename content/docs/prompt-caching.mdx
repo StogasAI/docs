@@ -29,7 +29,8 @@ share a prefix on the same cache.
 ## Cache requests that mark nothing
 
 Some deployments cache only the parts of a prompt that a request marks, and most clients mark
-nothing. A policy can have the gateway mark such a request:
+nothing. A new organization's policy starts with this [default rule](/docs/policies/rules#defaults),
+which has the gateway mark such a request. You can edit or remove it:
 
 ```json title="Organization policy"
 {
@@ -45,7 +46,9 @@ conversation that starts with them reads them too.
 
 - `5m` or `1h` is how long each cache entry lasts after its last read. An hour costs more to write,
   and pays off when a conversation pauses for more than five minutes.
-- `off` is the same as no setting. Set it in a key policy to replace the default.
+- `off` is the same as no setting. Set it in a key policy to replace the default where requests
+  do not repeat: a cache write costs more than ordinary input, so a prompt that no later request
+  reads costs more when the gateway marks it.
 - A request that marks anything itself keeps only its own marks.
 - The longest lifetime that a policy requires applies.
 - A prompt shorter than the deployment's smallest cache entry (`promptCacheMinimumTokens` in the
