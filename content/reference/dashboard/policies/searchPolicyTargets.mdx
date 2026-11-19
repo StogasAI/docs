@@ -1,0 +1,31 @@
+---
+title: Find resources that a policy can name
+description: Returns the folders, grants, roles, members, BYOK credentials or
+  keys that the policy applies to, that you can view and whose name contains the
+  search text. A policy names them by ID in delegation exceptions and rule
+  exclusions.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: GET
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Returns the folders, grants, roles, members, BYOK credentials or keys
+          that the policy applies to, that you can view and whose name contains
+          the search text. A policy names them by ID in delegation exceptions
+          and rule exclusions.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/policies/{scope}/{id}/targets', method: 'get' }]} />
+    </>
+  );
+}

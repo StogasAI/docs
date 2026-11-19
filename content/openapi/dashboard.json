@@ -5393,6 +5393,80 @@
 													}
 												]
 											}
+										},
+										"targets": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"folder",
+															"grant",
+															"role",
+															"member",
+															"credential",
+															"key"
+														]
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													},
+													"name": {
+														"anyOf": [
+															{
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 100
+															},
+															{
+																"type": "null"
+															}
+														],
+														"description": "Null when you cannot view the resource."
+													}
+												},
+												"required": [
+													"scope",
+													"id",
+													"name"
+												],
+												"additionalProperties": false
+											},
+											"description": "The resources that this policy names in delegation exceptions and rule exclusions, among those it applies to."
+										},
+										"unmatched": {
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"folder",
+															"grant",
+															"role",
+															"member",
+															"credential",
+															"key"
+														]
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													}
+												},
+												"required": [
+													"scope",
+													"id"
+												],
+												"additionalProperties": false
+											},
+											"description": "The IDs that this policy names and that match no resource it applies to, because the resource was deleted or moved."
 										}
 									},
 									"required": [
@@ -5401,7 +5475,9 @@
 										"enabled",
 										"expiresAt",
 										"policies",
-										"notes"
+										"notes",
+										"targets",
+										"unmatched"
 									],
 									"additionalProperties": false
 								}
@@ -5546,6 +5622,146 @@
 										"revision",
 										"enabled",
 										"expiresAt"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/policies/{scope}/{id}/targets": {
+			"get": {
+				"operationId": "searchPolicyTargets",
+				"tags": [
+					"Policies"
+				],
+				"summary": "Find resources that a policy can name",
+				"description": "Returns the folders, grants, roles, members, BYOK credentials or keys that the policy applies to, that you can view and whose name contains the search text. A policy names them by ID in delegation exceptions and rule exclusions.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "scope",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"organization",
+								"folder",
+								"grant",
+								"role",
+								"member",
+								"credential",
+								"key"
+							]
+						}
+					},
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					},
+					{
+						"name": "scope",
+						"in": "query",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"folder",
+								"grant",
+								"role",
+								"member",
+								"credential",
+								"key"
+							]
+						}
+					},
+					{
+						"name": "search",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string",
+							"maxLength": 100
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"targets": {
+											"maxItems": 50,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"scope": {
+														"type": "string",
+														"enum": [
+															"folder",
+															"grant",
+															"role",
+															"member",
+															"credential",
+															"key"
+														]
+													},
+													"id": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 64
+													},
+													"name": {
+														"anyOf": [
+															{
+																"type": "string",
+																"minLength": 1,
+																"maxLength": 100
+															},
+															{
+																"type": "null"
+															}
+														],
+														"description": "Null when you cannot view the resource."
+													}
+												},
+												"required": [
+													"scope",
+													"id",
+													"name"
+												],
+												"additionalProperties": false
+											}
+										}
+									},
+									"required": [
+										"targets"
 									],
 									"additionalProperties": false
 								}
