@@ -202,6 +202,20 @@ These fields describe the candidate's [credential](/docs/byok).
 
 <RoutingFields group="credential" />
 
+A [conditional limit](/docs/policies/limits#conditional-limits) on `credential.kind` counts only the
+requests that use that kind of credential:
+
+```json title="Spend at most $100 through Stogas managed"
+{
+	"rules": {
+		"managed_budget": {
+			"when": "credential.kind == 'managed'",
+			"limits": { "spend": { "usd": "100" } }
+		}
+	}
+}
+```
+
 Data handling fields already include what an account option changes, so
 `deployment.dataHandling.zeroDataRetention == true` accepts the same candidates without naming an
 option. Use these fields to require one option by its ID, or to refuse options that only the owner
