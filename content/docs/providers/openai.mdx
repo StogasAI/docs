@@ -62,10 +62,12 @@ The gateway sends `prompt_cache_key`, `prompt_cache_options`, `prompt_cache_brea
 
 Besides `function` tools, Responses accepts `custom` tools,
 [namespaces](/docs/model-tools#group-tools-in-namespaces),
-[tool search](/docs/model-tools#tool-search) and `web_search`. Search models take
+[tool search](/docs/model-tools#tool-search), `web_search` and
+[remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models take
 `web_search_options` on Chat Completions instead of `tools`.
 
 - A model without tool search returns `400` for deferred tools.
+- `max_tool_calls` counts web searches and the calls of remote MCP servers together.
 - `web_search` takes `search_content_types`. With `["text", "image"]`, a search can return images
   too.
 

@@ -101,7 +101,10 @@
 	"request.interface": "`chat_completions` or `responses`.",
 	"request.time": "When the request started. The same value applies to every candidate.",
 	"request.bodyBytes": "Size of the JSON body as sent, before redaction.",
-	"request.hostedTools": "The [hosted tools](/docs/model-tools#hosted-tools) that the request lets the model call: `web_search` or `web_fetch`. Empty on Chat Completions.",
+	"request.hostedTools": "The [hosted tools](/docs/model-tools#hosted-tools) that the request lets the model call: `web_search`, `web_fetch` or `mcp`. `mcp` is listed whenever the request has an `mcp` tool. Empty on Chat Completions.",
 	"request.clientTools": "Names of the `function` and `custom` tools that the request lets the model call.",
+	"request.mcpServers": "The [remote MCP servers](/docs/model-tools#remote-mcp-servers) that the request lists, whatever `tool_choice` says: the host of a `server_url`, such as `mcp.example.com`, a `connector_id` as `connector:<id>` or a `tunnel_id` as `tunnel:<id>`. All are lowercase. Empty on Chat Completions.",
+	"request.mcpServersWithoutApproval": "The servers in `request.mcpServers` whose `require_approval` lets a call run [without approval](/docs/model-tools#calls-without-approval): `never`, or a `never` filter.",
+	"request.mcpTools": "Each tool that `allowed_tools` names on a server in `request.mcpServers`, as the server, a slash and the tool's name, such as `mcp.example.com/search`. A server that names no tools reads as `mcp.example.com/*`.",
 	"request.systemMessages": "Whether the request sends a `system` or `developer` message, or `instructions`."
 }

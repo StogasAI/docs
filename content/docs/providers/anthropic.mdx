@@ -150,7 +150,7 @@ Some Claude models can write a short update before a tool call during long work.
 - A `required` or named `tool_choice` makes Claude call the tool without reasoning first, and
   returns a 400 error together with a reasoning token budget. Some models take only `auto` and
   `none`, and return a 400 error for the other choices.
-- `custom` tools are not available.
+- `custom` tools and remote MCP servers are not available.
 - Claude gets each tool of a [namespace](/docs/model-tools#group-tools-in-namespaces) as a
   function, so a call in `input` must name a tool that `tools` declares in its namespace.
 

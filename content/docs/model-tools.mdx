@@ -12,6 +12,8 @@ A request can give the model two kinds of tools:
   for tokens.
 - **Hosted tools**, such as web search, run at the provider during the request. They can have a
   price per call.
+- **Remote MCP servers** give the model the tools of a server that you choose. The provider calls
+  them during the request.
 
 ## Call a function
 
@@ -139,41 +141,6 @@ its namespace.
 - `tool_choice` can name only top-level tools.
 - [Policies](#restrict-tools-with-a-policy) read a tool in a namespace by its own name.
 
-## Use an MCP server
-
-Connect to the MCP server in your application, and pass its tools to the model as functions, for
-example in a namespace for each server:
-
-```jsonc title="Responses"
-{
-	"model": "gpt-5.6-sol",
-	"input": "Which pull requests wait for my review?",
-	"tools": [
-		{
-			"type": "namespace",
-			"name": "tracker",
-			"description": "Tools of the tracker MCP server.",
-			"tools": [
-				{
-					"type": "function",
-					"name": "list_pull_requests", // The name, description and inputSchema from tools/list.
-					"description": "List the pull requests of a repository.",
-					"parameters": {
-						"type": "object",
-						"properties": { "state": { "type": "string" } }
-					}
-				}
-			]
-		}
-	]
-}
-```
-
-Run each call with the server's `tools/call`, and send the result back as a `function_call_output`.
-[Redaction](/docs/pii-redaction), [exports](/docs/export) and [policies](#restrict-tools-with-a-policy)
-then cover the server's tools and results as they cover your other tools. A request with an `mcp`
-tool gets `400`, because the provider would call the server itself, outside these checks.
-
 ## Tool search
 
 On OpenAI models[^tool-search], a `tool_search` tool keeps tools with `defer_loading` out of the
@@ -242,6 +209,7 @@ With `"execution": "client"`, your app runs the search. Give the tool a `descrip
 - A `tool_search_output` loads `function`, `custom` and `namespace` tools, which the model then
   calls as tools of the request. Your app's search can load tools that `tools` does not declare.
 - A search costs only its tokens.
+- MCP tools cannot be deferred.
 
 ## Hosted tools
 
@@ -329,7 +297,8 @@ route's deployments:
 ```
 
 `tool_choice: "none"` lets the model call no tool, and an `allowed_tools` choice only the tools that
-it lists, so the other tools' data handling does not count. `request.hostedTools` lists the hosted
+it lists, so the other tools' data handling does not count. An [`mcp` tool](#your-data-and-the-server)
+always counts. `request.hostedTools` lists the hosted
 tools that the model may call, so a policy can also refuse a tool by name:
 
 ```json title="policy.json"
@@ -355,16 +324,156 @@ reserves for them:
 The provider does not stop at the hold. Settlement charges the calls and tokens that the provider
 reports, even when they are more than the hold.
 
+## Remote MCP servers
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Which pull requests wait for my review?",
+	"tools": [
+		{
+			"type": "mcp",
+			"server_label": "tracker", // Each server needs its own label.
+			"server_url": "https://mcp.example.com/sse",
+			"authorization": "<the server's token>",
+			"allowed_tools": ["list_pull_requests"] // Optional. The model sees only these tools.
+		}
+	]
+}
+```
+
+The provider connects to each server, lists its tools for the model and makes the calls that the
+model asks for. Responses accepts `mcp` tools on the routes that run the `mcp` hosted tool in the
+[catalog](https://stogas.ai/catalog)[^mcp]. `connector_id` or `tunnel_id` can name the server
+instead of `server_url`. Two servers can offer tools with the same name, because each call names
+its server.
+
+<Steps>
+<Step>
+
+### Read the approval request
+
+By default, each call waits for your approval. The response has an `mcp_approval_request` item
+with the tool's name and arguments, and the call has not run.
+
+</Step>
+<Step>
+
+### Send your decision
+
+Send the request again with the response's output items after your input, and an
+`mcp_approval_response` for each approval request:
+
+```jsonc
+"input": [
+	{ "role": "user", "content": "Which pull requests wait for my review?" },
+	// The output items of the response, unchanged.
+	{ "type": "mcp_list_tools", "id": "mcpl_1", "server_label": "tracker", "tools": [ /* ... */ ] },
+	{
+		"type": "mcp_approval_request",
+		"id": "mcpr_1",
+		"server_label": "tracker",
+		"name": "list_pull_requests",
+		"arguments": "{\"state\":\"open\"}"
+	},
+	{ "type": "mcp_approval_response", "approval_request_id": "mcpr_1", "approve": true }
+]
+```
+
+Keep the `mcp` tool in `tools`, with its `authorization`, because the provider keeps no copy of it.
+The approved call runs, and the response has its `mcp_call` item. An approval whose call has not run
+must answer an `mcp_approval_request` in the same input, from a server that `tools` declares, or
+the request gets `400`.
+
+</Step>
+</Steps>
+
+### Calls without approval
+
+`require_approval: "never"` lets the provider call any tool of the server without asking. To skip
+approval only for some tools, name them:
+
+```jsonc
+"require_approval": { "never": { "tool_names": ["list_pull_requests"] } }
+```
+
+A filter's `tool_names` must name at least one tool. `tool_choice` can select a server, as in
+`{ "type": "mcp", "server_label": "tracker" }`, and an `allowed_tools` choice can list servers.
+
+### Holds for MCP
+
+A server decides how long its tool list and its results are, so the
+[hold](/docs/usage#how-a-request-is-charged) reserves 8,000 input tokens for each of these:
+
+- The tool list of each server in `tools`. A server whose `mcp_list_tools` item you send back in
+  `input` adds none.
+- Each `mcp_approval_response` with `approve: true` whose call has not run. A call has run when an
+  `mcp_call` in the input names its `approval_request_id`, so the approvals of earlier turns that
+  you send again add nothing.
+- Ten calls when some tool runs without approval, or `max_tool_calls` if you set it. Hosted tools
+  share that limit, so a request that also searches the web reserves these calls once.
+
+`tool_choice: "none"`, or a choice of another tool, leaves calls without approval out of the hold.
+Tool lists still count, because the provider fetches them whatever `tool_choice` says, and so do
+approved calls, because they answer earlier requests. You pay for the tokens of tool lists and
+results, with no price per call. Settlement charges what the provider reports, even when it is more
+than the hold.
+
+### Your data and the server
+
+- The server receives the arguments that the model writes, and what it returns goes to the model.
+  [Redaction](/docs/pii-redaction) and [policies](/docs/policies) cover what you send, not what
+  the server returns.
+- Your request names the server, so the catalog states every data handling fact of the `mcp` tool
+  as unknown. A [routing filter](/docs/policies/routing) on data handling refuses every request
+  that lists an `mcp` tool, whatever `tool_choice` says.
+- To use a server under such a policy, connect to it in your application and pass its tools as
+  [functions](#call-a-function). Redaction, [exports](/docs/export) and policies then cover its
+  tools and results as they cover your other tools.
+- The gateway sends `authorization`, `headers` and `server_url` to the provider unchanged, and
+  redaction skips the server's settings. The response returns the tool as the provider does, with
+  `<redacted>` for `authorization` and for each header value.
+- Exports and provider error messages show `[omitted]` for those values. An export keeps only the
+  scheme, host and port of `server_url`, because a URL can carry a token too.
+- With redaction on, the arguments of an `mcp_approval_request` that you send back are redacted
+  too, so the approved call runs with the redacted arguments.
+- The gateway returns `502` instead of a response with an item from a server that the request did
+  not declare, or with a call from a server that `tool_choice` leaves out.
+
 ## Restrict tools with a policy
 
 A [routing filter](/docs/policies/routing) can read the tools that a request lets the model call. A
-request that the filter refuses gets `model_unavailable`. This policy refuses requests that let the
-model call `run_shell`:
+request that the filter refuses gets `model_unavailable`. This policy allows only one MCP server
+and one connector:
 
 ```json title="policy.json"
 {
 	"routing": {
-		"filter": "!('run_shell' in request.clientTools)"
+		"filter": "request.mcpServers.all(server, server in ['mcp.example.com', 'connector:connector_googledrive'])"
+	}
+}
+```
+
+`request.mcpServers` holds the host of each `server_url`, a `connector_id` after `connector:` and a
+`tunnel_id` after `tunnel:`, all in lowercase.
+
+This one refuses one tool of a server. A server whose `allowed_tools` names no tools reads as
+`mcp.example.com/*`, because the model can call any of its tools, so the filter refuses that too:
+
+```json title="policy.json"
+{
+	"routing": {
+		"filter": "!request.mcpTools.exists(tool, tool in ['mcp.example.com/*', 'mcp.example.com/delete_repo'])"
+	}
+}
+```
+
+This one lets only one server run calls without your application's approval:
+
+```json title="policy.json"
+{
+	"routing": {
+		"filter": "request.mcpServersWithoutApproval.all(server, server == 'mcp.example.com')"
 	}
 }
 ```
@@ -372,11 +481,19 @@ model call `run_shell`:
 | Filter                                                           | Effect                                                             |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `size(request.clientTools) == 0`                                 | Refuses every tool that your application runs                      |
-| `size(request.hostedTools) == 0`                                 | Refuses hosted tools                                               |
+| `!('mcp' in request.hostedTools)`                                | Refuses remote MCP servers                                         |
+| `size(request.mcpServersWithoutApproval) == 0`                   | Refuses MCP calls that run without approval                        |
+| `!('run_shell' in request.clientTools)`                          | Refuses requests that let the model call `run_shell`               |
+| `size(request.hostedTools) == 0`                                 | Refuses hosted tools, remote MCP servers included                  |
 | `!(provider.id == 'anthropic' && size(request.hostedTools) > 0)` | Sends requests with hosted tools to providers other than Anthropic |
 
-- `tool_choice: "none"` empties the lists, because the model can call no tool. A choice of one
-  function still counts every function.
+- List the MCP servers to allow rather than those to refuse, because one server can have many
+  hosts. A `server_url` without a host matches no server in a list.
+- `tool_choice: "none"` empties `request.clientTools` and takes web tools out of
+  `request.hostedTools`, because the model can call none of them. A choice of one function still
+  counts every function.
+- An `mcp` tool counts whenever the request lists it, whatever `tool_choice` says, because the
+  provider can connect to a listed server before the model chooses a tool.
 - `request.clientTools` lists the tools of a namespace by their own names, without the namespace,
   and the tools that a [tool search](#tool-search) in `input` loaded.
 - A provider's shell or file editing tool[^provider-tools] counts under its name: `shell`,
@@ -388,7 +505,7 @@ model call `run_shell`:
 
 These tools return `400` before the gateway calls a provider:
 
-- Remote MCP servers, whose tools you can [pass as functions](#use-an-mcp-server)
+- Remote MCP servers on routes that do not run the `mcp` hosted tool
 - File search and hosted retrieval
 - Code interpreter, hosted shell and standalone code execution
 - Computer use and image generation
@@ -415,6 +532,8 @@ These tools return `400` before the gateway calls a provider:
 [^tool-search]: [OpenAI](/docs/providers/openai#tools). Other models return `400` for deferred tools.
 
 [^replay]: [Claude](/docs/providers/anthropic#tools) reads a search again only with the encrypted content of its results.
+
+[^mcp]: [OpenAI](/docs/providers/openai#tools) runs remote MCP servers.
 
 [^content]:
     [Claude](/docs/providers/anthropic#tools) reads every earlier result again in each later step
