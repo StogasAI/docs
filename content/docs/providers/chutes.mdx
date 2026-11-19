@@ -85,6 +85,12 @@ processing needs it, and they name no storage place or retention period. The cat
 the storage location as `unknown` and no retention on every Chutes deployment. To keep requests
 on TEE deployments, filter on `deployment.dataHandling.endToEndEncrypted`.
 
+Chutes does not say that it keeps prompt caches apart between accounts, so
+`dataHandling.isolatedPromptCache` is `false` on every Chutes deployment. When another account
+shares the cache, its request that starts with the same tokens as a recent one of yours shows
+this in its cached token count and response time. To keep prompts out of caches that other
+accounts can share, filter on `deployment.dataHandling.isolatedPromptCache`.
+
 ## Supported requests
 
 Chutes supports Chat Completions with text messages, and Responses through
