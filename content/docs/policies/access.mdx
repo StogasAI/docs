@@ -209,19 +209,20 @@ addresses, ranges and `onion`, which name networks that you control.
 
 ## Countries
 
-This policy accepts requests only from the United States and Canada:
+This policy accepts requests only from the European Union, Switzerland and the United Kingdom:
 
 ```json title="policy.json"
 {
 	"access": {
-		"countries": { "allow": ["US", "CA"] }
+		"countries": { "allow": ["eu", "CH", "GB"] }
 	}
 }
 ```
 
-- List uppercase ISO 3166-1 alpha-2 codes, such as `DE`, `GB` for the United Kingdom and `XK` for
-  Kosovo. The `allow` list of the countries of the European Union is
-  `["AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK"]`.
+- List a country by its uppercase ISO 3166-1 alpha-2 code, such as `DE`, `GB` for the United
+  Kingdom or `XK` for Kosovo. List a region by its lowercase ID, such as `eu`, `europe` or `apac`,
+  for every country that it covers. A [place's page](https://stogas.ai/locations/eu) shows the
+  countries of a region.
 - The gateway finds the country of the address that it reads from the connection in
   [DB-IP](https://db-ip.com)'s monthly data. A VPN, proxy or Tor exit relay has the country of its
   own address, so add `"networks": { "deny": ["tor", "vpn", "hosting"] }` to refuse requests that
