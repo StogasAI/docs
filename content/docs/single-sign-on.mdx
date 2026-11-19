@@ -20,8 +20,9 @@ scopes, or only the first two when the provider's discovery document lists its s
 
 The issuer's OpenID Connect discovery document must name exactly that issuer. A multi-tenant
 endpoint, such as Microsoft's `common`, lets any tenant sign in, so it is refused. For Microsoft
-Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0` and add the `xms_edov` optional
-claim to the ID token, because Entra ID doesn't send `email_verified`.
+Entra ID, use `https://login.microsoftonline.com/<tenant-id>/v2.0` and add the `xms_edov` and
+`auth_time` optional claims to the ID token. Entra ID doesn't send `email_verified`, and without
+`auth_time` your members can't [confirm a sensitive change](#accounts) through it.
 
 ### SAML
 
