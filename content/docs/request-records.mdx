@@ -209,10 +209,10 @@ name how a request ended. A record has the first outcome in this table that fits
 The gateway sets each call's `status` from the provider's structured error type, code and HTTP
 status. Only failures that providers mark in no other way are read from the start of the message:
 
-- Anthropic's spend limits, low credit and workspace region refusals.
+- A provider's spend limits, low credit and region refusals.
 - Prompts longer than the deployment's context window.
-- Prompts that OpenAI's safety checks flag. They share the `invalid_prompt` code with prompts that
-  OpenAI refuses for other reasons.
+- Prompts that a provider's safety checks flag, where they share a code with prompts that the
+  provider refuses for other reasons.
   An unrecognized failure is
   `provider_error`. Each failed call also keeps the code from the provider's error reply in
   `error_code`, such as `invalid_prompt`, and `status:invalid_prompt` filters by it.
@@ -243,8 +243,8 @@ did not report it. An attempt without options omits the field.
 ## Request settings
 
 `request_settings` records the settings that control what the model generates, as the gateway sent
-them to the provider. It includes values that the gateway adds, such as the output limit that
-Anthropic requires. Chat Completions and Responses use the same names, and a format or tool choice
+them to the provider. It includes values that the gateway adds, such as an output limit that the
+provider requires. Chat Completions and Responses use the same names, and a format or tool choice
 keeps only its type:
 
 ```json title="Responses request"

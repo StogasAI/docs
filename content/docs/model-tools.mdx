@@ -143,7 +143,7 @@ its namespace.
 
 ## Tool search
 
-On OpenAI models[^tool-search], a `tool_search` tool keeps tools with `defer_loading` out of the
+On some models[^tool-search], a `tool_search` tool keeps tools with `defer_loading` out of the
 input until the model searches for them:
 
 ```jsonc title="Responses"
@@ -224,9 +224,9 @@ With `"execution": "client"`, your app runs the search. Give the tool a `descrip
 [catalog](https://stogas.ai/catalog) lists the hosted tools of each route. A request that lists a
 hosted tool goes only to deployments that run it, even when `tool_choice` lets the model call no
 tool. When no deployment for the request runs a tool, the gateway returns `400` with
-`unsupported_tool`. For example, Claude on AWS runs `web_fetch` only where Anthropic hosts it, so a
-request for `provider:aws claude-sonnet-5-5` with `web_fetch` goes to
-`aws-claude-sonnet-5-5-anthropic-hosted` and never to Bedrock.
+`unsupported_tool`. For example, when only one of a provider's deployments of a model runs
+`web_fetch`, a request for that provider and model with `web_fetch` goes to that deployment and
+never to the others.
 
 ```jsonc title="Responses"
 {

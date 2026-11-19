@@ -24,8 +24,8 @@ stream_max_retries = 0
 ```
 
 - Codex adds [web search](/docs/model-tools#hosted-tools) to every request. With `"live"`, every
-  model that runs web search can use it. Codex's default, `"cached"`, searches only OpenAI's index,
-  so requests to other models fail with `400`, and `"indexed"` fails on every model.
+  model that runs web search can use it. `"cached"` searches only OpenAI's index, so requests to
+  other models fail with `400`, and `"indexed"` fails on every model.
 - A model with no deployment that runs web search returns `unsupported_tool`. Set
   `web_search = "disabled"` to use it. [Compare providers](/docs/providers) shows which providers
   run web search.
