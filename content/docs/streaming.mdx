@@ -131,10 +131,14 @@ unclear whether the model ran, and a new request can run and bill it again. See
 
 Abort the request from your stop action, or close the stream in Python. This ends the response to
 your client. The provider still runs to completion so the gateway can record its final usage, and
-that usage is billed. Close streams you no longer need instead of leaving them unread.
+that usage is billed.[^chutes] Close streams you no longer need instead of leaving them unread.
 
 ## Time limits
 
 A request can run for up to 60 minutes, including quiet model processing. Keepalives do not extend
 this limit or a proxy's total-duration limit. A response write that makes no progress for one
 minute ends that response. To set shorter limits, use a [timeout policy](/docs/policies/timeouts).
+
+[^chutes]:
+    On [Chutes](/docs/providers/chutes#when-the-client-stops-early) TEE deployments, the gateway
+    stops a stream that no client receives, and you pay for the usage up to the stop.
