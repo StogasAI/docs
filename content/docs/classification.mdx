@@ -1,0 +1,82 @@
+---
+title: Classification
+description: Record the language of each request and reply, and count the hidden characters in their text.
+icon: ScanText
+---
+
+Classifiers label the text of each request and its reply. The
+[request record](/docs/request-records#plugin-metrics) keeps the labels and never the text, and
+[Analytics](/docs/analytics#filters) groups and filters requests by them. Classifiers do not change
+the request or the reply, and they add no charge.
+
+```json title="Policy"
+{
+	"plugins": { "classification": ["language", "hidden_characters"] }
+}
+```
+
+```json title="Request record"
+{
+	"plugins": {
+		"classification": {
+			"language": { "input": "de", "output": "de" },
+			"hidden_characters": { "input": 0, "output": 0 }
+		}
+	}
+}
+```
+
+| Classifier          | Records                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------ |
+| `language`          | The [language](#language) of the newest user message and of the reply                |
+| `hidden_characters` | The number of [hidden characters](#hidden-characters) in the input and in the output |
+
+## Language
+
+`input` is the language of the newest user message that holds prose, and `output` is the language
+of the reply's text. Each is a two-letter ISO 639-1 tag, or `und` when the classifier cannot tell,
+as for a short message or one that mixes languages.
+
+- The classifier reads the first 512 bytes of prose, so a text that changes language gets the
+  language that it starts in. It skips fenced code blocks, whose keywords would read as English.
+- `input` reads the message as your app sent it, before [PII redaction](/docs/pii-redaction).
+- `input` is missing when no user message holds prose, such as in a request that sends only tool
+  results. `output` is missing when the reply holds no text, such as a reply with only tool calls.
+- Text in a language that is not in the list below can get the tag of a related language.
+
+The classifier knows these languages: Afrikaans `af`, Akan `ak`, Amharic `am`, Arabic `ar`,
+Armenian `hy`, Azerbaijani `az`, Belarusian `be`, Bengali `bn`, Bulgarian `bg`, Burmese `my`,
+Catalan `ca`, Chinese `zh`, Croatian `hr`, Czech `cs`, Danish `da`, Dutch `nl`, English `en`,
+Esperanto `eo`, Estonian `et`, Finnish `fi`, French `fr`, Georgian `ka`, German `de`, Greek `el`,
+Gujarati `gu`, Hebrew `he`, Hindi `hi`, Hungarian `hu`, Indonesian `id`, Italian `it`, Japanese
+`ja`, Javanese `jv`, Kannada `kn`, Khmer `km`, Korean `ko`, Latin `la`, Latvian `lv`, Lithuanian
+`lt`, Macedonian `mk`, Malayalam `ml`, Marathi `mr`, Nepali `ne`, Norwegian Bokmål `nb`, Odia `or`,
+Persian `fa`, Polish `pl`, Portuguese `pt`, Punjabi `pa`, Romanian `ro`, Russian `ru`, Serbian
+`sr`, Shona `sn`, Sinhala `si`, Slovak `sk`, Slovenian `sl`, Spanish `es`, Swedish `sv`, Tagalog
+`tl`, Tamil `ta`, Telugu `te`, Thai `th`, Turkish `tr`, Turkmen `tk`, Ukrainian `uk`, Urdu `ur`,
+Uzbek `uz`, Vietnamese `vi`, Yiddish `yi` and Zulu `zu`.
+
+## Hidden characters
+
+A hidden character is one that a reader cannot see and a model still reads. Hidden characters carry
+instructions past the people who review a prompt, as in ASCII smuggling. The classifier counts:
+
+- each Unicode tag character, from U+E0000 to U+E007F, apart from those in the flags of England,
+  Scotland and Wales
+- each character in a run of two or more other characters that Unicode marks as default ignorable,
+  such as zero-width spaces and joiners, variation selectors and direction marks
+
+Text in many languages uses these characters one at a time, such as a zero-width joiner inside a
+word or an emoji, so a single one does not count. An emoji presentation selector followed by a
+zero-width joiner, as in 🏳️‍🌈, does not count either.
+
+`input` counts the text that the [`input_text_bytes`](/docs/usage#meters) meter measures, after
+redaction, and `output` counts the text that `output_text_bytes` measures, which includes the
+arguments of tool calls. The analytics filter `input_hidden_characters>0` finds the requests whose
+input holds any.
+
+## How policies combine
+
+Every classifier that any policy names runs. A [default rule](/docs/policies/rules#defaults) can
+name classifiers, and a policy that requires `"classification": []` replaces those defaults without
+adding any.

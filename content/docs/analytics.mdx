@@ -46,6 +46,8 @@ output. Generation speed divides generated tokens by the full request duration.
   `key:checkout OR key:search`.
 - Hiding a group in the legend only takes it off the chart. Totals and shares still count it.
 - Model groups combine revisions of the same model.
+- Language groups need the [language classifier](/docs/classification). Requests that ran without
+  it count as No language.
 - Session and trace groups also show when each one started and how long it ran, from the start of
   its first request in the period to the end of its last.
 - A request counts in each role of its key's member and under each of its
@@ -98,25 +100,27 @@ provider credential that has it, so use an ID to match one.
 | `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                                                                                        |
 | `id:`               | A request ID.                                                                                                                                                                                                          |
 | `redaction:`        | `redacted`, `no_matches` or `not_recorded`. See [PII redaction](/docs/pii-redaction).                                                                                                                                  |
+| `input_language:`   | The [language](/docs/classification#language) of the newest user message, such as `input_language:de`, or `und` when the classifier could not tell.                                                                    |
+| `output_language:`  | The [language](/docs/classification#language) of the reply.                                                                                                                                                            |
 
 `status:success` matches completed requests with no cancellation or gateway error. Other `status:`
 values check every provider attempt, including earlier failed ones.
 
 `none` selects requests without a value in `grant:`, `role:`, `model:`, `final_provider:`,
-`final_byok:`, `error:`, `metadata.<key>:`, `session:`, `app:`, `agent:`, `trace:` and
-`encryption_key:`. For
-example, `error:none` selects requests without a gateway error, and `session:"none"` selects the
-session named none.
+`final_byok:`, `error:`, `metadata.<key>:`, `session:`, `app:`, `agent:`, `trace:`,
+`encryption_key:`, `input_language:` and `output_language:`. For example, `error:none` selects
+requests without a gateway error, and `session:"none"` selects the session named none.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
 
-| Filter                                                   | Unit                                              | Example                |
-| -------------------------------------------------------- | ------------------------------------------------- | ---------------------- |
-| `latency`, `provider_latency`, `gateway_latency`, `ttft` | Milliseconds, or `ms`, `s` and `m`                | `latency>2s`           |
-| `input_tokens`, `output_tokens`                          | Tokens, or `k` and `m` for thousands and millions | `input_tokens>=10k`    |
-| `tokens_per_second`                                      | Generated tokens per second                       | `tokens_per_second<20` |
-| `client_tool_calls`, `hosted_tool_calls`                 | [Tool calls](/docs/request-records#tool-calls)    | `client_tool_calls>0`  |
-| `upstream_cost`, `billed_cost`                           | USD, with or without `$`                          | `billed_cost>$0.05`    |
+| Filter                                                   | Unit                                                        | Example                     |
+| -------------------------------------------------------- | ----------------------------------------------------------- | --------------------------- |
+| `latency`, `provider_latency`, `gateway_latency`, `ttft` | Milliseconds, or `ms`, `s` and `m`                          | `latency>2s`                |
+| `input_tokens`, `output_tokens`                          | Tokens, or `k` and `m` for thousands and millions           | `input_tokens>=10k`         |
+| `tokens_per_second`                                      | Generated tokens per second                                 | `tokens_per_second<20`      |
+| `client_tool_calls`, `hosted_tool_calls`                 | [Tool calls](/docs/request-records#tool-calls)              | `client_tool_calls>0`       |
+| `upstream_cost`, `billed_cost`                           | USD, with or without `$`                                    | `billed_cost>$0.05`         |
+| `input_hidden_characters`, `output_hidden_characters`    | [Hidden characters](/docs/classification#hidden-characters) | `input_hidden_characters>0` |
 
 Each member can run 30 queries a minute and download 3 files a minute. An organization's queries
 share 30 seconds of query time a minute, and over that they return `429 ANALYTICS_QUOTA_EXCEEDED`

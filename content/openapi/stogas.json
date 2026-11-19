@@ -5864,6 +5864,19 @@
 					"plugins": {
 						"type": "object",
 						"properties": {
+							"classification": {
+								"maxItems": 2,
+								"type": "array",
+								"items": {
+									"type": "string",
+									"enum": [
+										"language",
+										"hidden_characters"
+									]
+								},
+								"uniqueItems": true,
+								"description": "Classifiers whose results the request log records. `language` names the language of the newest user message and of the reply, and `hidden_characters` counts the input and output characters that a reader cannot see. Policies add their classifiers together, and an empty list replaces the defaults."
+							},
 							"export": {
 								"anyOf": [
 									{
@@ -8238,6 +8251,19 @@
 								"plugins": {
 									"type": "object",
 									"properties": {
+										"classification": {
+											"maxItems": 2,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"language",
+													"hidden_characters"
+												]
+											},
+											"uniqueItems": true,
+											"description": "Classifiers whose results the request log records. `language` names the language of the newest user message and of the reply, and `hidden_characters` counts the input and output characters that a reader cannot see. Policies add their classifiers together, and an empty list replaces the defaults."
+										},
 										"export": {
 											"anyOf": [
 												{

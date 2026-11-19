@@ -5215,7 +5215,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 33,
+																"maxItems": 34,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5240,6 +5240,7 @@
 																		"plugins.textExtraction.pdf",
 																		"plugins.export",
 																		"plugins.promptCaching",
+																		"plugins.classification",
 																		"plugins.encrypted",
 																		"routing",
 																		"routing.filter",
@@ -5323,7 +5324,7 @@
 															},
 															"sections": {
 																"minItems": 1,
-																"maxItems": 33,
+																"maxItems": 34,
 																"type": "array",
 																"items": {
 																	"type": "string",
@@ -5348,6 +5349,7 @@
 																		"plugins.textExtraction.pdf",
 																		"plugins.export",
 																		"plugins.promptCaching",
+																		"plugins.classification",
 																		"plugins.encrypted",
 																		"routing",
 																		"routing.filter",
@@ -12192,6 +12194,8 @@
 										"session",
 										"agent",
 										"trace",
+										"input_language",
+										"output_language",
 										"metadata",
 										"outcome",
 										"error"
@@ -12394,6 +12398,8 @@
 														"session",
 														"agent",
 														"trace",
+														"input_language",
+														"output_language",
 														"metadata",
 														"outcome",
 														"error"
@@ -14856,6 +14862,192 @@
 														"description": "[Plugin metrics](/docs/request-records#plugin-metrics). Omitted when no plugin recorded any.",
 														"type": "object",
 														"properties": {
+															"classification": {
+																"type": "object",
+																"properties": {
+																	"hidden_characters": {
+																		"type": "object",
+																		"properties": {
+																			"input": {
+																				"type": "integer",
+																				"minimum": 0,
+																				"maximum": 4294967295,
+																				"description": "Hidden characters in the input text."
+																			},
+																			"output": {
+																				"type": "integer",
+																				"minimum": 0,
+																				"maximum": 4294967295,
+																				"description": "Hidden characters in the output text."
+																			}
+																		},
+																		"required": [
+																			"input",
+																			"output"
+																		],
+																		"additionalProperties": false
+																	},
+																	"language": {
+																		"type": "object",
+																		"properties": {
+																			"input": {
+																				"description": "Language of the newest user message that holds prose, as a BCP 47 tag. `und` when the classifier cannot tell, and absent without such a message.",
+																				"type": "string",
+																				"enum": [
+																					"af",
+																					"ak",
+																					"am",
+																					"ar",
+																					"az",
+																					"be",
+																					"bg",
+																					"bn",
+																					"ca",
+																					"cs",
+																					"da",
+																					"de",
+																					"el",
+																					"en",
+																					"eo",
+																					"es",
+																					"et",
+																					"fa",
+																					"fi",
+																					"fr",
+																					"gu",
+																					"he",
+																					"hi",
+																					"hr",
+																					"hu",
+																					"hy",
+																					"id",
+																					"it",
+																					"ja",
+																					"jv",
+																					"ka",
+																					"km",
+																					"kn",
+																					"ko",
+																					"la",
+																					"lt",
+																					"lv",
+																					"mk",
+																					"ml",
+																					"mr",
+																					"my",
+																					"nb",
+																					"ne",
+																					"nl",
+																					"or",
+																					"pa",
+																					"pl",
+																					"pt",
+																					"ro",
+																					"ru",
+																					"si",
+																					"sk",
+																					"sl",
+																					"sn",
+																					"sr",
+																					"sv",
+																					"ta",
+																					"te",
+																					"th",
+																					"tk",
+																					"tl",
+																					"tr",
+																					"uk",
+																					"ur",
+																					"uz",
+																					"vi",
+																					"yi",
+																					"zh",
+																					"zu",
+																					"und"
+																				]
+																			},
+																			"output": {
+																				"description": "Language of the reply. Absent when the reply holds no text.",
+																				"type": "string",
+																				"enum": [
+																					"af",
+																					"ak",
+																					"am",
+																					"ar",
+																					"az",
+																					"be",
+																					"bg",
+																					"bn",
+																					"ca",
+																					"cs",
+																					"da",
+																					"de",
+																					"el",
+																					"en",
+																					"eo",
+																					"es",
+																					"et",
+																					"fa",
+																					"fi",
+																					"fr",
+																					"gu",
+																					"he",
+																					"hi",
+																					"hr",
+																					"hu",
+																					"hy",
+																					"id",
+																					"it",
+																					"ja",
+																					"jv",
+																					"ka",
+																					"km",
+																					"kn",
+																					"ko",
+																					"la",
+																					"lt",
+																					"lv",
+																					"mk",
+																					"ml",
+																					"mr",
+																					"my",
+																					"nb",
+																					"ne",
+																					"nl",
+																					"or",
+																					"pa",
+																					"pl",
+																					"pt",
+																					"ro",
+																					"ru",
+																					"si",
+																					"sk",
+																					"sl",
+																					"sn",
+																					"sr",
+																					"sv",
+																					"ta",
+																					"te",
+																					"th",
+																					"tk",
+																					"tl",
+																					"tr",
+																					"uk",
+																					"ur",
+																					"uz",
+																					"vi",
+																					"yi",
+																					"zh",
+																					"zu",
+																					"und"
+																				]
+																			}
+																		},
+																		"additionalProperties": false
+																	}
+																},
+																"additionalProperties": false
+															},
 															"export": {
 																"type": "object",
 																"properties": {
@@ -21060,7 +21252,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 33,
+											"maxItems": 34,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -21085,6 +21277,7 @@
 													"plugins.textExtraction.pdf",
 													"plugins.export",
 													"plugins.promptCaching",
+													"plugins.classification",
 													"plugins.encrypted",
 													"routing",
 													"routing.filter",
@@ -21168,7 +21361,7 @@
 										},
 										"sections": {
 											"minItems": 1,
-											"maxItems": 33,
+											"maxItems": 34,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -21193,6 +21386,7 @@
 													"plugins.textExtraction.pdf",
 													"plugins.export",
 													"plugins.promptCaching",
+													"plugins.classification",
 													"plugins.encrypted",
 													"routing",
 													"routing.filter",
@@ -23213,6 +23407,19 @@
 										"plugins": {
 											"type": "object",
 											"properties": {
+												"classification": {
+													"maxItems": 2,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"language",
+															"hidden_characters"
+														]
+													},
+													"uniqueItems": true,
+													"description": "Classifiers whose results the request log records. `language` names the language of the newest user message and of the reply, and `hidden_characters` counts the input and output characters that a reader cannot see. Policies add their classifiers together, and an empty list replaces the defaults."
+												},
 												"export": {
 													"anyOf": [
 														{
@@ -24895,7 +25102,7 @@
 								},
 								"replaced": {
 									"minItems": 1,
-									"maxItems": 33,
+									"maxItems": 34,
 									"type": "array",
 									"items": {
 										"type": "object",
@@ -24923,6 +25130,7 @@
 													"plugins.textExtraction.pdf",
 													"plugins.export",
 													"plugins.promptCaching",
+													"plugins.classification",
 													"plugins.encrypted",
 													"routing",
 													"routing.filter",
@@ -26138,7 +26346,7 @@
 					},
 					"setBy": {
 						"minItems": 1,
-						"maxItems": 1188,
+						"maxItems": 1224,
 						"type": "array",
 						"items": {
 							"type": "object",
@@ -26166,6 +26374,7 @@
 										"plugins.textExtraction.pdf",
 										"plugins.export",
 										"plugins.promptCaching",
+										"plugins.classification",
 										"plugins.encrypted",
 										"routing",
 										"routing.filter",
@@ -26225,7 +26434,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26250,6 +26459,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -26275,7 +26485,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26300,6 +26510,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -26325,7 +26536,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26350,6 +26561,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -26375,7 +26587,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26400,6 +26612,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -26425,7 +26638,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26450,6 +26663,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -26475,7 +26689,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26500,6 +26714,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -26525,7 +26740,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -26549,6 +26764,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -26573,6 +26789,19 @@
 					"plugins": {
 						"type": "object",
 						"properties": {
+							"classification": {
+								"maxItems": 2,
+								"type": "array",
+								"items": {
+									"type": "string",
+									"enum": [
+										"language",
+										"hidden_characters"
+									]
+								},
+								"uniqueItems": true,
+								"description": "Classifiers whose results the request log records. `language` names the language of the newest user message and of the reply, and `hidden_characters` counts the input and output characters that a reader cannot see. Policies add their classifiers together, and an empty list replaces the defaults."
+							},
 							"export": {
 								"type": "object",
 								"properties": {
@@ -28339,7 +28568,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 33,
+												"maxItems": 34,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28364,6 +28593,7 @@
 														"plugins.textExtraction.pdf",
 														"plugins.export",
 														"plugins.promptCaching",
+														"plugins.classification",
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
@@ -28392,7 +28622,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 33,
+														"maxItems": 34,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28417,6 +28647,7 @@
 																"plugins.textExtraction.pdf",
 																"plugins.export",
 																"plugins.promptCaching",
+																"plugins.classification",
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
@@ -28457,7 +28688,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 33,
+															"maxItems": 34,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28482,6 +28713,7 @@
 																	"plugins.textExtraction.pdf",
 																	"plugins.export",
 																	"plugins.promptCaching",
+																	"plugins.classification",
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
@@ -28519,7 +28751,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 33,
+												"maxItems": 34,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28544,6 +28776,7 @@
 														"plugins.textExtraction.pdf",
 														"plugins.export",
 														"plugins.promptCaching",
+														"plugins.classification",
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
@@ -28572,7 +28805,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 33,
+														"maxItems": 34,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28597,6 +28830,7 @@
 																"plugins.textExtraction.pdf",
 																"plugins.export",
 																"plugins.promptCaching",
+																"plugins.classification",
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
@@ -28637,7 +28871,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 33,
+															"maxItems": 34,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28662,6 +28896,7 @@
 																	"plugins.textExtraction.pdf",
 																	"plugins.export",
 																	"plugins.promptCaching",
+																	"plugins.classification",
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
@@ -28699,7 +28934,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 33,
+												"maxItems": 34,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28724,6 +28959,7 @@
 														"plugins.textExtraction.pdf",
 														"plugins.export",
 														"plugins.promptCaching",
+														"plugins.classification",
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
@@ -28752,7 +28988,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 33,
+														"maxItems": 34,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28777,6 +29013,7 @@
 																"plugins.textExtraction.pdf",
 																"plugins.export",
 																"plugins.promptCaching",
+																"plugins.classification",
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
@@ -28817,7 +29054,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 33,
+															"maxItems": 34,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -28842,6 +29079,7 @@
 																	"plugins.textExtraction.pdf",
 																	"plugins.export",
 																	"plugins.promptCaching",
+																	"plugins.classification",
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
@@ -28879,7 +29117,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 33,
+												"maxItems": 34,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -28904,6 +29142,7 @@
 														"plugins.textExtraction.pdf",
 														"plugins.export",
 														"plugins.promptCaching",
+														"plugins.classification",
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
@@ -28932,7 +29171,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 33,
+														"maxItems": 34,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -28957,6 +29196,7 @@
 																"plugins.textExtraction.pdf",
 																"plugins.export",
 																"plugins.promptCaching",
+																"plugins.classification",
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
@@ -28997,7 +29237,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 33,
+															"maxItems": 34,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -29022,6 +29262,7 @@
 																	"plugins.textExtraction.pdf",
 																	"plugins.export",
 																	"plugins.promptCaching",
+																	"plugins.classification",
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
@@ -29059,7 +29300,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 33,
+												"maxItems": 34,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -29084,6 +29325,7 @@
 														"plugins.textExtraction.pdf",
 														"plugins.export",
 														"plugins.promptCaching",
+														"plugins.classification",
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
@@ -29112,7 +29354,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 33,
+														"maxItems": 34,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -29137,6 +29379,7 @@
 																"plugins.textExtraction.pdf",
 																"plugins.export",
 																"plugins.promptCaching",
+																"plugins.classification",
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
@@ -29177,7 +29420,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 33,
+															"maxItems": 34,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -29202,6 +29445,7 @@
 																	"plugins.textExtraction.pdf",
 																	"plugins.export",
 																	"plugins.promptCaching",
+																	"plugins.classification",
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
@@ -29239,7 +29483,7 @@
 												"type": "boolean"
 											},
 											{
-												"maxItems": 33,
+												"maxItems": 34,
 												"type": "array",
 												"items": {
 													"type": "string",
@@ -29264,6 +29508,7 @@
 														"plugins.textExtraction.pdf",
 														"plugins.export",
 														"plugins.promptCaching",
+														"plugins.classification",
 														"plugins.encrypted",
 														"routing",
 														"routing.filter",
@@ -29292,7 +29537,7 @@
 														"type": "boolean"
 													},
 													{
-														"maxItems": 33,
+														"maxItems": 34,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -29317,6 +29562,7 @@
 																"plugins.textExtraction.pdf",
 																"plugins.export",
 																"plugins.promptCaching",
+																"plugins.classification",
 																"plugins.encrypted",
 																"routing",
 																"routing.filter",
@@ -29357,7 +29603,7 @@
 															"type": "boolean"
 														},
 														{
-															"maxItems": 33,
+															"maxItems": 34,
 															"type": "array",
 															"items": {
 																"type": "string",
@@ -29382,6 +29628,7 @@
 																	"plugins.textExtraction.pdf",
 																	"plugins.export",
 																	"plugins.promptCaching",
+																	"plugins.classification",
 																	"plugins.encrypted",
 																	"routing",
 																	"routing.filter",
@@ -29417,7 +29664,7 @@
 										"type": "boolean"
 									},
 									{
-										"maxItems": 33,
+										"maxItems": 34,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -29441,6 +29688,7 @@
 												"plugins.textExtraction.pdf",
 												"plugins.export",
 												"plugins.promptCaching",
+												"plugins.classification",
 												"plugins.encrypted",
 												"routing",
 												"routing.filter",
@@ -30388,6 +30636,19 @@
 					"plugins": {
 						"type": "object",
 						"properties": {
+							"classification": {
+								"maxItems": 2,
+								"type": "array",
+								"items": {
+									"type": "string",
+									"enum": [
+										"language",
+										"hidden_characters"
+									]
+								},
+								"uniqueItems": true,
+								"description": "Classifiers whose results the request log records. `language` names the language of the newest user message and of the reply, and `hidden_characters` counts the input and output characters that a reader cannot see. Policies add their classifiers together, and an empty list replaces the defaults."
+							},
 							"export": {
 								"anyOf": [
 									{
@@ -32883,6 +33144,19 @@
 								"plugins": {
 									"type": "object",
 									"properties": {
+										"classification": {
+											"maxItems": 2,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"language",
+													"hidden_characters"
+												]
+											},
+											"uniqueItems": true,
+											"description": "Classifiers whose results the request log records. `language` names the language of the newest user message and of the reply, and `hidden_characters` counts the input and output characters that a reader cannot see. Policies add their classifiers together, and an empty list replaces the defaults."
+										},
 										"export": {
 											"anyOf": [
 												{
