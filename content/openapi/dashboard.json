@@ -4575,7 +4575,6 @@
 					"API keys"
 				],
 				"summary": "Set the BYOK credentials of an API key",
-				"description": "Adding a credential whose policy does not combine with the key's policies gets 400 CREDENTIAL_POLICY_CONFLICT, because requests through it would fail.",
 				"security": [
 					{
 						"accessToken": [
@@ -21278,12 +21277,14 @@
 							{
 								"type": "null"
 							}
-						]
+						],
+						"description": "The settings of every policy that applies to the key, combined. Null with effectiveConfigError, and for policies that are too large together to combine in this response, which does not affect requests."
 					},
 					"effectiveConfigError": {
 						"type": "string",
 						"minLength": 1,
-						"maxLength": 512
+						"maxLength": 512,
+						"description": "Why a saved policy of the key is no longer valid. Requests with the key fail until that policy changes."
 					},
 					"expiresAt": {
 						"anyOf": [
@@ -23583,7 +23584,7 @@
 																			"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																		}
 																	],
-																	"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+																	"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 																}
 															},
 															"required": [
@@ -24363,7 +24364,7 @@
 																					}
 																				]
 																			},
-																			"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+																			"description": "Groups of literal strings sharing case, boundary and fuzzy settings. One policy, counting its rules, holds at most 1,000 strings and 65,536 UTF-8 text bytes."
 																		},
 																		{
 																			"type": "object",
@@ -25306,7 +25307,7 @@
 																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																}
 															],
-															"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+															"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 														}
 													},
 													"required": [
@@ -25920,7 +25921,7 @@
 																			}
 																		]
 																	},
-																	"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+																	"description": "Groups of literal strings sharing case, boundary and fuzzy settings. One policy, counting its rules, holds at most 1,000 strings and 65,536 UTF-8 text bytes."
 																},
 																{
 																	"type": "object",
@@ -26473,7 +26474,7 @@
 								"type": "object",
 								"properties": {
 									"destinations": {
-										"maxItems": 8,
+										"maxItems": 288,
 										"type": "array",
 										"items": {
 											"type": "object",
@@ -26593,7 +26594,7 @@
 											],
 											"additionalProperties": false
 										},
-										"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+										"description": "The destinations of every policy that applies."
 									}
 								},
 								"required": [
@@ -26771,9 +26772,8 @@
 								"type": "object",
 								"properties": {
 									"literals": {
-										"description": "At most 1,000 literal rules and 65,536 UTF-8 text bytes across the combined policy after safe deduplication. Fuzzy rules require 8–64 printable ASCII bytes, word endpoints and wholeWord: true.",
 										"minItems": 1,
-										"maxItems": 1000,
+										"maxItems": 36000,
 										"type": "array",
 										"items": {
 											"type": "object",
@@ -26804,7 +26804,8 @@
 												"text"
 											],
 											"additionalProperties": false
-										}
+										},
+										"description": "The literal rules of every policy that applies. Fuzzy rules require 8–64 printable ASCII bytes, word endpoints and wholeWord: true."
 									},
 									"presets": {
 										"maxItems": 9,
@@ -26827,7 +26828,7 @@
 									},
 									"customPatterns": {
 										"minItems": 1,
-										"maxItems": 3,
+										"maxItems": 576,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -27807,7 +27808,7 @@
 							"filter": {
 								"type": "string",
 								"minLength": 1,
-								"maxLength": 524288
+								"maxLength": 9437184
 							},
 							"sort": {
 								"maxItems": 40,
@@ -30655,7 +30656,7 @@
 														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 													}
 												],
-												"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+												"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 											}
 										},
 										"required": [
@@ -31435,7 +31436,7 @@
 																}
 															]
 														},
-														"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+														"description": "Groups of literal strings sharing case, boundary and fuzzy settings. One policy, counting its rules, holds at most 1,000 strings and 65,536 UTF-8 text bytes."
 													},
 													{
 														"type": "object",
@@ -33150,7 +33151,7 @@
 																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																}
 															],
-															"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. At most eight combined destinations. An empty array adds none and replaces plugin defaults."
+															"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 														}
 													},
 													"required": [
@@ -33930,7 +33931,7 @@
 																			}
 																		]
 																	},
-																	"description": "Groups of literal strings sharing case, boundary and fuzzy settings. At most 1,000 strings and 65,536 UTF-8 text bytes in total."
+																	"description": "Groups of literal strings sharing case, boundary and fuzzy settings. One policy, counting its rules, holds at most 1,000 strings and 65,536 UTF-8 text bytes."
 																},
 																{
 																	"type": "object",

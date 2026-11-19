@@ -64,18 +64,6 @@ depends on the scope that sets them:
 [Rules](/docs/policies/rules) apply settings only to matching requests, or as defaults that apply
 only when no policy requires the same kind of setting.
 
-## Policies that do not combine
-
-Policies that each fit can exceed a [limit](/docs/policies/editing#document-rules) together, such as
-the combined size or the complexity of custom patterns. Saving a policy checks it against the
-policies above it, not against the keys that it applies to.
-
-- Adding a credential to a key fails when the credential's policy does not combine with the key's
-  policies.
-- When an edit stops a key's policies from combining, requests with that key fail until one of the
-  policies changes. The key's page names the reason.
-- A credential whose policy stops combining with a key's policies serves no requests with that key.
-
 ## Request order
 
 <Steps>

@@ -39,8 +39,8 @@ Add a destination to a [policy](/docs/policies/editing):
 - The URL must use HTTPS and reach a public address.
 - Headers go only to your webhook. To keep them private,
   [encrypt the export](/docs/customer-encryption#encrypt-plugin-settings).
-- Destinations from every policy that applies to a request add together, up to eight. Destinations
-  with the same URL and headers get one record. They get it if any of them would, and it has bodies
+- Destinations from every policy that applies to a request add together. One policy, counting its
+  rules, can have up to eight. Destinations with the same URL and headers get one record. They get it if any of them would, and it has bodies
   if one of them that would get it sends bodies.
 - An empty `destinations` array replaces
   [default export destinations](/docs/policies/rules#defaults), but it cannot

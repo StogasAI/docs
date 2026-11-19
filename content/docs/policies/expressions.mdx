@@ -98,11 +98,17 @@ deployment.
 
 ## Bounds
 
-| Bound                                                            | Limit              |
-| ---------------------------------------------------------------- | ------------------ |
-| One expression                                                   | 16 KiB             |
-| Work for one expression                                          | 10,000 cost units  |
-| Expression nodes in one policy, and in all policies of a request | 4,096 and 8,192    |
-| Work for all expressions of one request                          | 100,000 cost units |
+| Bound                                            | Limit                |
+| ------------------------------------------------ | -------------------- |
+| One expression                                   | 16 KiB               |
+| Work for one expression                          | 10,000 cost units    |
+| Expression nodes in one policy                   | 4,096                |
+| Work for one policy's expressions in one request | 100,000 cost units   |
+| Work for all policies in one request             | 3,700,000 cost units |
 
-A request over a bound fails before the gateway holds any funds.
+Filters and sort criteria run once for each candidate, so their work grows with the number of
+deployments that serve the model. A request over a work bound fails with
+`policy_work_limit_exceeded` before the gateway holds any funds, and the message names the policy.
+
+The policies of one key never reach the bound for all policies. Only a key with many
+[credentials](/docs/byok#order-credentials) that each have a policy of their own can reach it.

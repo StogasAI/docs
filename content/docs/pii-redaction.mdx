@@ -185,8 +185,8 @@ to every string in `values`:
 - Text is not normalized. Composed and decomposed Unicode, look-alike characters, percent-encoding
   and abbreviations count as different text.
 
-Each term can be up to 256 bytes. Each scope, and all the policies that apply to one request
-together, can have up to 1,000 terms and 65,536 bytes of term text after duplicates are removed.
+Each term can be up to 256 bytes. One policy, counting its rules, can have up to 1,000 terms and
+65,536 bytes of term text.
 
 ## Custom pattern
 
@@ -216,13 +216,13 @@ format:
 - `\b` uses ASCII word characters, and `(?i)` uses Unicode case folding.
 - Start with fixed text and bound each repetition, such as `EMP-[0-9]{1,12}`, to keep scans fast.
 
-| Limit                                      | Maximum            |
-| ------------------------------------------ | ------------------ |
-| Patterns in one scope                      | 1                  |
-| Different patterns that apply to a request | 3                  |
-| Size of one pattern                        | 512 bytes          |
-| Compiled size of all patterns              | 4,096 instructions |
-| Count in one repetition, such as `{1000}`  | 1,000              |
+| Limit                                       | Maximum            |
+| ------------------------------------------- | ------------------ |
+| Patterns in a policy or in one of its rules | 1                  |
+| Patterns in one policy, counting its rules  | 16                 |
+| Size of one pattern                         | 512 bytes          |
+| Compiled size of one policy's patterns      | 4,096 instructions |
+| Count in one repetition, such as `{1000}`   | 1,000              |
 
 ## What is scanned
 
@@ -256,8 +256,9 @@ Redaction from every scope that applies to a request adds together. For example,
 detection, a grant's banking detection and a key's custom pattern all run on the same request. A
 child scope cannot turn off a preset, term or pattern that another scope requires.
 
-If a parent change makes the combined rules of a key exceed a limit, requests with that key fail
-until you fix its policies. To keep terms and patterns private, [encrypt the plugin
+Every pattern and term list reads the whole text, and one request has one
+[scan budget](#errors). Each one that a scope adds lowers the largest text that a request can send.
+To keep terms and patterns private, [encrypt the plugin
 settings](/docs/customer-encryption#encrypt-plugin-settings).
 
 ## ASCII-only input

@@ -113,11 +113,9 @@ that only some people should read. Reading a policy does not give permission to 
 | ------------------------------------------------------------ | ------- |
 | A saved policy, as compact UTF-8 JSON                        | 256 KiB |
 | A [request policy](/docs/policies/request-policies), as sent | 16 KiB  |
-| All policies that apply to one request, combined             | 512 KiB |
 
-Encrypted settings count by their decrypted size. Settings that several policies share count once.
-`policy_work_limit_exceeded` means that the policies of all credentials that a request could use
-are too large or complex together. Simplify them, or use fewer distinct credential policies.
+Encrypted settings count by their decrypted size. Every limit belongs to one policy, so a policy
+that saves keeps working whatever the other policies of a request hold.
 
 ## Use an external editor
 
