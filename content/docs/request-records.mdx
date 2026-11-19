@@ -542,7 +542,7 @@ finds both the request that made the call and the one that sent its result.
 Requests that the gateway rejects before billing authorization, such as for credit, policy or
 validation errors, appear once the gateway can tell which API key sent them. Repeated rejections
 share records. In each UTC minute, rejections with the same key, `interface`, `stream`, `transport`,
-`policy_versions`, `encryption_key_ids`, error code and HTTP status are recorded like this:
+`policy_versions`, `encryption_key_ids` and `gateway_error` are recorded like this:
 
 | Rejections      | Record                                                                        |
 | --------------- | ----------------------------------------------------------------------------- |

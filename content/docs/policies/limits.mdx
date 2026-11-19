@@ -194,13 +194,17 @@ A limit below current usage blocks new requests until usage falls under it.
 | `429`  | The platform limit                                                         | `platform_rate_limited`                                                    |
 | `429`  | A request within 25 ms after a blocked request with the same key           | `rate_limit_exceeded`                                                      |
 
-The code names the scope, such as `grant_token_limit`, but not the named limit. A `429` response has
-`Retry-After` when waiting can help: until a reset, until a gradual limit has room, or until running
-requests finish. When several limits block a request, the code and `Retry-After` come from the one
-that frees up last. A retry cannot fit a hold that is larger than the limit, so lower the output limit
-or raise the limit. Such a response, and one with a wait longer than a minute, has
-`X-Should-Retry: false`. Before it blocks a request, the gateway tries the request's other
-candidates as [fallbacks](/docs/policies/routing#retries-and-fallbacks). See
+The code names the scope, such as `grant_token_limit`, and the message names the limit:
+`Grant token limit "daily" exceeded`, or `Grant spend limit "spend" in rule "openai_budget" exceeded`
+for a limit in a rule. The [request record](/docs/request-records) keeps both names in
+`gateway_error`.
+
+A `429` response has `Retry-After` when waiting can help: until a reset, until a gradual limit has
+room, or until running requests finish. When several limits block a request, the error and
+`Retry-After` come from the one that frees up last. A retry cannot fit a hold that is larger than the
+limit, so lower the output limit or raise the limit. Such a response, and one with a wait longer than
+a minute, has `X-Should-Retry: false`. Before it blocks a request, the gateway tries the request's
+other candidates as [fallbacks](/docs/policies/routing#retries-and-fallbacks). See
 [Errors](/docs/reference/errors) for every code.
 
 ## Field reference
