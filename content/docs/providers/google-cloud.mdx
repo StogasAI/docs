@@ -1,14 +1,14 @@
 ---
 title: Google Cloud
-description: Run Claude in your Google Cloud project on Gemini Enterprise Agent Platform (Vertex AI) or Claude Models on Google Cloud.
+description: Run Claude and Gemini in your Google Cloud project on Gemini Enterprise Agent Platform (Vertex AI) or Claude Models on Google Cloud.
 icon: logo:google-cloud
 ---
 
-Google Cloud deployments run Claude in your Google Cloud project. Google bills you for inference,
+Google Cloud deployments run Claude and Gemini in your Google Cloud project. Google bills you for inference,
 and we charge the [BYOK fee](/docs/byok#billing). Agent Platform on this page is Gemini Enterprise
 Agent Platform, which Google's role and policy names call Vertex AI.
 
-| Deployment ID suffix   | Offering                                                        | Who runs Claude, and where      |
+| Deployment ID suffix   | Offering                                                        | Who runs the model, and where   |
 | ---------------------- | --------------------------------------------------------------- | ------------------------------- |
 | None                   | Agent Platform, global endpoint                                 | Google, in any region           |
 | `-us`                  | Agent Platform, US multi-region                                 | Google, in the United States    |
@@ -162,3 +162,57 @@ spec:
 ```bash
 gcloud org-policies set-policy policy.yaml
 ```
+
+## Gemini
+
+Gemini deployments take Chat Completions, and the gateway translates Responses
+[through Chat Completions](/docs/providers#responses-through-chat-completions). Gemini returns a
+summary of its reasoning, which costs nothing extra, unless you set `reasoning.display` to `omitted`
+or `reasoning.summary` to `none`.
+
+```json title="A tool loop on Gemini"
+{
+	"model": "google-cloud-gemini-3.8-flash",
+	"messages": [
+		{ "role": "system", "content": "Answer in one sentence." },
+		{ "role": "user", "content": "What's the weather in Paris?" },
+		{
+			"role": "assistant",
+			"reasoning_details": [
+				{
+					"type": "reasoning.encrypted",
+					"id": "tool_call_call_1",
+					"data": "gemini:...",
+					"index": 0
+				}
+			],
+			"tool_calls": [
+				{
+					"id": "call_1",
+					"type": "function",
+					"function": { "name": "get_weather", "arguments": "{\"city\":\"Paris\"}" }
+				}
+			]
+		},
+		{ "role": "tool", "tool_call_id": "call_1", "content": "18°C and cloudy" }
+	]
+}
+```
+
+- Gemini signs its reasoning, and `reasoning_details` returns each signature as a
+  `reasoning.encrypted` entry. Send the assistant message back unchanged, through the same
+  credential. Google refuses a changed signature, and the gateway leaves out signatures that
+  another credential returned.
+- System and developer messages go before the first user message. One that comes later returns
+  `400`, because Gemini takes system instructions only at the start.
+- Send files inline. File URLs and file IDs return `400`.
+- Gemini does not enforce `strict` on tools. Check the tool call error rate in
+  [Analytics](/docs/analytics).
+- A conversation that ends with an assistant message continues it on some Gemini models, and others
+  return `400`.
+- Some Gemini models write fewer tokens in one reply without streaming than the deployment's
+  `maxOutputTokens`, as each model's [page at Google](https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models)
+  states. A reply cut there ends with `finish_reason` `length`, or `incomplete` in Responses. Stream
+  to get the whole limit.
+- `web_search_options` and hosted tools return `400`, because the gateway does not offer
+  Grounding with Google Search.

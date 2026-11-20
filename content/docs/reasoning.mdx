@@ -231,6 +231,7 @@ including reasoning.
     the summaries of GPT models
     [through Responses](/docs/providers#chat-completions-through-responses), so a request
     with a field that Responses lack, such as `stop` or `n` above 1, returns no summary.
+    [Gemini](/docs/providers/google-cloud#gemini) returns a summary when you omit the field.
 
 [^claude]:
     Claude also checks the system prompt, tools and earlier messages before its reasoning. See
@@ -239,3 +240,5 @@ including reasoning.
 [^credential]:
     GPT models read encrypted reasoning only through the credential that returned it, and on
     [Azure](/docs/providers/azure) only from a deployment in the same Azure account.
+    [Gemini](/docs/providers/google-cloud#gemini) reads its signatures only through the credential
+    that returned them.
