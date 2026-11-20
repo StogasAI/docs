@@ -136,3 +136,35 @@ try {
 
 Reuse one verifier when you accept evidence updates, so it keeps the key retirements and AMD
 revocations it has learned. Free each snapshot when you finish with it.
+
+## Check receipts and records offline
+
+The verifier also checks a saved [receipt](/docs/receipts#check-a-receipt-later) or a
+[request record's proof](/docs/receipts#prove-a-request-log) against the boot that signed it:
+
+```ts
+import { EvidenceVerifier, request_digest, response_digest } from 'stogas';
+
+const verifier = EvidenceVerifier.for_stogas('prod');
+try {
+	const receipt = verifier.verify_receipt_archive(
+		bootBytes,
+		evidenceBytes,
+		stogasBytes,
+		request_digest(requestBytes),
+		response_digest(responseBytes)
+	);
+	console.log(receipt.node_id, receipt.request_verified, receipt.response_verified);
+
+	const record = verifier.verify_log_proof_archive(bootBytes, evidenceBytes, proofBytes);
+	console.log(record.request_id, record.sequence, record.index);
+} finally {
+	verifier.free();
+}
+```
+
+`bootBytes` and `evidenceBytes` are the two files that
+[`stogas download-evidence`](/docs/receipts#check-without-network-access) saves. Pass an empty
+`Uint8Array` for a side that you don't check, for example a request kept private.
+`stream_response(streamBytes)` returns the `response` and the `stogas` object of a stream saved as
+it arrived. A failed check throws an error with a [code](/docs/sdk-overview#errors).

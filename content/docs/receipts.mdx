@@ -144,8 +144,9 @@ stogas proof --boot evidence/boot.json --evidence evidence/evidence.json \
   --request request.json --response response.json --json
 ```
 
-The SDKs offer the same offline check, for example `verify_receipt` in [Python](/docs/python) and
-`VerifyReceipt` in [Go](/docs/go).
+The SDKs offer the same offline check, for example `verify_receipt_archive` in
+[JavaScript](/docs/javascript#check-receipts-and-records-offline), `verify_receipt` in
+[Python](/docs/python) and `VerifyReceipt` in [Go](/docs/go).
 
 ## Prove a request log
 
@@ -178,6 +179,27 @@ and response that you saved.
   them.
 - A proof covers one record. It doesn't show that Analytics holds every record that a gateway
   signed.
+
+## Check in the Trust Center
+
+The dashboard's [Trust Center](/docs/verification#trust-center) checks the same proofs in your
+browser, with the verifier that the CLI uses. Your files are not uploaded.
+
+| You choose                                                             | It checks                                        |
+| ---------------------------------------------------------------------- | ------------------------------------------------ |
+| A saved response with its `stogas` object, or a complete saved stream  | The receipt, the metadata and the response       |
+| A `stogas` object on its own, such as a shared proof's `metadata.json` | The receipt and the metadata                     |
+| A request or a response, together with either of the above             | That side, when the `stogas` object has its salt |
+| A request record's proof                                               | The record and its batch                         |
+
+Choose the files of one request together. When they hold both a receipt and a record's proof, the
+check also compares the record's `receipt_commitments` with the receipt.
+
+Members who can read an organization's [Analytics](/docs/analytics) can enter a request ID instead,
+which checks that request's record.
+
+We serve the page that runs this check. To check a proof without relying on a page from us, use
+the [CLI](/docs/cli) or an [SDK](/docs/sdk-overview).
 
 ## What a receipt does not prove
 
