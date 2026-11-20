@@ -2119,7 +2119,7 @@
 																		"type": "string",
 																		"maxLength": 2048,
 																		"format": "uri",
-																		"description": "Complete JSON webhook URL. No path is appended."
+																		"description": "Complete ingestion URL. No path is appended."
 																	},
 																	{
 																		"type": "object",
@@ -2173,7 +2173,7 @@
 																				"type": "string",
 																				"maxLength": 2048,
 																				"format": "uri",
-																				"description": "Complete JSON webhook URL. No path is appended."
+																				"description": "Complete ingestion URL. No path is appended."
 																			}
 																		},
 																		"required": [
@@ -2195,6 +2195,74 @@
 																	"type": "string",
 																	"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																}
+															},
+															"format": {
+																"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"const": "otlp-genai-1.41"
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"encrypted": {
+																				"type": "object",
+																				"properties": {
+																					"version": {
+																						"type": "number",
+																						"const": 1
+																					},
+																					"keyId": {
+																						"type": "string",
+																						"pattern": "^[0-9a-f]{64}$"
+																					},
+																					"salt": {
+																						"type": "string",
+																						"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																					},
+																					"nonce": {
+																						"type": "string",
+																						"pattern": "^[A-Za-z0-9_-]{16}$"
+																					},
+																					"blob": {
+																						"type": "string",
+																						"minLength": 22,
+																						"maxLength": 349547,
+																						"pattern": "^[A-Za-z0-9_-]+$"
+																					}
+																				},
+																				"required": [
+																					"version",
+																					"keyId",
+																					"salt",
+																					"nonce",
+																					"blob"
+																				],
+																				"additionalProperties": false
+																			}
+																		},
+																		"required": [
+																			"encrypted"
+																		],
+																		"additionalProperties": false,
+																		"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"encrypt": {
+																				"type": "string",
+																				"const": "otlp-genai-1.41"
+																			}
+																		},
+																		"required": [
+																			"encrypt"
+																		],
+																		"additionalProperties": false,
+																		"description": "This value in plain text. `stogas policy edit` encrypts it when it saves."
+																	}
+																]
 															},
 															"content": {
 																"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -2557,7 +2625,7 @@
 																				"type": "string",
 																				"maxLength": 2048,
 																				"format": "uri",
-																				"description": "Complete JSON webhook URL. No path is appended."
+																				"description": "Complete ingestion URL. No path is appended."
 																			},
 																			{
 																				"type": "object",
@@ -2617,6 +2685,60 @@
 																			"type": "string",
 																			"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																		}
+																	},
+																	"format": {
+																		"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"const": "otlp-genai-1.41"
+																			},
+																			{
+																				"type": "object",
+																				"properties": {
+																					"encrypted": {
+																						"type": "object",
+																						"properties": {
+																							"version": {
+																								"type": "number",
+																								"const": 1
+																							},
+																							"keyId": {
+																								"type": "string",
+																								"pattern": "^[0-9a-f]{64}$"
+																							},
+																							"salt": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																							},
+																							"nonce": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{16}$"
+																							},
+																							"blob": {
+																								"type": "string",
+																								"minLength": 22,
+																								"maxLength": 349547,
+																								"pattern": "^[A-Za-z0-9_-]+$"
+																							}
+																						},
+																						"required": [
+																							"version",
+																							"keyId",
+																							"salt",
+																							"nonce",
+																							"blob"
+																						],
+																						"additionalProperties": false
+																					}
+																				},
+																				"required": [
+																					"encrypted"
+																				],
+																				"additionalProperties": false,
+																				"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																			}
+																		]
 																	},
 																	"content": {
 																		"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -2885,7 +3007,7 @@
 																				"type": "string",
 																				"maxLength": 2048,
 																				"format": "uri",
-																				"description": "Complete JSON webhook URL. No path is appended."
+																				"description": "Complete ingestion URL. No path is appended."
 																			},
 																			{
 																				"type": "object",
@@ -2945,6 +3067,60 @@
 																			"type": "string",
 																			"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																		}
+																	},
+																	"format": {
+																		"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"const": "otlp-genai-1.41"
+																			},
+																			{
+																				"type": "object",
+																				"properties": {
+																					"encrypted": {
+																						"type": "object",
+																						"properties": {
+																							"version": {
+																								"type": "number",
+																								"const": 1
+																							},
+																							"keyId": {
+																								"type": "string",
+																								"pattern": "^[0-9a-f]{64}$"
+																							},
+																							"salt": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																							},
+																							"nonce": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{16}$"
+																							},
+																							"blob": {
+																								"type": "string",
+																								"minLength": 22,
+																								"maxLength": 349547,
+																								"pattern": "^[A-Za-z0-9_-]+$"
+																							}
+																						},
+																						"required": [
+																							"version",
+																							"keyId",
+																							"salt",
+																							"nonce",
+																							"blob"
+																						],
+																						"additionalProperties": false
+																					}
+																				},
+																				"required": [
+																					"encrypted"
+																				],
+																				"additionalProperties": false,
+																				"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																			}
+																		]
 																	},
 																	"content": {
 																		"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -3197,7 +3373,7 @@
 											"description": "This value in plain text. `stogas policy edit` encrypts it when it saves."
 										}
 									],
-									"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
+									"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 								}
 							},
 							"required": [
@@ -3272,7 +3448,7 @@
 																				"type": "string",
 																				"maxLength": 2048,
 																				"format": "uri",
-																				"description": "Complete JSON webhook URL. No path is appended."
+																				"description": "Complete ingestion URL. No path is appended."
 																			},
 																			{
 																				"type": "object",
@@ -3332,6 +3508,60 @@
 																			"type": "string",
 																			"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																		}
+																	},
+																	"format": {
+																		"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"const": "otlp-genai-1.41"
+																			},
+																			{
+																				"type": "object",
+																				"properties": {
+																					"encrypted": {
+																						"type": "object",
+																						"properties": {
+																							"version": {
+																								"type": "number",
+																								"const": 1
+																							},
+																							"keyId": {
+																								"type": "string",
+																								"pattern": "^[0-9a-f]{64}$"
+																							},
+																							"salt": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																							},
+																							"nonce": {
+																								"type": "string",
+																								"pattern": "^[A-Za-z0-9_-]{16}$"
+																							},
+																							"blob": {
+																								"type": "string",
+																								"minLength": 22,
+																								"maxLength": 349547,
+																								"pattern": "^[A-Za-z0-9_-]+$"
+																							}
+																						},
+																						"required": [
+																							"version",
+																							"keyId",
+																							"salt",
+																							"nonce",
+																							"blob"
+																						],
+																						"additionalProperties": false
+																					}
+																				},
+																				"required": [
+																					"encrypted"
+																				],
+																				"additionalProperties": false,
+																				"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																			}
+																		]
 																	},
 																	"content": {
 																		"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -3622,7 +3852,7 @@
 													"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 												}
 											],
-											"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
+											"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 										}
 									},
 									"required": [
@@ -7331,7 +7561,7 @@
 																					"type": "string",
 																					"maxLength": 2048,
 																					"format": "uri",
-																					"description": "Complete JSON webhook URL. No path is appended."
+																					"description": "Complete ingestion URL. No path is appended."
 																				},
 																				{
 																					"type": "object",
@@ -7385,7 +7615,7 @@
 																							"type": "string",
 																							"maxLength": 2048,
 																							"format": "uri",
-																							"description": "Complete JSON webhook URL. No path is appended."
+																							"description": "Complete ingestion URL. No path is appended."
 																						}
 																					},
 																					"required": [
@@ -7407,6 +7637,74 @@
 																				"type": "string",
 																				"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																			}
+																		},
+																		"format": {
+																			"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																			"anyOf": [
+																				{
+																					"type": "string",
+																					"const": "otlp-genai-1.41"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypt": {
+																							"type": "string",
+																							"const": "otlp-genai-1.41"
+																						}
+																					},
+																					"required": [
+																						"encrypt"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value in plain text. `stogas policy edit` encrypts it when it saves."
+																				}
+																			]
 																		},
 																		"content": {
 																			"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -7769,7 +8067,7 @@
 																							"type": "string",
 																							"maxLength": 2048,
 																							"format": "uri",
-																							"description": "Complete JSON webhook URL. No path is appended."
+																							"description": "Complete ingestion URL. No path is appended."
 																						},
 																						{
 																							"type": "object",
@@ -7829,6 +8127,60 @@
 																						"type": "string",
 																						"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																					}
+																				},
+																				"format": {
+																					"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																					"anyOf": [
+																						{
+																							"type": "string",
+																							"const": "otlp-genai-1.41"
+																						},
+																						{
+																							"type": "object",
+																							"properties": {
+																								"encrypted": {
+																									"type": "object",
+																									"properties": {
+																										"version": {
+																											"type": "number",
+																											"const": 1
+																										},
+																										"keyId": {
+																											"type": "string",
+																											"pattern": "^[0-9a-f]{64}$"
+																										},
+																										"salt": {
+																											"type": "string",
+																											"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																										},
+																										"nonce": {
+																											"type": "string",
+																											"pattern": "^[A-Za-z0-9_-]{16}$"
+																										},
+																										"blob": {
+																											"type": "string",
+																											"minLength": 22,
+																											"maxLength": 349547,
+																											"pattern": "^[A-Za-z0-9_-]+$"
+																										}
+																									},
+																									"required": [
+																										"version",
+																										"keyId",
+																										"salt",
+																										"nonce",
+																										"blob"
+																									],
+																									"additionalProperties": false
+																								}
+																							},
+																							"required": [
+																								"encrypted"
+																							],
+																							"additionalProperties": false,
+																							"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																						}
+																					]
 																				},
 																				"content": {
 																					"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -8097,7 +8449,7 @@
 																							"type": "string",
 																							"maxLength": 2048,
 																							"format": "uri",
-																							"description": "Complete JSON webhook URL. No path is appended."
+																							"description": "Complete ingestion URL. No path is appended."
 																						},
 																						{
 																							"type": "object",
@@ -8157,6 +8509,60 @@
 																						"type": "string",
 																						"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																					}
+																				},
+																				"format": {
+																					"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																					"anyOf": [
+																						{
+																							"type": "string",
+																							"const": "otlp-genai-1.41"
+																						},
+																						{
+																							"type": "object",
+																							"properties": {
+																								"encrypted": {
+																									"type": "object",
+																									"properties": {
+																										"version": {
+																											"type": "number",
+																											"const": 1
+																										},
+																										"keyId": {
+																											"type": "string",
+																											"pattern": "^[0-9a-f]{64}$"
+																										},
+																										"salt": {
+																											"type": "string",
+																											"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																										},
+																										"nonce": {
+																											"type": "string",
+																											"pattern": "^[A-Za-z0-9_-]{16}$"
+																										},
+																										"blob": {
+																											"type": "string",
+																											"minLength": 22,
+																											"maxLength": 349547,
+																											"pattern": "^[A-Za-z0-9_-]+$"
+																										}
+																									},
+																									"required": [
+																										"version",
+																										"keyId",
+																										"salt",
+																										"nonce",
+																										"blob"
+																									],
+																									"additionalProperties": false
+																								}
+																							},
+																							"required": [
+																								"encrypted"
+																							],
+																							"additionalProperties": false,
+																							"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																						}
+																					]
 																				},
 																				"content": {
 																					"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -8409,7 +8815,7 @@
 														"description": "This value in plain text. `stogas policy edit` encrypts it when it saves."
 													}
 												],
-												"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
+												"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 											}
 										},
 										"required": [
@@ -8484,7 +8890,7 @@
 																							"type": "string",
 																							"maxLength": 2048,
 																							"format": "uri",
-																							"description": "Complete JSON webhook URL. No path is appended."
+																							"description": "Complete ingestion URL. No path is appended."
 																						},
 																						{
 																							"type": "object",
@@ -8544,6 +8950,60 @@
 																						"type": "string",
 																						"pattern": "^[^\\x00-\\x08\\x0a-\\x1f\\x7f]*$"
 																					}
+																				},
+																				"format": {
+																					"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																					"anyOf": [
+																						{
+																							"type": "string",
+																							"const": "otlp-genai-1.41"
+																						},
+																						{
+																							"type": "object",
+																							"properties": {
+																								"encrypted": {
+																									"type": "object",
+																									"properties": {
+																										"version": {
+																											"type": "number",
+																											"const": 1
+																										},
+																										"keyId": {
+																											"type": "string",
+																											"pattern": "^[0-9a-f]{64}$"
+																										},
+																										"salt": {
+																											"type": "string",
+																											"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																										},
+																										"nonce": {
+																											"type": "string",
+																											"pattern": "^[A-Za-z0-9_-]{16}$"
+																										},
+																										"blob": {
+																											"type": "string",
+																											"minLength": 22,
+																											"maxLength": 349547,
+																											"pattern": "^[A-Za-z0-9_-]+$"
+																										}
+																									},
+																									"required": [
+																										"version",
+																										"keyId",
+																										"salt",
+																										"nonce",
+																										"blob"
+																									],
+																									"additionalProperties": false
+																								}
+																							},
+																							"required": [
+																								"encrypted"
+																							],
+																							"additionalProperties": false,
+																							"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																						}
+																					]
 																				},
 																				"content": {
 																					"description": "Send request and response bodies. Defaults to true, and false sends the request record and metadata only. A share, written as a sample is, sends bodies with that share of records and the other records without them.",
@@ -8834,7 +9294,7 @@
 																"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 															}
 														],
-														"description": "Independent destinations from required policies are combined. Destinations with the same URL and headers are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
+														"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 													}
 												},
 												"required": [

@@ -1,6 +1,6 @@
 ---
 title: Export
-description: Send each request and its response to your own webhook as JSON.
+description: Send each request and its response to your own webhook as JSON or as an OpenTelemetry trace.
 icon: Webhook
 ---
 
@@ -40,8 +40,8 @@ Add a destination to a [policy](/docs/policies/editing):
 - Headers go only to your webhook. To keep them private,
   [encrypt the export](/docs/customer-encryption#encrypt-plugin-settings).
 - Destinations from every policy that applies to a request add together. One policy, counting its
-  rules, can have up to eight. Destinations with the same URL and headers get one record. They get it if any of them would, and it has bodies
-  if one of them that would get it sends bodies.
+  rules, can have up to eight. Destinations with the same URL, headers and format get one record.
+  They get it if any of them would, and it has bodies if one of them that would get it sends bodies.
 - An empty `destinations` array replaces
   [default export destinations](/docs/policies/rules#defaults), but it cannot
   remove a destination that another scope requires.
@@ -103,6 +103,56 @@ destination gets no record of an outcome that the object leaves out.
 of records, chosen in the same way, and gets the other records without bodies. A record that
 `sample` leaves out is not sent, whatever `content` says.
 
+## Send traces to an OpenTelemetry receiver
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"export": {
+			"destinations": [
+				{
+					"url": "https://otlp.contoso.com/v1/traces", // The receiver's OTLP traces URL over HTTP.
+					"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" },
+					"format": "otlp-genai-1.41"
+				}
+			]
+		}
+	}
+}
+```
+
+With this `format`, the destination gets each record as one trace in OTLP binary Protobuf, with
+`Content-Type: application/x-protobuf`. The attributes follow version 1.41 of the
+[OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/),
+which trace and LLM observability tools read. `sample`, `content` and the
+[delivery rules](#delivery) work as they do for JSON.
+
+| Span                          | Name                                | Attributes                                                                                                    |
+| ----------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| The request                   | `chat` and the model                | The `gen_ai.*` attributes below, and every other [request record](/docs/request-records) field as `stogas.*`. |
+| One for each provider attempt | `provider_attempt` and the provider | The attempt's fields as `stogas.attempt.*`, `http.response.status_code`, and `error.type` if it failed.       |
+
+| Attribute                                                                                                                  | Value                                                                                 |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `gen_ai.operation.name`                                                                                                    | `chat`, for Chat Completions and Responses.                                           |
+| `gen_ai.provider.name`                                                                                                     | The provider that answered. A rejected request has none.                              |
+| `gen_ai.request.model`, `gen_ai.response.model`                                                                            | The model, as the response names it, and the model that the provider reported.        |
+| `gen_ai.response.id`, `gen_ai.response.finish_reasons`                                                                     | The provider's response ID and finish reason.                                         |
+| `gen_ai.conversation.id`                                                                                                   | Your [session ID](/docs/request-records#sessions), if the request sent one.           |
+| `gen_ai.request.*`                                                                                                         | The sampling settings, output token limit, seed and stream flag that the request set. |
+| `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                                  | All input tokens, including cached ones, and all output tokens, including reasoning.  |
+| `gen_ai.usage.cache_read.input_tokens`, `gen_ai.usage.cache_creation.input_tokens`, `gen_ai.usage.reasoning.output_tokens` | The cached, cache write and reasoning tokens among them.                              |
+| `gen_ai.input.messages`, `gen_ai.output.messages`, `gen_ai.system_instructions`, `gen_ai.tool.definitions`                 | The bodies as JSON text, if the destination gets bodies.                              |
+| `error.type`                                                                                                               | The error code of a failed or rejected request. The span status is then an error.     |
+
+- If the request has a [`traceparent` header](/docs/request-records#traces), the spans join that
+  trace, and the request span is a child of your span. Otherwise the trace and span IDs come from
+  the request ID, so a retry repeats them.
+- In messages, an inline file is a `blob` part with its `mime_type`, `size` and `sha256` and no
+  content. A part or an item that the conventions have no type for stays as it was sent.
+- The conventions are in development and rename attributes between versions, so the `format`
+  value names its version. A destination keeps the attributes of the version that it names.
+
 ## Record format
 
 Each record is the request record with these fields added:
@@ -163,8 +213,8 @@ Each record is the request record with these fields added:
 
 ## Delivery
 
-Each record is a `POST` with `Content-Type: application/json` and an `Idempotency-Key` header equal
-to its `request_id`. Any `2xx` response acknowledges it. The gateway ignores the response body and does
+Each record is a `POST` with an `Idempotency-Key` header equal to its `request_id`, and with
+`Content-Type: application/json` unless the destination has a `format`. Any `2xx` response acknowledges it. The gateway ignores the response body and does
 not follow redirects. Each destination receives records on its own, so a slow receiver does not
 delay the others.
 

@@ -412,6 +412,8 @@ the analytics filter [`trace:`](/docs/analytics#filters) finds the requests of a
 
 - The gateway serves a request whose header is missing, invalid or repeated, and records no trace
   ID.
+- An [export in the trace format](/docs/export#send-traces-to-an-opentelemetry-receiver) adds the
+  request to that trace as a child of your span.
 - The gateway never sends the header to the provider.
 - Records that count [repeated rejections](#grouped-rejections) have no trace ID.
 
