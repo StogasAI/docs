@@ -62,35 +62,35 @@ different access.
 
 ## Encrypt plugin settings
 
-Write the policy as usual:
+Open the policy with your key, and write each value to encrypt as `{ "encrypt": value }`:
 
-```json title="policy.json"
+```console
+stogas policy edit organization --organization YOUR_ORGANIZATION_ID --key-file providers.key
+```
+
+```json title="The file in your editor"
 {
+	"$schema": "https://stogas.ai/schemas/policy-edit-v1.json",
 	"plugins": {
 		"export": {
 			"destinations": [
 				{
-					"url": "https://receiver.contoso.com/stogas",
-					"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }
+					"encrypt": {
+						"url": "https://receiver.contoso.com/stogas",
+						"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" }
+					}
 				}
 			]
 		},
-		"redaction": { "literals": [{ "values": ["Project Aurora"] }] }
+		"redaction": { "literals": { "encrypt": [{ "values": ["Project Aurora"] }] } }
 	}
 }
 ```
 
-Then encrypt the parts that you want to hide:
+When you close the file, the CLI encrypts each marked value and saves the policy. Each value becomes
+an envelope in its place, and the rest stays as you wrote it:
 
-```console
-stogas encrypt --key-file providers.key --organization YOUR_ORGANIZATION_ID --policy policy.json \
-  --path /plugins/export/destinations/0 --path /plugins/redaction/literals \
-  --output policy.encrypted.json
-```
-
-Each part becomes an envelope in its place, and the rest stays as you wrote it:
-
-```jsonc title="policy.encrypted.json (placeholders)"
+```jsonc title="The saved policy (placeholders)"
 {
 	"plugins": {
 		"export": {
@@ -111,23 +111,40 @@ Each part becomes an envelope in its place, and the rest stays as you wrote it:
 }
 ```
 
-[Save the policy](/docs/policies/editing) from the output. Saving checks the readable settings,
-each envelope's format and that the organization registers its key.
+The next `policy edit` with the key shows the values in plain text again, so you need no readable
+copy of the policy. [Edit a policy](/docs/cli#edit-a-policy) gives the scopes and the editor.
+
+- You can mark the `export` or `redaction` plugin, or any value inside one, in the policy or in a
+  rule.
+- Encrypt a destination's `headers` together with its `url`, by marking the destination or more.
+  Someone who can edit the policy could otherwise move the headers beside another URL.
+- Before it encrypts the values, the CLI has a gateway check the plugins that hold them, over a
+  verified connection, so a mistake shows now instead of in the requests that need them.
+- Each plugin can use its own registered key. A request needs the key of each encrypted part that
+  applies to it, as [Send the key with a request](#send-the-key-with-a-request) shows.
+- Saving checks the readable settings, each envelope's format and that the organization registers
+  its key.
+
+### Encrypt a policy file
+
+When you keep policies in files and save them with the
+[Dashboard API](/docs/reference/dashboard), encrypt parts of the file instead:
+
+```console
+stogas encrypt --key-file providers.key --organization YOUR_ORGANIZATION_ID --policy policy.json \
+  --path /plugins/export/destinations/0 --path /plugins/redaction/literals \
+  --output policy.encrypted.json
+```
 
 - `--path` takes a [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) to the `export` or
   `redaction` plugin, or to any value inside one, in the policy or in a rule, such as
   `/rules/night/plugins/export`. Repeat it for more parts. A path above a plugin, such as
   `/rules/night`, encrypts each export and redaction plugin under it, and without `--path` the
   command encrypts every one in the policy.
-- Encrypt a destination's `headers` together with its `url`, by encrypting the destination or more.
-  Someone who can edit the policy could otherwise move the headers beside another URL.
-- Before it encrypts the parts, the command has a gateway check the plugins that hold them, over a
-  verified connection, so a mistake shows now instead of in the requests that need them. The check
-  needs you signed in with `stogas login` or `STOGAS_TOKEN`.
-- Keep the policy without encryption, and encrypt from it whenever you change it. The command
+- The gateway checks the plugins first, as it does for `policy edit`. The check needs you signed in
+  with `stogas login` or `STOGAS_TOKEN`.
+- Keep the file without encryption, and encrypt from it whenever you change it. The command
   refuses a plugin that already holds encrypted values, because the check needs all of it.
-- Each plugin can use its own registered key. A request needs the key of each encrypted part that
-  applies to it, as [Send the key with a request](#send-the-key-with-a-request) shows.
 
 [Policy size limits](/docs/policies/editing#document-rules) count encrypted parts at their
 decrypted size. Anyone who can read the policy still sees:
@@ -175,15 +192,23 @@ Anyone with both a key and its ciphertext can decrypt that content. Only separat
 separate access, not separate labels. Removing a member does not make them forget a key they had.
 Each caller must hold every key that the encrypted settings of their requests need.
 
-Keep the original policies and provider credentials so you can encrypt them again. To rotate a key:
+Keep the original provider credentials so you can encrypt them again. To rotate a key:
 
 1. Generate a new key and register it under a new label.
 2. Update your clients to send both keys.
-3. Encrypt the policy settings and provider credentials again with the new key, and save them.
+3. Open each policy with the new key first and the old key second, and close the file. The CLI
+   encrypts every value that the old key opened with the new key:
+
+   ```console
+   stogas policy edit key YOUR_KEY_ID --key-file new.key --key-file providers.key
+   ```
+
+   Encrypt each provider credential again with the new key, and save it.
    [List the uses of an encryption key](/docs/reference/dashboard/encryption-keys/listEncryptionKeyUses)
    names each policy and credential that you can view and that still uses the old key, and where
    each policy holds it, such as `/plugins/redaction` or
    `/rules/night/plugins/export/destinations/0/url`.
+
 4. Filter analytics with [`encryption_key:`](/docs/analytics#filters) and the old key's label to
    check that no recent request could still use it.
 5. Remove the old key's registration, then stop sending it.

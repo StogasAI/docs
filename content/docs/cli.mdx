@@ -254,7 +254,8 @@ result, or writes it to the new file that `--output` names.
   an export or redaction plugin, or to a value inside one. Without `--path`, it encrypts every
   export and redaction plugin in the policy. Before it encrypts them, a gateway checks the plugins
   that hold the parts, which needs you signed in.
-  [Encrypt plugin settings](/docs/customer-encryption#encrypt-plugin-settings) gives the rules.
+  [Encrypt a policy file](/docs/customer-encryption#encrypt-a-policy-file) gives the rules. For a
+  policy that the dashboard stores, [`policy edit --key-file`](#edit-a-policy) encrypts as it saves.
 - With `--credential`, it encrypts a [provider credential](/docs/byok#customer-encryption) of
   `openai`, `anthropic`, `chutes`, `aws`, `azure` or `google-cloud`, without connecting anywhere.
   It reads the file that `--input` names or what you pipe in, and without either asks for an API
@@ -310,6 +311,7 @@ billing country, state and ZIP code yet, the CLI asks for them.
 ```console
 stogas policy edit key <key-id>
 stogas policy edit organization --organization <organization-id>
+stogas policy edit key <key-id> --key-file prod.key
 ```
 
 `policy edit` opens a [policy](/docs/policies) as JSON in your `$VISUAL` or `$EDITOR`, or in `vi`
@@ -330,6 +332,12 @@ organization.
 - When an edit is not saved, the CLI prints the path of the file with your text, which only you
   can read.
 - An editor that opens a window must wait until you close the file, as `code --wait` does.
+- With `--key-file`, or `--key` for a key saved under that label, the file shows each value that
+  the key encrypts in plain text as `{ "encrypt": value }`, and saving encrypts every value of an
+  export or redaction plugin that is written so.
+  [Encrypt plugin settings](/docs/customer-encryption#encrypt-plugin-settings) gives the rules.
+  Repeat the option with a new key first to move the values of the other keys to it, which saves
+  even when you close the file unchanged.
 
 ### Check a credential
 

@@ -47,8 +47,8 @@ draft, in order. It calls no model and costs nothing.
 
 - The draft replaces the saved policy at its scope. A credential policy draft applies wherever the
   key uses that credential. Enabled state, expiration and other changes apply after you save.
-- The request uses Responses and sends every registered encryption key, no `service_tier` and no
-  system message. `request.bodyBytes` is 0, and the simulation reads no
+- The request uses Responses and sends every registered encryption key, no tools, no
+  `service_tier` and no system message. `request.bodyBytes` is 0, and the simulation reads no
   [request policy](/docs/policies/request-policies) or `provider` preference.
 - It uses the current catalog and time, so `access.schedule` periods and rules that read
   `request.time` apply as they would now. It routes as a request from an address that every
@@ -131,4 +131,5 @@ The schema checks the structure. Saving also checks expressions, permissions and
 combines with others.
 
 [`stogas policy edit`](/docs/cli#edit-a-policy) opens a saved policy in your own editor with the
-schema URL already in place, and saves it when you close the file.
+schema URL already in place, and saves it when you close the file. With your organization key, it
+also shows and encrypts [customer-encrypted settings](/docs/customer-encryption#encrypt-plugin-settings).
