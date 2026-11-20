@@ -13,7 +13,7 @@ explains.
 | [OpenAI](/docs/providers/openai)             | API key               | Yes              | Flex, Fast, Ultrafast | Automatic, optional breakpoints | Web search, remote MCP            | Post-quantum TLS                            |
 | [Anthropic](/docs/providers/anthropic)       | API key               | Yes              | Fast                  | `cache_control`                 | Web search, web fetch             | Post-quantum TLS                            |
 | [Azure](/docs/providers/azure)               | Entra application     | Yes[^translated] | Flex, Fast            | As OpenAI or Anthropic          | Web search, web fetch for Claude  | TLS 1.3                                     |
-| [AWS](/docs/providers/aws)                   | Access key or API key | Yes              | None                  | `cache_control`                 | Web search, web fetch[^anthropic] | TLS 1.3                                     |
+| [AWS](/docs/providers/aws)                   | Access key or API key | Yes[^translated] | None                  | As OpenAI or Anthropic          | Web search, web fetch[^anthropic] | TLS 1.3                                     |
 | [Google Cloud](/docs/providers/google-cloud) | Service account key   | Yes              | Fast[^anthropic]      | `cache_control`                 | Web search, web fetch[^anthropic] | Post-quantum TLS                            |
 | [Chutes](/docs/providers/chutes)             | Ours, or your API key | Yes[^translated] | None                  | Automatic                       | None                              | E2EE to a verified TEE, or post-quantum TLS |
 
@@ -54,10 +54,10 @@ gateway never accepts.
 Some deployments take only one of Chat Completions and Responses. The gateway translates a request
 on the other API, and returns the reply, or each streamed event, on the API that you called:
 
-| You call         | Deployments                                                  | The gateway calls |
-| ---------------- | ------------------------------------------------------------ | ----------------- |
-| Responses        | Azure and Chutes deployments that take only Chat Completions | Chat Completions  |
-| Chat Completions | OpenAI and Azure deployments that take only Responses        | Responses         |
+| You call         | Deployments                                                       | The gateway calls |
+| ---------------- | ----------------------------------------------------------------- | ----------------- |
+| Responses        | Azure, AWS and Chutes deployments that take only Chat Completions | Chat Completions  |
+| Chat Completions | OpenAI and Azure deployments that take only Responses             | Responses         |
 
 OpenAI and Azure deployments that take both APIs also get a Chat Completions request through
 Responses when its `reasoning_details` hold encrypted reasoning that the gateway returned from

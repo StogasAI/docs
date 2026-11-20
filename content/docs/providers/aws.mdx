@@ -1,13 +1,13 @@
 ---
 title: AWS
-description: Run Claude in your AWS account on Amazon Bedrock or Claude Platform on AWS.
+description: Run Claude and models of other authors in your AWS account on Amazon Bedrock or Claude Platform on AWS.
 icon: logo:aws
 ---
 
-AWS deployments run Claude in your AWS account. AWS bills you for inference, and we charge the
-[BYOK fee](/docs/byok#billing).
+AWS deployments run Claude and models of other authors in your AWS account. AWS bills you for
+inference, and we charge the [BYOK fee](/docs/byok#billing).
 
-| Deployment ID suffix   | Offering                             | Who runs Claude, and where      |
+| Deployment ID suffix   | Offering                             | Who runs the model, and where   |
 | ---------------------- | ------------------------------------ | ------------------------------- |
 | None                   | Amazon Bedrock, global profile       | AWS, in any Region              |
 | `-us`                  | Amazon Bedrock, US profile           | AWS, in US Regions              |
@@ -73,7 +73,7 @@ gateway assumes the role for one hour at a time.
    aws iam create-role --role-name stogas-gateway \
      --assume-role-policy-document file://trust.json
    aws iam put-role-policy --role-name stogas-gateway \
-     --policy-name stogas-claude --policy-document file://policy.json
+     --policy-name stogas-gateway --policy-document file://policy.json
    ```
 
 4. Add the role's ARN in [BYOK](/docs/byok) with a commercial Region, such as `us-east-1`. A
@@ -87,7 +87,7 @@ gateway assumes the role for one hour at a time.
    ```bash
    aws iam create-user --user-name stogas-gateway
    aws iam put-user-policy --user-name stogas-gateway \
-     --policy-name stogas-claude --policy-document file://policy.json
+     --policy-name stogas-gateway --policy-document file://policy.json
    ```
 
 2. Create the user's key:
@@ -137,8 +137,8 @@ The role, or the IAM user that owns the key, needs this policy:
 			"Effect": "Allow",
 			"Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
 			"Resource": [
-				"arn:aws:bedrock:*:*:inference-profile/*.anthropic.claude-*",
-				"arn:aws:bedrock:*::foundation-model/anthropic.claude-*"
+				"arn:aws:bedrock:*:*:inference-profile/*",
+				"arn:aws:bedrock:*::foundation-model/*"
 			]
 		},
 		{
@@ -150,8 +150,10 @@ The role, or the IAM user that owns the key, needs this policy:
 }
 ```
 
-A Bedrock API key also needs `bedrock:CallWithBearerToken` and `bedrock:ListFoundationModels`,
-and a Claude Platform on AWS API key needs `aws-external-anthropic:CallWithBearerToken`.
+To allow only some models, end both Bedrock resources with their model IDs, such as
+`inference-profile/*.anthropic.claude-*` and `foundation-model/anthropic.claude-*` for Claude. A
+Bedrock API key also needs `bedrock:CallWithBearerToken` and `bedrock:ListFoundationModels`, and a
+Claude Platform on AWS API key needs `aws-external-anthropic:CallWithBearerToken`.
 
 ## Turn on models that Bedrock reviews
 
@@ -218,3 +220,15 @@ Delete `aws.json`, and add what the CLI printed in [BYOK](/docs/byok).
 Claude Platform on AWS works as on [Anthropic](/docs/providers/anthropic). On Bedrock, send files
 inline, because file URLs and file IDs are rejected. `web_search` and `web_fetch` are not
 available, and Bedrock runs a request without its `task_budget`.
+
+## Models of other authors
+
+Bedrock runs models of other authors through its Chat Completions API, and the gateway
+[translates](/docs/providers#responses-through-chat-completions) Responses requests for them.
+Prompt caching works as on [OpenAI](/docs/providers/openai#prompt-caching).
+
+- Send images and files inline. Bedrock reads a file's type from the extension of its `filename`,
+  so the extension must be one that the route lists in `documentFormats`.
+- Bedrock takes a `file_id` only as an S3 URL.
+- Requests that set `logit_bias`, `logprobs`, `top_logprobs` or `parallel_tool_calls: false` skip
+  these deployments, because Bedrock answers without applying them.

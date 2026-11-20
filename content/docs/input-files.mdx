@@ -157,9 +157,10 @@ turns Word, Excel and PowerPoint files into text.
 
 A tool result takes images and documents, with the sources, formats, policies and
 [limits](#limits) of a user message. It takes no audio. Only deployments with the
-`toolResultAttachments` capability read them, and the request
-[leaves the others out](#when-no-candidate-reads-a-file). A text file, Office file or PDF that a
-policy [extracts](/docs/text-extraction) is text, so every deployment reads it.
+`toolResultImages` capability read its images, and only those with `toolResultDocuments` read its
+documents. The request [leaves the others out](#when-no-candidate-reads-a-file). A text file,
+Office file or PDF that a policy [extracts](/docs/text-extraction) is text, so every deployment
+reads it.
 
 ## Supported formats
 
@@ -167,11 +168,12 @@ Each catalog route lists the document types that it reads as `documentFormats`, 
 deployment lists its input types as `inputModalities`. Search the
 [catalog](https://stogas.ai/catalog) to find them:
 
-| Search                                               | Finds                                             |
-| ---------------------------------------------------- | ------------------------------------------------- |
-| `deployment.inputModalities:image`                   | Deployments that read images                      |
-| `route.documentFormats.extensions:.pdf`              | Routes that read PDFs                             |
-| `deployment.capabilities.toolResultAttachments:true` | Deployments that read attachments in tool results |
+| Search                                             | Finds                                           |
+| -------------------------------------------------- | ----------------------------------------------- |
+| `deployment.inputModalities:image`                 | Deployments that read images                    |
+| `route.documentFormats.extensions:.pdf`            | Routes that read PDFs                           |
+| `deployment.capabilities.toolResultImages:true`    | Deployments that read images in tool results    |
+| `deployment.capabilities.toolResultDocuments:true` | Deployments that read documents in tool results |
 
 The provider can convert a document before the model reads it, so a model that reads only text can
 still accept a PDF. The [provider pages](/docs/providers) list each provider's file rules.
@@ -260,5 +262,5 @@ model, such as `provider:openai gpt-5.6-sol`, or use a key with one credential f
 
 [^sources]:
     Anthropic models also take `file_url` on Chat Completions, and do not take an image
-    `file_id`. Claude that AWS or Google runs takes neither URLs nor file IDs, and Claude that
-    Azure runs takes no file IDs.
+    `file_id`. Models that AWS or Google runs take no URLs. Claude that AWS or Google runs takes
+    no file IDs either, and Claude that Azure runs takes none.
