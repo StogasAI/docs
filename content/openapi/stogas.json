@@ -7159,6 +7159,72 @@
 														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 													}
 												]
+											},
+											"parts": {
+												"minItems": 1,
+												"maxItems": 6,
+												"type": "array",
+												"items": {
+													"anyOf": [
+														{
+															"type": "string",
+															"const": "request",
+															"description": "Every part of the request"
+														},
+														{
+															"type": "string",
+															"const": "system",
+															"description": "System and developer messages, and instructions"
+														},
+														{
+															"type": "string",
+															"const": "user",
+															"description": "User messages"
+														},
+														{
+															"type": "string",
+															"const": "assistant",
+															"description": "Assistant messages, tool calls and reasoning that the request sends back"
+														},
+														{
+															"type": "string",
+															"const": "toolResults",
+															"description": "Tool results, and the result inside a call that the provider ran"
+														},
+														{
+															"type": "string",
+															"const": "tools",
+															"description": "Tool definitions and output formats"
+														},
+														{
+															"type": "string",
+															"const": "response",
+															"description": "The response"
+														}
+													]
+												},
+												"uniqueItems": true,
+												"description": "The text that the detectors read. Without it, they read every part of the request."
+											},
+											"action": {
+												"anyOf": [
+													{
+														"type": "string",
+														"const": "replace",
+														"description": "Replace each match with a placeholder such as <EMAIL_ADDRESS>"
+													},
+													{
+														"type": "string",
+														"const": "restore",
+														"description": "Replace each match with a numbered placeholder such as <EMAIL_ADDRESS_1>, and put the value back in the response"
+													},
+													{
+														"type": "string",
+														"const": "refuse",
+														"description": "Refuse a request or a response that holds a match"
+													}
+												],
+												"description": "What a match does. Without it, a placeholder replaces the match."
 											}
 										},
 										"additionalProperties": false,
@@ -9600,6 +9666,72 @@
 																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																}
 															]
+														},
+														"parts": {
+															"minItems": 1,
+															"maxItems": 6,
+															"type": "array",
+															"items": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"const": "request",
+																		"description": "Every part of the request"
+																	},
+																	{
+																		"type": "string",
+																		"const": "system",
+																		"description": "System and developer messages, and instructions"
+																	},
+																	{
+																		"type": "string",
+																		"const": "user",
+																		"description": "User messages"
+																	},
+																	{
+																		"type": "string",
+																		"const": "assistant",
+																		"description": "Assistant messages, tool calls and reasoning that the request sends back"
+																	},
+																	{
+																		"type": "string",
+																		"const": "toolResults",
+																		"description": "Tool results, and the result inside a call that the provider ran"
+																	},
+																	{
+																		"type": "string",
+																		"const": "tools",
+																		"description": "Tool definitions and output formats"
+																	},
+																	{
+																		"type": "string",
+																		"const": "response",
+																		"description": "The response"
+																	}
+																]
+															},
+															"uniqueItems": true,
+															"description": "The text that the detectors read. Without it, they read every part of the request."
+														},
+														"action": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"const": "replace",
+																	"description": "Replace each match with a placeholder such as <EMAIL_ADDRESS>"
+																},
+																{
+																	"type": "string",
+																	"const": "restore",
+																	"description": "Replace each match with a numbered placeholder such as <EMAIL_ADDRESS_1>, and put the value back in the response"
+																},
+																{
+																	"type": "string",
+																	"const": "refuse",
+																	"description": "Refuse a request or a response that holds a match"
+																}
+															],
+															"description": "What a match does. Without it, a placeholder replaces the match."
 														}
 													},
 													"additionalProperties": false,

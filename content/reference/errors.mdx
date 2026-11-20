@@ -71,6 +71,7 @@ Fix the request before you send it again. Requests rejected before dispatch cost
 | `encryption_key_required`     | An [encrypted policy or credential](/docs/customer-encryption) needs its key in `encryption_keys`.                                                     |
 | `encrypted_content_invalid`   | Encrypted policy content cannot be read.                                                                                                               |
 | `input_ascii_required`        | A policy [allows only ASCII input](/docs/pii-redaction#ascii-only-input).                                                                              |
+| `redaction_refused`           | A [redaction that refuses matches](/docs/pii-redaction#parts-and-actions) matched the request or the response.                                         |
 | `key_configuration_too_large` | The key's policies and credentials are too large, need more than 32 encryption keys per request, or have more than 20,000 Azure targets. Remove some.  |
 | `policy_work_limit_exceeded`  | The policies that apply need too much work for one request. Simplify them.                                                                             |
 | `invalid_policy`              | Only from [Validate policy](/docs/reference/policies/validatePolicy): the policies are invalid. Without `encryption_keys`, the message says why.       |

@@ -101,6 +101,9 @@ available. Buffered requests over HTTPS or attested TLS get no keepalives.
 A keepalive shows that the gateway is working on the request. It does not mean that the provider
 accepted the request or that the request will succeed.
 
+A policy that [redacts responses](/docs/pii-redaction#a-redaction-of-the-response-holds-the-stream)
+holds every event until the provider finishes, and keepalives fill the wait.
+
 With [E2EE](/docs/connection-modes#e2ee-over-https), keepalives are encrypted records outside the
 response body, for streaming and buffered requests. They do not fix the HTTP status, so a provider
 `429` after 30 seconds still reaches your client as `429` with its `Retry-After` header. They also

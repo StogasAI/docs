@@ -14371,6 +14371,7 @@
 																			"provider_unavailable",
 																			"rate_limit_exceeded",
 																			"reasoning_mode_unavailable",
+																			"redaction_refused",
 																			"request_body_timeout",
 																			"request_timeout",
 																			"request_too_large",
@@ -15324,13 +15325,25 @@
 																		"type": "integer",
 																		"minimum": 0,
 																		"maximum": 4294967295,
-																		"description": "Scan time, in microseconds."
+																		"description": "Scan time of the request, in microseconds."
 																	},
 																	"items_redacted": {
 																		"type": "integer",
 																		"minimum": 0,
 																		"maximum": 4294967295,
-																		"description": "Replacements. `0` means the scan found nothing."
+																		"description": "Replacements in the request. `0` means the scan found nothing."
+																	},
+																	"response_items_redacted": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 4294967295,
+																		"description": "Replacements in the response. Absent when the scan found nothing."
+																	},
+																	"items_restored": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 4294967295,
+																		"description": "Values put back in the response. Absent when the response held none."
 																	}
 																},
 																"required": [
@@ -24935,6 +24948,72 @@
 																			"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																		}
 																	]
+																},
+																"parts": {
+																	"minItems": 1,
+																	"maxItems": 6,
+																	"type": "array",
+																	"items": {
+																		"anyOf": [
+																			{
+																				"type": "string",
+																				"const": "request",
+																				"description": "Every part of the request"
+																			},
+																			{
+																				"type": "string",
+																				"const": "system",
+																				"description": "System and developer messages, and instructions"
+																			},
+																			{
+																				"type": "string",
+																				"const": "user",
+																				"description": "User messages"
+																			},
+																			{
+																				"type": "string",
+																				"const": "assistant",
+																				"description": "Assistant messages, tool calls and reasoning that the request sends back"
+																			},
+																			{
+																				"type": "string",
+																				"const": "toolResults",
+																				"description": "Tool results, and the result inside a call that the provider ran"
+																			},
+																			{
+																				"type": "string",
+																				"const": "tools",
+																				"description": "Tool definitions and output formats"
+																			},
+																			{
+																				"type": "string",
+																				"const": "response",
+																				"description": "The response"
+																			}
+																		]
+																	},
+																	"uniqueItems": true,
+																	"description": "The text that the detectors read. Without it, they read every part of the request."
+																},
+																"action": {
+																	"anyOf": [
+																		{
+																			"type": "string",
+																			"const": "replace",
+																			"description": "Replace each match with a placeholder such as <EMAIL_ADDRESS>"
+																		},
+																		{
+																			"type": "string",
+																			"const": "restore",
+																			"description": "Replace each match with a numbered placeholder such as <EMAIL_ADDRESS_1>, and put the value back in the response"
+																		},
+																		{
+																			"type": "string",
+																			"const": "refuse",
+																			"description": "Refuse a request or a response that holds a match"
+																		}
+																	],
+																	"description": "What a match does. Without it, a placeholder replaces the match."
 																}
 															},
 															"additionalProperties": false,
@@ -26650,6 +26729,72 @@
 																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																}
 															]
+														},
+														"parts": {
+															"minItems": 1,
+															"maxItems": 6,
+															"type": "array",
+															"items": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"const": "request",
+																		"description": "Every part of the request"
+																	},
+																	{
+																		"type": "string",
+																		"const": "system",
+																		"description": "System and developer messages, and instructions"
+																	},
+																	{
+																		"type": "string",
+																		"const": "user",
+																		"description": "User messages"
+																	},
+																	{
+																		"type": "string",
+																		"const": "assistant",
+																		"description": "Assistant messages, tool calls and reasoning that the request sends back"
+																	},
+																	{
+																		"type": "string",
+																		"const": "toolResults",
+																		"description": "Tool results, and the result inside a call that the provider ran"
+																	},
+																	{
+																		"type": "string",
+																		"const": "tools",
+																		"description": "Tool definitions and output formats"
+																	},
+																	{
+																		"type": "string",
+																		"const": "response",
+																		"description": "The response"
+																	}
+																]
+															},
+															"uniqueItems": true,
+															"description": "The text that the detectors read. Without it, they read every part of the request."
+														},
+														"action": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"const": "replace",
+																	"description": "Replace each match with a placeholder such as <EMAIL_ADDRESS>"
+																},
+																{
+																	"type": "string",
+																	"const": "restore",
+																	"description": "Replace each match with a numbered placeholder such as <EMAIL_ADDRESS_1>, and put the value back in the response"
+																},
+																{
+																	"type": "string",
+																	"const": "refuse",
+																	"description": "Refuse a request or a response that holds a match"
+																}
+															],
+															"description": "What a match does. Without it, a placeholder replaces the match."
 														}
 													},
 													"additionalProperties": false,
@@ -27475,81 +27620,151 @@
 								},
 								"description": "Turn inline files into prompt text before input checks and redaction. A key is a file family, `text`, `office` or `pdf`, or one media type of a family, such as `text/csv`, whose mode applies to its files in place of the family mode of the same policy. `auto` keeps a file that the deployment reads as a file unless input checks or redaction must read it, `always` turns every one into text, and `off` is the same as a file that no policy sets. The strongest required mode of each file applies."
 							},
-							"redaction": {
-								"type": "object",
-								"properties": {
-									"literals": {
-										"minItems": 1,
-										"maxItems": 36000,
-										"type": "array",
-										"items": {
-											"type": "object",
-											"properties": {
-												"text": {
-													"type": "string",
-													"minLength": 1,
-													"maxLength": 256,
-													"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
+							"redactions": {
+								"minItems": 1,
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"literals": {
+											"minItems": 1,
+											"maxItems": 36000,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"text": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 256,
+														"description": "Exact text, up to 256 UTF-8 bytes. Not a regular expression."
+													},
+													"ignoreCase": {
+														"type": "boolean",
+														"description": "Ignore ASCII letter case",
+														"default": false
+													},
+													"wholeWord": {
+														"type": "boolean",
+														"description": "Require Unicode word boundaries",
+														"default": true
+													},
+													"fuzzy": {
+														"type": "boolean",
+														"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
+														"default": false
+													}
 												},
-												"ignoreCase": {
-													"type": "boolean",
-													"description": "Ignore ASCII letter case",
-													"default": false
-												},
-												"wholeWord": {
-													"type": "boolean",
-													"description": "Require Unicode word boundaries",
-													"default": true
-												},
-												"fuzzy": {
-													"type": "boolean",
-													"description": "Allow one ASCII insertion, deletion, substitution or adjacent swap",
-													"default": false
-												}
+												"required": [
+													"text"
+												],
+												"additionalProperties": false
 											},
-											"required": [
-												"text"
+											"description": "The literal rules of every policy that applies. Fuzzy rules require 8–64 printable ASCII bytes, word endpoints and wholeWord: true."
+										},
+										"presets": {
+											"maxItems": 9,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"enum": [
+													"email_address",
+													"phone_number",
+													"social_security_number",
+													"credit_card_number",
+													"ip_address",
+													"api_keys_and_secrets",
+													"bank_identifiers",
+													"national_identifiers",
+													"health_identifiers"
+												]
+											},
+											"uniqueItems": true
+										},
+										"customPatterns": {
+											"minItems": 1,
+											"maxItems": 576,
+											"type": "array",
+											"items": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 512,
+												"description": "One RE2 expression, limited to 512 UTF-8 bytes."
+											},
+											"uniqueItems": true
+										},
+										"parts": {
+											"minItems": 1,
+											"maxItems": 6,
+											"type": "array",
+											"items": {
+												"anyOf": [
+													{
+														"type": "string",
+														"const": "request",
+														"description": "Every part of the request"
+													},
+													{
+														"type": "string",
+														"const": "system",
+														"description": "System and developer messages, and instructions"
+													},
+													{
+														"type": "string",
+														"const": "user",
+														"description": "User messages"
+													},
+													{
+														"type": "string",
+														"const": "assistant",
+														"description": "Assistant messages, tool calls and reasoning that the request sends back"
+													},
+													{
+														"type": "string",
+														"const": "toolResults",
+														"description": "Tool results, and the result inside a call that the provider ran"
+													},
+													{
+														"type": "string",
+														"const": "tools",
+														"description": "Tool definitions and output formats"
+													},
+													{
+														"type": "string",
+														"const": "response",
+														"description": "The response"
+													}
+												]
+											},
+											"uniqueItems": true,
+											"description": "The text that the detectors read. Without it, they read every part of the request."
+										},
+										"action": {
+											"anyOf": [
+												{
+													"type": "string",
+													"const": "replace",
+													"description": "Replace each match with a placeholder such as <EMAIL_ADDRESS>"
+												},
+												{
+													"type": "string",
+													"const": "restore",
+													"description": "Replace each match with a numbered placeholder such as <EMAIL_ADDRESS_1>, and put the value back in the response"
+												},
+												{
+													"type": "string",
+													"const": "refuse",
+													"description": "Refuse a request or a response that holds a match"
+												}
 											],
-											"additionalProperties": false
-										},
-										"description": "The literal rules of every policy that applies. Fuzzy rules require 8–64 printable ASCII bytes, word endpoints and wholeWord: true."
+											"description": "What a match does. Without it, a placeholder replaces the match."
+										}
 									},
-									"presets": {
-										"maxItems": 9,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"enum": [
-												"email_address",
-												"phone_number",
-												"social_security_number",
-												"credit_card_number",
-												"ip_address",
-												"api_keys_and_secrets",
-												"bank_identifiers",
-												"national_identifiers",
-												"health_identifiers"
-											]
-										},
-										"uniqueItems": true
-									},
-									"customPatterns": {
-										"minItems": 1,
-										"maxItems": 576,
-										"type": "array",
-										"items": {
-											"type": "string",
-											"minLength": 1,
-											"maxLength": 512,
-											"description": "One RE2 expression, limited to 512 UTF-8 bytes."
-										},
-										"uniqueItems": true
-									}
-								},
-								"required": [
-									"presets"
-								],
-								"additionalProperties": false
+									"required": [
+										"presets"
+									],
+									"additionalProperties": false
+								}
 							}
 						},
 						"additionalProperties": false
@@ -32277,6 +32492,72 @@
 														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 													}
 												]
+											},
+											"parts": {
+												"minItems": 1,
+												"maxItems": 6,
+												"type": "array",
+												"items": {
+													"anyOf": [
+														{
+															"type": "string",
+															"const": "request",
+															"description": "Every part of the request"
+														},
+														{
+															"type": "string",
+															"const": "system",
+															"description": "System and developer messages, and instructions"
+														},
+														{
+															"type": "string",
+															"const": "user",
+															"description": "User messages"
+														},
+														{
+															"type": "string",
+															"const": "assistant",
+															"description": "Assistant messages, tool calls and reasoning that the request sends back"
+														},
+														{
+															"type": "string",
+															"const": "toolResults",
+															"description": "Tool results, and the result inside a call that the provider ran"
+														},
+														{
+															"type": "string",
+															"const": "tools",
+															"description": "Tool definitions and output formats"
+														},
+														{
+															"type": "string",
+															"const": "response",
+															"description": "The response"
+														}
+													]
+												},
+												"uniqueItems": true,
+												"description": "The text that the detectors read. Without it, they read every part of the request."
+											},
+											"action": {
+												"anyOf": [
+													{
+														"type": "string",
+														"const": "replace",
+														"description": "Replace each match with a placeholder such as <EMAIL_ADDRESS>"
+													},
+													{
+														"type": "string",
+														"const": "restore",
+														"description": "Replace each match with a numbered placeholder such as <EMAIL_ADDRESS_1>, and put the value back in the response"
+													},
+													{
+														"type": "string",
+														"const": "refuse",
+														"description": "Refuse a request or a response that holds a match"
+													}
+												],
+												"description": "What a match does. Without it, a placeholder replaces the match."
 											}
 										},
 										"additionalProperties": false,
@@ -34839,6 +35120,72 @@
 																	"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																}
 															]
+														},
+														"parts": {
+															"minItems": 1,
+															"maxItems": 6,
+															"type": "array",
+															"items": {
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"const": "request",
+																		"description": "Every part of the request"
+																	},
+																	{
+																		"type": "string",
+																		"const": "system",
+																		"description": "System and developer messages, and instructions"
+																	},
+																	{
+																		"type": "string",
+																		"const": "user",
+																		"description": "User messages"
+																	},
+																	{
+																		"type": "string",
+																		"const": "assistant",
+																		"description": "Assistant messages, tool calls and reasoning that the request sends back"
+																	},
+																	{
+																		"type": "string",
+																		"const": "toolResults",
+																		"description": "Tool results, and the result inside a call that the provider ran"
+																	},
+																	{
+																		"type": "string",
+																		"const": "tools",
+																		"description": "Tool definitions and output formats"
+																	},
+																	{
+																		"type": "string",
+																		"const": "response",
+																		"description": "The response"
+																	}
+																]
+															},
+															"uniqueItems": true,
+															"description": "The text that the detectors read. Without it, they read every part of the request."
+														},
+														"action": {
+															"anyOf": [
+																{
+																	"type": "string",
+																	"const": "replace",
+																	"description": "Replace each match with a placeholder such as <EMAIL_ADDRESS>"
+																},
+																{
+																	"type": "string",
+																	"const": "restore",
+																	"description": "Replace each match with a numbered placeholder such as <EMAIL_ADDRESS_1>, and put the value back in the response"
+																},
+																{
+																	"type": "string",
+																	"const": "refuse",
+																	"description": "Refuse a request or a response that holds a match"
+																}
+															],
+															"description": "What a match does. Without it, a placeholder replaces the match."
 														}
 													},
 													"additionalProperties": false,
