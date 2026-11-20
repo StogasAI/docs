@@ -72,20 +72,19 @@ broken connection can't lock everyone out. API keys don't use single sign-on.
 
 ## Choose who can join
 
-| SCIM          | Who can join                                                            |
-| ------------- | ----------------------------------------------------------------------- |
-| Not connected | Anyone with an invitation link, and people at your verified domains     |
-| Connected     | Anyone with an invitation link, and active users that the provider sent |
+| Let people join without an invite | SCIM          | Who can join                                                            |
+| --------------------------------- | ------------- | ----------------------------------------------------------------------- |
+| Off                               | Either        | Anyone with an invitation link                                          |
+| On                                | Not connected | Anyone with an invitation link, and people at your verified domains     |
+| On                                | Connected     | Anyone with an invitation link, and active users that the provider sent |
 
-Each person who joins through your provider takes one of the **Seats for single sign-on**, from 0
-to 1,000, and nobody joins that way at 0. These seats count as [used seats](/docs/members#invitations)
-while you hold them. Changing them needs **Members → Manage**. Holding more also needs free seats, a
-verified domain, a test sign-in that succeeded and the permissions to assign the default role.
+**Let people join without an invite** is off at first. While it is on, a person whom your provider
+signs in joins with the default role and takes a [free seat](/docs/members#invitations). Turning it
+on needs the permissions to assign the default role.
 
 While single sign-on is required, a person joins with an invitation link through your provider,
-unless the invitation gives a role that lets them skip single sign-on. Such a join takes the
-invitation's use instead of a seat for single sign-on, and needs no verified domain. While SCIM is
-connected, the provider must have sent the person as an active user.
+unless the invitation gives a role that lets them skip single sign-on. Such a join needs no verified
+domain. While SCIM is connected, the provider must have sent the person as an active user.
 
 ## Access tokens
 
@@ -139,8 +138,7 @@ While SCIM is connected:
 - When the provider deactivates or deletes a user, the member who signs in as that person is
   removed, as when an admin [removes a member](/docs/members#remove-access). [Activity](/docs/activity) names
   **Identity provider** as the actor. The last member who can manage roles stays.
-- A user that the provider activates again is not a member. The person joins again and takes a
-  seat for single sign-on.
+- A user that the provider activates again is not a member. The person joins again.
 - A provisioned user takes no seat until the person joins.
 - A member links to their user by email once. A later change of address at the provider keeps the
   link.
