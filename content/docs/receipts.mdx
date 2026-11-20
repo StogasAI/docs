@@ -25,7 +25,10 @@ compact receipt and two salts:
 	"choices": [ ... ],
 	"usage": { ... }, // The standard usage field does not change.
 	"stogas": {
-		// Usage, routing and provider details.
+		"request_id": "req_...",
+		"usage": { "billed_cost_usd": "0.022952", "meters": { ... } }, // The request record's usage.
+		"performance": { "total_ms": 1975, "provider_ms": 1944, ... }, // The request record's times.
+		"catalog": { ... }, // The deployment that answered.
 		"policy_versions_sha512": "6a0f...", // The policies that applied.
 		"receipt": {
 			"schema": "stogas.receipt.v2",
@@ -41,6 +44,10 @@ compact receipt and two salts:
 
 A stream sends the `stogas` object in a `: stogas {...}` SSE comment before the last event.
 Ordinary SSE parsers ignore it.
+
+`usage` and `performance` have the values and names of the
+[request record](/docs/request-records), so one parser reads both. `provider_ms` is the
+[provider time](/docs/request-records#timing) that the record's attempts give.
 
 The [SDK](/docs/sdk-overview) and [CLI](/docs/cli) check the receipt before they report that the
 request completed. Streamed output arrives before that check.

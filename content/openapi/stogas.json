@@ -4408,14 +4408,10 @@
 					"created_at",
 					"node_id",
 					"catalog",
-					"timing",
+					"performance",
+					"usage",
 					"receipt",
-					"salts",
-					"meters",
-					"upstream_cost_usd",
-					"billed_cost_usd",
-					"cache_read_savings_usd",
-					"cache_write_overhead_usd"
+					"salts"
 				],
 				"properties": {
 					"request_id": {
@@ -4481,26 +4477,154 @@
 							}
 						}
 					},
-					"timing": {
+					"policy_versions_sha512": {
+						"type": "string",
+						"pattern": "^[0-9a-f]{128}$",
+						"description": "The SHA-512 of the request record's `policy_versions`, when the record has them."
+					},
+					"performance": {
 						"type": "object",
 						"additionalProperties": false,
 						"required": [
 							"total_ms",
-							"provider_ms"
+							"provider_ms",
+							"rate_limit_wait_ms",
+							"first_output_ms",
+							"ttft_ms"
 						],
+						"description": "The request record's [times](/docs/request-records#timing), and `provider_ms`, which the record's provider attempts give.",
 						"properties": {
 							"total_ms": {
 								"type": "integer",
-								"minimum": 0
+								"minimum": 0,
+								"description": "From the decoded request body to the written record."
 							},
 							"provider_ms": {
 								"type": "integer",
-								"minimum": 0
+								"minimum": 0,
+								"description": "From the start of the first provider call to the end of the last."
 							},
-							"ttft_ms": {
+							"rate_limit_wait_ms": {
 								"type": "integer",
 								"minimum": 0,
-								"description": "Time to the first generated token in a stream."
+								"description": "How long the platform request limit held the request before its first call."
+							},
+							"first_output_ms": {
+								"type": [
+									"integer",
+									"null"
+								],
+								"minimum": 0,
+								"description": "When the provider's first output reached the gateway."
+							},
+							"ttft_ms": {
+								"type": [
+									"integer",
+									"null"
+								],
+								"minimum": 0,
+								"description": "When the gateway passed on the first generated token of a stream."
+							}
+						}
+					},
+					"usage": {
+						"type": "object",
+						"additionalProperties": false,
+						"required": [
+							"upstream_cost_usd",
+							"billed_cost_usd",
+							"meters"
+						],
+						"description": "The request record's [usage](/docs/usage).",
+						"properties": {
+							"upstream_cost_usd": {
+								"type": "string",
+								"maxLength": 77,
+								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"description": "Exact USD amount as a decimal string."
+							},
+							"billed_cost_usd": {
+								"type": "string",
+								"maxLength": 77,
+								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"description": "Exact USD amount as a decimal string."
+							},
+							"cache_read_savings_usd": {
+								"type": "string",
+								"maxLength": 77,
+								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"description": "Exact USD amount as a decimal string."
+							},
+							"cache_write_overhead_usd": {
+								"type": "string",
+								"maxLength": 77,
+								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"description": "Exact USD amount as a decimal string."
+							},
+							"meters": {
+								"type": "object",
+								"maxProperties": 64,
+								"additionalProperties": {
+									"type": "object",
+									"additionalProperties": false,
+									"required": [
+										"quantity"
+									],
+									"properties": {
+										"quantity": {
+											"type": "string",
+											"pattern": "^(0|[1-9][0-9]*)$",
+											"maxLength": 20
+										},
+										"usd": {
+											"type": "string",
+											"maxLength": 77,
+											"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+											"description": "Exact USD amount as a decimal string."
+										},
+										"rateKey": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128
+										},
+										"rateUsd": {
+											"type": "string",
+											"maxLength": 77,
+											"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+											"description": "Exact USD amount as a decimal string."
+										}
+									},
+									"oneOf": [
+										{
+											"not": {
+												"anyOf": [
+													{
+														"required": [
+															"rateKey"
+														]
+													},
+													{
+														"required": [
+															"rateUsd"
+														]
+													},
+													{
+														"required": [
+															"usd"
+														]
+													}
+												]
+											}
+										},
+										{
+											"required": [
+												"rateKey",
+												"rateUsd",
+												"usd"
+											]
+										}
+									]
+								}
 							}
 						}
 					},
@@ -4530,101 +4654,6 @@
 							}
 						},
 						"description": "The random salt that each commitment covers. Only you receive them: share a side's salt to prove that side. Request records and exports don't have them."
-					},
-					"meters": {
-						"type": "object",
-						"maxProperties": 64,
-						"additionalProperties": {
-							"type": "object",
-							"additionalProperties": false,
-							"required": [
-								"quantity"
-							],
-							"properties": {
-								"quantity": {
-									"type": "string",
-									"pattern": "^(0|[1-9][0-9]*)$",
-									"maxLength": 20
-								},
-								"usd": {
-									"type": "string",
-									"maxLength": 77,
-									"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-									"description": "Exact USD amount as a decimal string."
-								},
-								"rateKey": {
-									"type": "string",
-									"minLength": 1,
-									"maxLength": 128
-								},
-								"rateUsd": {
-									"type": "string",
-									"maxLength": 77,
-									"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-									"description": "Exact USD amount as a decimal string."
-								}
-							},
-							"oneOf": [
-								{
-									"not": {
-										"anyOf": [
-											{
-												"required": [
-													"rateKey"
-												]
-											},
-											{
-												"required": [
-													"rateUsd"
-												]
-											},
-											{
-												"required": [
-													"usd"
-												]
-											}
-										]
-									}
-								},
-								{
-									"required": [
-										"rateKey",
-										"rateUsd",
-										"usd"
-									]
-								}
-							]
-						}
-					},
-					"upstream_cost_usd": {
-						"type": "string",
-						"maxLength": 77,
-						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Exact USD amount as a decimal string."
-					},
-					"billed_cost_usd": {
-						"type": "string",
-						"maxLength": 77,
-						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Exact USD amount as a decimal string."
-					},
-					"cache_read_savings_usd": {
-						"type": [
-							"string",
-							"null"
-						],
-						"maxLength": 77,
-						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Exact USD amount as a decimal string."
-					},
-					"cache_write_overhead_usd": {
-						"type": [
-							"string",
-							"null"
-						],
-						"maxLength": 77,
-						"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-						"description": "Exact USD amount as a decimal string."
 					}
 				},
 				"description": "Added to the response when the request sends `Stogas-Metadata: v2`. The receipt signs a commitment to the request, a commitment to the response and the rest of this object without its `salts`. See [Receipts](/docs/receipts)."
