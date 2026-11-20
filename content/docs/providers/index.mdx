@@ -86,7 +86,7 @@ A translated request returns `400` for what Chat Completions cannot carry:
 - file URLs and image file IDs
 - `stream_options.include_obfuscation` set to `true`
 
-The deployment's Chat Completions limits apply as well, so Chutes returns `400` for log
+The deployment's Chat Completions limits apply as well, so Chutes and AWS return `400` for log
 probabilities. Reasoning comes back as text, which `reasoning.encrypted_content`
 does not change. A streamed reply sends reasoning as `response.reasoning_text` events, and its
 function calls arrive whole when the reply ends. Log probabilities cover only the output text, so

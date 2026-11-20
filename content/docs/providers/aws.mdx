@@ -230,5 +230,5 @@ Prompt caching works as on [OpenAI](/docs/providers/openai#prompt-caching).
 - Send images and files inline. Bedrock reads a file's type from the extension of its `filename`,
   so the extension must be one that the route lists in `documentFormats`.
 - Bedrock takes a `file_id` only as an S3 URL.
-- Requests that set `logit_bias`, `logprobs`, `top_logprobs` or `parallel_tool_calls: false` skip
-  these deployments, because Bedrock answers without applying them.
+- Bedrock answers without applying `logit_bias`, `logprobs`, `top_logprobs` or
+  `parallel_tool_calls: false`, so a request that sets one goes to another deployment or fails.
