@@ -48,6 +48,9 @@ which generated them, so retries, fallbacks and gateway time do not lower it.
 - Hiding a group in the legend only takes it off the chart. Totals and shares still count it.
 - Model groups combine revisions of the same model. Model and deployment groups use the last
   provider attempt.
+- Error code groups use the error that each request ended with, so a request that failed at its
+  provider counts under the provider's [result](/docs/request-records#provider-results), such as
+  `rate_limited`.
 - Folder groups use the folder that held the key when the request ran, so the requests of a key that
   moves stay with its earlier folder. A member key is in its grant's folder.
 - Language groups need the [language classifier](/docs/classification). Requests that ran without
@@ -103,7 +106,7 @@ provider credential that has it, so use an ID to match one.
 | `tool_call:`        | A tool call ID or its [hash](/docs/request-records#tool-calls), such as `tool_call:call_1`. Matches the request that made the call and the one that sent its result. IDs are case-sensitive.                           |
 | `outcome:`          | An [outcome](/docs/request-records#outcomes): `success`, `failed`, `cancelled`, `rejected` or `unknown`.                                                                                                               |
 | `status:`           | `success`, a [provider result](/docs/request-records#provider-results), a provider's error code such as `invalid_prompt`, a gateway error code such as `insufficient_balance`, or an HTTP status such as `402`.        |
-| `error:`            | A gateway [error code](/docs/reference/errors).                                                                                                                                                                        |
+| `error:`            | The error that the request ended with: a gateway [error code](/docs/reference/errors), or the [result](/docs/request-records#provider-results) of the last provider attempt when the request failed there.             |
 | `id:`               | A request ID.                                                                                                                                                                                                          |
 | `redaction:`        | `redacted`, `no_matches` or `not_recorded`. See [PII redaction](/docs/pii-redaction).                                                                                                                                  |
 | `input_language:`   | The [language](/docs/classification#language) of the newest user message, such as `input_language:de`, or `und` when the classifier could not tell.                                                                    |
@@ -116,7 +119,7 @@ values check every provider attempt, including earlier failed ones.
 `final_provider:`,
 `final_byok:`, `error:`, `metadata.<key>:`, `session:`, `app:`, `agent:`, `trace:`,
 `encryption_key:`, `input_language:` and `output_language:`. For example, `error:none` selects
-requests without a gateway error, and `session:"none"` selects the session named none.
+requests that ended without an error, and `session:"none"` selects the session named none.
 
 Compare numbers with `>`, `>=`, `<` or `<=`:
 

@@ -7,13 +7,13 @@ Every search field in the dashboard and every `filter` parameter in the API take
 page lists the fields it takes: [Analytics](/docs/analytics#filters),
 [Activity](/docs/activity#filters) and the [model catalog](/docs/models#search-the-catalog).
 
-| Filter                                | Matches                                         |
-| ------------------------------------- | ----------------------------------------------- |
-| `provider:openai latency>2s`          | Both filters. A space means `AND`.              |
-| `outcome:failed OR outcome:cancelled` | Either filter.                                  |
-| `-error:none`                         | Requests with a gateway error. `-` means `NOT`. |
-| `actor:"Alex Smith" time>=2026-11`    | A name with a space, and November 2026 onward.  |
-| `checkout`                            | Text without a field, which each page searches. |
+| Filter                                | Matches                                             |
+| ------------------------------------- | --------------------------------------------------- |
+| `provider:openai latency>2s`          | Both filters. A space means `AND`.                  |
+| `outcome:failed OR outcome:cancelled` | Either filter.                                      |
+| `-error:none`                         | Requests that ended with an error. `-` means `NOT`. |
+| `actor:"Alex Smith" time>=2026-11`    | A name with a space, and November 2026 onward.      |
+| `checkout`                            | Text without a field, which each page searches.     |
 
 ## Terms
 

@@ -150,7 +150,7 @@ receiver reads. `sample`, `content` and the [delivery rules](#delivery) work as 
 | `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                               | All input tokens, including cached ones, and all output tokens, including reasoning.                                                                |
 | `gen_ai.usage.cache_read.input_tokens`, `gen_ai.usage.cache_write.input_tokens`, `gen_ai.usage.reasoning.output_tokens` | The cached, cache write and reasoning tokens among them, if there are any. Under 1.41, cache writes are `gen_ai.usage.cache_creation.input_tokens`. |
 | `gen_ai.input.messages`, `gen_ai.output.messages`, `gen_ai.system_instructions`, `gen_ai.tool.definitions`              | The bodies, if the destination gets bodies.                                                                                                         |
-| `error.type`                                                                                                            | The error code of a failed or rejected request. The span status is then an error.                                                                   |
+| `error.type`                                                                                                            | The error that the request ended with. The span status is then an error. A reply that a content filter stopped, or that refused, is not an error.   |
 
 - A streamed response times its [tool calls](/docs/request-records#tool-calls). Each span runs
   from when the stream added the call until it marked the call done, or until the response ended.
