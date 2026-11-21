@@ -71,23 +71,23 @@ charge:
 }
 ```
 
-| Meter                                                                 | Counts                                                                                                                |
-| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `input_tokens`                                                        | Input tokens, without cache reads and writes                                                                          |
-| `cached_input_tokens`                                                 | Input tokens read from the provider cache                                                                             |
-| `cache_write_5m_input_tokens`, `cache_write_1h_input_tokens`          | Input tokens written to a five-minute or one-hour cache                                                               |
-| `cache_write_input_tokens`                                            | Cache writes with no reported duration                                                                                |
-| `output_tokens`                                                       | Output tokens, without reasoning                                                                                      |
-| `reasoning_tokens`                                                    | Reasoning tokens that the provider reports. Otherwise absent, and `output_tokens` includes them                       |
-| `total_input_tokens`, `total_output_tokens`, `total_tokens`           | Totals, with each token counted once. [Token limits](/docs/policies/limits#tokens-and-input-text) use `total_tokens`. |
-| `total_cache_write_tokens`                                            | All cache writes                                                                                                      |
-| `estimated_input_tokens`                                              | The gateway's [input estimate](#input-estimates) for the hold                                                         |
-| `hosted_tool_calls`, `client_tool_calls`                              | Hosted tool calls, and calls returned to your application                                                             |
-| `checked_client_tool_calls`, `invalid_client_tool_calls`              | Returned calls [checked](/docs/analytics#metrics) against their tool's schema, and failures                           |
-| `checked_structured_outputs`, `invalid_structured_outputs`            | JSON outputs checked against the requested format, and failures                                                       |
-| `input_text_bytes`, `output_text_bytes`, `reasoning_text_bytes`       | UTF-8 bytes of text: input after redaction, visible output and visible reasoning                                      |
-| `client_stop_output_text_bytes`, `client_stop_reasoning_text_bytes`   | The visible output and reasoning that the client had received when it [stopped early](#when-the-client-stops-early)   |
-| `input_file_count`, `input_file_url_count`, `input_inline_file_bytes` | Attachments, attachments sent as URLs, and decoded inline bytes                                                       |
+| Meter                                                                                        | Counts                                                                                                                |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `input_tokens`                                                                               | Input tokens, without cache reads and writes                                                                          |
+| `cached_input_tokens`                                                                        | Input tokens read from the provider cache                                                                             |
+| `cache_write_5m_input_tokens`, `cache_write_1h_input_tokens`, `cache_write_12h_input_tokens` | Input tokens written to a cache entry that lasts five minutes, one hour or 12 hours                                   |
+| `cache_write_input_tokens`                                                                   | Other cache writes, which last as long as the deployment keeps them by default                                        |
+| `output_tokens`                                                                              | Output tokens, without reasoning                                                                                      |
+| `reasoning_tokens`                                                                           | Reasoning tokens that the provider reports. Otherwise absent, and `output_tokens` includes them                       |
+| `total_input_tokens`, `total_output_tokens`, `total_tokens`                                  | Totals, with each token counted once. [Token limits](/docs/policies/limits#tokens-and-input-text) use `total_tokens`. |
+| `total_cache_write_tokens`                                                                   | All cache writes                                                                                                      |
+| `estimated_input_tokens`                                                                     | The gateway's [input estimate](#input-estimates) for the hold                                                         |
+| `hosted_tool_calls`, `client_tool_calls`                                                     | Hosted tool calls, and calls returned to your application                                                             |
+| `checked_client_tool_calls`, `invalid_client_tool_calls`                                     | Returned calls [checked](/docs/analytics#metrics) against their tool's schema, and failures                           |
+| `checked_structured_outputs`, `invalid_structured_outputs`                                   | JSON outputs checked against the requested format, and failures                                                       |
+| `input_text_bytes`, `output_text_bytes`, `reasoning_text_bytes`                              | UTF-8 bytes of text: input after redaction, visible output and visible reasoning                                      |
+| `client_stop_output_text_bytes`, `client_stop_reasoning_text_bytes`                          | The visible output and reasoning that the client had received when it [stopped early](#when-the-client-stops-early)   |
+| `input_file_count`, `input_file_url_count`, `input_inline_file_bytes`                        | Attachments, attachments sent as URLs, and decoded inline bytes                                                       |
 
 Some models charge more for every token of a request whose prompt is over a size. The prompt counts
 cache reads and writes. For example, a 300,000-token prompt to a model that charges more over

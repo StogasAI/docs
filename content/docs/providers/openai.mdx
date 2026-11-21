@@ -58,8 +58,12 @@ also let you mark where the cache ends:
 ```
 
 The gateway sends `prompt_cache_key`, `prompt_cache_options`, `prompt_cache_breakpoint` and
-`prompt_cache_retention` as you set them, except that `ttl` takes only `30m`. See
-[OpenAI's guide](https://developers.openai.com/api/docs/guides/prompt-caching) for their values.
+`prompt_cache_retention` as you set them, with one exception. OpenAI takes a `ttl` of `12h` only on
+Responses, so the gateway sends it only in a Responses request, or a Chat Completions request
+[through Responses](/docs/providers#chat-completions-through-responses), to a deployment that prices
+`cache_write_12h_input_tokens` in the catalog. Other requests write the cache for the default `30m`,
+which costs less. See [OpenAI's guide](https://developers.openai.com/api/docs/guides/prompt-caching)
+for their values.
 
 ## Tools
 
