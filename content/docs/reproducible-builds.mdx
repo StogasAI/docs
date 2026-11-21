@@ -264,18 +264,17 @@ file system, such as your home directory there.
 
 ## Closed-source components
 
-| Release                                        | Closed-source code in its files                                            |
-| ---------------------------------------------- | -------------------------------------------------------------------------- |
-| Gateway image                                  | None                                                                       |
-| Catalog                                        | None                                                                       |
-| SDK and CLI for Linux, Android and WebAssembly | None                                                                       |
-| Go package for Windows                         | None. It links the open-source mingw-w64 runtime                           |
-| CLI and every other SDK package for Windows    | Microsoft's C runtime, linked statically from Microsoft's Visual C++ files |
-| SDK and CLI for macOS and iOS                  | None, but Apple's closed-source Xcode compiles and links them              |
+| Release                                                 | Closed-source code in its files                               |
+| ------------------------------------------------------- | ------------------------------------------------------------- |
+| Gateway image                                           | None                                                          |
+| Catalog                                                 | None                                                          |
+| SDK and CLI for Linux, Android, Windows and WebAssembly | None                                                          |
+| SDK and CLI for macOS and iOS                           | None, but Apple's closed-source Xcode compiles and links them |
 
-No one but Apple can inspect the tools that produce the Apple files, and only GitHub's macOS
-runners build them. On Windows and Apple systems our files also call the system's own libraries,
-as every program there does.
+The Windows files link the open-source mingw-w64 runtime in place of Microsoft's Visual C++
+runtime. No one but Apple can inspect the tools that produce the Apple files, and only GitHub's
+macOS runners build them. On Windows and Apple systems our files also call the system's own
+libraries, as every program there does.
 
 ## Scan an SDK download for vulnerable crates
 
