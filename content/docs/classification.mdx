@@ -63,17 +63,23 @@ instructions past the people who review a prompt, as in ASCII smuggling. The cla
 
 - each Unicode tag character, from U+E0000 to U+E007F, apart from those in the flags of England,
   Scotland and Wales
+- each bidirectional override, U+202D and U+202E, which shows the text after it in another order
+  than a model reads it
 - each character in a run of two or more other characters that Unicode marks as default ignorable,
   such as zero-width spaces and joiners, variation selectors and direction marks
 
-Text in many languages uses these characters one at a time, such as a zero-width joiner inside a
-word or an emoji, so a single one does not count. An emoji presentation selector followed by a
-zero-width joiner, as in 🏳️‍🌈, does not count either.
+Text in many languages uses those other characters one at a time, such as a zero-width joiner
+inside a word or an emoji, so a single one does not count. An emoji presentation selector followed
+by a zero-width joiner, as in 🏳️‍🌈, does not count either.
 
-`input` counts the text that the [`input_text_bytes`](/docs/usage#meters) meter measures, after
+`input` counts the text that the [`input_text_bytes`](/docs/usage#meters) meter measures, before
 redaction, and `output` counts the text that `output_text_bytes` measures, which includes the
 arguments of tool calls. The analytics filter `input_hidden_characters>0` finds the requests whose
 input holds any.
+
+To replace hidden characters, or to refuse a request or a reply that holds them, use the
+[`hidden_characters` redaction preset](/docs/pii-redaction#presets), which reads the same
+characters in the parts of the request or the reply that you choose.
 
 ## How policies combine
 

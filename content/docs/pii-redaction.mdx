@@ -1,14 +1,14 @@
 ---
 title: PII redaction
-description: Replace personal data, secrets and your own terms in prompts before a provider receives them, and in responses.
+description: Replace personal data, secrets, hidden characters and your own terms in prompts before a provider receives them, and in responses.
 icon: EyeOff
 ---
 
-Redaction replaces personal data, credentials and terms that you choose with placeholders such as
-`<EMAIL_ADDRESS>`, before the gateway sends a request to the provider. It runs inside the
-confidential gateway, so the original text never leaves it. Redaction is off until a policy turns
-it on. A policy can also [put the values back in the response, refuse a match, or redact the
-response](#parts-and-actions).
+Redaction replaces personal data, credentials, hidden characters and terms that you choose with
+placeholders such as `<EMAIL_ADDRESS>`, before the gateway sends a request to the provider. It runs
+inside the confidential gateway, so the original text never leaves it. Redaction is off until a
+policy turns it on. A policy can also [put the values back in the response, refuse a match, or
+redact the response](#parts-and-actions).
 
 ## Turn on redaction
 
@@ -56,6 +56,7 @@ Each preset in `presets` turns on a group of detectors:
 | `bank_identifiers`       | IBANs and U.S. ABA routing numbers                                | `<IBAN>`, `<US_ROUTING_NUMBER>`                                                         |
 | `national_identifiers`   | National, tax and business IDs from many countries                | One for each type, such as `<UK_NATIONAL_INSURANCE_NUMBER>`                             |
 | `health_identifiers`     | Health insurance and provider IDs from several countries          | One for each type, such as `<US_NPI>`                                                   |
+| `hidden_characters`      | Characters that a reader cannot see and a model reads             | `<HIDDEN_CHARACTERS>`                                                                   |
 
 Detectors check the format, checksum and nearby labels, so ordinary numbers do not match. Some
 values match only with a label nearby, such as `ITIN`, `NHS` or `routing number`. Known sample values, such as the card number
@@ -150,6 +151,26 @@ Diagnoses, medical notes and patient record numbers are not detected.
   Telegram and Notion.
 
 A secret with no label and no known format may not match.
+
+</Accordion>
+<Accordion title="Hidden characters">
+
+Each run of the [hidden characters](/docs/classification#hidden-characters) that classification
+counts becomes one placeholder, such as instructions written in Unicode tag characters. Text from
+web pages and files reaches a model in tool results, so this redaction refuses a request whose tool
+results hold any:
+
+```json title="policy.json"
+{
+	"plugins": {
+		"redaction": {
+			"presets": ["hidden_characters"],
+			"parts": ["toolResults"],
+			"action": "refuse"
+		}
+	}
+}
+```
 
 </Accordion>
 </Accordions>
