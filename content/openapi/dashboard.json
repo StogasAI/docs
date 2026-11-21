@@ -4938,6 +4938,19 @@
 															"type": "string"
 														}
 													},
+													"keyThumbprints": {
+														"anyOf": [
+															{
+																"type": "array",
+																"items": {
+																	"type": "string"
+																}
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
 													"createdAt": {
 														"type": "string",
 														"format": "date-time"
@@ -4960,6 +4973,7 @@
 													"audience",
 													"subject",
 													"claims",
+													"keyThumbprints",
 													"createdAt",
 													"lastUsedAt"
 												],
@@ -5050,6 +5064,26 @@
 											"minLength": 1,
 											"maxLength": 512
 										}
+									},
+									"keys": {
+										"default": null,
+										"anyOf": [
+											{
+												"minItems": 1,
+												"maxItems": 16,
+												"type": "array",
+												"items": {
+													"type": "object",
+													"propertyNames": {
+														"type": "string"
+													},
+													"additionalProperties": {}
+												}
+											},
+											{
+												"type": "null"
+											}
+										]
 									}
 								},
 								"required": [
@@ -5096,6 +5130,19 @@
 												"type": "string"
 											}
 										},
+										"keyThumbprints": {
+											"anyOf": [
+												{
+													"type": "array",
+													"items": {
+														"type": "string"
+													}
+												},
+												{
+													"type": "null"
+												}
+											]
+										},
 										"createdAt": {
 											"type": "string",
 											"format": "date-time"
@@ -5118,6 +5165,7 @@
 										"audience",
 										"subject",
 										"claims",
+										"keyThumbprints",
 										"createdAt",
 										"lastUsedAt"
 									],

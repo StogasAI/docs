@@ -21,21 +21,46 @@ curl https://api.stogas.ai/v1/chat/completions \
   -d '{"model": "gpt-5.6-sol", "messages": [{"role": "user", "content": "Hello"}]}'
 ```
 
+The [CLI](/docs/cli#use-a-service-key-without-its-secret) runs the exchange for you. `stogas token`
+prints an access token, and `stogas serve` sends one with every request and renews it:
+
+```yaml
+# A GitHub Actions job
+permissions:
+  id-token: write
+steps:
+  - run: echo "STOGAS_API_KEY=$(stogas token --service-key <key-id>)" >> "$GITHUB_ENV"
+```
+
 ## Trust a workload
 
 Add a workload identity on the service key's page. A token must match every value that the identity
 sets.
 
-| Field    | Matches the token's                                                | Example                                       |
-| -------- | ------------------------------------------------------------------ | --------------------------------------------- |
-| Issuer   | `iss` claim, exactly                                               | `https://token.actions.githubusercontent.com` |
-| Audience | One of the values in its `aud` claim                               | `stogas`                                      |
-| Subject  | `sub` claim, exactly. Leave it empty to accept any subject.        | `system:serviceaccount:prod:inference`        |
-| Claims   | Top-level claims that hold exactly these strings, up to 10 of them | `repository_id` is `123456789`                |
+| Field        | Matches the token's                                       | Example                                       |
+| ------------ | --------------------------------------------------------- | --------------------------------------------- |
+| Issuer       | `iss` claim, exactly                                      | `https://token.actions.githubusercontent.com` |
+| Audience     | One of the values in its `aud` claim                      | `stogas`                                      |
+| Subject      | `sub` claim. Leave it empty to accept any subject.        | `system:serviceaccount:prod:inference`        |
+| Claims       | Top-level claims that hold these values, up to 10 of them | `repository_id` is `123456789`                |
+| Signing keys | Signature, in place of the keys that the issuer publishes | `{"keys": [{"kty": "RSA", …}]}`               |
 
 An identity needs a subject or a claim, because anyone with an account on a shared platform, such
 as GitHub, can get a token for any audience. Match IDs, such as GitHub's `repository_id`, rather
 than names that someone else can take after you rename or delete a repository or an account.
+
+A subject or a claim's value that ends with `*` matches every value that starts with the text
+before it. End the prefix with the separator, as in `repo:acme/app:*`, because `repo:acme/app*`
+also matches `repo:acme/app-fork`. A `*` anywhere else is refused.
+
+A claim's value is compared as text. A boolean or whole number claim matches its JSON text, such
+as `true` or `42`, and a list claim matches when one of its values does.
+
+Add signing keys only for an issuer that the public internet cannot reach, such as a private
+Kubernetes cluster. Paste its JSON Web Key Set, which `kubectl get --raw /openid/v1/jwks` prints
+for a cluster: 1 to 16 public RSA, ECDSA, Ed25519 or ML-DSA keys, up to 16 KiB. The issuer's
+discovery document is then never read, so add a new identity when the issuer changes its keys. The
+dashboard shows each key by its [RFC 7638](https://www.rfc-editor.org/rfc/rfc7638) thumbprint.
 
 - Only service keys have workload identities, up to 20 for each key.
 - Adding an identity needs **Manage** and **Use** on the key, and a recent sign-in. Removing one
@@ -70,13 +95,13 @@ their requests apart.
 
 The access token lasts 1 hour. Exchange a new platform token before it expires.
 
-| Platform token rule | Value                                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| Format              | A JWT of at most 16 KiB, with `iss`, `sub`, `aud` and `exp` claims                          |
-| Signature           | RSA, ECDSA, EdDSA or ML-DSA, with a key from the issuer's OpenID Connect discovery document |
-| Issuer              | Publishes its discovery document on the public internet, and the document names it exactly  |
-| Lifetime            | At most 24 hours from `iat` to `exp`                                                        |
-| Clock               | `iat` and `nbf` can be up to 5 minutes ahead of our clock                                   |
+| Platform token rule | Value                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Format              | A JWT of at most 16 KiB, with `iss`, `sub`, `aud` and `exp` claims                                                                               |
+| Signature           | RSA, ECDSA, EdDSA or ML-DSA, with one of the identity's signing keys or, without them, a key from the issuer's OpenID Connect discovery document |
+| Issuer              | Without signing keys, publishes its discovery document on the public internet, and the document names it exactly                                 |
+| Lifetime            | At most 24 hours from `iat` to `exp`                                                                                                             |
+| Clock               | `iat` and `nbf` can be up to 5 minutes ahead of our clock                                                                                        |
 
 ### Errors
 

@@ -115,6 +115,9 @@ simulation, the model list and the catalog, and installs no certificate authorit
 | `--organization`        |                  | The organization whose keys `--encryption-key` names                             |
 | `--encryption-key-file` |                  | A [key](#send-your-encryption-keys) file to send, as `LABEL=FILE`. Repeat it.    |
 
+With `--service-key`, the endpoint sends a [workload's access token](#use-a-service-key-without-its-secret)
+with every request in place of the API key that your client sends.
+
 The CLI loads evidence when a session starts, and again only when a session needs newer evidence.
 A `POST` to the separately printed refresh URL loads it now.
 
@@ -158,6 +161,29 @@ const client = new OpenAI({
 	maxRetries: 0
 });
 ```
+
+## Use a service key without its secret
+
+```console
+stogas token --service-key <key-id> --identity-token-file /var/run/secrets/tokens/stogas
+stogas serve --service-key <key-id> --identity-token-file /var/run/secrets/tokens/stogas
+```
+
+A workload that a service key [trusts](/docs/workload-identity) needs no stored API key. `token`
+exchanges the platform's token and prints an access token, which lasts 1 hour, and `--json` prints
+the whole response with `expires_in`. `serve` exchanges it too, sends the access token with every
+request, and renews it 2 minutes before it expires. If a renewal fails, `serve` keeps the token
+until 30 seconds before it expires and tries again on the next request.
+
+| Option                  | Environment variable         | Effect                                                            |
+| ----------------------- | ---------------------------- | ----------------------------------------------------------------- |
+| `--service-key`         | `STOGAS_SERVICE_KEY`         | The ID of the service key                                         |
+| `--identity-token-file` | `STOGAS_IDENTITY_TOKEN_FILE` | The file with the platform's token, read again for every exchange |
+| `--audience`            |                              | The audience of the token that the CLI requests in GitHub Actions |
+
+`token` reads the platform's token from standard input when the file is `-`. In a GitHub Actions
+job with the `id-token: write` permission, leave the file out: the CLI requests the job's token for
+`--audience`, which is `stogas` unless you set it.
 
 ## Global options
 
