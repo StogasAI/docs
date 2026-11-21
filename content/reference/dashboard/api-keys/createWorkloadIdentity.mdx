@@ -1,0 +1,27 @@
+---
+title: Add a workload identity to an API key
+description: Only service keys can have workload identities, up to 20 each. You
+  need Manage and Use on the key.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Only service keys can have workload identities, up to 20 each. You need
+          Manage and Use on the key.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/keys/{keyId}/workload-identities', method: 'post' }]} />
+    </>
+  );
+}

@@ -1,0 +1,181 @@
+---
+title: Workload identity
+description: Let CI jobs and cloud workloads use a service key with their platform's token instead of a stored secret.
+icon: IdCard
+---
+
+A workload, such as a GitHub Actions job or a Kubernetes pod, can use a [service key](/docs/api-keys#service-keys)
+without storing its secret. It exchanges a short-lived OpenID Connect token from its platform for an
+access token, and sends the access token as its API key.
+
+```bash
+ACCESS_TOKEN=$(curl -sS https://app.stogas.ai/api/auth/token \
+  -d grant_type=urn:ietf:params:oauth:grant-type:token-exchange \
+  -d subject_token_type=urn:ietf:params:oauth:token-type:jwt \
+  -d key_id=<key-id> \
+  -d subject_token="$PLATFORM_TOKEN" | jq -r .access_token)
+
+curl https://api.stogas.ai/v1/chat/completions \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"model": "gpt-5.6-sol", "messages": [{"role": "user", "content": "Hello"}]}'
+```
+
+## Trust a workload
+
+Add a workload identity on the service key's page. A token must match every value that the identity
+sets.
+
+| Field    | Matches the token's                                                | Example                                       |
+| -------- | ------------------------------------------------------------------ | --------------------------------------------- |
+| Issuer   | `iss` claim, exactly                                               | `https://token.actions.githubusercontent.com` |
+| Audience | One of the values in its `aud` claim                               | `stogas`                                      |
+| Subject  | `sub` claim, exactly. Leave it empty to accept any subject.        | `system:serviceaccount:prod:inference`        |
+| Claims   | Top-level claims that hold exactly these strings, up to 10 of them | `repository_id` is `123456789`                |
+
+An identity needs a subject or a claim, because anyone with an account on a shared platform, such
+as GitHub, can get a token for any audience. Match IDs, such as GitHub's `repository_id`, rather
+than names that someone else can take after you rename or delete a repository or an account.
+
+- Only service keys have workload identities, up to 20 for each key.
+- Adding an identity needs **Manage** and **Use** on the key, and a recent sign-in. Removing one
+  needs **Manage**, and access tokens from it stop working at once.
+- An identity can't change. To change one, add the new identity, then remove the old one.
+
+Requests with an access token are the key's requests: the key's policy, limits and organization
+balance apply, and request logs show the key. Give each workload its own key when you need to tell
+their requests apart.
+
+## Exchange a token
+
+`POST https://app.stogas.ai/api/auth/token` takes an
+[RFC 8693](https://www.rfc-editor.org/rfc/rfc8693) token exchange as a form.
+
+| Field                  | Value                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------- |
+| `grant_type`           | `urn:ietf:params:oauth:grant-type:token-exchange`                                     |
+| `subject_token`        | The platform's token                                                                  |
+| `subject_token_type`   | `urn:ietf:params:oauth:token-type:jwt` or `urn:ietf:params:oauth:token-type:id_token` |
+| `key_id`               | The service key's ID                                                                  |
+| `requested_token_type` | Optional. If you send it, `urn:ietf:params:oauth:token-type:access_token`             |
+
+```json
+{
+	"access_token": "stogas_workload_v1.eyJ…",
+	"issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+	"token_type": "Bearer",
+	"expires_in": 3600
+}
+```
+
+The access token lasts 1 hour. Exchange a new platform token before it expires.
+
+| Platform token rule | Value                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Format              | A JWT of at most 16 KiB, with `iss`, `sub`, `aud` and `exp` claims                          |
+| Signature           | RSA, ECDSA, EdDSA or ML-DSA, with a key from the issuer's OpenID Connect discovery document |
+| Issuer              | Publishes its discovery document on the public internet, and the document names it exactly  |
+| Lifetime            | At most 24 hours from `iat` to `exp`                                                        |
+| Clock               | `iat` and `nbf` can be up to 5 minutes ahead of our clock                                   |
+
+### Errors
+
+Refusals have an `error` code and an `error_description`, as in
+[RFC 6749](https://www.rfc-editor.org/rfc/rfc6749#section-5.2).
+
+| Status | `error`                   | What to do                                                                                                                                                                                        |
+| ------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `invalid_request`         | Fix what the description names. When the token matches no identity of the key, the description gives the token's issuer, subject and audience, so you can compare them with the key's identities. |
+| 503    | `temporarily_unavailable` | Try again. We couldn't read the issuer's discovery document or keys.                                                                                                                              |
+
+To see a token's claims, decode its middle part:
+
+```bash
+jq -rR 'split(".")[1] | gsub("-";"+") | gsub("_";"/") | @base64d | fromjson' <<<"$PLATFORM_TOKEN"
+```
+
+## Platforms
+
+Each example asks for a token with the audience `stogas`, where the platform lets the workload
+choose one.
+
+### GitHub Actions
+
+```yaml
+permissions:
+  id-token: write
+steps:
+  - run: |
+      PLATFORM_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+        "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=stogas" | jq -r .value)
+```
+
+The issuer is `https://token.actions.githubusercontent.com`. Leave the subject empty, and match the
+`repository_id` claim with the `environment` or `ref` claim, such as `refs/heads/main`. GitHub lists
+the claims in its [OpenID Connect reference](https://docs.github.com/en/actions/reference/security/oidc).
+
+### GitLab CI
+
+```yaml
+deploy:
+  id_tokens:
+    PLATFORM_TOKEN:
+      aud: stogas
+```
+
+The issuer is `https://gitlab.com`, or your instance's address. Leave the subject empty, and match
+the `project_id` claim with the `ref` or `environment` claim. GitLab lists the claims in its
+[ID token reference](https://docs.gitlab.com/ci/secrets/id_token_authentication/).
+
+### Kubernetes
+
+```yaml
+volumes:
+  - name: stogas-token
+    projected:
+      sources:
+        - serviceAccountToken:
+            path: token
+            audience: stogas
+            expirationSeconds: 3600
+```
+
+The issuer is the cluster's service account issuer, which must publish its discovery document on
+the public internet. The subject is `system:serviceaccount:<namespace>:<service-account>`. The
+kubelet replaces the token before it expires, so read the file again for each exchange.
+
+### Google Cloud
+
+```bash
+PLATFORM_TOKEN=$(curl -sS -H "Metadata-Flavor: Google" \
+  "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=stogas&format=full")
+```
+
+The issuer is `https://accounts.google.com`. The subject is the service account's unique ID, which
+`gcloud iam service-accounts describe <email> --format='value(uniqueId)'` prints. Add the `email`
+claim with the service account's address.
+
+### AWS
+
+```bash
+PLATFORM_TOKEN=$(aws sts get-web-identity-token --audience stogas --signing-algorithm ES384 \
+  --query WebIdentityToken --output text)
+```
+
+Turn on outbound identity federation for the account first. The issuer is the account's own
+address, which `aws iam get-outbound-web-identity-federation-info` prints. The subject is the
+role's ARN.
+
+### Microsoft Azure
+
+Register an application in Microsoft Entra ID with the application ID URI `api://<app-id>`, and set
+it to issue version 2.0 access tokens. A managed identity then asks for a token for it:
+
+```bash
+PLATFORM_TOKEN=$(curl -sS -H "Metadata: true" \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=api://<app-id>" \
+  | jq -r .access_token)
+```
+
+The issuer is `https://login.microsoftonline.com/<tenant-id>/v2.0`, the audience is the
+application's client ID, and the subject is the managed identity's object ID.

@@ -1,0 +1,25 @@
+---
+title: Remove a workload identity from an API key
+description: Access tokens from the identity stop working at once.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: DELETE
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Access tokens from the identity stop working at once.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/keys/{keyId}/workload-identities/{identityId}', method: 'delete' }]} />
+    </>
+  );
+}

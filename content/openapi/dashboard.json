@@ -4745,6 +4745,336 @@
 				}
 			}
 		},
+		"/api/{orgId}/keys/{keyId}/workload-identities": {
+			"get": {
+				"operationId": "listWorkloadIdentities",
+				"tags": [
+					"API keys"
+				],
+				"summary": "List the workload identities of an API key",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"items": {
+											"maxItems": 20,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"id": {
+														"type": "string",
+														"format": "uuid"
+													},
+													"issuer": {
+														"type": "string"
+													},
+													"audience": {
+														"type": "string"
+													},
+													"subject": {
+														"type": [
+															"string",
+															"null"
+														]
+													},
+													"claims": {
+														"type": "object",
+														"propertyNames": {
+															"type": "string"
+														},
+														"additionalProperties": {
+															"type": "string"
+														}
+													},
+													"createdAt": {
+														"type": "string",
+														"format": "date-time"
+													},
+													"lastUsedAt": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "date-time"
+															},
+															{
+																"type": "null"
+															}
+														]
+													}
+												},
+												"required": [
+													"id",
+													"issuer",
+													"audience",
+													"subject",
+													"claims",
+													"createdAt",
+													"lastUsedAt"
+												],
+												"additionalProperties": false
+											}
+										}
+									},
+									"required": [
+										"items"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"post": {
+				"operationId": "createWorkloadIdentity",
+				"tags": [
+					"API keys"
+				],
+				"summary": "Add a workload identity to an API key",
+				"description": "Only service keys can have workload identities, up to 20 each. You need Manage and Use on the key.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"issuer": {
+										"type": "string"
+									},
+									"audience": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 512
+									},
+									"subject": {
+										"anyOf": [
+											{
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 512
+											},
+											{
+												"type": "null"
+											}
+										]
+									},
+									"claims": {
+										"type": "object",
+										"propertyNames": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 128
+										},
+										"additionalProperties": {
+											"type": "string",
+											"minLength": 1,
+											"maxLength": 512
+										}
+									}
+								},
+								"required": [
+									"issuer",
+									"audience",
+									"subject",
+									"claims"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"id": {
+											"type": "string",
+											"format": "uuid"
+										},
+										"issuer": {
+											"type": "string"
+										},
+										"audience": {
+											"type": "string"
+										},
+										"subject": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
+										"claims": {
+											"type": "object",
+											"propertyNames": {
+												"type": "string"
+											},
+											"additionalProperties": {
+												"type": "string"
+											}
+										},
+										"createdAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"lastUsedAt": {
+											"anyOf": [
+												{
+													"type": "string",
+													"format": "date-time"
+												},
+												{
+													"type": "null"
+												}
+											]
+										}
+									},
+									"required": [
+										"id",
+										"issuer",
+										"audience",
+										"subject",
+										"claims",
+										"createdAt",
+										"lastUsedAt"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/keys/{keyId}/workload-identities/{identityId}": {
+			"delete": {
+				"operationId": "deleteWorkloadIdentity",
+				"tags": [
+					"API keys"
+				],
+				"summary": "Remove a workload identity from an API key",
+				"description": "Access tokens from the identity stop working at once.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
+						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "keyId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					},
+					{
+						"name": "identityId",
+						"in": "path",
+						"required": true,
+						"schema": {
+							"type": "string",
+							"format": "uuid"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"deletedId": {
+											"type": "string",
+											"format": "uuid"
+										}
+									},
+									"required": [
+										"deletedId"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
 		"/api/{orgId}/members/{userId}/picture": {
 			"get": {
 				"operationId": "getMemberPicture",
