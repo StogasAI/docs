@@ -107,8 +107,10 @@ deployment.
 | Work for all policies in one request             | 3,700,000 cost units |
 
 Filters and sort criteria run once for each candidate, so their work grows with the number of
-deployments that serve the model. A request over a work bound fails with
-`policy_work_limit_exceeded` before the gateway holds any funds, and the message names the policy.
+deployments that a request reaches: those of its model, or those of every model in its group. A
+request over a work bound fails with `policy_work_limit_exceeded` before the gateway holds any
+funds. The message names the policy and how many deployments the request reaches, and a request for
+one model of a group reaches fewer.
 
 The policies of one key never reach the bound for all policies. Only a key with many
 [credentials](/docs/byok#order-credentials) that each have a policy of their own can reach it.
