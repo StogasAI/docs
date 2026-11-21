@@ -11438,7 +11438,7 @@
 					"BYOK"
 				],
 				"summary": "Check a stored BYOK credential with its provider",
-				"description": "A gateway checks the credential within seconds and records the result on it, which changes its `checkedAt`. A customer-encrypted credential gets 400 CREDENTIAL_ENCRYPTED, since only the key that encrypted it can open it, and a disabled or expired one gets 409 CREDENTIAL_INACTIVE.",
+				"description": "A gateway checks the credential within seconds, after any check of it that already runs, and records the result on it. `checkAskedAt` stays set until a check that began after the ask records its result, so read the credential until it is null. A customer-encrypted credential gets 400 CREDENTIAL_ENCRYPTED, since only the key that encrypted it can open it, and a disabled or expired one gets 409 CREDENTIAL_INACTIVE.",
 				"security": [
 					{
 						"accessToken": [
@@ -23096,6 +23096,17 @@
 							}
 						]
 					},
+					"checkAskedAt": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
 					"checkError": {
 						"anyOf": [
 							{
@@ -23248,6 +23259,7 @@
 					"exclusiveKeyCount",
 					"expiresAt",
 					"checkedAt",
+					"checkAskedAt",
 					"checkError",
 					"checkFailingSince",
 					"azureTargets",
