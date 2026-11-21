@@ -329,7 +329,126 @@
 														"type": "string",
 														"enum": [
 															"read",
-															"write"
+															"write",
+															"custom"
+														]
+													},
+													"permissions": {
+														"anyOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"account": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"activity": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"analytics": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"api_keys": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"balance": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"byok": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"encryption_keys": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"folders": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"grants": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"invites": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"members": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"organizations": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"policies": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"roles": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	},
+																	"sso": {
+																		"type": "string",
+																		"enum": [
+																			"read",
+																			"write"
+																		]
+																	}
+																},
+																"additionalProperties": false
+															},
+															{
+																"type": "null"
+															}
 														]
 													},
 													"organizationIds": {
@@ -418,6 +537,7 @@
 													"id",
 													"name",
 													"access",
+													"permissions",
 													"organizationIds",
 													"expiresAt",
 													"createdAt",
@@ -724,7 +844,8 @@
 																"enum": [
 																	"permission",
 																	"policy",
-																	"read_only_token"
+																	"read_only_token",
+																	"token_permission"
 																]
 															},
 															{
@@ -1095,7 +1216,8 @@
 													"enum": [
 														"permission",
 														"policy",
-														"read_only_token"
+														"read_only_token",
+														"token_permission"
 													]
 												},
 												{

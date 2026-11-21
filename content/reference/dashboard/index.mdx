@@ -18,6 +18,10 @@ do not let web pages on other sites call the API, so call it from a server or a 
 
 - A **Read only** token can call only `GET` operations. Operations with the scope `write` return
   `403 TOKEN_READ_ONLY` to it.
+- A **Custom** token reaches only the sections of this reference that you choose, such as **API
+  keys** or **Analytics**, each as read only or as read and write. An operation in another section
+  returns `403 TOKEN_PERMISSION_REQUIRED`, and a write in a section that the token can only read
+  returns `403 TOKEN_READ_ONLY`. In each section the token can do only what your roles allow.
 - A token for **Selected organizations** covers up to 30 of them and gets `404` for every other
   organization. Operations with the scope `all-organizations` return
   `403 TOKEN_ORGANIZATIONS_LIMITED` to it.
