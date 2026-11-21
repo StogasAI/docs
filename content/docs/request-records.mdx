@@ -499,11 +499,13 @@ backpressure. `rate_limit_wait_ms` is how long the
 The rest of the time is gateway preparation and response processing, which analytics shows as
 gateway duration.
 
-`first_output_ms` is when the provider's first output reached the gateway, and `ttft_ms` is when the
-gateway passed the first generated token on to your client, so `ttft_ms` is never earlier. Output
-other than tokens, such as citations, can make them differ by more than the gateway's own handling.
-A response that is not streamed arrives whole, so its `first_output_ms` is when the provider call
-ended, and it has no `ttft_ms`.
+Only streams record `first_output_ms` and `ttft_ms`. A response that is not streamed arrives whole
+when its call ends, and both are `null`. `first_output_ms` is when the provider's first output
+reached the gateway, and `ttft_ms` is when the gateway passed the first generated output on to your
+client, such as text, a tool call, audio or an image. Output that the model did not generate, such as
+a citation, can come first. A policy that
+[redacts responses](/docs/pii-redaction#a-redaction-of-the-response-holds-the-stream) holds the
+stream until the provider ends it, so `ttft_ms` then comes near the end of the call.
 
 ### Tool calls
 

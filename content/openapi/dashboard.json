@@ -14946,7 +14946,7 @@
 																		"type": "null"
 																	}
 																],
-																"description": "When the provider's first valid output reached the gateway, including output other than tokens, such as citations. A response that is not streamed arrives whole, so this is when the provider call ended."
+																"description": "When the provider's first valid output of a stream reached the gateway, including output other than generated content, such as citations. `null` for requests that are not streamed."
 															},
 															"ttft_ms": {
 																"anyOf": [
@@ -14959,7 +14959,7 @@
 																		"type": "null"
 																	}
 																],
-																"description": "When the gateway passed the first generated token of a stream on to the client. `null` for requests that are not streamed."
+																"description": "When the gateway passed the first generated output of a stream on to the client, such as text, reasoning, a tool call, audio or an image. `null` for requests that are not streamed."
 															},
 															"tool_calls": {
 																"default": [],
