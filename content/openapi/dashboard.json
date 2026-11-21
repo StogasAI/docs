@@ -640,6 +640,22 @@
 															"null"
 														]
 													},
+													"via": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"dashboard",
+																	"assistant",
+																	"access_token"
+																]
+															},
+															{
+																"type": "null"
+															}
+														],
+														"description": "How the member made the change: `dashboard`, `assistant` for the Playground assistant, or `access_token`. Null when the actor is Stogas, the identity provider or a secret scanning partner."
+													},
 													"createdAt": {
 														"type": "string",
 														"format": "date-time"
@@ -741,6 +757,7 @@
 													"actorName",
 													"actorTokenId",
 													"actorTokenName",
+													"via",
 													"createdAt",
 													"action",
 													"refusal",
@@ -994,6 +1011,22 @@
 												"null"
 											]
 										},
+										"via": {
+											"anyOf": [
+												{
+													"type": "string",
+													"enum": [
+														"dashboard",
+														"assistant",
+														"access_token"
+													]
+												},
+												{
+													"type": "null"
+												}
+											],
+											"description": "How the member made the change: `dashboard`, `assistant` for the Playground assistant, or `access_token`. Null when the actor is Stogas, the identity provider or a secret scanning partner."
+										},
 										"createdAt": {
 											"type": "string",
 											"format": "date-time"
@@ -1167,6 +1200,7 @@
 										"actorName",
 										"actorTokenId",
 										"actorTokenName",
+										"via",
 										"createdAt",
 										"action",
 										"refusal",

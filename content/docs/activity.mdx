@@ -5,9 +5,10 @@ icon: RotateCcwClock
 ---
 
 Activity records who changed your organization's settings and when, with each changed field's
-values before and after. Changes through the dashboard and the API appear in the same history, and
-a change made with an [access token](/docs/reference/dashboard#access-tokens) names the token.
-Each event keeps the names it had, so renaming or deleting a resource does not erase its context.
+values before and after. A member's change also shows whether they made it in the dashboard, in
+the [Playground assistant](/docs/playground#assistant), or with an
+[access token](/docs/reference/dashboard#access-tokens), which the event names. Each event keeps
+the names it had, so renaming or deleting a resource does not erase its context.
 
 ## Refused attempts
 
@@ -28,6 +29,7 @@ resource names and IDs, and event names.
 | `action:`   | Events whose name contains the value, such as `action:key`. `action=key.deleted` matches one event.                    |
 | `actor:`    | Who made the change, a member or Stogas, by part of the name or by ID. `actor=` matches the whole name.                |
 | `token:`    | The access token used, by part of its name or by its ID. `token=` matches the whole name.                              |
+| `via:`      | Where a member made the change: `dashboard`, `assistant` for the Playground assistant, or `access_token`.              |
 | `resource:` | A changed resource, by part of its name or by its ID. `resource=` matches the whole name.                              |
 | `outcome:`  | `outcome:refused` matches refused attempts, and `outcome:succeeded` matches changes that happened.                     |
 | `time`      | A [date or time](/docs/reference/filters#dates-and-times), such as `time>=2026-10-01`. `time:2026-10` matches October. |
