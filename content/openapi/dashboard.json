@@ -15763,6 +15763,18 @@
 																		"minimum": 0,
 																		"maximum": 4294967295,
 																		"description": "Values put back in the response. Absent when the response held none."
+																	},
+																	"items_recorded": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 4294967295,
+																		"description": "Matches in the request that a `record` redaction counted and left as they were. Absent when it found none."
+																	},
+																	"response_items_recorded": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 4294967295,
+																		"description": "Matches in the response that a `record` redaction counted and left as they were. Absent when it found none."
 																	}
 																},
 																"required": [
@@ -25543,6 +25555,11 @@
 																			"type": "string",
 																			"const": "refuse",
 																			"description": "Refuse a request or a response that holds a match"
+																		},
+																		{
+																			"type": "string",
+																			"const": "record",
+																			"description": "Count each match in the request record and leave the text as it is"
 																		}
 																	],
 																	"description": "What a match does. Without it, a placeholder replaces the match."
@@ -27333,6 +27350,11 @@
 																	"type": "string",
 																	"const": "refuse",
 																	"description": "Refuse a request or a response that holds a match"
+																},
+																{
+																	"type": "string",
+																	"const": "record",
+																	"description": "Count each match in the request record and leave the text as it is"
 																}
 															],
 															"description": "What a match does. Without it, a placeholder replaces the match."
@@ -28300,6 +28322,11 @@
 													"type": "string",
 													"const": "refuse",
 													"description": "Refuse a request or a response that holds a match"
+												},
+												{
+													"type": "string",
+													"const": "record",
+													"description": "Count each match in the request record and leave the text as it is"
 												}
 											],
 											"description": "What a match does. Without it, a placeholder replaces the match."
@@ -33215,6 +33242,11 @@
 														"type": "string",
 														"const": "refuse",
 														"description": "Refuse a request or a response that holds a match"
+													},
+													{
+														"type": "string",
+														"const": "record",
+														"description": "Count each match in the request record and leave the text as it is"
 													}
 												],
 												"description": "What a match does. Without it, a placeholder replaces the match."
@@ -35908,6 +35940,11 @@
 																	"type": "string",
 																	"const": "refuse",
 																	"description": "Refuse a request or a response that holds a match"
+																},
+																{
+																	"type": "string",
+																	"const": "record",
+																	"description": "Count each match in the request record and leave the text as it is"
 																}
 															],
 															"description": "What a match does. Without it, a placeholder replaces the match."

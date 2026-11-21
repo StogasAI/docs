@@ -7,8 +7,8 @@ icon: EyeOff
 Redaction replaces personal data, credentials, hidden characters and terms that you choose with
 placeholders such as `<EMAIL_ADDRESS>`, before the gateway sends a request to the provider. It runs
 inside the confidential gateway, so the original text never leaves it. Redaction is off until a
-policy turns it on. A policy can also [put the values back in the response, refuse a match, or
-redact the response](#parts-and-actions).
+policy turns it on. A policy can also [put the values back in the response, refuse a match, count
+matches without changing them, or redact the response](#parts-and-actions).
 
 ## Turn on redaction
 
@@ -296,9 +296,10 @@ differently:
 | `replace` | Becomes a placeholder. This is the default.                                                                            |
 | `restore` | Becomes a numbered placeholder, such as `<EMAIL_ADDRESS_1>`, and the response gets the value back. Request parts only. |
 | `refuse`  | Fails the request with [`redaction_refused`](#errors).                                                                 |
+| `record`  | Stays as it is, and the [request record](#check-results) counts it.                                                    |
 
 - Where redactions read the same text, the strictest action applies to a match: `refuse`, then
-  `replace`, then `restore`.
+  `replace`, then `restore`, then `record`.
 - A message or an input item with a role or type that the gateway does not know counts as every
   request part.
 - `parts` and `action` need a preset, a term or a pattern in the same redaction.
@@ -331,14 +332,37 @@ Done. li@contoso.com has the note.
   the next turn.
 - A placeholder that the model changes, such as `<EMAIL ADDRESS 1>`, stays as it is.
 - A tool that the provider runs, such as web search, gets the placeholder.
+- Citations keep the character positions that the provider wrote, so a position after a value
+  that changed length can be off.
 - The request record and the [export](/docs/export) keep the request with its placeholders.
 - With `stream: true`, text arrives as the model writes it. Only a text that may be the start of a
   placeholder waits for the events that complete it.
 
+### Count matches before you enforce
+
+`record` shows how often a redaction would match, before you let it change or refuse traffic:
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"redaction": {
+			"presets": ["email_address", "phone_number"],
+			"parts": ["request", "response"],
+			"action": "record"
+		}
+	}
+}
+```
+
+- The request, the response and the stream stay as they are. Attachments and log probabilities
+  stay allowed.
+- A match that a stricter redaction replaces or restores counts for that redaction only.
+- The [redaction limits](#errors) still apply.
+
 ### A redaction of the response holds the stream
 
-A redaction that reads `response` changes the response after the model finishes, because a match
-can span two stream events. With `stream: true`:
+A redaction that replaces or refuses in `response` changes the response after the model finishes,
+because a match can span two stream events. With `stream: true`:
 
 - Events arrive when the provider's stream ends. Until then the gateway sends
   [keepalive comments](/docs/streaming).
@@ -347,8 +371,8 @@ can span two stream events. With `stream: true`:
   the provider's usage is charged.
 
 Signed or encrypted reasoning, images, audio, citations and log probabilities stay as the provider
-wrote them. A request that asks for log probabilities fails with `400` while a redaction reads
-`response`.
+wrote them. A request that asks for log probabilities fails with `400` while a redaction replaces
+or refuses in `response`.
 
 ## What is scanned
 
@@ -430,6 +454,8 @@ The [request record](/docs/request-records) shows what redaction did:
 		"items_redacted": 3, // Values replaced in the request.
 		"response_items_redacted": 1, // Values replaced in the response.
 		"items_restored": 2, // Values put back in the response.
+		"items_recorded": 4, // Matches that `record` counted in the request.
+		"response_items_recorded": 1, // Matches that `record` counted in the response.
 		"duration_us": 412 // Time spent scanning and replacing in the request, in microseconds.
 	}
 }

@@ -449,21 +449,34 @@ and one connector:
 ```json title="policy.json"
 {
 	"routing": {
-		"filter": "request.mcpServers.all(server, server in ['mcp.example.com', 'connector:connector_googledrive'])"
+		"filter": "request.mcpServers.all(server, server in ['mcp.example.com/mcp', 'connector:connector_googledrive'])"
 	}
 }
 ```
 
-`request.mcpServers` holds the host of each `server_url`, a `connector_id` after `connector:` and a
-`tunnel_id` after `tunnel:`, all in lowercase.
+`request.mcpServers` names each server by one of these:
 
-This one refuses one tool of a server. A server whose `allowed_tools` names no tools reads as
-`mcp.example.com/*`, because the model can call any of its tools, so the filter refuses that too:
+| The tool sets  | Name                                                                      |
+| -------------- | ------------------------------------------------------------------------- |
+| `server_url`   | The host and the path, such as `mcp.example.com/mcp`                      |
+| `connector_id` | `connector:` and the ID in lowercase, such as `connector:connector_gmail` |
+| `tunnel_id`    | `tunnel:` and the ID in lowercase                                         |
+
+- The host is in lowercase, and the path is as the request wrote it. A URL without a path reads as
+  `mcp.example.com/`.
+- A port shows only when it is not the default of `https` or `http`, as in
+  `mcp.example.com:8443/mcp`. The query string is left out.
+- One host can serve many servers, each at its own path, so a name holds the path. To allow every
+  server of a host, compare the start of the name: `server.startsWith('mcp.example.com/')`.
+
+This one refuses one tool of a server. `request.mcpTools` names a tool by its server, `#` and the
+tool's name. A server whose `allowed_tools` names no tools reads as `mcp.example.com/mcp#*`,
+because the model can call any of its tools, so the filter refuses that too:
 
 ```json title="policy.json"
 {
 	"routing": {
-		"filter": "!request.mcpTools.exists(tool, tool in ['mcp.example.com/*', 'mcp.example.com/delete_repo'])"
+		"filter": "!request.mcpTools.exists(tool, tool in ['mcp.example.com/mcp#*', 'mcp.example.com/mcp#delete_repo'])"
 	}
 }
 ```
@@ -473,22 +486,34 @@ This one lets only one server run calls without your application's approval:
 ```json title="policy.json"
 {
 	"routing": {
-		"filter": "request.mcpServersWithoutApproval.all(server, server == 'mcp.example.com')"
+		"filter": "request.mcpServersWithoutApproval.all(server, server == 'mcp.example.com/mcp')"
 	}
 }
 ```
 
-| Filter                                                           | Effect                                                             |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `size(request.clientTools) == 0`                                 | Refuses every tool that your application runs                      |
-| `!('mcp' in request.hostedTools)`                                | Refuses remote MCP servers                                         |
-| `size(request.mcpServersWithoutApproval) == 0`                   | Refuses MCP calls that run without approval                        |
-| `!('run_shell' in request.clientTools)`                          | Refuses requests that let the model call `run_shell`               |
-| `size(request.hostedTools) == 0`                                 | Refuses hosted tools, remote MCP servers included                  |
-| `!(provider.id == 'anthropic' && size(request.hostedTools) > 0)` | Sends requests with hosted tools to providers other than Anthropic |
+| Filter                                                                                   | Effect                                                             |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `size(request.clientTools) == 0`                                                         | Refuses every tool that your application runs                      |
+| `!('mcp' in request.hostedTools)`                                                        | Refuses remote MCP servers                                         |
+| `size(request.mcpServersWithoutApproval) == 0`                                           | Refuses MCP calls that run without approval                        |
+| `!('run_shell' in request.clientTools)`                                                  | Refuses requests that let the model call `run_shell`               |
+| `request.clientTools.all(tool, tool.startsWith('crm_'))`                                 | Allows only tools whose names start with `crm_`                    |
+| `!request.clientTools.exists(tool, tool.matches('^(run\|exec)_.*$'))`                    | Refuses tools whose names match a regular expression               |
+| `request.mcpServers.all(server, server.startsWith('mcp.example.com/'))`                  | Allows only the servers of one host                                |
+| `request.mcpTools.all(tool, tool.startsWith('mcp.example.com/mcp#get_'))`                | Allows only the tools of one server whose names start with `get_`  |
+| `!request.mcpTools.exists(tool, tool.endsWith('#*') \|\| tool.endsWith('#delete_repo'))` | Refuses a server that offers `delete_repo` or every tool           |
+| `size(request.hostedTools) == 0`                                                         | Refuses hosted tools, remote MCP servers included                  |
+| `!(provider.id == 'anthropic' && size(request.hostedTools) > 0)`                         | Sends requests with hosted tools to providers other than Anthropic |
 
-- List the MCP servers to allow rather than those to refuse, because one server can have many
-  hosts. A `server_url` without a host matches no server in a list.
+- A filter compares names with `==`, `in`, `startsWith`, `endsWith`, `contains` and `matches`.
+  `matches` takes an [RE2](https://github.com/google/re2/wiki/Syntax) regular expression and finds
+  it anywhere in a name, so begin it with `^` and end it with `$` to match the whole name.
+- List the MCP servers and tools to allow rather than those to refuse, because one server can have
+  many addresses and a list of refused tools must also refuse `#*`.
+- A `server_url` that the gateway cannot name returns `400`: one with a backslash, a `.` or `..`
+  path segment, an empty path segment, or an encoded slash.
+- Where one address serves every account and the token selects the account, a filter cannot tell
+  one account from another.
 - `tool_choice: "none"` empties `request.clientTools` and takes web tools out of
   `request.hostedTools`, because the model can call none of them. A choice of one function still
   counts every function.
