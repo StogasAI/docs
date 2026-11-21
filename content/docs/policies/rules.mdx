@@ -55,7 +55,7 @@ What the condition reads decides where the rule applies:
 | An `author`, `model`, `deployment`, `route` or `provider` field | `provider.id == 'openai'`     | Each matching deployment |
 
 When a condition reads deployment fields, the rule's settings apply only while a matching deployment
-serves the request. A deny period in such a rule removes only the matching deployments, and the
+serves the request. A weekly period in such a rule removes only the matching deployments, and the
 gateway tries the others.
 
 - Conditions read the same [request facts](/docs/policies/expressions#request-facts) as routing
@@ -164,7 +164,7 @@ another policy:
 | ----------------------- | ---------------------------------------------- |
 | ASCII only              | `"input": { "asciiOnly": false }`              |
 | Media types             | `"input": { "mediaTypes": { "deny": [] } }`    |
-| Deny periods            | `"access": { "schedule": { "deny": [] } }`     |
+| Weekly periods          | `"access": { "schedule": { "deny": [] } }`     |
 | Networks                | `"access": { "networks": { "deny": [] } }`     |
 | Countries               | `"access": { "countries": { "deny": [] } }`    |
 | Connection modes        | `"access": { "transports": { "deny": [] } }`   |

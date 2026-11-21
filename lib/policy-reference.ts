@@ -14,7 +14,7 @@ const sections = {
 			.anyOf[0]!,
 	limit: policy.properties.limits.additionalProperties,
 	limitPeriod: policy.properties.limits.additionalProperties.properties.per,
-	accessPeriod: policy.properties.access.properties.schedule.properties.deny.items,
+	accessPeriod: policy.properties.access.properties.schedule.properties.allow.items,
 	literalRule:
 		policy.properties.plugins.properties.redaction.anyOf[0]!.properties.literals!.anyOf[0]!.items!
 			.anyOf[0]!
@@ -31,7 +31,7 @@ export const policySectionNames: Record<PolicySection, string> = {
 	exportDestination: 'plugins.export.destinations[]',
 	limit: 'limits.<name>',
 	limitPeriod: 'limits.<name>.per',
-	accessPeriod: 'access.schedule.deny[]',
+	accessPeriod: 'access.schedule.allow[] and access.schedule.deny[]',
 	literalRule: 'plugins.redaction.literals[]'
 };
 
@@ -55,8 +55,8 @@ const documentFields = {
 	},
 	access: {
 		description:
-			'Deny requests during scheduled periods, or accept them only from listed networks.',
-		href: '/docs/policies/access#deny-periods'
+			'Accept or refuse requests by the time of the week, network, country and connection mode.',
+		href: '/docs/policies/access'
 	},
 	input: {
 		description: 'Require ASCII-only prompt text before redaction.',

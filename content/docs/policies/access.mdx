@@ -1,12 +1,12 @@
 ---
 title: Access and expiration
-description: Enable or disable a scope, expire access, block requests on a weekly schedule, allow and deny client networks and countries, or require connection modes.
+description: Enable or disable a scope, expire access, allow and deny requests by the time of the week, client networks and countries, or require connection modes.
 icon: CalendarClock
 ---
 
 Every resource that applies to a request must be enabled and unexpired. Enabled state and
-expiration are settings of the resource. Deny periods, networks, countries and connection modes are
-in its policy, under `access.schedule`, `access.networks`, `access.countries` and
+expiration are settings of the resource. Weekly periods, networks, countries and connection modes
+are in its policy, under `access.schedule`, `access.networks`, `access.countries` and
 `access.transports`.
 
 ## Enable or disable access
@@ -57,20 +57,28 @@ or deployments should change:
 | [Delegation](/docs/policies/delegation) | Does not apply                              | The scope must be allowed to save the rule's sections, such as `routing.filter`    |
 | Error                                   | `key_expired`, `grant_expired` and the like | The error of the rule's settings, such as `schedule_denied` or `model_unavailable` |
 
-## Deny periods
+## Weekly periods
 
-This policy blocks new requests before 08:00 on weekdays in New York:
+This policy accepts requests only during business hours in Paris, except a lunch break:
 
 ```json title="policy.json"
 {
 	"access": {
 		"schedule": {
+			"allow": [
+				{
+					"days": ["mon", "tue", "wed", "thu", "fri"],
+					"start": "09:00",
+					"end": "18:00",
+					"timeZone": "Europe/Paris"
+				}
+			],
 			"deny": [
 				{
 					"days": ["mon", "tue", "wed", "thu", "fri"],
-					"start": "00:00",
-					"end": "08:00",
-					"timeZone": "America/New_York"
+					"start": "12:00",
+					"end": "13:00",
+					"timeZone": "Europe/Paris"
 				}
 			]
 		}
@@ -78,14 +86,16 @@ This policy blocks new requests before 08:00 on weekdays in New York:
 }
 ```
 
+| List    | Effect                                                            |
+| ------- | ----------------------------------------------------------------- |
+| `allow` | Only requests in one of these periods pass.                       |
+| `deny`  | Requests in these periods fail, even when `allow` holds them.     |
+
 Use lowercase day names: `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, and `sun`. Every field is
-required. The start is included and the end is excluded, so the example permits requests at 08:00
-if all other policies allow them. Use `00:00` to `24:00` to deny an entire day.
+required. The start is included and the end is excluded, so the example accepts requests at 13:00
+if all other policies allow them. Use `00:00` to `24:00` for an entire day.
 
-Outside the deny periods, this setting adds no restriction. To allow only business hours, deny
-the hours outside them and deny weekends. A schedule has no `allow` list.
-
-Each entry under `access.schedule.deny` accepts:
+Each period under `access.schedule.allow` and `access.schedule.deny` accepts:
 
 <PolicyFields section="accessPeriod" />
 
@@ -121,20 +131,21 @@ all day.
 
 ## Daylight saving time
 
-IANA time zones follow daylight saving time. A local hour that repeats is denied both times, and a
-local hour that is skipped never occurs. Use `UTC` for a schedule that does not shift.
+IANA time zones follow daylight saving time. A local hour that repeats is in a period both times,
+and a local hour that is skipped never occurs. Use `UTC` for a schedule that does not shift.
 
 ## How periods combine
 
-Every required deny period from every policy applies. A schedule with an empty `deny` list replaces
-default periods only. A permitted [request policy](/docs/policies/request-policies) can add
-periods.
+A request must fall in a period of every `allow` list and in no `deny` period of the policies that
+apply, so two `allow` lists that share no time block every request. A refused request fails with
+`403 schedule_denied`. A schedule with an empty `deny` list replaces default periods only. A
+permitted [request policy](/docs/policies/request-policies) can add periods.
 
-A deny period in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's
-policy blocks only the deployments and credentials it applies to. The gateway tries the others,
-and fails with `schedule_denied` when none remain. If a filter or list also removes a candidate, or
-the candidate cannot read an [attachment](/docs/input-files#when-no-candidate-reads-a-file), the
-error gives that reason instead.
+A period in a [conditional rule](/docs/policies/rules#conditional-rules) or a credential's policy
+blocks only the deployments and credentials it applies to. The gateway tries the others, and fails
+with `schedule_denied` when none remain. If a filter or list also removes a candidate, or the
+candidate cannot read an [attachment](/docs/input-files#when-no-candidate-reads-a-file), the error
+gives that reason instead.
 
 ## Networks
 
@@ -168,18 +179,19 @@ autonomous system:
 | `allow` | Only requests from these networks pass.                           |
 | `deny`  | Requests from these networks fail, even where `allow` holds them. |
 
-| Entry                        | Matches                                                                             | Lists           |
-| ---------------------------- | ----------------------------------------------------------------------------------- | --------------- |
-| `203.0.113.7`, `2001:db8::7` | One IPv4 or IPv6 address.                                                           | `allow`, `deny` |
-| `198.51.100.0/24`            | A CIDR range.                                                                       | `allow`, `deny` |
-| `onion`                      | Requests to the [onion address](/docs/sdk-overview#connect-through-a-proxy-or-tor). | `allow`, `deny` |
-| `AS64496`                    | The addresses of an autonomous system.                                              | `deny`          |
-| `tor`                        | Tor exit relays.                                                                    | `deny`          |
-| `vpn`                        | The autonomous systems of VPN providers.                                            | `deny`          |
-| `hosting`                    | The autonomous systems of hosting, cloud and data center providers.                 | `deny`          |
+| Entry                        | Matches                                                                             |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| `203.0.113.7`, `2001:db8::7` | One IPv4 or IPv6 address.                                                           |
+| `198.51.100.0/24`            | A CIDR range.                                                                       |
+| `onion`                      | Requests to the [onion address](/docs/sdk-overview#connect-through-a-proxy-or-tor). |
+| `AS64496`                    | The addresses of an autonomous system.                                              |
+| `tor`                        | Tor exit relays.                                                                    |
+| `vpn`                        | The autonomous systems of VPN providers.                                            |
+| `hosting`                    | The autonomous systems of hosting, cloud and data center providers.                 |
 
-Anyone can send from an autonomous system, a VPN or a cloud provider, so an `allow` list takes only
-addresses, ranges and `onion`, which name networks that you control.
+Both lists take every entry. Anyone can rent a server in a cloud provider's autonomous system, so
+an `allow` list of your own addresses, ranges or autonomous system limits where a stolen key works
+more than an `allow` list of `hosting`.
 
 - A range starts at its first address, such as `198.51.100.0/24`, and an IPv4 address takes its
   IPv4 form, not `::ffff:198.51.100.7`.

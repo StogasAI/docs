@@ -5115,6 +5115,56 @@
 							"schedule": {
 								"type": "object",
 								"properties": {
+									"allow": {
+										"minItems": 1,
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"days": {
+													"minItems": 1,
+													"maxItems": 7,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"enum": [
+															"mon",
+															"tue",
+															"wed",
+															"thu",
+															"fri",
+															"sat",
+															"sun"
+														]
+													},
+													"uniqueItems": true
+												},
+												"end": {
+													"type": "string",
+													"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+													"description": "The end must be later than the start. Split an overnight period into two entries."
+												},
+												"start": {
+													"type": "string",
+													"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+												},
+												"timeZone": {
+													"type": "string",
+													"maxLength": 64,
+													"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+													"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
+												}
+											},
+											"required": [
+												"days",
+												"end",
+												"start",
+												"timeZone"
+											],
+											"additionalProperties": false
+										},
+										"description": "Accept requests only during these weekly periods. A request must fall in a period of the allow list of every policy."
+									},
 									"deny": {
 										"type": "array",
 										"items": {
@@ -5162,12 +5212,9 @@
 											],
 											"additionalProperties": false
 										},
-										"description": "Weekly periods when the gateway refuses requests. Deny periods of several policies join."
+										"description": "Refuse requests during these weekly periods. Deny periods of several policies join."
 									}
 								},
-								"required": [
-									"deny"
-								],
 								"additionalProperties": false,
 								"description": "Limit requests by the time of the week."
 							},
@@ -5205,13 +5252,22 @@
 												},
 												{
 													"type": "string",
-													"const": "onion"
+													"enum": [
+														"onion",
+														"tor",
+														"vpn",
+														"hosting"
+													]
+												},
+												{
+													"type": "string",
+													"pattern": "^AS[1-9][0-9]{0,9}$"
 												}
 											],
-											"description": "An IPv4 or IPv6 address, a CIDR range such as 203.0.113.0/24, or onion for requests to the onion service."
+											"description": "An IPv4 or IPv6 address, a CIDR range, an AS number such as AS64496, onion for requests to the onion service, tor for Tor exit relays, vpn for the networks of VPN providers, or hosting for the networks of hosting providers."
 										},
 										"uniqueItems": true,
-										"description": "Accept requests only from these networks. Allow lists of several policies intersect."
+										"description": "Accept requests only from these networks. A client must be in a network of the allow list of every policy."
 									},
 									"deny": {
 										"type": "array",
@@ -7628,6 +7684,56 @@
 										"schedule": {
 											"type": "object",
 											"properties": {
+												"allow": {
+													"minItems": 1,
+													"type": "array",
+													"items": {
+														"type": "object",
+														"properties": {
+															"days": {
+																"minItems": 1,
+																"maxItems": 7,
+																"type": "array",
+																"items": {
+																	"type": "string",
+																	"enum": [
+																		"mon",
+																		"tue",
+																		"wed",
+																		"thu",
+																		"fri",
+																		"sat",
+																		"sun"
+																	]
+																},
+																"uniqueItems": true
+															},
+															"end": {
+																"type": "string",
+																"pattern": "^(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)$",
+																"description": "The end must be later than the start. Split an overnight period into two entries."
+															},
+															"start": {
+																"type": "string",
+																"pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+															},
+															"timeZone": {
+																"type": "string",
+																"maxLength": 64,
+																"pattern": "^(?:UTC|[A-Z][A-Za-z]*(?:\\/[A-Za-z0-9_+-]+)+)$",
+																"description": "UTC or an IANA time zone name with its exact capitalization, such as America/New_York."
+															}
+														},
+														"required": [
+															"days",
+															"end",
+															"start",
+															"timeZone"
+														],
+														"additionalProperties": false
+													},
+													"description": "Accept requests only during these weekly periods. A request must fall in a period of the allow list of every policy."
+												},
 												"deny": {
 													"type": "array",
 													"items": {
@@ -7675,12 +7781,9 @@
 														],
 														"additionalProperties": false
 													},
-													"description": "Weekly periods when the gateway refuses requests. Deny periods of several policies join."
+													"description": "Refuse requests during these weekly periods. Deny periods of several policies join."
 												}
 											},
-											"required": [
-												"deny"
-											],
 											"additionalProperties": false,
 											"description": "Limit requests by the time of the week."
 										},
@@ -7718,13 +7821,22 @@
 															},
 															{
 																"type": "string",
-																"const": "onion"
+																"enum": [
+																	"onion",
+																	"tor",
+																	"vpn",
+																	"hosting"
+																]
+															},
+															{
+																"type": "string",
+																"pattern": "^AS[1-9][0-9]{0,9}$"
 															}
 														],
-														"description": "An IPv4 or IPv6 address, a CIDR range such as 203.0.113.0/24, or onion for requests to the onion service."
+														"description": "An IPv4 or IPv6 address, a CIDR range, an AS number such as AS64496, onion for requests to the onion service, tor for Tor exit relays, vpn for the networks of VPN providers, or hosting for the networks of hosting providers."
 													},
 													"uniqueItems": true,
-													"description": "Accept requests only from these networks. Allow lists of several policies intersect."
+													"description": "Accept requests only from these networks. A client must be in a network of the allow list of every policy."
 												},
 												"deny": {
 													"type": "array",
