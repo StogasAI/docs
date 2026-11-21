@@ -131,6 +131,7 @@ which trace and LLM observability tools read. `sample`, `content` and the
 | ----------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | The request                   | `chat` and the model                | The `gen_ai.*` attributes below, and every other [request record](/docs/request-records) field as `stogas.*`. |
 | One for each provider attempt | `provider_attempt` and the provider | The attempt's fields as `stogas.attempt.*`, `http.response.status_code`, and `error.type` if it failed.       |
+| One for each timed tool call  | `tool_call` and the call's type     | The call's fields as `stogas.tool_call.*`.                                                                    |
 
 | Attribute                                                                                                                  | Value                                                                                 |
 | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
@@ -145,6 +146,8 @@ which trace and LLM observability tools read. `sample`, `content` and the
 | `gen_ai.input.messages`, `gen_ai.output.messages`, `gen_ai.system_instructions`, `gen_ai.tool.definitions`                 | The bodies as JSON text, if the destination gets bodies.                              |
 | `error.type`                                                                                                               | The error code of a failed or rejected request. The span status is then an error.     |
 
+- A streamed response times its [tool calls](/docs/request-records#tool-calls). Each span runs
+  from when the stream added the call until it marked the call done, or until the response ended.
 - If the request has a [`traceparent` header](/docs/request-records#traces), the spans join that
   trace, and the request span is a child of your span. Otherwise the trace and span IDs come from
   the request ID, so a retry repeats them.
