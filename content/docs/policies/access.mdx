@@ -240,7 +240,7 @@ This policy accepts requests only from the European Union, Switzerland and the U
   own address, so add `"networks": { "deny": ["tor", "vpn", "hosting"] }` to refuse requests that
   hide where they come from.
 - Requests to the onion address, and addresses that DB-IP places in no country, are in no country:
-  an `allow` list refuses them and a `deny` list accepts them.
+  an `allow` list refuses them, even one of `world`, and a `deny` list accepts them.
 - A refused request fails with `403 country_denied`, and the message names the address and its
   country, such as `Request is not allowed from 203.0.113.7 in RU`.
 - A policy whose `deny` holds every country of its `allow` cannot be saved.

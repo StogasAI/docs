@@ -99,10 +99,10 @@ read content is trustworthy.
 | `unknown`                 | The provider does not disclose a usable boundary. Policies match it only as `unknown`, not as `world`. |
 | `none`                    | `storageLocation` only. The provider does not keep request or response content after the response.     |
 
-A value names the widest area where the activity can happen. The catalog lists every region, and
-the countries and subdivisions that deployments, headquarters and provider accounts name. Each
-region lists every country that it covers, including countries that the catalog does not list. A place lies in each region that lists all of its countries: `DE` lies in `eu`,
-which lies in `europe`, which lies in `world`. A [place's page](https://stogas.ai/locations/apac)
+A value names the widest area where the activity can happen. The catalog lists every region and
+country, and the subdivisions that deployments and provider accounts name. A place lies in each
+region that lists all of its countries: `DE` lies in `eu`, which lies in `europe`, which lies in
+`world`. A [place's page](https://stogas.ai/locations/apac)
 shows its countries. `processingWithin` and `storageWithin` list a deployment's location with
 every place that contains it, so `'europe' in deployment.dataHandling.processingWithin` accepts
 deployments that process in `europe`, in `eu` or in a European country. `unknown` lies in no other
