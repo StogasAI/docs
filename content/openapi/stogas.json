@@ -4396,17 +4396,6 @@
 			},
 			"StogasMetadata": {
 				"type": "object",
-				"additionalProperties": false,
-				"required": [
-					"request_id",
-					"created_at",
-					"node_id",
-					"catalog",
-					"performance",
-					"usage",
-					"receipt",
-					"salts"
-				],
 				"properties": {
 					"request_id": {
 						"type": "string",
@@ -4415,22 +4404,26 @@
 					},
 					"created_at": {
 						"type": "string",
+						"pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
 						"format": "date-time",
-						"pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$",
 						"description": "When the gateway handled the request, by its own clock."
 					},
 					"node_id": {
-						"type": "string",
-						"pattern": "^[a-z]+-[a-z]+-[0-9a-f]{64}$"
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 100,
+								"pattern": "^[a-z]+-[a-z]+-[a-f0-9]{64}$"
+							},
+							{
+								"type": "string",
+								"const": ""
+							}
+						],
+						"description": "The gateway VM that handled the request."
 					},
 					"catalog": {
 						"type": "object",
-						"additionalProperties": false,
-						"required": [
-							"chain_hash",
-							"version",
-							"selection_ids"
-						],
 						"properties": {
 							"chain_hash": {
 								"type": "string",
@@ -4469,125 +4462,139 @@
 								"minItems": 5,
 								"maxItems": 5
 							}
-						}
+						},
+						"required": [
+							"chain_hash",
+							"version",
+							"selection_ids"
+						],
+						"additionalProperties": false
 					},
 					"policy_versions_sha512": {
+						"description": "The SHA-512 of the request record's `policy_versions`, when the record has them.",
 						"type": "string",
-						"pattern": "^[0-9a-f]{128}$",
-						"description": "The SHA-512 of the request record's `policy_versions`, when the record has them."
+						"pattern": "^[0-9a-f]{128}$"
 					},
 					"performance": {
 						"type": "object",
-						"additionalProperties": false,
-						"required": [
-							"total_ms",
-							"provider_ms",
-							"rate_limit_wait_ms",
-							"first_output_ms",
-							"ttft_ms"
-						],
-						"description": "The request record's [times](/docs/request-records#timing), and `provider_ms`, which the record's provider attempts give.",
 						"properties": {
 							"total_ms": {
 								"type": "integer",
 								"minimum": 0,
-								"description": "From the decoded request body to the written record."
+								"maximum": 4294967295,
+								"description": "The full request on the gateway."
+							},
+							"rate_limit_wait_ms": {
+								"default": 0,
+								"description": "How long the request waited before its first provider call, or in all without one, because the organization was over its [platform rate](/docs/policies/limits#requests).",
+								"type": "integer",
+								"minimum": 0,
+								"maximum": 4294967295
+							},
+							"first_output_ms": {
+								"anyOf": [
+									{
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 4294967295
+									},
+									{
+										"type": "null"
+									}
+								],
+								"description": "When the provider's first valid output of a stream reached the gateway, including output other than generated content, such as citations. `null` for requests that are not streamed."
+							},
+							"ttft_ms": {
+								"anyOf": [
+									{
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 4294967295
+									},
+									{
+										"type": "null"
+									}
+								],
+								"description": "When the gateway passed the first generated output of a stream on to the client, such as text, reasoning, a tool call, audio or an image. `null` for requests that are not streamed."
 							},
 							"provider_ms": {
 								"type": "integer",
 								"minimum": 0,
+								"maximum": 4294967295,
 								"description": "From the start of the first provider call to the end of the last."
-							},
-							"rate_limit_wait_ms": {
-								"type": "integer",
-								"minimum": 0,
-								"description": "How long the platform request limit held the request before its first call."
-							},
-							"first_output_ms": {
-								"type": [
-									"integer",
-									"null"
-								],
-								"minimum": 0,
-								"description": "When the provider's first output reached the gateway."
-							},
-							"ttft_ms": {
-								"type": [
-									"integer",
-									"null"
-								],
-								"minimum": 0,
-								"description": "When the gateway passed on the first generated token of a stream."
 							}
-						}
+						},
+						"required": [
+							"total_ms",
+							"rate_limit_wait_ms",
+							"first_output_ms",
+							"ttft_ms",
+							"provider_ms"
+						],
+						"additionalProperties": false,
+						"description": "The request record's [times](/docs/request-records#timing), and `provider_ms`, which the record's provider attempts give."
 					},
 					"usage": {
 						"type": "object",
-						"additionalProperties": false,
-						"required": [
-							"upstream_cost_usd",
-							"billed_cost_usd",
-							"meters"
-						],
-						"description": "The request record's [usage](/docs/usage).",
 						"properties": {
 							"upstream_cost_usd": {
 								"type": "string",
 								"maxLength": 77,
-								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"pattern": "^(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$",
 								"description": "Exact USD amount as a decimal string."
 							},
 							"billed_cost_usd": {
 								"type": "string",
 								"maxLength": 77,
-								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"pattern": "^(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$",
 								"description": "Exact USD amount as a decimal string."
 							},
 							"cache_read_savings_usd": {
 								"type": "string",
 								"maxLength": 77,
-								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"pattern": "^(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$",
 								"description": "Exact USD amount as a decimal string."
 							},
 							"cache_write_overhead_usd": {
 								"type": "string",
 								"maxLength": 77,
-								"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+								"pattern": "^(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$",
 								"description": "Exact USD amount as a decimal string."
 							},
 							"meters": {
 								"type": "object",
-								"maxProperties": 64,
+								"propertyNames": {
+									"type": "string",
+									"minLength": 1
+								},
 								"additionalProperties": {
 									"type": "object",
-									"additionalProperties": false,
-									"required": [
-										"quantity"
-									],
 									"properties": {
 										"quantity": {
 											"type": "string",
-											"pattern": "^(0|[1-9][0-9]*)$",
-											"maxLength": 20
-										},
-										"usd": {
-											"type": "string",
-											"maxLength": 77,
-											"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
-											"description": "Exact USD amount as a decimal string."
+											"pattern": "^(0|[1-9]\\d{0,19})$"
 										},
 										"rateKey": {
 											"type": "string",
-											"minLength": 1,
-											"maxLength": 128
+											"minLength": 1
 										},
 										"rateUsd": {
 											"type": "string",
 											"maxLength": 77,
-											"pattern": "^(0|[1-9][0-9]{0,39})(?:\\.[0-9]{0,35}[1-9])?$",
+											"pattern": "^(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$",
+											"description": "Exact USD amount as a decimal string."
+										},
+										"usd": {
+											"type": "string",
+											"maxLength": 77,
+											"pattern": "^(0|[1-9]\\d{0,39})(?:\\.\\d{0,35}[1-9])?$",
 											"description": "Exact USD amount as a decimal string."
 										}
 									},
+									"required": [
+										"quantity"
+									],
+									"additionalProperties": false,
 									"oneOf": [
 										{
 											"not": {
@@ -4620,23 +4627,59 @@
 									]
 								}
 							}
-						}
+						},
+						"required": [
+							"upstream_cost_usd",
+							"billed_cost_usd",
+							"meters"
+						],
+						"additionalProperties": false,
+						"description": "The request record's [usage](/docs/usage)."
 					},
 					"provider": {
+						"description": "Provider details, such as the provider request ID. The receipt covers them.",
 						"type": "object",
-						"additionalProperties": true,
-						"description": "Provider details, such as the provider request ID. The receipt covers them."
+						"propertyNames": {
+							"type": "string"
+						},
+						"additionalProperties": {}
 					},
 					"receipt": {
-						"$ref": "#/components/schemas/StogasReceipt"
+						"type": "object",
+						"properties": {
+							"schema": {
+								"type": "string",
+								"const": "stogas.receipt.v2"
+							},
+							"boot_sha256": {
+								"type": "string",
+								"pattern": "^[0-9a-f]{64}$",
+								"description": "The boot record whose key signed the receipt."
+							},
+							"request_commitment": {
+								"type": "string",
+								"pattern": "^[0-9a-f]{64}$"
+							},
+							"response_commitment": {
+								"type": "string",
+								"pattern": "^[0-9a-f]{64}$"
+							},
+							"signature": {
+								"type": "string",
+								"pattern": "^[A-Za-z0-9_-]{4498}$"
+							}
+						},
+						"required": [
+							"schema",
+							"boot_sha256",
+							"request_commitment",
+							"response_commitment",
+							"signature"
+						],
+						"additionalProperties": false
 					},
 					"salts": {
 						"type": "object",
-						"additionalProperties": false,
-						"required": [
-							"request",
-							"response"
-						],
 						"properties": {
 							"request": {
 								"type": "string",
@@ -4647,44 +4690,26 @@
 								"pattern": "^[0-9a-f]{64}$"
 							}
 						},
+						"required": [
+							"request",
+							"response"
+						],
+						"additionalProperties": false,
 						"description": "The random salt that each commitment covers. Only you receive them: share a side's salt to prove that side. Request records and exports don't have them."
 					}
 				},
-				"description": "Added to the response when the request sends `Stogas-Metadata: v2`. The receipt signs a commitment to the request, a commitment to the response and the rest of this object without its `salts`. See [Receipts](/docs/receipts)."
-			},
-			"StogasReceipt": {
-				"type": "object",
-				"additionalProperties": false,
 				"required": [
-					"schema",
-					"boot_sha256",
-					"request_commitment",
-					"response_commitment",
-					"signature"
+					"request_id",
+					"created_at",
+					"node_id",
+					"catalog",
+					"performance",
+					"usage",
+					"receipt",
+					"salts"
 				],
-				"properties": {
-					"schema": {
-						"type": "string",
-						"const": "stogas.receipt.v2"
-					},
-					"boot_sha256": {
-						"type": "string",
-						"pattern": "^[0-9a-f]{64}$",
-						"description": "The boot record whose key signed the receipt."
-					},
-					"request_commitment": {
-						"type": "string",
-						"pattern": "^[0-9a-f]{64}$"
-					},
-					"response_commitment": {
-						"type": "string",
-						"pattern": "^[0-9a-f]{64}$"
-					},
-					"signature": {
-						"type": "string",
-						"pattern": "^[A-Za-z0-9_-]{4498}$"
-					}
-				}
+				"additionalProperties": false,
+				"description": "Added to the response when the request sends `Stogas-Metadata: v2`. The receipt signs a commitment to the request, a commitment to the response and the rest of this object without its `salts`. See [Receipts](/docs/receipts)."
 			},
 			"ChatInputMessageContent": {
 				"description": "Text, or a list of content blocks. See [Images and files](/docs/input-files).",
