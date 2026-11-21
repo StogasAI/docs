@@ -525,6 +525,9 @@ This one lets only one server run calls without your application's approval:
   `apply_patch`, `bash` or `str_replace_based_edit_tool`.
 - Your application names its tools, so a filter on `request.clientTools` cannot stop an
   application that gives a tool another name.
+- An MCP server names its tools too, so a filter on `request.mcpTools` holds only while the server
+  keeps those names. Allow the servers that you trust with `request.mcpServers`, because the
+  provider connects only to the servers that the request lists.
 
 ## Unavailable tools
 
