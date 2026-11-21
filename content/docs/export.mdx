@@ -113,7 +113,7 @@ of records, chosen in the same way, and gets the other records without bodies. A
 				{
 					"url": "https://otlp.contoso.com/v1/traces", // The receiver's OTLP traces URL over HTTP.
 					"headers": { "Authorization": "Bearer YOUR_RECEIVER_TOKEN" },
-					"format": "otlp-genai-1.41"
+					"format": "otlp-genai-0.1"
 				}
 			]
 		}
@@ -121,11 +121,16 @@ of records, chosen in the same way, and gets the other records without bodies. A
 }
 ```
 
-With this `format`, the destination gets each record as one trace in OTLP binary Protobuf, with
-`Content-Type: application/x-protobuf`. The attributes follow version 1.41 of the
-[OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/),
-which trace and LLM observability tools read. `sample`, `content` and the
-[delivery rules](#delivery) work as they do for JSON.
+With an OTLP `format`, the destination gets each record as one trace in OTLP binary Protobuf, with
+`Content-Type: application/x-protobuf`. The attributes follow the version of the
+[OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/)
+that the value names, which trace and LLM observability tools read. Choose the version that your
+receiver reads. `sample`, `content` and the [delivery rules](#delivery) work as they do for JSON.
+
+| `format`          | Conventions                                                      | Messages                                               |
+| ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------ |
+| `otlp-genai-0.1`  | Release 0.1 of the GenAI semantic conventions                    | Structured values                                      |
+| `otlp-genai-1.41` | The GenAI conventions in OpenTelemetry semantic conventions 1.41 | JSON text, with a finish reason on each output message |
 
 | Span                          | Name                                | Attributes                                                                                                    |
 | ----------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------- |
@@ -133,18 +138,19 @@ which trace and LLM observability tools read. `sample`, `content` and the
 | One for each provider attempt | `provider_attempt` and the provider | The attempt's fields as `stogas.attempt.*`, `http.response.status_code`, and `error.type` if it failed.       |
 | One for each timed tool call  | `tool_call` and the call's type     | The call's fields as `stogas.tool_call.*`.                                                                    |
 
-| Attribute                                                                                                                  | Value                                                                                 |
-| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `gen_ai.operation.name`                                                                                                    | `chat`, for Chat Completions and Responses.                                           |
-| `gen_ai.provider.name`                                                                                                     | The provider that answered. A rejected request has none.                              |
-| `gen_ai.request.model`, `gen_ai.response.model`                                                                            | The model, as the response names it, and the model that the provider reported.        |
-| `gen_ai.response.id`, `gen_ai.response.finish_reasons`                                                                     | The provider's response ID and finish reason.                                         |
-| `gen_ai.conversation.id`                                                                                                   | Your [session ID](/docs/request-records#sessions), if the request sent one.           |
-| `gen_ai.request.*`                                                                                                         | The sampling settings, output token limit, seed and stream flag that the request set. |
-| `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                                  | All input tokens, including cached ones, and all output tokens, including reasoning.  |
-| `gen_ai.usage.cache_read.input_tokens`, `gen_ai.usage.cache_creation.input_tokens`, `gen_ai.usage.reasoning.output_tokens` | The cached, cache write and reasoning tokens among them.                              |
-| `gen_ai.input.messages`, `gen_ai.output.messages`, `gen_ai.system_instructions`, `gen_ai.tool.definitions`                 | The bodies as JSON text, if the destination gets bodies.                              |
-| `error.type`                                                                                                               | The error code of a failed or rejected request. The span status is then an error.     |
+| Attribute                                                                                                               | Value                                                                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gen_ai.operation.name`                                                                                                 | `chat`, for Chat Completions and Responses.                                                                                                         |
+| `gen_ai.provider.name`                                                                                                  | The provider that answered. A rejected request has none.                                                                                            |
+| `gen_ai.request.model`, `gen_ai.response.model`                                                                         | The model, as the response names it, and the model that the provider reported.                                                                      |
+| `gen_ai.response.id`, `gen_ai.response.finish_reasons`                                                                  | The provider's response ID and finish reason.                                                                                                       |
+| `gen_ai.conversation.id`                                                                                                | Your [session ID](/docs/request-records#sessions), if the request sent one.                                                                         |
+| `gen_ai.request.*`                                                                                                      | The sampling settings, output token limit, seed and stream flag that the request set, and under 0.1 the `reasoning.level` that the provider got.    |
+| `gen_ai.response.time_to_first_chunk`                                                                                   | For a stream, the seconds until the gateway passed you its first output.                                                                            |
+| `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`                                                               | All input tokens, including cached ones, and all output tokens, including reasoning.                                                                |
+| `gen_ai.usage.cache_read.input_tokens`, `gen_ai.usage.cache_write.input_tokens`, `gen_ai.usage.reasoning.output_tokens` | The cached, cache write and reasoning tokens among them, if there are any. Under 1.41, cache writes are `gen_ai.usage.cache_creation.input_tokens`. |
+| `gen_ai.input.messages`, `gen_ai.output.messages`, `gen_ai.system_instructions`, `gen_ai.tool.definitions`              | The bodies, if the destination gets bodies.                                                                                                         |
+| `error.type`                                                                                                            | The error code of a failed or rejected request. The span status is then an error.                                                                   |
 
 - A streamed response times its [tool calls](/docs/request-records#tool-calls). Each span runs
   from when the stream added the call until it marked the call done, or until the response ended.
@@ -152,9 +158,10 @@ which trace and LLM observability tools read. `sample`, `content` and the
   trace, and the request span is a child of your span. Otherwise the trace and span IDs come from
   the request ID, so a retry repeats them.
 - In messages, an inline file is a `blob` part with its `mime_type`, `size` and `sha256` and no
-  content. A part or an item that the conventions have no type for stays as it was sent.
-- The conventions are in development and rename attributes between versions, so the `format`
-  value names its version. A destination keeps the attributes of the version that it names.
+  content. A tool that the provider ran, such as web search, is a `server_tool_call` part with the
+  item's own fields. A part or an item that the conventions have no type for stays as it was sent.
+- A destination keeps the attributes of the version that its `format` names. A later version of the
+  conventions gets its own value.
 
 ## Record format
 

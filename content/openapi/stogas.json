@@ -6039,11 +6039,14 @@
 																			}
 																		},
 																		"format": {
-																			"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																			"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-0.1` and `otlp-genai-1.41` send it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the version of the GenAI semantic conventions that the value names.",
 																			"anyOf": [
 																				{
 																					"type": "string",
-																					"const": "otlp-genai-1.41"
+																					"enum": [
+																						"otlp-genai-0.1",
+																						"otlp-genai-1.41"
+																					]
 																				},
 																				{
 																					"type": "object",
@@ -8608,11 +8611,14 @@
 																						}
 																					},
 																					"format": {
-																						"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-1.41` sends it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the GenAI semantic conventions 1.41.",
+																						"description": "How each record is sent. Without it, the record is one JSON document. `otlp-genai-0.1` and `otlp-genai-1.41` send it as an OpenTelemetry trace over OTLP/HTTP in binary Protobuf, with the attributes of the version of the GenAI semantic conventions that the value names.",
 																						"anyOf": [
 																							{
 																								"type": "string",
-																								"const": "otlp-genai-1.41"
+																								"enum": [
+																									"otlp-genai-0.1",
+																									"otlp-genai-1.41"
+																								]
 																							},
 																							{
 																								"type": "object",
