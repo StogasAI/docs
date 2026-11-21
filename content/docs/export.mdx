@@ -103,6 +103,34 @@ destination gets no record of an outcome that the object leaves out.
 of records, chosen in the same way, and gets the other records without bodies. A record that
 `sample` leaves out is not sent, whatever `content` says.
 
+### Send whole sessions
+
+```jsonc title="policy.json"
+{
+	"plugins": {
+		"export": {
+			"destinations": [
+				// Every record of one session in ten.
+				{ "url": "https://receiver.contoso.com/sessions", "sample": 0.1, "sampleBy": "session" }
+			]
+		}
+	}
+}
+```
+
+`sampleBy: "session"` chooses by [session ID](/docs/request-records#sessions) in place of the
+request ID, so a destination gets every record of a session or none of them. Use it for a receiver
+that reads sessions, such as a trace or evaluation tool.
+
+- A request without a session ID is chosen by its request ID.
+- A share for each outcome applies to each record, so `{ "failed": 1, "success": 0.1 }` sends every
+  failure, and the successes of one session in ten.
+- To repeat the choice, take the SHA-256 of the record's `session_id`.
+- The caller names the session, so the caller can decide which of its requests a destination
+  gets. To oversee requests, leave `sampleBy` out.
+- Destinations with the same URL, headers and format that sample in different ways each get their
+  own records, and a record that both choose is sent once.
+
 ## Send traces to an OpenTelemetry receiver
 
 ```jsonc title="policy.json"

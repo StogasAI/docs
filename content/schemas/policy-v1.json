@@ -2481,6 +2481,60 @@
 																		"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																	}
 																]
+															},
+															"sampleBy": {
+																"description": "Sample whole sessions. `session` sends every record of a session or none of them, for each share in `sample` and `content`. A request without a session ID is sampled alone, as every request is without this setting.",
+																"anyOf": [
+																	{
+																		"type": "string",
+																		"const": "session"
+																	},
+																	{
+																		"type": "object",
+																		"properties": {
+																			"encrypted": {
+																				"type": "object",
+																				"properties": {
+																					"version": {
+																						"type": "number",
+																						"const": 1
+																					},
+																					"keyId": {
+																						"type": "string",
+																						"pattern": "^[0-9a-f]{64}$"
+																					},
+																					"salt": {
+																						"type": "string",
+																						"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																					},
+																					"nonce": {
+																						"type": "string",
+																						"pattern": "^[A-Za-z0-9_-]{16}$"
+																					},
+																					"blob": {
+																						"type": "string",
+																						"minLength": 22,
+																						"maxLength": 349547,
+																						"pattern": "^[A-Za-z0-9_-]+$"
+																					}
+																				},
+																				"required": [
+																					"version",
+																					"keyId",
+																					"salt",
+																					"nonce",
+																					"blob"
+																				],
+																				"additionalProperties": false
+																			}
+																		},
+																		"required": [
+																			"encrypted"
+																		],
+																		"additionalProperties": false,
+																		"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																	}
+																]
 															}
 														},
 														"required": [
@@ -2582,7 +2636,7 @@
 											"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 										}
 									],
-									"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
+									"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are one receiver, which gets each record once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 								}
 							},
 							"required": [
@@ -5179,6 +5233,60 @@
 																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 																				}
 																			]
+																		},
+																		"sampleBy": {
+																			"description": "Sample whole sessions. `session` sends every record of a session or none of them, for each share in `sample` and `content`. A request without a session ID is sampled alone, as every request is without this setting.",
+																			"anyOf": [
+																				{
+																					"type": "string",
+																					"const": "session"
+																				},
+																				{
+																					"type": "object",
+																					"properties": {
+																						"encrypted": {
+																							"type": "object",
+																							"properties": {
+																								"version": {
+																									"type": "number",
+																									"const": 1
+																								},
+																								"keyId": {
+																									"type": "string",
+																									"pattern": "^[0-9a-f]{64}$"
+																								},
+																								"salt": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+																								},
+																								"nonce": {
+																									"type": "string",
+																									"pattern": "^[A-Za-z0-9_-]{16}$"
+																								},
+																								"blob": {
+																									"type": "string",
+																									"minLength": 22,
+																									"maxLength": 349547,
+																									"pattern": "^[A-Za-z0-9_-]+$"
+																								}
+																							},
+																							"required": [
+																								"version",
+																								"keyId",
+																								"salt",
+																								"nonce",
+																								"blob"
+																							],
+																							"additionalProperties": false
+																						}
+																					},
+																					"required": [
+																						"encrypted"
+																					],
+																					"additionalProperties": false,
+																					"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
+																				}
+																			]
 																		}
 																	},
 																	"required": [
@@ -5280,7 +5388,7 @@
 														"description": "This value, encrypted with `stogas encrypt`. The gateway reads it only with the encryption key a request sends."
 													}
 												],
-												"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are sent once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
+												"description": "Independent destinations from required policies are combined. Destinations with the same URL, headers and format are one receiver, which gets each record once, with bodies if one of them that gets the record sends bodies. One policy, counting its rules, holds at most eight destinations. An empty array adds none and replaces plugin defaults."
 											}
 										},
 										"required": [
