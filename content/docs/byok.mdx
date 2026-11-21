@@ -136,7 +136,7 @@ deployment.dataHandling.zeroDataRetention == true
 An account option is something that your provider account has and that changes how the provider
 handles your requests, such as a zero data retention agreement or a business associate agreement.
 The catalog states the data handling of an account without options. Turn on the options that your
-account has when you edit the credential.
+account has when you add or edit the credential.
 [Data handling fields](/docs/policies/routing-fields#data-handling) then hold what your account
 gets for requests through that credential.
 
@@ -144,14 +144,14 @@ Each provider's page in the [catalog](https://stogas.ai/catalog) lists its optio
 that each one covers and the facts that it sets.
 
 - An option changes only the deployments that list it under `accountOptions`. A provider can leave
-  a deployment out of an agreement, such as a preview.
+  a deployment out of an agreement, such as a preview, and so can a model whose developer requires
+  a longer retention.
 - An option sets whole values. A [hosted tool](/docs/model-tools#data-handling-of-hosted-tools)
   that the request lets the model call still joins its own data handling afterward, so a tool
   that stores content removes zero data retention. So does a request that
   [stores its response](/docs/providers/openai#stored-responses).
 - An option can add the certification [`hipaa`](/docs/policies/routing-fields#certifications) to
   deployments that list `hipaa-eligible`.
-- Options that are values of one setting exclude each other.
 - Stogas-managed credentials have no options.
 
 ### Declared and reported options
