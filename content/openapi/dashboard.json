@@ -9893,25 +9893,20 @@
 														"minLength": 1,
 														"maxLength": 100
 													},
-													"problems": {
-														"minItems": 1,
-														"maxItems": 2,
-														"type": "array",
-														"items": {
-															"type": "string",
-															"enum": [
-																"checkFailed",
-																"notChecked",
-																"noTargets",
-																"targetsUnavailable"
-															]
-														}
+													"problem": {
+														"type": "string",
+														"enum": [
+															"checkFailed",
+															"notChecked",
+															"noTargets",
+															"modelsStopped"
+														]
 													}
 												},
 												"required": [
 													"id",
 													"name",
-													"problems"
+													"problem"
 												],
 												"additionalProperties": false
 											}
@@ -10747,7 +10742,10 @@
 														"type": "string",
 														"minLength": 1
 													},
-													"selected": {
+													"excluded": {
+														"type": "boolean"
+													},
+													"serving": {
 														"type": "boolean"
 													},
 													"processingLocation": {
@@ -10781,7 +10779,8 @@
 													"modelName",
 													"modelPublisher",
 													"modelVersion",
-													"selected",
+													"excluded",
+													"serving",
 													"processingLocation",
 													"skuName",
 													"storageLocation"
@@ -10836,12 +10835,12 @@
 		},
 		"/api/{orgId}/byok/{byokId}/azure-bindings/{bindingId}": {
 			"patch": {
-				"operationId": "selectAzureBinding",
+				"operationId": "excludeAzureBinding",
 				"tags": [
 					"BYOK"
 				],
-				"summary": "Choose whether to use an Azure deployment",
-				"description": "Choosing a target replaces the chosen target of its group. A target that cannot serve gets 409, and so does a change based on targets that changed since you listed them.",
+				"summary": "Turn an Azure deployment off or on",
+				"description": "Requests for a model use the earliest discovered deployment that serves and is on. Turning a deployment off moves its model's requests to the next one. An Instant target gets 400, and a change based on targets that changed since you listed them gets 409.",
 				"security": [
 					{
 						"accessToken": [
@@ -10882,7 +10881,7 @@
 							"schema": {
 								"type": "object",
 								"properties": {
-									"selected": {
+									"excluded": {
 										"type": "boolean"
 									},
 									"updatedAt": {
@@ -10891,7 +10890,7 @@
 									}
 								},
 								"required": [
-									"selected",
+									"excluded",
 									"updatedAt"
 								],
 								"additionalProperties": false
@@ -11313,7 +11312,8 @@
 				"tags": [
 					"BYOK"
 				],
-				"summary": "Check a BYOK credential with its provider",
+				"summary": "Check a stored BYOK credential with its provider",
+				"description": "A gateway checks the credential within seconds and records the result on it, which changes its `checkedAt`. A customer-encrypted credential gets 400 CREDENTIAL_ENCRYPTED, since only the key that encrypted it can open it, and a disabled or expired one gets 409 CREDENTIAL_INACTIVE.",
 				"security": [
 					{
 						"accessToken": [
@@ -22881,26 +22881,20 @@
 							{
 								"type": "object",
 								"properties": {
-									"selected": {
+									"serving": {
 										"type": "integer",
 										"minimum": 0,
 										"maximum": 9007199254740991
 									},
-									"unavailable": {
-										"type": "integer",
-										"minimum": 0,
-										"maximum": 9007199254740991
-									},
-									"unselected": {
+									"stopped": {
 										"type": "integer",
 										"minimum": 0,
 										"maximum": 9007199254740991
 									}
 								},
 								"required": [
-									"selected",
-									"unavailable",
-									"unselected"
+									"serving",
+									"stopped"
 								],
 								"additionalProperties": false
 							},

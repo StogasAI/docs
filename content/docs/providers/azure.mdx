@@ -98,14 +98,16 @@ looks at once. A replaced application keeps its targets until the next check.
 
 ## Targets
 
-You choose which of your Azure deployments serves each catalog deployment. A target is one exact
-model version, and the gateway never sends a request to a deployment that you did not choose. If a
-target stops serving, the gateway tries the next candidate that your
-[routing](/docs/policies/routing#retries-and-fallbacks) allows.
+Each deployment of a catalog model in your account becomes a target for one exact model version.
+Requests for a model use the target that a check found first, and the next one when that target
+stops serving. A deployment that you turn off never receives requests. To keep a model out of
+Instant access, change the project's model allowlist in Azure. If no target of a model serves, the
+gateway tries the next candidate that your [routing](/docs/policies/routing#retries-and-fallbacks)
+allows.
 
 Azure can upgrade a deployment to a new model version, as its `versionUpgradeOption` allows.
-Your choice follows the deployment. Within 20 minutes of an upgrade, requests use the
-deployment as a target of the new version, when your policies allow that version. Until then,
+Within 20 minutes of an upgrade, requests use the deployment as a target of the new version, when
+your policies allow that version, and a deployment that you turned off stays off. Until then,
 requests for the old version use your next candidate or fail with `byok_target_unavailable`.
 
 The gateway reads your account's deployments every 10 minutes while requests use the credential.
@@ -118,7 +120,7 @@ with `byok_unavailable` until a read succeeds. A [check](/docs/byok#checks) show
 A check fails when an account has more than 20,000 targets, or when it would take the targets of
 all your organization's Azure credentials past the organization's limit, which is 20,000 by
 default and which we can raise. The credential then keeps the targets of its last check. Requests
-through an API key whose Azure credentials have more than 20,000 chosen targets together fail with
+through an API key whose Azure credentials have more than 20,000 serving targets together fail with
 `key_configuration_too_large`.
 
 ## Account options

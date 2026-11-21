@@ -891,28 +891,22 @@
 											],
 											"additionalProperties": false,
 											"required": [
-												"selected",
-												"unavailable",
-												"unselected"
+												"serving",
+												"stopped"
 											],
 											"properties": {
-												"selected": {
+												"serving": {
 													"type": "integer",
 													"minimum": 0,
-													"description": "The selected targets, at most one for each model."
+													"description": "The models that a deployment serves."
 												},
-												"unavailable": {
+												"stopped": {
 													"type": "integer",
 													"minimum": 0,
-													"description": "The selected targets that cannot serve now, such as a deleted deployment."
-												},
-												"unselected": {
-													"type": "integer",
-													"minimum": 0,
-													"description": "The models that have a target that can serve but none selected."
+													"description": "The models whose deployments that you left on all stopped serving, such as when a model's only deployment was deleted."
 												}
 											},
-											"description": "For an Azure credential, its targets after the check, which discovers the account's deployments, counted as the dashboard counts them. `null` for other providers."
+											"description": "For an Azure credential, its models after the check, which discovers the account's deployments, counted as the dashboard counts them. `null` for other providers."
 										}
 									}
 								},

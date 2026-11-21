@@ -1,0 +1,31 @@
+---
+title: Turn an Azure deployment off or on
+description: Requests for a model use the earliest discovered deployment that
+  serves and is on. Turning a deployment off moves its model's requests to the
+  next one. An Instant target gets 400, and a change based on targets that
+  changed since you listed them gets 409.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PATCH
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Requests for a model use the earliest discovered deployment that serves
+          and is on. Turning a deployment off moves its model's requests to the
+          next one. An Instant target gets 400, and a change based on targets
+          that changed since you listed them gets 409.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/byok/{byokId}/azure-bindings/{bindingId}', method: 'patch' }]} />
+    </>
+  );
+}

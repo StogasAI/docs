@@ -25,7 +25,7 @@ We check a stored credential with a free call to the provider when you save it, 
 after that. A rejected credential is not saved. If a check fails, requests keep using the
 credential, because a provider can reject a check for a short time. We check again after an hour,
 and double the wait while the checks keep failing, up to 23 hours. When a request disagrees with the
-last check, we check the credential again within 5 minutes, or an hour after its last check if that
+last check, we check the credential again within a minute, or an hour after its last check if that
 is later. That happens when a provider rejects a credential that passed its check, and when a
 provider serves a request through a credential whose checks fail. A check does not prove quota or access to every model. A customer-encrypted credential is
 checked only when you run [`stogas byok check`](/docs/cli#check-a-credential) with its encryption
