@@ -1,12 +1,12 @@
 ---
 title: Google Cloud
-description: Run Claude and Gemini in your Google Cloud project on Gemini Enterprise Agent Platform (Vertex AI) or Claude Models on Google Cloud.
+description: Run Claude, Gemini and open models in your Google Cloud project on Gemini Enterprise Agent Platform (Vertex AI) or Claude Models on Google Cloud.
 icon: logo:google-cloud
 ---
 
-Google Cloud deployments run Claude and Gemini in your Google Cloud project. Google bills you for inference,
-and we charge the [BYOK fee](/docs/byok#billing). Agent Platform on this page is Gemini Enterprise
-Agent Platform, which Google's role and policy names call Vertex AI.
+Google Cloud deployments run Claude, Gemini and open models in your Google Cloud project. Google
+bills you for inference, and we charge the [BYOK fee](/docs/byok#billing). Agent Platform on this
+page is Gemini Enterprise Agent Platform, which Google's role and policy names call Vertex AI.
 
 | Deployment ID suffix   | Offering                                                        | Who runs the model, and where   |
 | ---------------------- | --------------------------------------------------------------- | ------------------------------- |
@@ -217,3 +217,25 @@ or `reasoning.summary` to `none`.
   to get the whole limit.
 - `web_search_options` and hosted tools return `400`, because the gateway does not offer
   Grounding with Google Search.
+
+## Open models
+
+Agent Platform runs open models as managed APIs. Turn on each model in your project before its
+first request:
+
+1. Turn on the Agent Platform API and the Cloud Commerce Consumer Procurement API.
+2. Open the model's card in
+   [Model Garden](https://console.cloud.google.com/vertex-ai/model-garden) and click **Enable**,
+   which needs the Consumer Procurement Entitlement Manager role
+   (`roles/consumerprocurement.entitlementManager`).
+
+The gateway needs only `roles/aiplatform.user`. Open models take Chat Completions, and the gateway
+translates Responses [through Chat Completions](/docs/providers#responses-through-chat-completions).
+
+- Send images inline. Image URLs and files return `400`.
+- Prompt caching works as on [OpenAI](/docs/providers/openai#prompt-caching), on deployments whose
+  `capabilities.implicitPromptCaching` is true.
+- Some open models cannot be forced to call a tool, and a request with `required` or a named
+  function in `tool_choice` leaves out their deployments, whose `capabilities.toolChoice` is false.
+- A stop sequence also ends the reply when the model writes it in its reasoning, so the reply can
+  end without an answer.

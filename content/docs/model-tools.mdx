@@ -97,6 +97,10 @@ out. On some deployments the model can still call a tool under `none`, or write 
 text, most often after an earlier call. A request with tools and `none` goes only to deployments
 whose `capabilities.toolChoiceNone` is true.
 
+`parallel_tool_calls: false` returns at most one tool call per turn on every deployment. Some
+models write several calls anyway, and you then get the first call and pay for the tokens of all of
+them.
+
 On Responses, an `additional_tools` input item can also declare tools, as Codex does for some
 models. Its `tools` count as tools of the request on every provider, and a later declaration of a
 tool replaces the earlier one.
@@ -556,7 +560,9 @@ These tools return `400` before the gateway calls a provider:
 
 [^computer]: Except [OpenAI's `computer` tool](/docs/providers/openai#computer-use).
 
-[^forced]: Some Claude models. See [Anthropic](/docs/providers/anthropic#tools).
+[^forced]:
+    Some Claude models and some [open models on Google Cloud](/docs/providers/google-cloud#open-models).
+    See [Anthropic](/docs/providers/anthropic#tools).
 
 [^strict]:
     [Gemini on Google Cloud](/docs/providers/google-cloud#gemini) does not enforce it, and Claude
