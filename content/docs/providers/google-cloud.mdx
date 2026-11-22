@@ -1,12 +1,13 @@
 ---
 title: Google Cloud
-description: Run Claude, Gemini and open models in your Google Cloud project on Gemini Enterprise Agent Platform (Vertex AI) or Claude Models on Google Cloud.
+description: Run Claude, Gemini, Meta's models and open models in your Google Cloud project on Gemini Enterprise Agent Platform (Vertex AI) or Claude Models on Google Cloud.
 icon: logo:google-cloud
 ---
 
-Google Cloud deployments run Claude, Gemini and open models in your Google Cloud project. Google
-bills you for inference, and we charge the [BYOK fee](/docs/byok#billing). Agent Platform on this
-page is Gemini Enterprise Agent Platform, which Google's role and policy names call Vertex AI.
+Google Cloud deployments run Claude, Gemini, Meta's models and open models in your Google Cloud
+project. Google bills you for inference, and we charge the [BYOK fee](/docs/byok#billing). Agent
+Platform on this page is Gemini Enterprise Agent Platform, which Google's role and policy names
+call Vertex AI.
 
 | Deployment ID suffix   | Offering                                                        | Who runs the model, and where   |
 | ---------------------- | --------------------------------------------------------------- | ------------------------------- |
@@ -239,3 +240,47 @@ translates Responses [through Chat Completions](/docs/providers#responses-throug
   function in `tool_choice` leaves out their deployments, whose `capabilities.toolChoice` is false.
 - A stop sequence also ends the reply when the model writes it in its reasoning, so the reply can
   end without an answer.
+
+## Meta models
+
+Agent Platform runs Meta's Muse models as managed APIs. Turn on each model in Model Garden before
+its first request, as for [open models](#open-models). Meta's models take Responses, and the
+gateway translates Chat Completions
+[through Responses](/docs/providers#chat-completions-through-responses).
+
+```json title="A tool loop on a Meta model"
+{
+	"model": "google-cloud-muse-spark-1.3",
+	"input": [
+		{ "role": "user", "content": "What's the weather in Paris?" },
+		{ "type": "reasoning", "id": "rs_1", "summary": [], "encrypted_content": "meta:..." },
+		{
+			"type": "function_call",
+			"call_id": "call_1",
+			"name": "get_weather",
+			"arguments": "{\"city\":\"Paris\"}"
+		},
+		{ "type": "function_call_output", "call_id": "call_1", "output": "18°C and cloudy" }
+	],
+	"tools": [
+		{
+			"type": "function",
+			"name": "get_weather",
+			"parameters": {
+				"type": "object",
+				"properties": { "city": { "type": "string" } },
+				"required": ["city"]
+			}
+		}
+	]
+}
+```
+
+- Send each reasoning item back unchanged, through the same credential. Google refuses changed
+  reasoning, and the gateway leaves out reasoning that another model or credential returned.
+- Only function and namespace tools work. Hosted tools, such as `web_search` and `mcp`, and custom
+  tools return `400`.
+- Send images and documents inline or as URLs that Google can fetch. File IDs return `400`.
+- Deployments whose `capabilities.implicitPromptCaching` is true cache long prompts automatically,
+  and take `prompt_cache_key` and `prompt_cache_retention` as
+  [Meta's guide](https://dev.meta.ai/docs/prompt-caching) describes.
