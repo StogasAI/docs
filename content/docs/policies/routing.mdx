@@ -40,7 +40,9 @@ sorts are [expressions](/docs/policies/expressions) over the fields in the
 
 Filters and lists from every policy apply together, so an OpenAI-only policy and a Chutes-only
 policy leave no candidate. Sending the request again does not help, and a policy cannot widen the
-request's `model`. A [routing simulation](/docs/policies/editing#simulate-routing) shows the
+request's `model`. When filters and lists removed every candidate, the message names those
+policies, and the rule when one rule did, so a rule's name can say why, such as
+`no-stored-replies`. A [routing simulation](/docs/policies/editing#simulate-routing) shows the
 candidates that remain with a draft.
 
 ## Allow and deny lists
