@@ -50,7 +50,8 @@ hour.
    ```
 
    `roles/aiplatform.user` serves Agent Platform. For Claude Models on Google Cloud, grant
-   `roles/claude.user` too.
+   `roles/claude.user` too. Requests return `424` until Google
+   [applies the new roles](https://docs.cloud.google.com/iam/docs/access-change-propagation).
 
 3. Add the project ID and the provider's path in [BYOK](/docs/byok), with your workspace ID for
    Claude Models on Google Cloud:

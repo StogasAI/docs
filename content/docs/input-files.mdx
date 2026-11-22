@@ -164,14 +164,13 @@ reads it.
 
 ## Supported formats
 
-Each catalog route lists the document types that it reads as `documentFormats`, and each
-deployment lists its input types as `inputModalities`. Search the
-[catalog](https://stogas.ai/catalog) to find them:
+Each catalog deployment lists the document types that it reads as `documentFormats`, and its
+input types as `inputModalities`. Search the [catalog](https://stogas.ai/catalog) to find them:
 
 | Search                                             | Finds                                           |
 | -------------------------------------------------- | ----------------------------------------------- |
 | `deployment.inputModalities:image`                 | Deployments that read images                    |
-| `route.documentFormats.extensions:.pdf`            | Routes that read PDFs                           |
+| `deployment.documentFormats.extensions:.pdf`       | Deployments that read PDFs                      |
 | `deployment.capabilities.toolResultImages:true`    | Deployments that read images in tool results    |
 | `deployment.capabilities.toolResultDocuments:true` | Deployments that read documents in tool results |
 

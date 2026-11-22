@@ -93,7 +93,9 @@ Request records link each call to the request that sends its result by a
 
 `tool_choice` accepts `auto`, `none`, `required` or a named function. Some models cannot be forced
 to call a tool[^forced], and a request with `required` or a named function leaves their deployments
-out.
+out. On some deployments the model can still call a tool under `none`, or write a call into its
+text, most often after an earlier call. A request with tools and `none` goes only to deployments
+whose `capabilities.toolChoiceNone` is true.
 
 On Responses, an `additional_tools` input item can also declare tools, as Codex does for some
 models. Its `tools` count as tools of the request on every provider, and a later declaration of a

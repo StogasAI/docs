@@ -125,6 +125,9 @@ A profile other than global uses the credential only from a Region that keeps it
 Other Regions can add their own Region: from `ca-central-1` the US profile also runs in Canada,
 and from `eu-west-2` the EU profile also runs in London.
 
+A deployment that lists `upstream.regions` runs without a profile, in the credential's Region,
+which must be one that it lists.
+
 ## Grant access
 
 The role, or the IAM user that owns the key, needs this policy:
@@ -225,10 +228,12 @@ available, and Bedrock runs a request without its `task_budget`.
 
 Bedrock runs models of other authors through its Chat Completions API, and the gateway
 [translates](/docs/providers#responses-through-chat-completions) Responses requests for them.
-Prompt caching works as on [OpenAI](/docs/providers/openai#prompt-caching).
+Prompt caching works as on [OpenAI](/docs/providers/openai#prompt-caching), on deployments whose
+`capabilities.implicitPromptCaching` is true.
 
 - Send images and files inline. Bedrock reads a file's type from the extension of its `filename`,
-  so the extension must be one that the route lists in `documentFormats`.
+  so the extension must be one that the deployment lists in `documentFormats`.
 - Bedrock takes a `file_id` only as an S3 URL.
-- Bedrock answers without applying `logit_bias`, `logprobs`, `top_logprobs` or
+- Through a profile, Bedrock answers without applying `logprobs`, `top_logprobs` or
   `parallel_tool_calls: false`, so a request that sets one goes to another deployment or fails.
+- `logit_bias` goes only to deployments whose `sampling.logitBias` is true.
