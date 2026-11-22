@@ -8,8 +8,8 @@ A request can give the model two kinds of tools:
 
 - **Your tools** run in your application. `function` tools work on both endpoints and every
   provider. `custom` tools take free-form text input and work on Responses[^custom]. Some models
-  also know a shell tool and a file editing tool of their provider[^provider-tools]. You pay only
-  for tokens.
+  also know a shell tool, a file editing tool and a computer tool of their provider[^provider-tools].
+  You pay only for tokens.
 - **Hosted tools**, such as web search, run at the provider during the request. They can have a
   price per call.
 - **Remote MCP servers** give the model the tools of a server that you choose. The provider calls
@@ -523,8 +523,8 @@ This one lets only one server run calls without your application's approval:
   provider can connect to a listed server before the model chooses a tool.
 - `request.clientTools` lists the tools of a namespace by their own names, without the namespace,
   and the tools that a [tool search](#tool-search) in `input` loaded.
-- A provider's shell or file editing tool[^provider-tools] counts under its name: `shell`,
-  `apply_patch`, `bash` or `str_replace_based_edit_tool`.
+- A provider's shell, file editing or computer tool[^provider-tools] counts under its name:
+  `shell`, `apply_patch`, `computer`, `bash` or `str_replace_based_edit_tool`.
 - Your application names its tools, so a filter on `request.clientTools` cannot stop an
   application that gives a tool another name.
 - An MCP server names its tools too, so a filter on `request.mcpTools` holds only while the server
@@ -538,14 +538,17 @@ These tools return `400` before the gateway calls a provider:
 - Remote MCP servers on routes that do not run the `mcp` hosted tool
 - File search and hosted retrieval
 - Code interpreter, hosted shell and standalone code execution
-- Computer use and image generation
+- Image generation, and computer tools[^computer]
 - Provider memory
 
 [^custom]: On OpenAI models, at [OpenAI](/docs/providers/openai#tools) and [Azure](/docs/providers/azure).
 
 [^provider-tools]:
-    [OpenAI's `shell` and `apply_patch`](/docs/providers/openai#shell-and-apply_patch), and
+    [OpenAI's `shell` and `apply_patch`](/docs/providers/openai#shell-and-apply_patch) and
+    [`computer`](/docs/providers/openai#computer-use), and
     [Anthropic's bash and text editor](/docs/providers/anthropic#bash-and-text-editor).
+
+[^computer]: Except [OpenAI's `computer` tool](/docs/providers/openai#computer-use).
 
 [^forced]: Some Claude models. See [Anthropic](/docs/providers/anthropic#tools).
 

@@ -121,6 +121,51 @@ in your application, then send the conversation again with each call and its `sh
   [apply_patch](https://developers.openai.com/api/docs/guides/tools-apply-patch) guides for the
   call and result fields.
 
+### Computer use
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Open the settings page.",
+	"tools": [{ "type": "computer" }]
+}
+```
+
+The model returns a `computer_call` with a list of `actions`. Perform them in your application,
+take a screenshot, and send the conversation again with the call and a `computer_call_output` after
+it:
+
+```jsonc
+"input": [
+	{ "role": "user", "content": "Open the settings page." },
+	{
+		"type": "computer_call",
+		"id": "cu_123",
+		"call_id": "call_1",
+		"status": "completed",
+		"actions": [{ "type": "click", "button": "left", "x": 412, "y": 88 }]
+	},
+	{
+		"type": "computer_call_output",
+		"call_id": "call_1",
+		"output": { "type": "computer_screenshot", "image_url": "data:image/png;base64,iVBORw0KGgo..." }
+	}
+]
+```
+
+- The tool costs only tokens. OpenAI adds its own instructions for the tool to the input of each
+  request, and a screenshot counts as an image.
+- A screenshot follows the rules of an [image](/docs/input-files#send-an-image): a `file_id` needs
+  your own credential, the [hold](/docs/usage#input-estimates) covers the deployment's full input
+  limit, and [ASCII-only input](/docs/pii-redaction#ascii-only-input) and
+  [PII redaction](/docs/pii-redaction) cannot read it.
+- When a call has `pending_safety_checks`, repeat them in the output's
+  `acknowledged_safety_checks` to go on.
+- `tool_choice` accepts `{ "type": "computer" }`, also in `allowed_tools`.
+- `computer_use_preview` returns `400`, because OpenAI retired the model that runs it.
+- See OpenAI's [computer use guide](https://developers.openai.com/api/docs/guides/tools-computer-use)
+  for the actions and their fields.
+
 ## Stored responses
 
 ```json title="A request that continues a stored response"
@@ -180,5 +225,5 @@ another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 - Audio and image output, and the `audio` request field.
 - Prompt templates (`prompt`) and background mode (`background: true`).
 - Async tool calls (`async: true`) and `configuration_update` input items.
-- Hosted file search, code interpreter, shell containers, computer use and image generation.
+- Hosted file search, code interpreter, shell containers and image generation.
 - WebSocket mode and the Scale tier.

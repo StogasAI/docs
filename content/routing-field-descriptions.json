@@ -107,7 +107,7 @@
 	"request.time": "When the request started. The same value applies to every candidate.",
 	"request.bodyBytes": "Size of the JSON body as sent, before redaction.",
 	"request.hostedTools": "The [hosted tools](/docs/model-tools#hosted-tools) that the request lets the model call: `web_search`, `web_fetch` or `mcp`. `mcp` is listed whenever the request has an `mcp` tool. Empty on Chat Completions.",
-	"request.clientTools": "Names of the `function` and `custom` tools that the request lets the model call.",
+	"request.clientTools": "Names of the tools that your application runs and that the request lets the model call: `function` and `custom` tools, and the [shell, file editing and computer tools](/docs/model-tools#restrict-tools-with-a-policy) of a provider, such as `shell`, `apply_patch`, `computer` and `bash`.",
 	"request.mcpServers": "The [remote MCP servers](/docs/model-tools#remote-mcp-servers) that the request lists, whatever `tool_choice` says: the host and path of a `server_url`, such as `mcp.example.com/mcp`, a `connector_id` as `connector:<id>` or a `tunnel_id` as `tunnel:<id>`. Hosts and IDs are lowercase. Empty on Chat Completions.",
 	"request.mcpServersWithoutApproval": "The servers in `request.mcpServers` whose `require_approval` lets a call run [without approval](/docs/model-tools#calls-without-approval): `never`, or a `never` filter.",
 	"request.mcpTools": "Each tool that `allowed_tools` names on a server in `request.mcpServers`, as the server, `#` and the tool's name, such as `mcp.example.com/mcp#search`. A server that names no tools reads as `mcp.example.com/mcp#*`.",

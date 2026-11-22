@@ -513,14 +513,14 @@ stream until the provider ends it, so `ttft_ms` then comes near the end of the c
 `performance.answered_calls` lists the calls whose results the request sent. Records keep no tool
 names, arguments or results.
 
-| `type`                              | Who runs it                                                                                                                |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `function_call`, `custom_tool_call` | Your app                                                                                                                   |
-| `shell_call`, `apply_patch_call`    | Your app                                                                                                                   |
-| `mcp_approval_request`              | Your app, which approves or denies the provider's call                                                                     |
-| `web_search_call`, `web_fetch_call` | The provider                                                                                                               |
-| `mcp_list_tools`, `mcp_call`        | The provider, on a [remote MCP server](/docs/model-tools#remote-mcp-servers)                                               |
-| `tool_search_call`                  | Your app when the [`tool_search`](/docs/model-tools#tool-search) tool sets `execution` to `client`, otherwise the provider |
+| `type`                                            | Who runs it                                                                                                                |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `function_call`, `custom_tool_call`               | Your app                                                                                                                   |
+| `shell_call`, `apply_patch_call`, `computer_call` | Your app                                                                                                                   |
+| `mcp_approval_request`                            | Your app, which approves or denies the provider's call                                                                     |
+| `web_search_call`, `web_fetch_call`               | The provider                                                                                                               |
+| `mcp_list_tools`, `mcp_call`                      | The provider, on a [remote MCP server](/docs/model-tools#remote-mcp-servers)                                               |
+| `tool_search_call`                                | Your app when the [`tool_search`](/docs/model-tools#tool-search) tool sets `execution` to `client`, otherwise the provider |
 
 For a call that your app runs, `latency_ms` is the time the model took to write the call. Your
 app's time with it runs from the end of the request until a later request sends its result, and
