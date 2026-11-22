@@ -209,9 +209,9 @@ or `reasoning.summary` to `none`.
   `400`, because Gemini takes system instructions only at the start.
 - Send files inline, or as public URLs on deployments whose `inputModalities` list `audio` and
   `video`. Google fetches each URL, and Gemini reads what it holds, whatever type the request names,
-  so [media type lists](/docs/input-files#allow-or-deny-file-types) refuse URLs. A file URL works on
-  Chat Completions only, and needs `file_type` when its path has no extension. Google returns `404`
-  for a missing page and `400` for a URL that it cannot fetch otherwise. File IDs return `400`.
+  so [media type lists](/docs/input-files#allow-or-deny-file-types) refuse URLs. A file URL needs
+  `file_type` when its path has no extension. Google returns `404` for a missing page and `400` for
+  a URL that it cannot fetch otherwise. File IDs return `400`.
 - Gemini does not enforce `strict` on tools. Check the tool call error rate in
   [Analytics](/docs/analytics).
 - A conversation that ends with an assistant message continues it on some Gemini models, and others

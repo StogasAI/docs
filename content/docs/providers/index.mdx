@@ -83,7 +83,7 @@ A translated request returns `400` for what Chat Completions cannot carry:
 - hosted and custom tools, such as `web_search`, and tool choices that name them
 - input items other than messages, function calls, their outputs and reasoning
 - a function call whose `namespace` and `name` name no tool in `tools`
-- file URLs and image file IDs
+- image file IDs, and file URLs except on [Gemini](/docs/providers/google-cloud#gemini)
 - `stream_options.include_obfuscation` set to `true`
 
 The deployment's Chat Completions limits apply as well, so Chutes and AWS return `400` for log
