@@ -221,6 +221,7 @@ With `"execution": "client"`, your app runs the search. Give the tool a `descrip
 | `web_search_preview` | Responses                            |
 | `web_search_options` | Chat Completions, search models only |
 | `web_fetch`          | Responses                            |
+| `file_search`        | Responses[^file-search]              |
 
 [Compare providers](/docs/providers) shows which providers run each tool, and the
 [catalog](https://stogas.ai/catalog) lists the hosted tools of each route. A request that lists a
@@ -244,11 +245,11 @@ unknown version. Each provider's page lists its prices and versions.
 
 ### Send hosted calls back
 
-On Responses, a reply returns each hosted call as a `web_search_call` or `web_fetch_call` item. Send
-these items back in `input` with the rest of the reply. Each deployment gets only the calls that it
-can read: calls of a tool that its route runs, in the form that its provider returns them[^replay].
-The gateway leaves the other calls out and keeps the rest of the conversation, so a conversation can
-move to another model.
+On Responses, a reply returns each hosted call as a `web_search_call`, `web_fetch_call` or
+`file_search_call` item. Send these items back in `input` with the rest of the reply. Each
+deployment gets only the calls that it can read: calls of a tool that its route runs, in the form
+that its provider returns them[^replay]. The gateway leaves the other calls out and keeps the rest
+of the conversation, so a conversation can move to another model.
 
 ### Domain filters
 
@@ -321,7 +322,7 @@ reserves for them:
   value under ten lowers the hold.
 - The hold also covers 8,000 tokens of content for each call[^content], or a fetch's
   `max_content_tokens`. Larger results cost more than the hold.
-- `tool_choice: "none"` turns hosted tools off, so they cost nothing.
+- `tool_choice: "none"` turns hosted tools off, so the hold covers no calls.
 
 The provider does not stop at the hold. Settlement charges the calls and tokens that the provider
 reports, even when they are more than the hold.
@@ -536,7 +537,7 @@ This one lets only one server run calls without your application's approval:
 These tools return `400` before the gateway calls a provider:
 
 - Remote MCP servers on routes that do not run the `mcp` hosted tool
-- File search and hosted retrieval
+- Hosted retrieval other than [OpenAI's `file_search`](/docs/providers/openai#file-search)
 - Code interpreter, hosted shell and standalone code execution
 - Image generation, and computer tools[^computer]
 - Provider memory
@@ -565,7 +566,14 @@ These tools return `400` before the gateway calls a provider:
 
 [^tool-search]: [OpenAI](/docs/providers/openai#tools). Other models return `400` for deferred tools.
 
-[^replay]: [Claude](/docs/providers/anthropic#tools) reads a search again only with the encrypted content of its results.
+[^replay]:
+    [Claude](/docs/providers/anthropic#tools) reads a search again only with the encrypted content
+    of its results, and [OpenAI](/docs/providers/openai#file-search) a file search only with its
+    results.
+
+[^file-search]:
+    [OpenAI](/docs/providers/openai#file-search) searches the vector stores of your own OpenAI
+    account.
 
 [^mcp]: [OpenAI](/docs/providers/openai#tools) runs remote MCP servers.
 

@@ -69,12 +69,12 @@ for their values.
 
 Besides `function` tools, Responses accepts `custom` tools,
 [namespaces](/docs/model-tools#group-tools-in-namespaces),
-[tool search](/docs/model-tools#tool-search), `web_search` and
+[tool search](/docs/model-tools#tool-search), `web_search`, [`file_search`](#file-search) and
 [remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models take
 `web_search_options` on Chat Completions instead of `tools`.
 
 - A model without tool search returns `400` for deferred tools.
-- `max_tool_calls` counts web searches and the calls of remote MCP servers together.
+- `max_tool_calls` counts web searches, file searches and the calls of remote MCP servers together.
 - `web_search` takes `search_content_types`. With `["text", "image"]`, a search can return images
   too.
 
@@ -166,6 +166,38 @@ it:
 - See OpenAI's [computer use guide](https://developers.openai.com/api/docs/guides/tools-computer-use)
   for the actions and their fields.
 
+### File search
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "What does the travel policy say about hotels?",
+	"tools": [{ "type": "file_search", "vector_store_ids": ["vs_123"] }],
+	"include": ["file_search_call.results"] // Needed to send the search back.
+}
+```
+
+The model searches the [vector stores](https://developers.openai.com/api/docs/guides/tools-file-search)
+of your OpenAI account. The reply holds a `file_search_call` item with the queries, and the results
+when `include` asks for them, and its message cites the files that it used.
+
+- Create vector stores and add files with OpenAI's API. The gateway sends the tool to OpenAI as you
+  wrote it, with its ranking options and filters.
+- Send a search back with its `results`. OpenAI reads a search again only with them, so the gateway
+  leaves out a search without them.
+- Vector stores belong to one account, so a request that more than one of your OpenAI credentials
+  can serve fails. Use a key with one OpenAI credential for the model.
+- The files reach the model without passing through the gateway, so
+  [ASCII-only input](/docs/pii-redaction#ascii-only-input) and [PII redaction](/docs/pii-redaction)
+  cannot read them, and a candidate whose policy sets either refuses the request. The
+  `request.storedInput` [request field](/docs/policies/routing-fields#request) lets a policy refuse
+  such requests too.
+- Each search costs its price per call in the catalog, and its results count as input tokens. The
+  [hold](/docs/model-tools#holds-for-hosted-tools) covers ten searches, or `max_tool_calls`.
+- OpenAI adds its own instructions for the tool to the input of each request, also with
+  `tool_choice: "none"`, and your usage counts them.
+- `tool_choice` accepts `{ "type": "file_search" }`, also in `allowed_tools`.
+
 ## Stored responses
 
 ```json title="A request that continues a stored response"
@@ -225,5 +257,5 @@ another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 - Audio and image output, and the `audio` request field.
 - Prompt templates (`prompt`) and background mode (`background: true`).
 - Async tool calls (`async: true`) and `configuration_update` input items.
-- Hosted file search, code interpreter, shell containers and image generation.
+- Code interpreter, shell containers and image generation.
 - WebSocket mode and the Scale tier.
