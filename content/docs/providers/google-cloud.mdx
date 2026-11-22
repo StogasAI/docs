@@ -207,7 +207,11 @@ or `reasoning.summary` to `none`.
   another credential returned.
 - System and developer messages go before the first user message. One that comes later returns
   `400`, because Gemini takes system instructions only at the start.
-- Send files inline. File URLs and file IDs return `400`.
+- Send files inline, or as public URLs on deployments whose `inputModalities` list `audio` and
+  `video`. Google fetches each URL, and Gemini reads what it holds, whatever type the request names,
+  so [media type lists](/docs/input-files#allow-or-deny-file-types) refuse URLs. A file URL works on
+  Chat Completions only, and needs `file_type` when its path has no extension. Google returns `404`
+  for a missing page and `400` for a URL that it cannot fetch otherwise. File IDs return `400`.
 - Gemini does not enforce `strict` on tools. Check the tool call error rate in
   [Analytics](/docs/analytics).
 - A conversation that ends with an assistant message continues it on some Gemini models, and others
@@ -280,7 +284,9 @@ gateway translates Chat Completions
   reasoning, and the gateway leaves out reasoning that another model or credential returned.
 - Only function and namespace tools work. Hosted tools, such as `web_search` and `mcp`, and custom
   tools return `400`.
-- Send images and documents inline or as URLs that Google can fetch. File IDs return `400`.
+- Send images and documents inline or as URLs that Google can fetch. Google reads what a URL holds,
+  whatever type the request names, so [media type lists](/docs/input-files#allow-or-deny-file-types)
+  refuse URLs. File IDs return `400`.
 - Deployments whose `capabilities.implicitPromptCaching` is true cache long prompts automatically,
   and take `prompt_cache_key` and `prompt_cache_retention` as
   [Meta's guide](https://dev.meta.ai/docs/prompt-caching) describes.

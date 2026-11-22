@@ -212,7 +212,7 @@ text format from another. A `filename` never sets the type.
 | Inline data                                                                       | The declared type. With no type or `application/octet-stream`, the type the content shows. |
 | Inline data whose content is another type, such as a PDF declared as `text/plain` | None. The request fails.                                                                   |
 | `input_audio`                                                                     | `audio/mpeg` for `mp3`, otherwise `audio/` and the `format`                                |
-| An image URL or file ID                                                           | Only `image/*`, because the gateway never downloads it                                     |
+| An image URL or file ID                                                           | Only `image/*`, because the gateway never downloads it[^fetched]                           |
 | A document URL or file ID                                                         | None                                                                                       |
 
 An attachment whose type the lists cannot check is refused, so a list that names `image/png`
@@ -262,5 +262,11 @@ model, such as `provider:openai gpt-5.6-sol`, or use a key with one credential f
 [^sources]:
     Anthropic models also take `file_url` on Chat Completions, and do not take an image
     `file_id`. Models that AWS or Google runs take no URLs, except
-    [Meta's models on Google Cloud](/docs/providers/google-cloud#meta-models). Claude that AWS or
-    Google runs takes no file IDs either, and Claude that Azure runs takes none.
+    [Gemini](/docs/providers/google-cloud#gemini), which also takes `file_url` on Chat
+    Completions, and [Meta's models](/docs/providers/google-cloud#meta-models) on Google Cloud.
+    Claude that AWS or Google runs takes no file IDs either, and Claude that Azure runs takes none.
+
+[^fetched]:
+    Google reads a URL by what it holds, whatever type the request names, so a URL that Gemini or
+    Meta's models on [Google Cloud](/docs/providers/google-cloud) read has no type that the lists
+    can check.
