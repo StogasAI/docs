@@ -228,6 +228,7 @@ With `"execution": "client"`, your app runs the search. Give the tool a `descrip
 | `file_search`          | Responses[^file-search]              |
 | `code_interpreter`     | Responses[^containers]               |
 | `shell` in a container | Responses[^containers]               |
+| `image_generation`     | Responses[^images]                   |
 
 [Compare providers](/docs/providers) shows which providers run each tool, and the
 [catalog](https://stogas.ai/catalog) lists the hosted tools of each route. A request that lists a
@@ -256,7 +257,9 @@ On Responses, a reply returns each hosted call as a `web_search_call`, `web_fetc
 `shell_call_output`. Send these items back in `input` with the rest of the reply. Each
 deployment gets only the calls that it can read: calls of a tool that its route runs, in the form
 that its provider returns them[^replay]. The gateway leaves the other calls out and keeps the rest
-of the conversation, so a conversation can move to another model.
+of the conversation, so a conversation can move to another model. An `image_generation_call` is
+different: OpenAI reads its image from a stored response, so a request that sends one back goes
+only to [OpenAI's models](/docs/providers/openai#image-generation).
 
 ### Domain filters
 
@@ -524,9 +527,9 @@ This one lets only one server run calls without your application's approval:
   path segment, an empty path segment, or an encoded slash.
 - Where one address serves every account and the token selects the account, a filter cannot tell
   one account from another.
-- `tool_choice: "none"` empties `request.clientTools` and takes web tools out of
-  `request.hostedTools`, because the model can call none of them. A choice of one function still
-  counts every function.
+- `tool_choice: "none"` empties `request.clientTools` and takes web tools, `file_search` and
+  `image_generation` out of `request.hostedTools`, because the model can call none of them. A
+  choice of one function still counts every function.
 - An `mcp` tool, `code_interpreter` and a hosted `shell` count whenever the request lists them,
   whatever `tool_choice` says, because the provider can connect to a listed server or start a
   container before the model chooses a tool. A hosted `shell` counts in `request.hostedTools`, not
@@ -548,7 +551,8 @@ These tools return `400` before the gateway calls a provider:
 - Remote MCP servers on routes that do not run the `mcp` hosted tool
 - Hosted retrieval other than [OpenAI's `file_search`](/docs/providers/openai#file-search)
 - Code execution other than [OpenAI's code interpreter and hosted shells](/docs/providers/openai#code-interpreter-and-hosted-shells)
-- Image generation, and computer tools[^computer]
+- Image generation other than [OpenAI's `image_generation`](/docs/providers/openai#image-generation)
+- Computer tools[^computer]
 - Provider memory
 
 [^custom]: On OpenAI models, at [OpenAI](/docs/providers/openai#tools) and [Azure](/docs/providers/azure).
@@ -589,6 +593,8 @@ These tools return `400` before the gateway calls a provider:
 [^containers]:
     [OpenAI](/docs/providers/openai#code-interpreter-and-hosted-shells) runs them in containers of
     your own OpenAI account.
+
+[^images]: [OpenAI](/docs/providers/openai#image-generation) bills the images to your own OpenAI account.
 
 [^max-tool-calls]:
     [OpenAI](/docs/providers/openai#code-interpreter-and-hosted-shells) doesn't count a hosted

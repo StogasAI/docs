@@ -287,9 +287,11 @@ Other fields record the remaining settings:
 `hosted_tools` lists the [hosted tools](/docs/model-tools#hosted-tools) that the request let the
 model call, such as `["web_search"]`, and is missing when there were none. `provider_state` names
 the fields that kept or read content in your provider account, such as
-`["store", "previous_response_id"]`, or `["container"]` for a request with
-[code interpreter or a hosted shell](/docs/providers/openai#code-interpreter-and-hosted-shells),
-and is missing when there were none. See [Stored responses](/docs/providers/openai#stored-responses).
+`["store", "previous_response_id"]`, `["container"]` for a request with
+[code interpreter or a hosted shell](/docs/providers/openai#code-interpreter-and-hosted-shells), or
+`["image_generation_call"]` for a request that sent a
+[generated image](/docs/providers/openai#image-generation) back, and is missing when there were
+none. See [Stored responses](/docs/providers/openai#stored-responses).
 
 The record never keeps prompts, instructions, stop sequences, tool definitions, schemas or
 identifiers such as `user`. It also leaves out a text value that is longer than 64 characters or
@@ -521,6 +523,7 @@ names, arguments or results.
 | `shell_call`                                                                     | Your app, or the provider for a [hosted shell](/docs/providers/openai#code-interpreter-and-hosted-shells)                  |
 | `mcp_approval_request`                                                           | Your app, which approves or denies the provider's call                                                                     |
 | `web_search_call`, `web_fetch_call`, `file_search_call`, `code_interpreter_call` | The provider                                                                                                               |
+| `image_generation_call`                                                          | The provider                                                                                                               |
 | `mcp_list_tools`, `mcp_call`                                                     | The provider, on a [remote MCP server](/docs/model-tools#remote-mcp-servers)                                               |
 | `tool_search_call`                                                               | Your app when the [`tool_search`](/docs/model-tools#tool-search) tool sets `execution` to `client`, otherwise the provider |
 

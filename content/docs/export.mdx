@@ -222,8 +222,10 @@ Each record is the request record with these fields added:
   in its URL.
 
 - Records don't carry file contents. Each inline file in the request, such as a base64 image,
-  audio clip or PDF, is replaced by an object with its declared `media_type`, and the `size` in bytes
-  and hex `sha256` of the decoded file. Use the hash to match a file that you keep. File URLs and
+  audio clip, PDF, image mask or skill archive, is replaced by an object with its declared
+  `media_type`, and the `size` in bytes and hex `sha256` of the decoded file. Each image that
+  [image generation](/docs/providers/openai#image-generation) returns, partial images included, is
+  replaced by its `size` and `sha256`. Use the hash to match a file that you keep. File URLs and
   file IDs stay as sent.
 
   ```json

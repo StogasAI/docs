@@ -3473,6 +3473,7 @@
 							"web_fetch_call",
 							"file_search_call",
 							"code_interpreter_call",
+							"image_generation_call",
 							"tool_search_call",
 							"tool_search_output",
 							"function_call",
@@ -3687,6 +3688,7 @@
 							"web_fetch_call",
 							"file_search_call",
 							"code_interpreter_call",
+							"image_generation_call",
 							"tool_search_call",
 							"tool_search_output",
 							"additional_tools"
@@ -3700,10 +3702,11 @@
 							"incomplete",
 							"searching",
 							"interpreting",
+							"generating",
 							"failed",
 							"calling"
 						],
-						"description": "`searching` applies only to `web_search_call`, `web_fetch_call` and `file_search_call` items, `interpreting` only to `code_interpreter_call` items, `calling` only to `mcp_call` items, and `failed` to all five."
+						"description": "`searching` applies only to `web_search_call`, `web_fetch_call` and `file_search_call` items, `interpreting` only to `code_interpreter_call` items, `generating` only to `image_generation_call` items, `calling` only to `mcp_call` items, and `failed` to all six."
 					},
 					"role": {
 						"type": "string",
@@ -3826,8 +3829,11 @@
 						]
 					},
 					"error": {
-						"type": "string",
-						"description": "The error of an `mcp_list_tools` or `mcp_call` item."
+						"type": [
+							"string",
+							"object"
+						],
+						"description": "The error of an `mcp_list_tools` or `mcp_call` item, or of a failed `image_generation_call`."
 					},
 					"approval_request_id": {
 						"type": "string",
@@ -3842,9 +3848,11 @@
 						"description": "Why an `mcp_approval_response` decided so."
 					},
 					"action": {
-						"type": "object",
-						"description": "The commands of a `shell_call`, or what a `web_search_call` or `web_fetch_call` did.",
-						"additionalProperties": false,
+						"type": [
+							"object",
+							"string"
+						],
+						"description": "The commands of a `shell_call`, what a `web_search_call` or `web_fetch_call` did, the one action of a `computer_call` from the retired preview, whose fields OpenAI decides, or the name of an `image_generation_call`'s action, such as `generate`.",
 						"properties": {
 							"type": {
 								"type": "string",
@@ -4039,6 +4047,34 @@
 							"null"
 						],
 						"description": "The code of a `code_interpreter_call`."
+					},
+					"result": {
+						"type": [
+							"string",
+							"null"
+						],
+						"description": "The image of an `image_generation_call`, in base64. The gateway sends the call to OpenAI with only its `type` and `id`, and OpenAI reads the image from the stored response, so the response needs `store: true` and your own credential."
+					},
+					"revised_prompt": {
+						"type": "string",
+						"description": "The prompt that the model wrote for an `image_generation_call`."
+					},
+					"background": {
+						"type": "string",
+						"description": "A setting of an `image_generation_call`, as are `output_format`, `quality` and `size`."
+					},
+					"output_format": {
+						"type": "string"
+					},
+					"quality": {
+						"type": "string"
+					},
+					"size": {
+						"type": "string"
+					},
+					"svg_usage": {
+						"type": "object",
+						"description": "The usage of the model that wrote the SVG image of an `image_generation_call`."
 					},
 					"container_id": {
 						"type": "string",

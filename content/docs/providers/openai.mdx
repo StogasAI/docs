@@ -70,13 +70,13 @@ for their values.
 Besides `function` tools, Responses accepts `custom` tools,
 [namespaces](/docs/model-tools#group-tools-in-namespaces),
 [tool search](/docs/model-tools#tool-search), `web_search`, [`file_search`](#file-search),
-[`code_interpreter`, hosted shells](#code-interpreter-and-hosted-shells) and
-[remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models take
+[`code_interpreter`, hosted shells](#code-interpreter-and-hosted-shells),
+[`image_generation`](#image-generation) and [remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models take
 `web_search_options` on Chat Completions instead of `tools`.
 
 - A model without tool search returns `400` for deferred tools.
-- `max_tool_calls` counts web searches, file searches, code interpreter runs and the calls of
-  remote MCP servers together.
+- `max_tool_calls` counts web searches, file searches, code interpreter runs, images and the calls
+  of remote MCP servers together.
 - `web_search` takes `search_content_types`. With `["text", "image"]`, a search can return images
   too.
 
@@ -254,6 +254,46 @@ code wrote with a `container_file_citation`.
 - `tool_choice` accepts `{ "type": "code_interpreter" }` and `{ "type": "shell" }`, also in
   `allowed_tools`.
 
+### Image generation
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Draw a red circle on a white background.",
+	"tools": [{ "type": "image_generation", "size": "1024x1024", "output_format": "webp" }]
+}
+```
+
+The model writes a prompt for an
+[image model](https://developers.openai.com/api/docs/guides/tools-image-generation), and the reply
+holds an `image_generation_call` with the image in base64 in `result` and the model's prompt in
+`revised_prompt`.
+
+- OpenAI bills the image model's tokens to your account at that model's
+  [prices](https://developers.openai.com/api/docs/pricing). They are not in the response's `usage`,
+  and the [BYOK fee](/docs/byok#billing) covers only the tokens of the model that you call.
+- The gateway sends the tool's settings to OpenAI as you wrote them, and returns `400` for a
+  setting that the tool doesn't take.
+- A mask in `input_image_mask` follows the rules of an [image](/docs/input-files#send-an-image).
+- The model reads each image that it makes, and your usage counts those tokens. The
+  [hold](/docs/model-tools#holds-for-hosted-tools) covers what it reads of ten images, or of
+  `max_tool_calls` images, and of each image that you send back. OpenAI leaves each image past
+  `max_tool_calls` in the reply with status `generating` and no `result`.
+- To refer to an image in a later request, send its `image_generation_call` back. OpenAI reads the
+  image by its `id` from the [stored response](#stored-responses), so this works only for a
+  response that was stored, and the gateway sends OpenAI the `id` alone. Send an image without an
+  `id`, or from a response that wasn't stored, as an `input_image`.
+- An image that you send back reaches the model without passing through the gateway, so
+  [ASCII-only input](/docs/pii-redaction#ascii-only-input) and [PII redaction](/docs/pii-redaction)
+  cannot read it, and a candidate whose policy sets either refuses the request. The
+  `request.storedInput` [request field](/docs/policies/routing-fields#request) is true for such a
+  request.
+- A reply with an image can end with an assistant message without text. Send it back with the rest
+  of the reply.
+- OpenAI adds its own instructions for the tool to the input of each request, also with
+  `tool_choice: "none"`, and your usage counts them.
+- `tool_choice` accepts `{ "type": "image_generation" }`, also in `allowed_tools`.
+
 ## Stored responses
 
 ```json title="A request that continues a stored response"
@@ -310,7 +350,8 @@ another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 
 ## Not available
 
-- Audio and image output, the `audio` request field and image generation.
+- Audio output, the `audio` request field, and image output other than
+  [image generation](#image-generation).
 - Prompt templates (`prompt`) and background mode (`background: true`).
 - Async tool calls (`async: true`) and `configuration_update` input items.
 - WebSocket mode and the Scale tier.
