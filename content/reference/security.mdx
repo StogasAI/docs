@@ -114,6 +114,17 @@ integers are from -9007199254740991 to 9007199254740991:
   appended. `tool_calls` and `reasoning_details` are matched by `index`: their `id`, `type`,
   function `name` and `cache_control` must not change, and their text is joined. A field that is
   null or missing in every chunk is left out, and a chunk with any other field cannot be assembled.
+- A Messages stream is the message that its events assemble to. `message_start` gives the message,
+  and each `content_block_start` adds its block to `content`, with an `index` equal to the number
+  of blocks before it. Each `content_block_delta` changes the unfinished block at its `index`:
+  `text_delta`, `thinking_delta` and `input_json_delta` join their text, `citations_delta` adds its
+  citation to `citations`, and `signature_delta` and `compaction_delta` replace the fields that they
+  hold. When a block stops, or the message stops before it, input text that is a JSON object
+  becomes its `input`, and any other input text becomes `input` as a string. `message_delta` sets
+  each field of its `delta` that is not null on the message, and each field of its `usage` that is
+  not null on the message's `usage`. Its other fields that are not null, and those of
+  `message_stop`, are set on the message. `ping` carries nothing, and any other event, delta type
+  or delta field cannot be assembled.
 
 Comment lines, such as keepalives and the `stogas` comment, are not part of a stream's content.
 

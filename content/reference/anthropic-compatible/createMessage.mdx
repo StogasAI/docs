@@ -1,0 +1,36 @@
+---
+title: Messages
+description: "Creates a message in the format of Anthropic's Messages API. The
+  gateway runs it as a Responses request: it checks each field against the
+  selected deployment, applies your policies and keeps its record in that form,
+  and returns Claude's own reply."
+full: true
+_openapi:
+  preload:
+    - stogas
+  method: POST
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: "Creates a message in the format of Anthropic's Messages API. The
+          gateway runs it as a Responses request: it checks each field against
+          the selected deployment, applies your policies and keeps its record in
+          that form, and returns Claude's own reply."
+---
+
+export default function Layout(props) {
+  const { Callout, OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <Callout type="info" title="Verified connections">
+        Send this request through a <a href="/docs/sdk-overview">Stogas SDK</a> to verify the gateway
+        and encrypt the request. The request and response formats stay the same. See <a href="/docs/connection-modes">Connection modes</a> and <a href="/docs/reference/provider-behavior">Compatibility notes</a>.
+      </Callout>
+
+      <OpenAPIPage document="stogas" operations={[{ path: '/v1/messages', method: 'post' }]} />
+    </>
+  );
+}

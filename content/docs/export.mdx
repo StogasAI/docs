@@ -216,6 +216,9 @@ Each record is the request record with these fields added:
 
 - A record without bodies has no `request`, `response` or `events`.
 
+- The `request` of a [Messages](/docs/reference/provider-behavior#messages) request is in the
+  Responses format. Its `response` and `events` are Claude's, as you received them.
+
 - In `request`, each tool's `authorization` and header values read `"[omitted]"`, and
   `server_url` keeps only its scheme, host and port, so the credentials of a
   [remote MCP server](/docs/model-tools#remote-mcp-servers) stay out of records, including a token

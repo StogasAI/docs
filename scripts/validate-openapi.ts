@@ -10,6 +10,7 @@ readDocument('dashboard.json');
 for (const pathname of [
 	'/v1/chat/completions',
 	'/v1/responses',
+	'/v1/messages',
 	'/v1/catalog',
 	'/v1/catalog/parts/{sha256}',
 	'/v1/models'

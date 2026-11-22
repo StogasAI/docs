@@ -66,9 +66,10 @@ change it. A receipt covers:
 - the request body that you sent, without its top-level `encryption_keys`,
 - a buffered response, without its `stogas` object,
 - the `chat.completion` that a Chat Completions stream's chunks add up to, however the reply was
-  split into chunks, and
+  split into chunks,
 - the `response` of a Responses stream's last event, `response.completed` or
-  `response.incomplete`.
+  `response.incomplete`, and
+- the message that a Messages stream's events add up to.
 
 The [receipt format](/docs/reference/security#receipt-format) lists each field and how each
 commitment is computed.

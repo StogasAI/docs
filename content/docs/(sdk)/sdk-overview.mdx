@@ -64,9 +64,11 @@ To load it now, call the transport's refresh method, such as `refresh_evidence()
 - JavaScript keeps each encrypted upload in memory until it is sent, so limit how many large uploads
   run at once.
 - More connections do not spread requests across gateways.
-- The SDK serves Chat Completions, Responses, policy validation, routing simulation and, with
-  `GET`, [`/v1/models`, `/v1/catalog` and `/v1/catalog/parts/{sha256}`](/docs/models#find-a-model).
+- The SDK serves Chat Completions, Responses, Messages, policy validation, routing simulation and,
+  with `GET`, [`/v1/models`, `/v1/catalog` and `/v1/catalog/parts/{sha256}`](/docs/models#find-a-model).
   A request to another path fails before your API key leaves your process.
+- The SDK refuses a query, apart from the two that the gateway ignores, which it leaves out: that of
+  a model or catalog read, and the `beta=true` that Anthropic's SDKs add to a Messages request.
 
 ## Connect through a proxy or Tor
 
@@ -127,57 +129,57 @@ codes: `code()` in Rust and Java, `code` in Python, Ruby, JavaScript and C, `Cod
 and `VerificationError.native(code:message:)` in Swift. Handle errors by code, because messages can
 change.
 
-| Code                        | Meaning                                                                                                           |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `evidence_unavailable`      | The evidence could not be downloaded.                                                                             |
-| `evidence_too_large`        | The evidence exceeds its size limit.                                                                              |
-| `invalid_evidence`          | The evidence is malformed, or a signature or transparency log entry does not verify.                              |
-| `newer_format`              | The evidence, receipt or proof uses a newer format than this version reads. Update the SDK.                       |
-| `retired_format`            | The evidence, receipt or proof uses a format that this version no longer reads. Check it with an earlier version. |
-| `invalid_attestation`       | The gateway's hardware attestation does not verify.                                                               |
-| `not_approved`              | The gateway's release, hardware or key is not in the signed evidence.                                             |
-| `wrong_authority`           | The evidence belongs to another environment, such as staging.                                                     |
-| `key_rejected`              | The evidence's signing key is not active.                                                                         |
-| `expired_key_authorization` | The root key's authorization of the signing key has expired.                                                      |
-| `rollback`                  | The evidence is older than evidence the SDK already accepted.                                                     |
-| `conflicting_evidence`      | Two different signed documents have the same revision.                                                            |
-| `missing_collateral`        | The hardware vendor's certificates or revocation list are missing.                                                |
-| `expired_collateral`        | The vendor's certificates or revocation list are outside their validity period.                                   |
-| `revoked`                   | The vendor revoked a certificate that the hardware relies on.                                                     |
-| `crl_order`                 | A vendor revocation list is older than, or conflicts with, one the SDK already accepted.                          |
-| `setup_deadline`            | Connecting and verifying took longer than their time limit.                                                       |
-| `connection_failed`         | The connection to the gateway failed.                                                                             |
-| `tls_failed`                | The attested TLS handshake failed.                                                                                |
-| `unsupported_profile`       | The gateway finished TLS with a version, cipher suite, key exchange or protocol that the SDK refuses.             |
-| `setup_delivery_failed`     | The E2EE session setup did not arrive intact.                                                                     |
-| `client_capacity`           | Too many requests are waiting for a connection.                                                                   |
-| `transport_failed`          | The connection failed while the request was sent or answered.                                                     |
-| `receipt_failed`            | The response's [receipt](/docs/receipts) does not verify.                                                         |
-| `invalid_request`           | The request cannot be sent as given: `Stogas-Metadata` is not `v2`, or a receipt cannot cover the body.           |
-| `closed`                    | The transport is closed.                                                                                          |
-| `invalid_operation`         | An option is invalid, or the transport has stopped.                                                               |
-| `transport_unavailable`     | The local URL could not start.                                                                                    |
-| `verification_unavailable`  | The SDK's verification failed internally.                                                                         |
-| `invalid_host`              | The request's `Host` header does not name the local URL.                                                          |
-| `invalid_origin`            | The request comes from a browser origin that the transport does not allow.                                        |
-| `invalid_preflight`         | The transport refused a browser's preflight request.                                                              |
-| `invalid_path`              | The path does not start with the local URL, or has a query.                                                       |
-| `unsupported_path`          | The local URL serves only chat completions, responses, policy validation, routing simulation and catalog reads.   |
-| `unsupported_method`        | The request does not use `POST`, or a catalog read does not use `GET`.                                            |
-| `invalid_refresh`           | A request to refresh evidence does not use `POST`, or comes from a browser.                                       |
-| `deadline`                  | The request body did not arrive in time.                                                                          |
-| `request_body`              | The request body exceeds its size limit or was interrupted.                                                       |
-| `invalid_receipt`           | A receipt you check is malformed.                                                                                 |
-| `receipt_content`           | The request or response does not match the receipt.                                                               |
-| `receipt_salt`              | The metadata has no salt for the side you check.                                                                  |
-| `receipt_identity`          | The receipt does not name the verified boot.                                                                      |
-| `receipt_signature`         | The receipt's signature does not verify.                                                                          |
-| `invalid_content`           | The content is not one JSON object without duplicate keys.                                                        |
-| `inexact_integer`           | The content has an integer beyond ±9,007,199,254,740,991.                                                         |
-| `invalid_log_proof`         | A request record's proof you check is malformed.                                                                  |
-| `log_inclusion`             | The request record does not match its signed batch.                                                               |
-| `log_identity`              | The batch does not name the verified boot.                                                                        |
-| `log_signature`             | The batch's signature does not verify.                                                                            |
+| Code                        | Meaning                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `evidence_unavailable`      | The evidence could not be downloaded.                                                                                     |
+| `evidence_too_large`        | The evidence exceeds its size limit.                                                                                      |
+| `invalid_evidence`          | The evidence is malformed, or a signature or transparency log entry does not verify.                                      |
+| `newer_format`              | The evidence, receipt or proof uses a newer format than this version reads. Update the SDK.                               |
+| `retired_format`            | The evidence, receipt or proof uses a format that this version no longer reads. Check it with an earlier version.         |
+| `invalid_attestation`       | The gateway's hardware attestation does not verify.                                                                       |
+| `not_approved`              | The gateway's release, hardware or key is not in the signed evidence.                                                     |
+| `wrong_authority`           | The evidence belongs to another environment, such as staging.                                                             |
+| `key_rejected`              | The evidence's signing key is not active.                                                                                 |
+| `expired_key_authorization` | The root key's authorization of the signing key has expired.                                                              |
+| `rollback`                  | The evidence is older than evidence the SDK already accepted.                                                             |
+| `conflicting_evidence`      | Two different signed documents have the same revision.                                                                    |
+| `missing_collateral`        | The hardware vendor's certificates or revocation list are missing.                                                        |
+| `expired_collateral`        | The vendor's certificates or revocation list are outside their validity period.                                           |
+| `revoked`                   | The vendor revoked a certificate that the hardware relies on.                                                             |
+| `crl_order`                 | A vendor revocation list is older than, or conflicts with, one the SDK already accepted.                                  |
+| `setup_deadline`            | Connecting and verifying took longer than their time limit.                                                               |
+| `connection_failed`         | The connection to the gateway failed.                                                                                     |
+| `tls_failed`                | The attested TLS handshake failed.                                                                                        |
+| `unsupported_profile`       | The gateway finished TLS with a version, cipher suite, key exchange or protocol that the SDK refuses.                     |
+| `setup_delivery_failed`     | The E2EE session setup did not arrive intact.                                                                             |
+| `client_capacity`           | Too many requests are waiting for a connection.                                                                           |
+| `transport_failed`          | The connection failed while the request was sent or answered.                                                             |
+| `receipt_failed`            | The response's [receipt](/docs/receipts) does not verify.                                                                 |
+| `invalid_request`           | The request cannot be sent as given: `Stogas-Metadata` is not `v2`, or a receipt cannot cover the body.                   |
+| `closed`                    | The transport is closed.                                                                                                  |
+| `invalid_operation`         | An option is invalid, or the transport has stopped.                                                                       |
+| `transport_unavailable`     | The local URL could not start.                                                                                            |
+| `verification_unavailable`  | The SDK's verification failed internally.                                                                                 |
+| `invalid_host`              | The request's `Host` header does not name the local URL.                                                                  |
+| `invalid_origin`            | The request comes from a browser origin that the transport does not allow.                                                |
+| `invalid_preflight`         | The transport refused a browser's preflight request.                                                                      |
+| `invalid_path`              | The path does not start with the local URL, or has a query that the gateway does not ignore.                              |
+| `unsupported_path`          | The local URL serves only chat completions, responses, messages, policy validation, routing simulation and catalog reads. |
+| `unsupported_method`        | The request does not use `POST`, or a catalog read does not use `GET`.                                                    |
+| `invalid_refresh`           | A request to refresh evidence does not use `POST`, or comes from a browser.                                               |
+| `deadline`                  | The request body did not arrive in time.                                                                                  |
+| `request_body`              | The request body exceeds its size limit or was interrupted.                                                               |
+| `invalid_receipt`           | A receipt you check is malformed.                                                                                         |
+| `receipt_content`           | The request or response does not match the receipt.                                                                       |
+| `receipt_salt`              | The metadata has no salt for the side you check.                                                                          |
+| `receipt_identity`          | The receipt does not name the verified boot.                                                                              |
+| `receipt_signature`         | The receipt's signature does not verify.                                                                                  |
+| `invalid_content`           | The content is not one JSON object without duplicate keys.                                                                |
+| `inexact_integer`           | The content has an integer beyond ±9,007,199,254,740,991.                                                                 |
+| `invalid_log_proof`         | A request record's proof you check is malformed.                                                                          |
+| `log_inclusion`             | The request record does not match its signed batch.                                                                       |
+| `log_identity`              | The batch does not name the verified boot.                                                                                |
+| `log_signature`             | The batch's signature does not verify.                                                                                    |
 
 ## Check evidence offline
 

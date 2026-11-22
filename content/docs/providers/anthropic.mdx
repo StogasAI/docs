@@ -6,7 +6,9 @@ icon: logo:anthropic
 
 Anthropic deployments run Claude models on the Anthropic Messages API with your own Anthropic API
 key. Add the key in [BYOK](/docs/byok). The gateway converts Chat Completions and Responses requests
-to Messages, so you can keep your OpenAI client.
+to Messages, so you can keep your OpenAI client. Anthropic's clients, such as
+[Claude Code](/docs/coding-agents#claude-code), can call the gateway's
+[Messages API](/docs/reference/provider-behavior#messages) instead.
 
 ## US and Fast deployments
 
@@ -20,8 +22,8 @@ deployment ID:
 | Both   |                                     | `anthropic-claude-opus-5-fast-us` |
 
 Choose them by deployment ID, a [service tier](/docs/service-tiers) or a
-[routing filter](/docs/policies/routing). Requests that send Anthropic's `speed` or `inference_geo`
-field return `400`.
+[routing filter](/docs/policies/routing). Anthropic's `inference_geo` field returns `400`, and so
+does its `speed` field outside the Messages API.
 
 If your Anthropic workspace allows only US inference, turn on **Workspace allows only US inference**
 for the credential, which saves this rule in its policy:

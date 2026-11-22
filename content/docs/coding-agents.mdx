@@ -6,8 +6,8 @@ icon: Bot
 
 A coding agent that takes an OpenAI-compatible base URL works with `https://api.stogas.ai/v1` and
 an [API key](/docs/api-keys). Its `model` setting takes any ID that
-[`/v1/models`](/docs/models#find-a-model) lists. Codex and OpenCode send a session ID with each
-request, so each of their conversations is one [session](/docs/request-records#sessions).
+[`/v1/models`](/docs/models#find-a-model) lists. Codex, OpenCode and Claude Code send a session ID
+with each request, so each of their conversations is one [session](/docs/request-records#sessions).
 
 ## Codex
 
@@ -53,5 +53,23 @@ Select the model as `stogas/claude-sonnet-5-5`, and add each model that you use 
 
 ## Claude Code
 
-Claude Code sends only Anthropic's Messages format, which the API does not accept, so it cannot
-connect.
+```json title="~/.claude/settings.json"
+{
+	"env": {
+		"ANTHROPIC_BASE_URL": "https://api.stogas.ai",
+		"ANTHROPIC_AUTH_TOKEN": "<your API key>",
+		"CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
+		"CLAUDE_CODE_GATEWAY_HINT_HEADERS": "1"
+	}
+}
+```
+
+- Claude Code calls the [Messages API](/docs/reference/anthropic-compatible/createMessage), so it
+  can use the models whose deployments serve it. With model discovery on, `/model` lists them.
+- With hint headers on, the [records](/docs/request-records#agents) of a subagent's requests name
+  its kind, such as `Explore`.
+- If `ANTHROPIC_API_KEY` holds another key, such as one of Anthropic's, Claude Code sends both keys
+  and every request fails with `400`. Remove it from the environment that runs Claude Code.
+- The API has no token counting endpoint, so `/context` shows estimates.
+- To verify the gateway and encrypt each request, run [`stogas serve`](/docs/cli#serve) and set
+  `ANTHROPIC_BASE_URL` to the Anthropic base URL that it prints.

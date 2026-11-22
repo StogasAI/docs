@@ -2,8 +2,8 @@
 	"openapi": "3.1.0",
 	"info": {
 		"title": "Stogas Gateway API",
-		"summary": "OpenAI-compatible public API gateway.",
-		"description": "OpenAI-compatible API for every catalog model. Authenticate with your API key, and the gateway sends the request to the provider that your policies select.",
+		"summary": "Public API gateway for every catalog model.",
+		"description": "OpenAI-compatible API for every catalog model, and Anthropic's Messages API for the deployments that serve it. Authenticate with your API key, and the gateway sends the request to the provider that your policies select.",
 		"version": "1.0.0"
 	},
 	"jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
@@ -26,6 +26,10 @@
 		{
 			"name": "OpenAI-compatible",
 			"description": "Model inference endpoints."
+		},
+		{
+			"name": "Anthropic-compatible",
+			"description": "Anthropic's Messages API."
 		},
 		{
 			"name": "Policies",
@@ -625,6 +629,156 @@
 					},
 					"504": {
 						"$ref": "#/components/responses/GatewayTimeout"
+					}
+				}
+			}
+		},
+		"/v1/messages": {
+			"post": {
+				"operationId": "createMessage",
+				"tags": [
+					"Anthropic-compatible"
+				],
+				"summary": "Messages",
+				"description": "Creates a message in the format of Anthropic's Messages API. The gateway runs it as a Responses request: it checks each field against the selected deployment, applies your policies and keeps its record in that form, and returns Claude's own reply.",
+				"security": [
+					{
+						"bearerAuth": []
+					},
+					{
+						"authorizationHeader": []
+					},
+					{
+						"xApiKeyHeader": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "anthropic-beta",
+						"in": "header",
+						"schema": {
+							"type": "string"
+						},
+						"description": "Beta values, separated by commas. The gateway takes `advanced-tool-use-2025-11-20`, `claude-code-20250219`, `compact-2026-01-12`, `context-management-2025-06-27`, `effort-2025-11-24`, `extended-cache-ttl-2025-04-11`, `fast-mode-2026-02-01`, `files-api-2025-04-14`, `fine-grained-tool-streaming-2025-05-14`, `interleaved-thinking-2025-05-14`, `mid-conversation-output-config-2026-07-01`, `mid-conversation-tool-changes-2026-07-01`, `structured-outputs-2025-11-13`, `task-budgets-2026-03-13`, `thinking-display-updates-2026-08-18`, `thinking-token-count-2026-05-13` and `tool-search-tool-2025-10-19`, and sends each hosting the values that the fields of your request need. Any other value returns `400` with the message `capability_rejected: beta_header:<value>`."
+					},
+					{
+						"name": "anthropic-version",
+						"in": "header",
+						"schema": {
+							"type": "string"
+						},
+						"description": "Not required. The gateway ignores it."
+					},
+					{
+						"$ref": "#/components/parameters/Metadata"
+					},
+					{
+						"$ref": "#/components/parameters/SessionId"
+					},
+					{
+						"$ref": "#/components/parameters/RequestMetadata"
+					},
+					{
+						"$ref": "#/components/parameters/AppUrl"
+					},
+					{
+						"$ref": "#/components/parameters/AppTitle"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/MessagesRequest"
+							},
+							"example": {
+								"model": "claude-sonnet-5-5",
+								"max_tokens": 1024,
+								"messages": [
+									{
+										"role": "user",
+										"content": "Say hello in one sentence."
+									}
+								]
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Successful response. Non-streaming requests return JSON; streaming requests return Server-Sent Events.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ClaudeMessage"
+								}
+							},
+							"text/event-stream": {
+								"schema": {
+									"type": "string",
+									"description": "Claude's events, as Anthropic's API sends them, with the served model in `message_start`. When a receipt is requested, a `: stogas {...}` comment appears before `message_stop`. SSE clients ignore the comment."
+								},
+								"example": "event: message_start\ndata: {\"type\":\"message_start\",\"message\":{\"id\":\"msg_01XFDUDYJgAACzvnptvVoYEL\",\"type\":\"message\",\"role\":\"assistant\",\"model\":\"claude-sonnet-5-5\",\"content\":[],\"stop_reason\":null,\"stop_sequence\":null,\"usage\":{\"input_tokens\":12,\"output_tokens\":1}}}\n\nevent: content_block_start\ndata: {\"type\":\"content_block_start\",\"index\":0,\"content_block\":{\"type\":\"text\",\"text\":\"\"}}\n\nevent: content_block_delta\ndata: {\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hello\"}}\n\nevent: content_block_stop\ndata: {\"type\":\"content_block_stop\",\"index\":0}\n\nevent: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\",\"stop_sequence\":null},\"usage\":{\"output_tokens\":2}}\n\nevent: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
+							}
+						}
+					},
+					"400": {
+						"description": "The request is invalid, or the selected deployment cannot accept it. A field that the format lacks gets Anthropic's words, and an `anthropic-beta` value that the gateway does not take gets `capability_rejected: beta_header:<value>`. See [400 errors](/docs/reference/errors#400-bad-request).",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AnthropicErrorResponse"
+								},
+								"example": {
+									"type": "error",
+									"error": {
+										"type": "invalid_request_error",
+										"message": "capability_rejected: beta_header:context-1m-2025-08-07",
+										"code": "unsupported_request"
+									},
+									"request_id": "0192f217-35b0-7e2c-9be7-f4cc24f2a4b0"
+								}
+							}
+						}
+					},
+					"4XX": {
+						"description": "Any other error of the request, with the status and `code` that [Errors](/docs/reference/errors) lists.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AnthropicErrorResponse"
+								},
+								"example": {
+									"type": "error",
+									"error": {
+										"type": "billing_error",
+										"message": "Insufficient credit. Add funds to your organization to retry this request.",
+										"code": "insufficient_balance"
+									},
+									"request_id": "0192f217-35b0-7e2c-9be7-f4cc24f2a4b0"
+								}
+							}
+						}
+					},
+					"5XX": {
+						"description": "An error of the gateway or the provider, with the status and `code` that [Errors](/docs/reference/errors) lists.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AnthropicErrorResponse"
+								},
+								"example": {
+									"type": "error",
+									"error": {
+										"type": "api_error",
+										"message": "The gateway is temporarily unavailable. Retry the request later.",
+										"code": "gateway_unavailable"
+									},
+									"request_id": "0192f217-35b0-7e2c-9be7-f4cc24f2a4b0"
+								}
+							}
+						}
 					}
 				}
 			}
@@ -10766,6 +10920,339 @@
 			"CatalogStogasManaged": {
 				"type": "boolean",
 				"description": "Whether Stogas serves the record with its own provider account. A provider offers it, and its routes and deployments can withdraw it, as with `stogasByok`."
+			},
+			"MessagesRequest": {
+				"type": "object",
+				"description": "A request in the format of Anthropic's [Messages API](https://platform.claude.com/docs/en/api/messages/create). At every depth the gateway takes only the names that this format gives the fields below, and answers any other name with Anthropic's words, such as `betas: Extra inputs are not permitted`.",
+				"properties": {
+					"model": {
+						"type": "string",
+						"minLength": 1,
+						"description": "A model ID, alias or deployment ID, or terms that select a group or also choose where the request runs. Only deployments whose [route](/docs/policies/routing-fields#route-and-provider) serves the `messages` interface take the request. Omit it to let your [routing policy](/docs/policies/routing) choose. See [Models](/docs/models)."
+					},
+					"messages": {
+						"type": "array",
+						"minItems": 1,
+						"items": {
+							"type": "object"
+						},
+						"description": "The conversation. A message has the `user`, `assistant` or `system` role, and its content blocks can be `text`, `image`, `document`, `thinking`, `redacted_thinking`, `tool_use`, `tool_result`, `server_tool_use`, `web_search_tool_result` and `web_fetch_tool_result`. A `thinking` block needs its `signature`, and a `redacted_thinking` block its `data`."
+					},
+					"max_tokens": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "The most output tokens, including thinking. Each deployment sets its own maximum."
+					},
+					"system": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "array",
+								"items": {
+									"type": "object"
+								}
+							}
+						],
+						"description": "Instructions, as text or a list of `text` blocks."
+					},
+					"metadata": {
+						"type": "object",
+						"description": "Anthropic's request metadata. To label your [request records](/docs/request-records#metadata), send the `Stogas-Request-Metadata` header.",
+						"properties": {
+							"user_id": {
+								"type": "string",
+								"description": "An ID for the end user. Only your own credentials send it to the provider."
+							}
+						},
+						"additionalProperties": false
+					},
+					"stop_sequences": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"description": "Text that ends the reply where the model writes it."
+					},
+					"stream": {
+						"type": "boolean",
+						"default": false,
+						"description": "Return Claude's events as Server-Sent Events. See [Streaming](/docs/streaming)."
+					},
+					"temperature": {
+						"type": "number",
+						"description": "The provider decides which values its model accepts. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
+					},
+					"top_p": {
+						"type": "number",
+						"description": "The provider decides which values its model accepts. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
+					},
+					"top_k": {
+						"type": "integer",
+						"description": "Sample from the K most likely tokens. A deployment without it runs the request without it; see [Compatibility notes](/docs/reference/provider-behavior#settings-that-a-deployment-lacks)."
+					},
+					"thinking": {
+						"type": "object",
+						"description": "Thinking settings: `enabled` with `budget_tokens`, `adaptive` or `disabled`, and an optional `display`. See [Reasoning](/docs/reasoning).",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": [
+									"enabled",
+									"adaptive",
+									"disabled"
+								]
+							},
+							"budget_tokens": {
+								"type": "integer",
+								"minimum": 1
+							},
+							"display": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"type"
+						],
+						"additionalProperties": false
+					},
+					"output_config": {
+						"type": "object",
+						"description": "How much the model thinks (`effort`), a token budget for a task of many requests (`task_budget`), and a JSON schema that the reply follows (`format`).",
+						"properties": {
+							"effort": {
+								"type": "string"
+							},
+							"task_budget": {
+								"$ref": "#/components/schemas/AnthropicTaskBudget"
+							},
+							"format": {
+								"type": "object",
+								"properties": {
+									"type": {
+										"type": "string"
+									},
+									"schema": {
+										"type": "object"
+									}
+								},
+								"additionalProperties": false
+							}
+						},
+						"additionalProperties": false
+					},
+					"tools": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						},
+						"description": "The tools that the model can call: tools that you define, which can set `defer_loading`, `strict` and `eager_input_streaming`, and Anthropic's `web_search_20250305`, `web_fetch_20250910`, `bash_20250124` and `text_editor_20250728`. See [Tools](/docs/model-tools)."
+					},
+					"tool_choice": {
+						"type": "object",
+						"description": "`auto`, `any`, `none` or one named `tool`, with an optional `disable_parallel_tool_use`.",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": [
+									"auto",
+									"any",
+									"tool",
+									"none"
+								]
+							},
+							"name": {
+								"type": "string"
+							},
+							"disable_parallel_tool_use": {
+								"type": "boolean"
+							}
+						},
+						"required": [
+							"type"
+						],
+						"additionalProperties": false
+					},
+					"context_management": {
+						"$ref": "#/components/schemas/AnthropicContextManagement"
+					},
+					"cache_control": {
+						"type": "object",
+						"description": "Anthropic prompt caching: `{\"type\": \"ephemeral\"}` with an optional `ttl` of `5m` or `1h`. See [Prompt caching](/docs/prompt-caching).",
+						"properties": {
+							"type": {
+								"type": "string",
+								"enum": [
+									"ephemeral"
+								]
+							},
+							"ttl": {
+								"type": "string",
+								"enum": [
+									"5m",
+									"1h"
+								]
+							}
+						},
+						"required": [
+							"type"
+						],
+						"additionalProperties": false
+					},
+					"service_tier": {
+						"type": "string",
+						"enum": [
+							"auto",
+							"standard_only"
+						],
+						"description": "Either value leaves the tier to `model` and `speed`. See [Service tiers](/docs/service-tiers)."
+					},
+					"speed": {
+						"type": "string",
+						"enum": [
+							"standard",
+							"fast"
+						],
+						"description": "`standard` or `fast` selects that tier, as `service_tier` does on the other APIs. See [Service tiers](/docs/service-tiers)."
+					},
+					"policy": {
+						"$ref": "#/components/schemas/RequestPolicy"
+					},
+					"provider": {
+						"$ref": "#/components/schemas/ProviderRoutingPreference",
+						"description": "Providers to allow or prefer for this request. The gateway removes it before it calls the provider. See [Choose a model](/docs/models#choose-a-model)."
+					},
+					"session_id": {
+						"type": "string",
+						"maxLength": 256,
+						"pattern": "^[^\\u0000-\\u001f]*$",
+						"description": "Groups the request with others in the same [session](/docs/request-records#sessions), which analytics can filter by. Up to 256 bytes in UTF-8, without control characters. Takes precedence over the `X-Session-Id` header. The gateway does not send it to the provider."
+					},
+					"encryption_keys": {
+						"type": "object",
+						"writeOnly": true,
+						"propertyNames": {
+							"pattern": "^[a-z][a-z0-9_-]{0,47}$"
+						},
+						"additionalProperties": {
+							"type": "string",
+							"minLength": 43,
+							"maxLength": 43,
+							"pattern": "^[A-Za-z0-9_-]{43}$"
+						},
+						"description": "Encryption keys by registered label, as unpadded base64url, for [encrypted policies](/docs/customer-encryption). The gateway removes them before it calls the provider and never stores or logs them."
+					}
+				},
+				"required": [
+					"messages",
+					"max_tokens"
+				],
+				"additionalProperties": false
+			},
+			"ClaudeMessage": {
+				"type": "object",
+				"description": "Claude's message, as [Anthropic's Messages API](https://platform.claude.com/docs/en/api/messages/create) returns it.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The provider's message ID."
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"message"
+						]
+					},
+					"role": {
+						"type": "string",
+						"enum": [
+							"assistant"
+						]
+					},
+					"model": {
+						"type": "string",
+						"description": "The ID of the model that served the request. See [Models](/docs/models#choose-a-model)."
+					},
+					"content": {
+						"type": "array",
+						"items": {
+							"type": "object"
+						},
+						"description": "The reply's content blocks."
+					},
+					"stop_reason": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"stop_sequence": {
+						"type": [
+							"string",
+							"null"
+						]
+					},
+					"usage": {
+						"type": "object"
+					},
+					"stogas": {
+						"$ref": "#/components/schemas/StogasMetadata"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"role",
+					"model",
+					"content",
+					"stop_reason",
+					"usage"
+				]
+			},
+			"AnthropicErrorResponse": {
+				"type": "object",
+				"description": "An error in the shape of Anthropic's API.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"error"
+						]
+					},
+					"error": {
+						"type": "object",
+						"properties": {
+							"type": {
+								"type": "string",
+								"description": "The type that Anthropic's API gives the status, such as `invalid_request_error` or `rate_limit_error`."
+							},
+							"message": {
+								"type": "string",
+								"description": "A description for people. The text can change."
+							},
+							"code": {
+								"type": [
+									"string",
+									"null"
+								],
+								"description": "A stable code for handling the error. See [Errors](/docs/reference/errors)."
+							}
+						},
+						"required": [
+							"type",
+							"message"
+						]
+					},
+					"request_id": {
+						"type": "string",
+						"description": "The request ID, which the `Request-Id` header also carries."
+					}
+				},
+				"required": [
+					"type",
+					"error"
+				]
 			}
 		}
 	}

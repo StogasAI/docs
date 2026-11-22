@@ -96,12 +96,15 @@ stogas serve
 
 ```text
 OpenAI base URL: http://127.0.0.1:8787/<random-capability>/v1
+Anthropic base URL: http://127.0.0.1:8787/<random-capability>
 ```
 
-Use the complete URL as your client's base URL, and turn off the client's automatic retries. The
-endpoint accepts only local connections that include the random part of the URL, and passes on the
-API key that your client sends. It serves Chat Completions, Responses, policy validation, routing
-simulation, the model list and the catalog, and installs no certificate authority.
+Use the complete URL that fits your client as its base URL, and turn off the client's automatic
+retries. Anthropic's clients, such as [Claude Code](/docs/coding-agents#claude-code), add `/v1`
+themselves. The endpoint accepts only local connections that include the random part of the URL,
+and passes on the API key that your client sends. It serves Chat Completions, Responses, Messages,
+policy validation, routing simulation, the model list and the catalog, and installs no certificate
+authority.
 
 | Option                  | Default          | Effect                                                                           |
 | ----------------------- | ---------------- | -------------------------------------------------------------------------------- |
@@ -130,8 +133,8 @@ close. A cancelled request may have run, so do not send it again automatically.
 stogas serve --encryption-key-file providers=/run/secrets/providers.key
 ```
 
-The endpoint adds each key file's key under its registered label to each Chat Completions, Responses
-and policy validation request, as
+The endpoint adds each key file's key under its registered label to each Chat Completions,
+Responses, Messages and policy validation request, as
 [`encryption_keys`](/docs/customer-encryption#send-the-key-with-a-request). Your application then
 needs only the base URL and never holds a key. A request that sends its own `encryption_keys` goes
 unchanged, and a compressed body is decoded first and sent uncompressed. For keys that [`stogas

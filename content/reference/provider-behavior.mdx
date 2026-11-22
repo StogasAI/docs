@@ -3,8 +3,9 @@ title: Compatibility notes
 description: Where the API differs from calling a provider directly.
 ---
 
-The gateway accepts the OpenAI Chat Completions and Responses formats for every provider. It checks
-each request against the selected deployment before it calls the provider. A field that decides
+The gateway accepts the OpenAI Chat Completions and Responses formats for every provider, and
+Anthropic's [Messages](#messages) format for Claude. It checks each request against the selected
+deployment before it calls the provider. A field that decides
 what the reply holds, which tools the model can call, what the request costs or where its data is
 kept returns `400` when the deployment cannot honor it, and costs nothing. A
 [setting that only tunes the reply](#settings-that-a-deployment-lacks) never fails a request. Each
@@ -12,28 +13,29 @@ kept returns `400` when the deployment cannot honor it, and costs nothing. A
 
 ## Rejected fields
 
-| Endpoint         | Field                                  | Use instead                                                          |
-| ---------------- | -------------------------------------- | -------------------------------------------------------------------- |
-| Both             | `fallbacks`                            | A [routing policy](/docs/policies/routing)                           |
-| Both             | `container`                            | Not available. See [Tools](/docs/model-tools#unavailable-tools)      |
-| Both             | `speed`                                | A `-fast` deployment ID, such as `anthropic-claude-opus-5-fast`      |
-| Both             | `inference_geo`                        | A `-us` deployment ID, or a [routing policy](/docs/policies/routing) |
-| Both             | `moderation`                           | Not available. Requests and responses are not moderated              |
-| Chat Completions | `functions`, `function_call`           | `tools` and `tool_choice`                                            |
-| Chat Completions | `audio`                                | Not available. Output is text only                                   |
-| Chat Completions | `prompt_cache_isolation_key`           | [`prompt_cache_key`](/docs/prompt-caching)                           |
-| Chat Completions | `instructions`                         | A `system` or `developer` message                                    |
-| Chat Completions | `max_output_tokens`                    | `max_completion_tokens`                                              |
-| Chat Completions | `text`                                 | `response_format` and `verbosity`                                    |
-| Responses        | `previous_response_id`, `conversation` | Send the whole conversation in `input`                               |
-| Responses        | `prompt`                               | Send the prompt text in `instructions` and `input`                   |
-| Responses        | `background`                           | A normal request, or a [stream](/docs/streaming)                     |
-| Responses        | `stop`                                 | `stop_sequences`, where the provider accepts it                      |
-| Responses        | `max_tokens`, `max_completion_tokens`  | `max_output_tokens`                                                  |
-| Responses        | `reasoning_effort`                     | `reasoning.effort`                                                   |
-| Responses        | `reasoning_max_tokens`                 | `reasoning.max_tokens`                                               |
-| Responses        | `response_format`, `verbosity`         | `text.format` and `text.verbosity`                                   |
-| Responses        | `web_search_options`                   | A `web_search` tool                                                  |
+| Endpoint                    | Field                                  | Use instead                                                          |
+| --------------------------- | -------------------------------------- | -------------------------------------------------------------------- |
+| All                         | `fallbacks`                            | A [routing policy](/docs/policies/routing)                           |
+| All                         | `container`                            | Not available. See [Tools](/docs/model-tools#unavailable-tools)      |
+| All                         | `inference_geo`                        | A `-us` deployment ID, or a [routing policy](/docs/policies/routing) |
+| Chat Completions, Responses | `speed`                                | A [service tier](/docs/service-tiers)                                |
+| Chat Completions, Responses | `moderation`                           | Not available. Requests and responses are not moderated              |
+| Chat Completions            | `functions`, `function_call`           | `tools` and `tool_choice`                                            |
+| Chat Completions            | `audio`                                | Not available. Output is text only                                   |
+| Chat Completions            | `prompt_cache_isolation_key`           | [`prompt_cache_key`](/docs/prompt-caching)                           |
+| Chat Completions            | `instructions`                         | A `system` or `developer` message                                    |
+| Chat Completions            | `max_output_tokens`                    | `max_completion_tokens`                                              |
+| Chat Completions            | `text`                                 | `response_format` and `verbosity`                                    |
+| Responses                   | `previous_response_id`, `conversation` | Send the whole conversation in `input`                               |
+| Responses                   | `prompt`                               | Send the prompt text in `instructions` and `input`                   |
+| Responses                   | `background`                           | A normal request, or a [stream](/docs/streaming)                     |
+| Responses                   | `stop`                                 | `stop_sequences`, where the provider accepts it                      |
+| Responses                   | `max_tokens`, `max_completion_tokens`  | `max_output_tokens`                                                  |
+| Responses                   | `reasoning_effort`                     | `reasoning.effort`                                                   |
+| Responses                   | `reasoning_max_tokens`                 | `reasoning.max_tokens`                                               |
+| Responses                   | `response_format`, `verbosity`         | `text.format` and `text.verbosity`                                   |
+| Responses                   | `web_search_options`                   | A `web_search` tool                                                  |
+| Messages                    | `mcp_servers`                          | Not available. See [Tools](/docs/model-tools#unavailable-tools)      |
 
 ## Settings that a deployment lacks
 
@@ -76,8 +78,8 @@ of settings works for every model and a fallback never fails over one of them.
 ## Fields that the gateway changes
 
 - An unknown top-level field returns `400` with the field in `param`, as on OpenAI. `null` counts as
-  omitted. Unknown headers are ignored, and no client header reaches the provider. `anthropic-beta`
-  returns `400`.
+  omitted. Unknown headers are ignored, and no client header reaches the provider. On Chat
+  Completions and Responses, `anthropic-beta` returns `400`.
 - `client_metadata`, which Codex sends with each Responses request, is accepted and never sent to
   the provider.
 - `null`, and the defaults that SDKs send, such as `n: 1`, `parallel_tool_calls: true` or a
@@ -86,13 +88,14 @@ of settings works for every model and a fallback never fails over one of them.
 - `prompt_cache_key` works with every model, and only the models that use it receive it. See
   [Prompt caching](/docs/prompt-caching#provider-controls).
 - `store` accepts only `false`. The gateway never asks a provider to store a response.
-- `safety_identifier` and `user` tell the provider which of your users sent a request, so the
-  provider can act on that user instead of your whole account. Send an opaque value, such as a hash
+- `safety_identifier`, `user` and the `metadata.user_id` of Messages tell the provider which of your
+  users sent a request, so the provider can act on that user instead of your whole account. Send an opaque value, such as a hash
   of your user ID: redaction doesn't change these fields. With your own credential, providers that
-  accept them receive them. With a Stogas-managed credential, the gateway removes both.
+  accept them receive them. With a Stogas-managed credential, the gateway removes them.
 
-- [`metadata`](/docs/request-records#metadata) and [`session_id`](/docs/request-records#sessions)
-  go to the request record, not to the provider.
+- [`session_id`](/docs/request-records#sessions), and the
+  [`metadata`](/docs/request-records#metadata) of Chat Completions and Responses, go to the request
+  record, not to the provider.
 - `max_tokens` is another name for `max_completion_tokens` on Chat Completions.
 - Streamed Chat Completions always include usage.
 - Sampling values, such as `temperature`, reach the provider unchanged. The provider decides which
@@ -115,3 +118,34 @@ Models return text, tool calls and citations. Image and audio output are not ava
 Errors before the response starts use an HTTP status. Later errors arrive as an event in the
 stream. A cancelled request can still be billed for the usage that the provider reports. See
 [Streaming](/docs/streaming) and [Errors](/docs/reference/errors).
+
+## Messages
+
+```json title="A refused anthropic-beta value"
+{
+	"type": "error",
+	"error": {
+		"type": "invalid_request_error",
+		"code": "unsupported_request",
+		"message": "capability_rejected: beta_header:context-1m-2025-08-07"
+	},
+	"request_id": "019a3a6b-6b2e-7c4d-8a1b-2c3d4e5f6a7b"
+}
+```
+
+`POST /v1/messages` takes Anthropic's request format and returns Claude's own response or events.
+
+- Only deployments whose [route](/docs/policies/routing-fields#route-and-provider) serves the
+  `messages` interface take the request, so another model returns `model_unavailable`.
+- Anthropic's other endpoints, such as token counting, Message Batches and Files, are not
+  available.
+- A field that the gateway does not take returns `400` at any depth, with Anthropic's message, such
+  as `betas: Extra inputs are not permitted`.
+- An `anthropic-beta` value that the gateway does not take returns `400`. The
+  [reference](/docs/reference/anthropic-compatible/createMessage) lists the values that it takes.
+  `anthropic-version` is optional.
+- Errors have Anthropic's shape and types, and keep the gateway's [`code`](/docs/reference/errors).
+  Each response has a `request-id` header.
+- Send your key in `x-api-key` or `Authorization`. Two different keys return `400`.
+- The response's `model` is the model ID that served the request, such as `claude-sonnet-5-5`, on
+  every provider.

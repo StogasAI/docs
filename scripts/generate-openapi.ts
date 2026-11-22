@@ -103,6 +103,7 @@ async function main() {
 								'...catalog',
 								'---Models---',
 								'...openai-compatible',
+								'...anthropic-compatible',
 								'---Policies---',
 								'...policies',
 								'---Credentials---',
@@ -129,6 +130,10 @@ async function main() {
 						content.title = 'Models';
 						content.description = 'Model inference endpoints.';
 					}
+					if (file.path === path.join('anthropic-compatible', 'meta.json')) {
+						content.title = 'Anthropic-compatible';
+						content.description = "Anthropic's Messages API.";
+					}
 					if (file.path === path.join('policies', 'meta.json')) {
 						content.title = 'Policies';
 						content.description = 'Policy check endpoint.';
@@ -147,7 +152,8 @@ async function main() {
 					file.content = formatPage(file.content);
 					if (
 						file.content.includes("path: '/v1/responses'") ||
-						file.content.includes("path: '/v1/chat/completions'")
+						file.content.includes("path: '/v1/chat/completions'") ||
+						file.content.includes("path: '/v1/messages'")
 					) {
 						file.content = file.content
 							.replace(
