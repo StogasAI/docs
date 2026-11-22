@@ -53,6 +53,20 @@ conversation that starts with them reads them too.
 - A prompt shorter than the deployment's smallest cache entry (`promptCacheMinimumTokens` in the
   catalog) is not cached and costs nothing extra.
 
+A rule's condition decides for each deployment, so a rule can give some deployments a lifetime of
+their own:
+
+```json title="Organization policy"
+{
+	"rules": {
+		"long_cache": {
+			"when": "model.id == 'claude-sonnet-5-5'",
+			"plugins": { "promptCaching": "1h" }
+		}
+	}
+}
+```
+
 The catalog lists the deployments that cache only marked prompts with `explicitPromptCaching` and
 without `implicitPromptCaching`. A [request record](/docs/request-records) shows `prompt_caching` in
 its settings when the gateway marked the request.
