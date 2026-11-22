@@ -69,12 +69,14 @@ for their values.
 
 Besides `function` tools, Responses accepts `custom` tools,
 [namespaces](/docs/model-tools#group-tools-in-namespaces),
-[tool search](/docs/model-tools#tool-search), `web_search`, [`file_search`](#file-search) and
+[tool search](/docs/model-tools#tool-search), `web_search`, [`file_search`](#file-search),
+[`code_interpreter`, hosted shells](#code-interpreter-and-hosted-shells) and
 [remote MCP servers](/docs/model-tools#remote-mcp-servers). Search models take
 `web_search_options` on Chat Completions instead of `tools`.
 
 - A model without tool search returns `400` for deferred tools.
-- `max_tool_calls` counts web searches, file searches and the calls of remote MCP servers together.
+- `max_tool_calls` counts web searches, file searches, code interpreter runs and the calls of
+  remote MCP servers together.
 - `web_search` takes `search_content_types`. With `["text", "image"]`, a search can return images
   too.
 
@@ -111,8 +113,9 @@ in your application, then send the conversation again with each call and its `sh
 ]
 ```
 
-- `shell` runs only in your application: `environment` is `{ "type": "local" }` or left out, with
-  optional `skills`. Hosted containers return `400`.
+- `shell` runs in your application when `environment` is `{ "type": "local" }` or left out, with
+  optional `skills`. With a [hosted environment](#code-interpreter-and-hosted-shells), OpenAI runs
+  it in a container.
 - Both tools cost only tokens. OpenAI adds its own instructions for each tool to the input of
   each request, and your usage counts them.
 - `tool_choice` accepts `{ "type": "shell" }` and `{ "type": "apply_patch" }`, also in
@@ -198,6 +201,59 @@ when `include` asks for them, and its message cites the files that it used.
   `tool_choice: "none"`, and your usage counts them.
 - `tool_choice` accepts `{ "type": "file_search" }`, also in `allowed_tools`.
 
+### Code interpreter and hosted shells
+
+```jsonc title="Responses"
+{
+	"model": "gpt-5.6-sol",
+	"input": "Chart the monthly totals in sales.csv.",
+	"tools": [
+		{ "type": "code_interpreter", "container": { "type": "auto", "file_ids": ["file-123"] } },
+		{ "type": "shell", "environment": { "type": "container_auto" } }
+	],
+	"include": ["code_interpreter_call.outputs"] // Returns the logs of each run.
+}
+```
+
+OpenAI runs the model's Python code, and a hosted shell's commands, in a
+[container](https://developers.openai.com/api/docs/guides/tools-code-interpreter) of your OpenAI
+account. The reply holds a `code_interpreter_call` for each run, and a `shell_call` with the
+`shell_call_output` that OpenAI wrote for each set of commands. A message cites a file that the
+code wrote with a `container_file_citation`.
+
+- OpenAI bills each container to your account by the session, as its
+  [pricing](https://developers.openai.com/api/docs/pricing) shows. The
+  [BYOK fee](/docs/byok#billing) covers only tokens.
+- `container` takes a container ID, or `auto` with `file_ids`, `memory_limit` and
+  `network_policy`. A hosted shell's `environment` takes `container_auto` with the same options and
+  `skills`, or `container_reference` with a `container_id`. Other options return `400`.
+- Send the calls back as the reply gave them. While the tool is in `tools`, OpenAI runs the next
+  calls in the same container, and returns `404` once the container has expired. The gateway
+  leaves out the images of a run's `outputs`, which OpenAI doesn't read in input.
+- Code can reach the network through a `network_policy` that allows domains, from a container
+  that you name, or from the container of a call that you send back while the tool is in `tools`.
+  Data handling then states every fact as unknown, as for an
+  [MCP server](/docs/model-tools#your-data-and-the-server).
+- A container keeps files in your account until it expires, so a request with either tool has
+  unknown retention and no zero data retention in
+  [data handling](/docs/policies/routing-fields#data-handling), and `request.store` is true.
+- Files, containers and stored skills that a request names reach the model without passing
+  through the gateway, and neither does an inline skill's archive, so
+  [ASCII-only input](/docs/pii-redaction#ascii-only-input) and [PII redaction](/docs/pii-redaction)
+  cannot read them, and a candidate whose policy sets either refuses the request. The
+  `request.storedInput` [request field](/docs/policies/routing-fields#request) lets a policy refuse
+  a request that names files, containers or stored skills too.
+- The gateway sends `network_policy` to OpenAI unchanged, and redaction skips container settings.
+  The response returns the tool with `<redacted>` for each domain secret's `value`, and exports and
+  provider error messages show `[omitted]`.
+- `max_tool_calls` doesn't limit a hosted shell's commands, so a request whose only hosted tool is
+  a hosted shell returns `400` for it. The [hold](/docs/model-tools#holds-for-hosted-tools) covers
+  the output of ten hosted shell commands, and of ten code interpreter runs or `max_tool_calls`.
+- OpenAI adds its own instructions for each tool to the input of each request, also with
+  `tool_choice: "none"`, and your usage counts them.
+- `tool_choice` accepts `{ "type": "code_interpreter" }` and `{ "type": "shell" }`, also in
+  `allowed_tools`.
+
 ## Stored responses
 
 ```json title="A request that continues a stored response"
@@ -254,8 +310,7 @@ another text file, [extract text](/docs/text-extraction) on OpenAI deployments:
 
 ## Not available
 
-- Audio and image output, and the `audio` request field.
+- Audio and image output, the `audio` request field and image generation.
 - Prompt templates (`prompt`) and background mode (`background: true`).
 - Async tool calls (`async: true`) and `configuration_update` input items.
-- Code interpreter, shell containers and image generation.
 - WebSocket mode and the Scale tier.

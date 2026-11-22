@@ -215,13 +215,15 @@ With `"execution": "client"`, your app runs the search. Give the tool a `descrip
 
 ## Hosted tools
 
-| Tool                 | Endpoint                             |
-| -------------------- | ------------------------------------ |
-| `web_search`         | Responses                            |
-| `web_search_preview` | Responses                            |
-| `web_search_options` | Chat Completions, search models only |
-| `web_fetch`          | Responses                            |
-| `file_search`        | Responses[^file-search]              |
+| Tool                   | Endpoint                             |
+| ---------------------- | ------------------------------------ |
+| `web_search`           | Responses                            |
+| `web_search_preview`   | Responses                            |
+| `web_search_options`   | Chat Completions, search models only |
+| `web_fetch`            | Responses                            |
+| `file_search`          | Responses[^file-search]              |
+| `code_interpreter`     | Responses[^containers]               |
+| `shell` in a container | Responses[^containers]               |
 
 [Compare providers](/docs/providers) shows which providers run each tool, and the
 [catalog](https://stogas.ai/catalog) lists the hosted tools of each route. A request that lists a
@@ -245,8 +247,9 @@ unknown version. Each provider's page lists its prices and versions.
 
 ### Send hosted calls back
 
-On Responses, a reply returns each hosted call as a `web_search_call`, `web_fetch_call` or
-`file_search_call` item. Send these items back in `input` with the rest of the reply. Each
+On Responses, a reply returns each hosted call as a `web_search_call`, `web_fetch_call`,
+`file_search_call` or `code_interpreter_call` item, or as a hosted shell's `shell_call` and
+`shell_call_output`. Send these items back in `input` with the rest of the reply. Each
 deployment gets only the calls that it can read: calls of a tool that its route runs, in the form
 that its provider returns them[^replay]. The gateway leaves the other calls out and keeps the rest
 of the conversation, so a conversation can move to another model.
@@ -318,8 +321,8 @@ Hosted tools can make many calls in one request, so the [hold](/docs/usage#how-a
 reserves for them:
 
 - Without `max_tool_calls`, the hold covers ten calls of the most expensive hosted tool in the
-  request, and the model decides how many calls it makes. `max_tool_calls` limits the calls, and a
-  value under ten lowers the hold.
+  request, and the model decides how many calls it makes. `max_tool_calls` limits the
+  calls[^max-tool-calls], and a value under ten lowers the hold.
 - The hold also covers 8,000 tokens of content for each call[^content], or a fetch's
   `max_content_tokens`. Larger results cost more than the hold.
 - `tool_choice: "none"` turns hosted tools off, so the hold covers no calls.
@@ -520,8 +523,10 @@ This one lets only one server run calls without your application's approval:
 - `tool_choice: "none"` empties `request.clientTools` and takes web tools out of
   `request.hostedTools`, because the model can call none of them. A choice of one function still
   counts every function.
-- An `mcp` tool counts whenever the request lists it, whatever `tool_choice` says, because the
-  provider can connect to a listed server before the model chooses a tool.
+- An `mcp` tool, `code_interpreter` and a hosted `shell` count whenever the request lists them,
+  whatever `tool_choice` says, because the provider can connect to a listed server or start a
+  container before the model chooses a tool. A hosted `shell` counts in `request.hostedTools`, not
+  in `request.clientTools`.
 - `request.clientTools` lists the tools of a namespace by their own names, without the namespace,
   and the tools that a [tool search](#tool-search) in `input` loaded.
 - A provider's shell, file editing or computer tool[^provider-tools] counts under its name:
@@ -538,7 +543,7 @@ These tools return `400` before the gateway calls a provider:
 
 - Remote MCP servers on routes that do not run the `mcp` hosted tool
 - Hosted retrieval other than [OpenAI's `file_search`](/docs/providers/openai#file-search)
-- Code interpreter, hosted shell and standalone code execution
+- Code execution other than [OpenAI's code interpreter and hosted shells](/docs/providers/openai#code-interpreter-and-hosted-shells)
 - Image generation, and computer tools[^computer]
 - Provider memory
 
@@ -574,6 +579,14 @@ These tools return `400` before the gateway calls a provider:
 [^file-search]:
     [OpenAI](/docs/providers/openai#file-search) searches the vector stores of your own OpenAI
     account.
+
+[^containers]:
+    [OpenAI](/docs/providers/openai#code-interpreter-and-hosted-shells) runs them in containers of
+    your own OpenAI account.
+
+[^max-tool-calls]:
+    [OpenAI](/docs/providers/openai#code-interpreter-and-hosted-shells) doesn't count a hosted
+    shell's commands.
 
 [^mcp]: [OpenAI](/docs/providers/openai#tools) runs remote MCP servers.
 

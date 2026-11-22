@@ -287,8 +287,9 @@ Other fields record the remaining settings:
 `hosted_tools` lists the [hosted tools](/docs/model-tools#hosted-tools) that the request let the
 model call, such as `["web_search"]`, and is missing when there were none. `provider_state` names
 the fields that kept or read content in your provider account, such as
-`["store", "previous_response_id"]`, and is missing when there were none. See
-[Stored responses](/docs/providers/openai#stored-responses).
+`["store", "previous_response_id"]`, or `["container"]` for a request with
+[code interpreter or a hosted shell](/docs/providers/openai#code-interpreter-and-hosted-shells),
+and is missing when there were none. See [Stored responses](/docs/providers/openai#stored-responses).
 
 The record never keeps prompts, instructions, stop sequences, tool definitions, schemas or
 identifiers such as `user`. It also leaves out a text value that is longer than 64 characters or
@@ -513,14 +514,15 @@ stream until the provider ends it, so `ttft_ms` then comes near the end of the c
 `performance.answered_calls` lists the calls whose results the request sent. Records keep no tool
 names, arguments or results.
 
-| `type`                                                  | Who runs it                                                                                                                |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `function_call`, `custom_tool_call`                     | Your app                                                                                                                   |
-| `shell_call`, `apply_patch_call`, `computer_call`       | Your app                                                                                                                   |
-| `mcp_approval_request`                                  | Your app, which approves or denies the provider's call                                                                     |
-| `web_search_call`, `web_fetch_call`, `file_search_call` | The provider                                                                                                               |
-| `mcp_list_tools`, `mcp_call`                            | The provider, on a [remote MCP server](/docs/model-tools#remote-mcp-servers)                                               |
-| `tool_search_call`                                      | Your app when the [`tool_search`](/docs/model-tools#tool-search) tool sets `execution` to `client`, otherwise the provider |
+| `type`                                                                           | Who runs it                                                                                                                |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `function_call`, `custom_tool_call`                                              | Your app                                                                                                                   |
+| `apply_patch_call`, `computer_call`                                              | Your app                                                                                                                   |
+| `shell_call`                                                                     | Your app, or the provider for a [hosted shell](/docs/providers/openai#code-interpreter-and-hosted-shells)                  |
+| `mcp_approval_request`                                                           | Your app, which approves or denies the provider's call                                                                     |
+| `web_search_call`, `web_fetch_call`, `file_search_call`, `code_interpreter_call` | The provider                                                                                                               |
+| `mcp_list_tools`, `mcp_call`                                                     | The provider, on a [remote MCP server](/docs/model-tools#remote-mcp-servers)                                               |
+| `tool_search_call`                                                               | Your app when the [`tool_search`](/docs/model-tools#tool-search) tool sets `execution` to `client`, otherwise the provider |
 
 For a call that your app runs, `latency_ms` is the time the model took to write the call. Your
 app's time with it runs from the end of the request until a later request sends its result, and
