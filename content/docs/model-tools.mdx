@@ -536,6 +536,11 @@ This one lets only one server run calls without your application's approval:
   in `request.clientTools`.
 - `request.clientTools` lists the tools of a namespace by their own names, without the namespace,
   and the tools that a [tool search](#tool-search) in `input` loaded.
+- An MCP server that your application connects to itself gives the model ordinary tools, so its
+  tools are in `request.clientTools` and no field names the server. Many MCP clients put the
+  server's name in each tool's name, such as `mcp__github__create_issue`, so
+  `request.clientTools.all(tool, !tool.startsWith('mcp__') || tool.startsWith('mcp__github__'))`
+  allows only that server's MCP tools.
 - A provider's shell, file editing or computer tool[^provider-tools] counts under its name:
   `shell`, `apply_patch`, `computer`, `bash` or `str_replace_based_edit_tool`.
 - Your application names its tools, so a filter on `request.clientTools` cannot stop an

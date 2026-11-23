@@ -57,6 +57,43 @@ sign-in authorized keeps working.
 Members with **Members → Manage** or **Organization → Manage** see which accounts have a passkey
 or an authenticator app, and `two-factor:false` finds the members without one.
 
+## Choose whose access tokens work
+
+| Access tokens | Tokens that work in the organization                                   |
+| ------------- | ---------------------------------------------------------------------- |
+| All members   | Every member's                                                         |
+| Chosen roles  | Those of members whose roles have **Organization → Use access tokens** |
+| No one        | None                                                                   |
+
+Changing the setting needs **Organization → Manage** and applies to existing tokens at once,
+including the [CLI's](/docs/cli#use-your-account). Refused tokens get
+`403 ACCESS_TOKENS_NOT_ALLOWED`, and a new token can't name the organization. The dashboard and API
+keys work as before, and a personal organization accepts all of your tokens.
+
+## Allow only chosen networks
+
+```text title="Allowed networks"
+203.0.113.0/24    Office
+2001:db8:5::/48   VPN
+198.51.100.7
+```
+
+While the rule is on, the organization's dashboard, members' access tokens and the
+[Playground](/docs/playground) work only from these IP addresses and CIDR ranges, for every member.
+Other requests get `403 NETWORK_NOT_ALLOWED`, and requests through the onion service have no IP
+address to match. API keys follow the [networks in their policies](/docs/policies/access#networks)
+instead. Your identity provider's [SCIM requests](/docs/single-sign-on#provisioning) aren't
+affected, and a member can always leave.
+
+- The list holds up to 100 networks. A range starts at its first address, and an IPv4 address takes
+  its IPv4 form.
+- Turning the rule on, or changing the list while it's on, fails with `409 ADDRESS_NOT_ALLOWED`
+  unless the new list holds your own IP address.
+- The Playground checks the network each time it signs in, at least every 15 minutes, so a removed
+  network stops its requests within 15 minutes.
+- If no manager can reach an allowed network, email [ops@stogas.ai](mailto:ops@stogas.ai). We turn
+  the rule off once we confirm who you are, and Activity records it.
+
 ## Pictures
 
 A member's picture comes from your [identity provider](/docs/single-sign-on) until they upload one,
@@ -79,8 +116,8 @@ pixels, so no metadata such as a camera's location stays with it.
 - At least one member always holds **Roles → Manage**. A change that would leave none fails with
   `409 ORG_LAST_ROLE_MANAGER`, so the last member who holds it cannot leave or be removed while
   other members remain.
-- Your identity provider's groups can
-  [give roles](/docs/single-sign-on#roles-from-groups). Only the groups give and remove such a role.
+- Your identity provider's groups can [give roles](/docs/single-sign-on#roles-from-groups), which
+  add to the roles you assign.
 
 ## Remove access
 
@@ -120,26 +157,27 @@ access to someone else.
 
 ### Organization permissions
 
-| Permission               | Dashboard                          | Allows                                                                                                                                            |
-| ------------------------ | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `activity.read`          | Activity → Read                    | Read and export [Activity](/docs/activity).                                                                                                       |
-| `analytics.read_own`     | Analytics → Read own               | Read the requests of your own member keys.                                                                                                        |
-| `analytics.read_all`     | Analytics → Read all               | Read every request in the organization.                                                                                                           |
-| `api_keys.read_all`      | API keys → Read all                | Read every API key, grant and folder, every policy except credential policies, and every request.                                                 |
-| `api_keys.use_all`       | API keys → Use all                 | Reveal every service-key secret, and create your own keys from any grant.                                                                         |
-| `api_keys.manage_all`    | API keys → Manage all              | Create, edit and delete every API key, grant and folder, and edit every policy except credential policies.                                        |
-| `api_keys.manage_access` | API keys → Admin all               | Use and manage every API key, grant and folder, and give others access to them.                                                                   |
-| `billing.read`           | Billing → Read                     | Read the balance, payments, invoices, receipts and billing details.                                                                               |
-| `billing.manage`         | Billing → Manage                   | Save billing details, and get the payment addresses that add credit.                                                                              |
-| `byok.read_all`          | BYOK → Read all                    | Read every provider credential and its policy.                                                                                                    |
-| `byok.use_all`           | BYOK → Use all                     | Assign any provider credential to the keys you manage.                                                                                            |
-| `byok.manage_all`        | BYOK → Manage all                  | Create, edit, replace, disable and delete every provider credential, and edit its policy.                                                         |
-| `byok.manage_access`     | BYOK → Admin all                   | Use and manage every provider credential, and give others access to it.                                                                           |
-| `members.read`           | Members → Read                     | Read members and roles.                                                                                                                           |
-| `members.manage`         | Members → Manage                   | Invite and remove members, read, change and delete invitations, assign the roles that the [rules](#roles) allow, and remove any member's picture. |
-| `organization.skip_sso`  | Organization → Skip single sign-on | Open the organization without single sign-on when it is required.                                                                                 |
-| `organization.manage`    | Organization → Manage              | Change the organization's name, picture and settings, and set up single sign-on.                                                                  |
-| `roles.manage`           | Roles → Manage                     | Create, edit and delete roles, including roles with permissions you do not hold. With `members.manage`, assign any role.                          |
+| Permission                       | Dashboard                          | Allows                                                                                                                                            |
+| -------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activity.read`                  | Activity → Read                    | Read and export [Activity](/docs/activity).                                                                                                       |
+| `analytics.read_own`             | Analytics → Read own               | Read the requests of your own member keys.                                                                                                        |
+| `analytics.read_all`             | Analytics → Read all               | Read every request in the organization.                                                                                                           |
+| `api_keys.read_all`              | API keys → Read all                | Read every API key, grant and folder, every policy except credential policies, and every request.                                                 |
+| `api_keys.use_all`               | API keys → Use all                 | Reveal every service-key secret, and create your own keys from any grant.                                                                         |
+| `api_keys.manage_all`            | API keys → Manage all              | Create, edit and delete every API key, grant and folder, and edit every policy except credential policies.                                        |
+| `api_keys.manage_access`         | API keys → Admin all               | Use and manage every API key, grant and folder, and give others access to them.                                                                   |
+| `billing.read`                   | Billing → Read                     | Read the balance, payments, invoices, receipts and billing details.                                                                               |
+| `billing.manage`                 | Billing → Manage                   | Save billing details, and get the payment addresses that add credit.                                                                              |
+| `byok.read_all`                  | BYOK → Read all                    | Read every provider credential and its policy.                                                                                                    |
+| `byok.use_all`                   | BYOK → Use all                     | Assign any provider credential to the keys you manage.                                                                                            |
+| `byok.manage_all`                | BYOK → Manage all                  | Create, edit, replace, disable and delete every provider credential, and edit its policy.                                                         |
+| `byok.manage_access`             | BYOK → Admin all                   | Use and manage every provider credential, and give others access to it.                                                                           |
+| `members.read`                   | Members → Read                     | Read members and roles.                                                                                                                           |
+| `members.manage`                 | Members → Manage                   | Invite and remove members, read, change and delete invitations, assign the roles that the [rules](#roles) allow, and remove any member's picture. |
+| `organization.skip_sso`          | Organization → Skip single sign-on | Open the organization without single sign-on when it is required.                                                                                 |
+| `organization.use_access_tokens` | Organization → Use access tokens   | Use access tokens in the organization while it accepts them only from [chosen roles](#choose-whose-access-tokens-work).                           |
+| `organization.manage`            | Organization → Manage              | Change the organization's name, picture and settings, and set up single sign-on.                                                                  |
+| `roles.manage`                   | Roles → Manage                     | Create, edit and delete roles, including roles with permissions you do not hold. With `members.manage`, assign any role.                          |
 
 A role also gets the permissions that its permissions include. In API keys and BYOK, Admin all
 includes Use all and Manage all, and each of those includes Read all. Billing → Manage includes

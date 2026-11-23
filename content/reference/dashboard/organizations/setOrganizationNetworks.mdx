@@ -1,0 +1,37 @@
+---
+title: Set allowed networks
+description: Needs organization management. Replaces the networks and turns
+  their rule on or off. While restricted is true, a request from any other
+  address to this organization's dashboard, its access tokens or the Playground
+  gets 403 NETWORK_NOT_ALLOWED, whoever makes it. Turning the rule on, or
+  changing the list while it is on, needs your own address on the new list, and
+  gets 409 ADDRESS_NOT_ALLOWED otherwise. API keys follow the networks of their
+  policies instead.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PUT
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Needs organization management. Replaces the networks and turns their
+          rule on or off. While restricted is true, a request from any other
+          address to this organization's dashboard, its access tokens or the
+          Playground gets 403 NETWORK_NOT_ALLOWED, whoever makes it. Turning the
+          rule on, or changing the list while it is on, needs your own address
+          on the new list, and gets 409 ADDRESS_NOT_ALLOWED otherwise. API keys
+          follow the networks of their policies instead.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/networks', method: 'put' }]} />
+    </>
+  );
+}

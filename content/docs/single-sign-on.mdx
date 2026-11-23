@@ -92,8 +92,8 @@ While single sign-on is required, an access token can act in the organization on
 it, or approved its `stogas login`, after signing in through the provider. The token keeps working
 when that sign-in's length ends, until a manager signs out all members or saves another issuer, or
 you leave the organization. Other tokens get `403 SSO_REQUIRED`, and tokens of members who can
-skip single sign-on need no sign-in. To refuse every access token, turn off **Allow access
-tokens**.
+skip single sign-on need no sign-in. To refuse tokens from some or all members,
+[choose whose access tokens work](/docs/members#choose-whose-access-tokens-work).
 
 A manager's access token can manage every single sign-on setting through the
 [Dashboard API](/docs/reference/dashboard), including the identity provider. A new issuer, client
@@ -143,7 +143,8 @@ While SCIM is connected:
 - A member links to their user by email once. A later change of address at the provider keeps the
   link.
 
-Disconnecting SCIM keeps every member, and saving another issuer disconnects SCIM.
+Disconnecting SCIM keeps every member. Disconnecting the identity provider or saving another
+issuer disconnects SCIM too.
 
 ### Roles from groups
 
@@ -167,21 +168,26 @@ Manage** and the permissions to assign each role that you add or remove.
 - A member holds a group's roles while their user is active and in the group, once they have
   signed in through your provider. The request that changes the group changes the roles, and a
   person who joins later gets them on joining.
-- The groups alone give such a role. Assigning or removing it by hand, giving it in an invitation
-  and making it the default role fail with `409 ORG_ROLE_GROUP_ASSIGNED`. A group cannot give the
-  default role or a role that an invitation gives.
-- When the first group gives a role, members who hold the role and are in no such group lose it.
-- A member loses a role when no group gives it to them any more: the provider removed them from
-  the group or deleted it, or you removed the role from the group. Losing a role
-  [removes the access](/docs/members#remove-access) that it gave.
+- A group's roles add to the roles assigned to a member directly: by a member, by an invitation
+  or as the default role. A group that starts to give a role takes it from nobody.
+- Each source removes only what it gave. Removing a role by hand leaves it with a member whose
+  group gives it, and a group change leaves a role that is also assigned directly.
+- A member loses a group's role when no group gives it to them any more and it is not assigned to
+  them directly: the provider removed them from the group or deleted it, or you removed the role
+  from the group. Losing a role [removes the access](/docs/members#remove-access) that it gave.
 - A member without any role holds the default role.
-- A member holds 30 roles at most. A group role beyond that is given at the next group change
-  after the member holds fewer.
-- The last member who can manage roles keeps that role. A later group change removes it once
-  another member can manage roles.
+- A member holds 30 roles at most. Group roles beyond that wait, oldest role first, and the member
+  gets them as soon as they hold fewer.
+- The last member who can manage roles keeps that role, as a direct assignment.
 - A group inside a group gives nothing.
-- Disconnecting SCIM deletes the groups and keeps the roles that members hold, which you then
-  assign by hand.
+- Disconnecting SCIM or the identity provider deletes the groups. You choose whether members keep
+  the roles that the groups gave, as direct assignments, or lose the ones not assigned to them
+  directly. Saving another issuer keeps them, so members keep their access while you map the new
+  provider's groups.
+
+Each role of a member in [`listMembers`](/docs/reference/dashboard/members/listMembers) says whether it is
+assigned directly (`direct`) and which groups give it (`groupNames`).
+[`setMemberRoles`](/docs/reference/dashboard/members/setMemberRoles) sets the direct roles only.
 
 [Activity](/docs/activity) names **Identity provider** as the actor of role changes that follow a
 group change.

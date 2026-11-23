@@ -25,13 +25,17 @@ do not let web pages on other sites call the API, so call it from a server or a 
 - A token for **Selected organizations** covers up to 30 of them and gets `404` for every other
   organization. Operations with the scope `all-organizations` return
   `403 TOKEN_ORGANIZATIONS_LIMITED` to it.
-- An organization can turn off **Allow access tokens** in its settings. Its operations then return
-  `403 ACCESS_TOKENS_NOT_ALLOWED` to every token at once, and a token can't select it.
-  `GET /api/organizations` still lists it, with `allowAccessTokens` set to `false`. The dashboard
-  and API keys aren't affected.
+- An organization can [accept tokens](/docs/members#choose-whose-access-tokens-work) from all
+  members, from members whose roles allow it, or from no one. Its operations return
+  `403 ACCESS_TOKENS_NOT_ALLOWED` to any other token at once, and a token can't select it.
+  `GET /api/organizations` still lists it, with `allowAccessTokens` set to `false`.
 - An organization that [requires single sign-on](/docs/single-sign-on#access-tokens) returns
-  `403 SSO_REQUIRED` to a token unless you created it after signing in through its provider.
-  `GET /api/organizations` then lists the organization with `ssoRequired` set to `true`.
+  `403 SSO_REQUIRED` to a token unless you created it after signing in through its provider. One
+  that [allows only chosen networks](/docs/members#allow-only-chosen-networks) returns
+  `403 NETWORK_NOT_ALLOWED` to a request from any other IP address. One that
+  [requires two-factor authentication](/docs/members#require-two-factor-authentication) returns
+  `403 TWO_FACTOR_REQUIRED` while your account has no second factor. `GET /api/organizations`
+  names the rule that refuses you in `signInRefusal`: `network`, `sso` or `two_factor`.
 - A token stops working when it expires, when you delete it, and when you change your password.
 - After you rotate a token on the **Account** page, requests with the old token return
   `401 TOKEN_REPLACED`.

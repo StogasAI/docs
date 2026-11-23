@@ -7263,6 +7263,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -7276,6 +7281,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -7623,6 +7629,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -7636,6 +7647,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -7971,6 +7983,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -7984,6 +8001,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -8318,6 +8336,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -8331,6 +8354,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -8727,6 +8751,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -8740,6 +8769,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -8786,7 +8816,7 @@
 					"Single sign-on"
 				],
 				"summary": "Delete the identity provider",
-				"description": "Turns single sign-on off with its rules, and disconnects SCIM.",
+				"description": "Turns single sign-on off with its rules, and disconnects SCIM. groupRoles decides what happens to the roles that groups gave, as when you disconnect SCIM.",
 				"security": [
 					{
 						"accessToken": [
@@ -8800,6 +8830,19 @@
 					},
 					{
 						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "groupRoles",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "keep",
+							"type": "string",
+							"enum": [
+								"keep",
+								"remove"
+							]
+						}
 					}
 				],
 				"responses": {
@@ -9064,6 +9107,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -9077,6 +9125,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -9427,6 +9476,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -9440,6 +9494,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -9772,6 +9827,11 @@
 																			"name": {
 																				"type": "string"
 																			},
+																			"userCount": {
+																				"type": "integer",
+																				"minimum": 0,
+																				"maximum": 50000
+																			},
 																			"roleIds": {
 																				"maxItems": 30,
 																				"type": "array",
@@ -9785,6 +9845,7 @@
 																		"required": [
 																			"id",
 																			"name",
+																			"userCount",
 																			"roleIds"
 																		],
 																		"additionalProperties": false
@@ -9838,7 +9899,7 @@
 					"Single sign-on"
 				],
 				"summary": "Disconnect SCIM",
-				"description": "Members stay. The identity provider no longer chooses who can join or removes the members it deactivates.",
+				"description": "Members stay. The identity provider no longer chooses who can join or removes the members it deactivates. With groupRoles=keep, members keep the roles that groups gave them as direct assignments; with remove, they keep only the roles assigned to them directly.",
 				"security": [
 					{
 						"accessToken": [
@@ -9852,6 +9913,19 @@
 					},
 					{
 						"$ref": "#/components/parameters/orgId"
+					},
+					{
+						"name": "groupRoles",
+						"in": "query",
+						"required": false,
+						"schema": {
+							"default": "keep",
+							"type": "string",
+							"enum": [
+								"keep",
+								"remove"
+							]
+						}
 					}
 				],
 				"responses": {
@@ -10116,6 +10190,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -10129,6 +10208,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -10177,7 +10257,7 @@
 					"Single sign-on"
 				],
 				"summary": "Set the roles of an identity provider group",
-				"description": "Members whose identity provider account is in the group hold these roles, and nobody gives or takes them by hand or through an invite. A role that the group no longer gives leaves the members whom no other group gives it, with the keys that they made from its grants. The default role and a role that an invite gives are refused. Setting a role needs the right to give it.",
+				"description": "Members whose identity provider account is in the group hold these roles, in addition to the roles assigned to them directly. A role that the group no longer gives leaves the members who hold it in no other way, with the keys that they made from its grants. Setting a role needs the right to give it.",
 				"security": [
 					{
 						"accessToken": [
@@ -10489,6 +10569,11 @@
 																	"name": {
 																		"type": "string"
 																	},
+																	"userCount": {
+																		"type": "integer",
+																		"minimum": 0,
+																		"maximum": 50000
+																	},
 																	"roleIds": {
 																		"maxItems": 30,
 																		"type": "array",
@@ -10502,6 +10587,7 @@
 																"required": [
 																	"id",
 																	"name",
+																	"userCount",
 																	"roleIds"
 																],
 																"additionalProperties": false
@@ -12388,14 +12474,15 @@
 						}
 					},
 					{
-						"name": "ssoRequired",
+						"name": "signInRefusal",
 						"in": "query",
 						"required": false,
 						"schema": {
 							"type": "string",
 							"enum": [
-								"true",
-								"false"
+								"network",
+								"sso",
+								"two_factor"
 							]
 						}
 					}
@@ -12453,11 +12540,20 @@
 															"external"
 														]
 													},
-													"ssoRequired": {
-														"type": "boolean"
-													},
-													"twoFactorRequired": {
-														"type": "boolean"
+													"signInRefusal": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"network",
+																	"sso",
+																	"two_factor"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
 													}
 												},
 												"required": [
@@ -12467,8 +12563,7 @@
 													"organizationName",
 													"organizationPicture",
 													"organizationType",
-													"ssoRequired",
-													"twoFactorRequired"
+													"signInRefusal"
 												],
 												"additionalProperties": false
 											}
@@ -12616,12 +12711,26 @@
 								"schema": {
 									"type": "object",
 									"properties": {
+										"address": {
+											"type": [
+												"string",
+												"null"
+											]
+										},
 										"items": {
 											"maxItems": 3,
 											"type": "array",
 											"items": {
 												"type": "object",
 												"properties": {
+													"accessTokens": {
+														"type": "string",
+														"enum": [
+															"all",
+															"roles",
+															"none"
+														]
+													},
 													"allowAccessTokens": {
 														"type": "boolean"
 													},
@@ -12635,7 +12744,7 @@
 														"type": "boolean"
 													},
 													"capabilities": {
-														"maxItems": 18,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -12656,6 +12765,7 @@
 																"members.read",
 																"members.manage",
 																"organization.skip_sso",
+																"organization.use_access_tokens",
 																"organization.manage",
 																"roles.manage"
 															]
@@ -12789,17 +12899,27 @@
 															"type": "string"
 														}
 													},
-													"ssoRequired": {
-														"type": "boolean"
-													},
-													"twoFactorRequired": {
-														"type": "boolean"
+													"signInRefusal": {
+														"anyOf": [
+															{
+																"type": "string",
+																"enum": [
+																	"network",
+																	"sso",
+																	"two_factor"
+																]
+															},
+															{
+																"type": "null"
+															}
+														]
 													},
 													"singleSignOnReady": {
 														"type": "boolean"
 													}
 												},
 												"required": [
+													"accessTokens",
 													"allowAccessTokens",
 													"allowPlaygroundAssistant",
 													"allowStoredCredentials",
@@ -12814,8 +12934,7 @@
 													"organizationPicture",
 													"picture",
 													"roleIds",
-													"ssoRequired",
-													"twoFactorRequired",
+													"signInRefusal",
 													"singleSignOnReady"
 												],
 												"additionalProperties": false
@@ -12840,6 +12959,7 @@
 										}
 									},
 									"required": [
+										"address",
 										"items",
 										"notFoundOrganizationIds",
 										"retrievedAt",
@@ -20951,7 +21071,7 @@
 					"Organizations"
 				],
 				"summary": "Change organization settings",
-				"description": "Changing name, allowAccessTokens, allowPlaygroundAssistant, allowStoredCredentials or requireTwoFactor needs organization management. displayName is your name in this organization. With allowAccessTokens false, members' access tokens get 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key. With allowStoredCredentials false, the organization keeps only provider credentials that its own encryption keys encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains. With requireTwoFactor true, a member whose account has no passkey or authenticator app gets 403 TWO_FACTOR_REQUIRED for this organization, unless its identity provider signed the session in or authorized the access token. Turning it on needs a passkey or an authenticator app on your own account, and gets 409 TWO_FACTOR_MISSING without one.",
+				"description": "Changing name, accessTokens, allowPlaygroundAssistant, allowStoredCredentials or requireTwoFactor needs organization management. displayName is your name in this organization. accessTokens decides whose access tokens act in this organization: all members' tokens, only those of members whose roles include organization.use_access_tokens (roles), or none. Any other token gets 403 ACCESS_TOKENS_NOT_ALLOWED for this organization at once. allowPlaygroundAssistant lets members turn on the Playground assistant, which reads the organization as them and sends what it reads to the model through their own API key. With allowStoredCredentials false, the organization keeps only provider credentials that its own encryption keys encrypt: adding a stored credential gets 409 STORED_CREDENTIALS_NOT_ALLOWED, and turning it off gets 409 STORED_CREDENTIALS_EXIST while any stored credential remains. With requireTwoFactor true, a member whose account has no passkey or authenticator app gets 403 TWO_FACTOR_REQUIRED for this organization, unless its identity provider signed the session in or authorized the access token. Turning it on needs a passkey or an authenticator app on your own account, and gets 409 TWO_FACTOR_MISSING without one.",
 				"security": [
 					{
 						"accessToken": [
@@ -20974,8 +21094,13 @@
 							"schema": {
 								"type": "object",
 								"properties": {
-									"allowAccessTokens": {
-										"type": "boolean"
+									"accessTokens": {
+										"type": "string",
+										"enum": [
+											"all",
+											"roles",
+											"none"
+										]
 									},
 									"allowPlaygroundAssistant": {
 										"type": "boolean"
@@ -21017,8 +21142,13 @@
 								"schema": {
 									"type": "object",
 									"properties": {
-										"allowAccessTokens": {
-											"type": "boolean"
+										"accessTokens": {
+											"type": "string",
+											"enum": [
+												"all",
+												"roles",
+												"none"
+											]
 										},
 										"allowPlaygroundAssistant": {
 											"type": "boolean"
@@ -21048,12 +21178,261 @@
 										}
 									},
 									"required": [
-										"allowAccessTokens",
+										"accessTokens",
 										"allowPlaygroundAssistant",
 										"allowStoredCredentials",
 										"displayName",
 										"name",
 										"requireTwoFactor"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			}
+		},
+		"/api/{orgId}/networks": {
+			"get": {
+				"operationId": "getOrganizationNetworks",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Get allowed networks",
+				"description": "Needs organization management. address is your own IP address as we see it.",
+				"security": [
+					{
+						"accessToken": []
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"restricted": {
+											"type": "boolean"
+										},
+										"networks": {
+											"maxItems": 100,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"network": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "ipv4"
+															},
+															{
+																"type": "string",
+																"format": "ipv6"
+															},
+															{
+																"type": "string",
+																"format": "cidrv4"
+															},
+															{
+																"type": "string",
+																"format": "cidrv6"
+															}
+														]
+													},
+													"description": {
+														"default": "",
+														"type": "string",
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"network",
+													"description"
+												],
+												"additionalProperties": false
+											},
+											"uniqueItems": true
+										},
+										"address": {
+											"type": [
+												"string",
+												"null"
+											]
+										}
+									},
+									"required": [
+										"restricted",
+										"networks",
+										"address"
+									],
+									"additionalProperties": false
+								}
+							}
+						}
+					},
+					"default": {
+						"$ref": "#/components/responses/Error"
+					}
+				}
+			},
+			"put": {
+				"operationId": "setOrganizationNetworks",
+				"tags": [
+					"Organizations"
+				],
+				"summary": "Set allowed networks",
+				"description": "Needs organization management. Replaces the networks and turns their rule on or off. While restricted is true, a request from any other address to this organization's dashboard, its access tokens or the Playground gets 403 NETWORK_NOT_ALLOWED, whoever makes it. Turning the rule on, or changing the list while it is on, needs your own address on the new list, and gets 409 ADDRESS_NOT_ALLOWED otherwise. API keys follow the networks of their policies instead.",
+				"security": [
+					{
+						"accessToken": [
+							"write"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/version"
+					},
+					{
+						"$ref": "#/components/parameters/orgId"
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"restricted": {
+										"type": "boolean"
+									},
+									"networks": {
+										"maxItems": 100,
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"network": {
+													"anyOf": [
+														{
+															"type": "string",
+															"format": "ipv4"
+														},
+														{
+															"type": "string",
+															"format": "ipv6"
+														},
+														{
+															"type": "string",
+															"format": "cidrv4"
+														},
+														{
+															"type": "string",
+															"format": "cidrv6"
+														}
+													]
+												},
+												"description": {
+													"default": "",
+													"type": "string",
+													"maxLength": 100
+												}
+											},
+											"required": [
+												"network"
+											],
+											"additionalProperties": false
+										},
+										"uniqueItems": true
+									}
+								},
+								"required": [
+									"restricted",
+									"networks"
+								],
+								"additionalProperties": false
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "OK",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"restricted": {
+											"type": "boolean"
+										},
+										"networks": {
+											"maxItems": 100,
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"network": {
+														"anyOf": [
+															{
+																"type": "string",
+																"format": "ipv4"
+															},
+															{
+																"type": "string",
+																"format": "ipv6"
+															},
+															{
+																"type": "string",
+																"format": "cidrv4"
+															},
+															{
+																"type": "string",
+																"format": "cidrv6"
+															}
+														]
+													},
+													"description": {
+														"default": "",
+														"type": "string",
+														"maxLength": 100
+													}
+												},
+												"required": [
+													"network",
+													"description"
+												],
+												"additionalProperties": false
+											},
+											"uniqueItems": true
+										},
+										"address": {
+											"type": [
+												"string",
+												"null"
+											]
+										}
+									},
+									"required": [
+										"restricted",
+										"networks",
+										"address"
 									],
 									"additionalProperties": false
 								}
@@ -21182,12 +21561,30 @@
 																	"type": "string",
 																	"minLength": 1,
 																	"maxLength": 100
+																},
+																"direct": {
+																	"type": "boolean"
+																},
+																"groupCount": {
+																	"type": "integer",
+																	"minimum": 0,
+																	"maximum": 9007199254740991
+																},
+																"groupNames": {
+																	"maxItems": 3,
+																	"type": "array",
+																	"items": {
+																		"type": "string"
+																	}
 																}
 															},
 															"required": [
 																"id",
 																"isDefault",
-																"name"
+																"name",
+																"direct",
+																"groupCount",
+																"groupNames"
 															],
 															"additionalProperties": false
 														}
@@ -21425,7 +21822,7 @@
 														"maximum": 9007199254740991
 													},
 													"capabilities": {
-														"maxItems": 18,
+														"maxItems": 19,
 														"type": "array",
 														"items": {
 															"type": "string",
@@ -21446,6 +21843,7 @@
 																"members.read",
 																"members.manage",
 																"organization.skip_sso",
+																"organization.use_access_tokens",
 																"organization.manage",
 																"roles.manage"
 															]
@@ -21455,8 +21853,17 @@
 													"canAssign": {
 														"type": "boolean"
 													},
-													"groupAssigned": {
-														"type": "boolean"
+													"groupCount": {
+														"type": "integer",
+														"minimum": 0,
+														"maximum": 9007199254740991
+													},
+													"groupNames": {
+														"maxItems": 3,
+														"type": "array",
+														"items": {
+															"type": "string"
+														}
 													},
 													"createdAt": {
 														"type": "string",
@@ -21475,7 +21882,8 @@
 													"resourceScopeCount",
 													"capabilities",
 													"canAssign",
-													"groupAssigned",
+													"groupCount",
+													"groupNames",
 													"createdAt",
 													"updatedAt"
 												],
@@ -21537,7 +21945,7 @@
 								"properties": {
 									"capabilities": {
 										"default": [],
-										"maxItems": 18,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -21558,6 +21966,7 @@
 												"members.read",
 												"members.manage",
 												"organization.skip_sso",
+												"organization.use_access_tokens",
 												"organization.manage",
 												"roles.manage"
 											]
@@ -21655,7 +22064,7 @@
 											"maximum": 9007199254740991
 										},
 										"capabilities": {
-											"maxItems": 18,
+											"maxItems": 19,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -21676,6 +22085,7 @@
 													"members.read",
 													"members.manage",
 													"organization.skip_sso",
+													"organization.use_access_tokens",
 													"organization.manage",
 													"roles.manage"
 												]
@@ -21685,8 +22095,17 @@
 										"canAssign": {
 											"type": "boolean"
 										},
-										"groupAssigned": {
-											"type": "boolean"
+										"groupCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"groupNames": {
+											"maxItems": 3,
+											"type": "array",
+											"items": {
+												"type": "string"
+											}
 										},
 										"createdAt": {
 											"type": "string",
@@ -21705,7 +22124,8 @@
 										"resourceScopeCount",
 										"capabilities",
 										"canAssign",
-										"groupAssigned",
+										"groupCount",
+										"groupNames",
 										"createdAt",
 										"updatedAt"
 									],
@@ -22005,7 +22425,7 @@
 								"type": "object",
 								"properties": {
 									"capabilities": {
-										"maxItems": 18,
+										"maxItems": 19,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -22026,6 +22446,7 @@
 												"members.read",
 												"members.manage",
 												"organization.skip_sso",
+												"organization.use_access_tokens",
 												"organization.manage",
 												"roles.manage"
 											]
@@ -22120,7 +22541,7 @@
 											"maximum": 9007199254740991
 										},
 										"capabilities": {
-											"maxItems": 18,
+											"maxItems": 19,
 											"type": "array",
 											"items": {
 												"type": "string",
@@ -22141,6 +22562,7 @@
 													"members.read",
 													"members.manage",
 													"organization.skip_sso",
+													"organization.use_access_tokens",
 													"organization.manage",
 													"roles.manage"
 												]
@@ -22150,8 +22572,17 @@
 										"canAssign": {
 											"type": "boolean"
 										},
-										"groupAssigned": {
-											"type": "boolean"
+										"groupCount": {
+											"type": "integer",
+											"minimum": 0,
+											"maximum": 9007199254740991
+										},
+										"groupNames": {
+											"maxItems": 3,
+											"type": "array",
+											"items": {
+												"type": "string"
+											}
 										},
 										"createdAt": {
 											"type": "string",
@@ -22170,7 +22601,8 @@
 										"resourceScopeCount",
 										"capabilities",
 										"canAssign",
-										"groupAssigned",
+										"groupCount",
+										"groupNames",
 										"createdAt",
 										"updatedAt"
 									],
@@ -22360,7 +22792,7 @@
 					"Members"
 				],
 				"summary": "Give or take a role from members",
-				"description": "Members left without a role get the default role.",
+				"description": "Gives or takes the direct assignment of the role. A member whose identity provider group gives the role keeps it. Members left without a role get the default role.",
 				"security": [
 					{
 						"accessToken": [
@@ -22452,7 +22884,7 @@
 					"Members"
 				],
 				"summary": "Set a member's roles",
-				"description": "An empty list gives the member the default role.",
+				"description": "Sets the roles assigned to the member directly. The roles that identity provider groups give the member stay, and the response lists every role the member holds. An empty list gives the default role to a member who then holds no role.",
 				"security": [
 					{
 						"accessToken": [
