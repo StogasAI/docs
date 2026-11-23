@@ -145,20 +145,64 @@ While SCIM is connected:
 
 Disconnecting SCIM keeps every member, and saving another issuer disconnects SCIM.
 
+### Roles from groups
+
+```http
+PATCH /api/scim/v2/<organization-id>/Groups/<group-id> HTTP/1.1
+Host: app.stogas.ai
+Authorization: Bearer scim_stogas_v1_...
+Content-Type: application/scim+json
+
+{
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+  "Operations": [{ "op": "add", "path": "members", "value": [{ "value": "<user-id>" }] }]
+}
+```
+
+Your identity provider can also send its groups. A group gives no role until you choose its
+[roles](/docs/members#roles) in the Single sign-on settings, or with
+[`setGroupRoles`](/docs/reference/dashboard/single-sign-on/setGroupRoles). Choosing them needs **Organization →
+Manage** and the permissions to assign each role that you add or remove.
+
+- A member holds a group's roles while their user is active and in the group, once they have
+  signed in through your provider. The request that changes the group changes the roles, and a
+  person who joins later gets them on joining.
+- The groups alone give such a role. Assigning or removing it by hand, giving it in an invitation
+  and making it the default role fail with `409 ORG_ROLE_GROUP_ASSIGNED`. A group cannot give the
+  default role or a role that an invitation gives.
+- When the first group gives a role, members who hold the role and are in no such group lose it.
+- A member loses a role when no group gives it to them any more: the provider removed them from
+  the group or deleted it, or you removed the role from the group. Losing a role
+  [removes the access](/docs/members#remove-access) that it gave.
+- A member without any role holds the default role.
+- A member holds 30 roles at most. A group role beyond that is given at the next group change
+  after the member holds fewer.
+- The last member who can manage roles keeps that role. A later group change removes it once
+  another member can manage roles.
+- A group inside a group gives nothing.
+- Disconnecting SCIM deletes the groups and keeps the roles that members hold, which you then
+  assign by hand.
+
+[Activity](/docs/activity) names **Identity provider** as the actor of role changes that follow a
+group change.
+
 ### SCIM limits
 
-| Limit           | Value                                                                                                     |
-| --------------- | --------------------------------------------------------------------------------------------------------- |
-| Resources       | Users. `GET /Groups` returns an empty list, and group changes return `501`.                               |
-| Attributes kept | `userName`, `externalId`, `name.givenName`, `name.familyName`, `displayName`, the primary email, `active` |
-| Filters         | `userName eq`, `externalId eq`, `emails.value eq`                                                         |
-| Changes         | `POST`, `PUT`, `PATCH` with `add`, `replace` and `remove`, `DELETE`                                       |
-| Users           | 50,000 for each organization                                                                              |
-| Page size       | 100 by default, 200 at most                                                                               |
-| Request body    | 64 KiB                                                                                                    |
-| Not supported   | Bulk requests, sorting, ETags, password changes                                                           |
+| Limit            | Value                                                                                                       |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| Resources        | Users and groups                                                                                            |
+| User attributes  | `userName`, `externalId`, `name.givenName`, `name.familyName`, `displayName`, the primary email, `active`   |
+| Group attributes | `displayName`, `externalId`, `members`                                                                      |
+| Filters          | Users by `userName eq`, `externalId eq` or `emails.value eq`. Groups by `displayName eq` or `externalId eq` |
+| Changes          | `POST`, `PUT`, `PATCH` with `add`, `replace` and `remove`, `DELETE`                                         |
+| Users            | 50,000 for each organization                                                                                |
+| Groups           | 1,000 for each organization, with unique names regardless of case                                           |
+| Group users      | `GET /Groups` leaves out `members`. `GET /Groups/<group-id>` returns them unless you exclude them.          |
+| Page size        | 100 by default, 200 at most                                                                                 |
+| Request body     | 64 KiB, and 8 MiB for a group                                                                               |
+| Not supported    | Bulk requests, sorting, ETags, password changes                                                             |
 
-Stogas accepts every other attribute and leaves it out. Assign [roles](/docs/members#roles) in Stogas.
+Stogas accepts every other attribute and leaves it out.
 
 ## Domains
 

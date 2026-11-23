@@ -1,0 +1,34 @@
+---
+title: Set the roles of an identity provider group
+description: Members whose identity provider account is in the group hold these
+  roles, and nobody gives or takes them by hand or through an invite. A role
+  that the group no longer gives leaves the members whom no other group gives
+  it, with the keys that they made from its grants. The default role and a role
+  that an invite gives are refused. Setting a role needs the right to give it.
+full: true
+_openapi:
+  preload:
+    - dashboard
+  method: PUT
+  webhook: false
+  toc: []
+  structuredData:
+    headings: []
+    contents:
+      - content: Members whose identity provider account is in the group hold these
+          roles, and nobody gives or takes them by hand or through an invite. A
+          role that the group no longer gives leaves the members whom no other
+          group gives it, with the keys that they made from its grants. The
+          default role and a role that an invite gives are refused. Setting a
+          role needs the right to give it.
+---
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="dashboard" operations={[{ path: '/api/{orgId}/sso/scim/groups/{groupId}/roles', method: 'put' }]} />
+    </>
+  );
+}
