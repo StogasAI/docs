@@ -17,7 +17,7 @@ it.
 
 | Charge                           | Fee                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------ |
-| Adding credit                    | 2%, plus the payment processor, network and conversion costs             |
+| Adding credit                    | 2%, plus the processing, network and conversion fees                     |
 | Requests with managed providers  | The catalog rates                                                        |
 | Requests with [BYOK](/docs/byok) | 2% of the usage at catalog rates. Your provider bills you for the usage. |
 
@@ -31,21 +31,22 @@ cards and bank transfers through [Stripe](https://stripe.com).
 - If our price sources disagree by more than 3% on a payment's price, we check that price before
   we credit it.
 - CCPayment has no payment deadline, and credits a late payment or a different amount. A payment
-  on the wrong network or without its memo may be lost.
+  on the wrong network or without its memo may be lost, and CCPayment may not credit a payment
+  below the coin's minimum.
 - A receipt keeps the billing details saved when we received its payment, and its PDF attaches a
   JSON record with the exact amounts and exchange rates.
 
 ### Cards
 
-| Credit  | Total before sales tax | Stripe's fee | Our fee |
-| ------- | ---------------------- | ------------ | ------- |
-| $1.00   | $1.36                  | $0.34        | $0.02   |
-| $10.00  | $10.80                 | $0.61        | $0.19   |
-| $100.00 | $105.40                | $3.36        | $2.04   |
+| Credit  | Total before sales tax | Processing fee | Our fee |
+| ------- | ---------------------- | -------------- | ------- |
+| $1.00   | $1.36                  | $0.34          | $0.02   |
+| $10.00  | $10.80                 | $0.61          | $0.19   |
+| $100.00 | $105.40                | $3.36          | $2.04   |
 
-- A card pays the credit, Stripe's 2.9% and 30¢ of the total, our 2% of what Stripe's fee leaves
-  and any sales tax, rounded up to the cent. The fees never exceed 5.5% of the credit, or $0.80 when
-  that is more, and the total must be at least $0.50.
+- A card pays the credit, a processing fee of 2.9% and 30¢ of the total, our 2% of what the
+  processing fee leaves and any sales tax, rounded up to the cent. The fees never exceed 5.5% of the
+  credit, or $0.80 when that is more, and the total must be at least $0.50.
 - Every card payment needs 3D Secure, so your bank may ask you to confirm it. Link, Apple Pay and
   Google Pay are not available.
 - A card payment can add only the credit that the prepaid limits allow when you start it, less
@@ -65,17 +66,17 @@ cards and bank transfers through [Stripe](https://stripe.com).
 
 ### Bank transfers
 
-| Credit     | Method | Total before sales tax | Stripe's fee | Our fee |
-| ---------- | ------ | ---------------------- | ------------ | ------- |
-| $100.00    | ACH    | $102.56                | $0.51        | $2.04   |
-| $100.00    | Wire   | $117.64                | $15.59       | $2.04   |
-| $1,000.00  | ACH    | $1,025.41              | $5.00        | $20.41  |
-| $1,000.00  | Wire   | $1,040.41              | $20.00       | $20.41  |
-| $10,000.00 | ACH    | $10,209.09             | $5.00        | $204.08 |
-| $10,000.00 | Wire   | $10,224.09             | $20.00       | $204.08 |
+| Credit     | Method | Total before sales tax | Processing fee | Our fee |
+| ---------- | ------ | ---------------------- | -------------- | ------- |
+| $100.00    | ACH    | $102.56                | $0.51          | $2.04   |
+| $100.00    | Wire   | $117.64                | $15.59         | $2.04   |
+| $1,000.00  | ACH    | $1,025.41              | $5.00          | $20.41  |
+| $1,000.00  | Wire   | $1,040.41              | $20.00         | $20.41  |
+| $10,000.00 | ACH    | $10,209.09             | $5.00          | $204.08 |
+| $10,000.00 | Wire   | $10,224.09             | $20.00         | $204.08 |
 
-- A transfer pays Stripe's 0.5% of its amount, at most $5.00, and $15.00 more for a wire. Our 2%
-  applies to what Stripe's fee leaves.
+- A transfer pays a processing fee of 0.5% of its amount, at most $5.00, and $15.00 more for a
+  wire. Our 2% applies to what the processing fee leaves.
 - Each member has their own account number in each organization, so a transfer needs no reference.
   The account takes ACH transfers and domestic wires in US dollars.
 - You can send any amount at any time. A transfer under $0.50, or a wire that its fees use up, is
