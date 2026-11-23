@@ -12,6 +12,7 @@ bun run dev
 Before you commit, run the checks:
 
 ```sh
+bun run format:check
 bun run typecheck
 bun run build
 bun run test

@@ -8,6 +8,8 @@
 		"build": "bun run generate:openapi && next build && bun scripts/copy-markdown.ts",
 		"clean": "rm -rf .next .wrangler .source out next-env.d.ts tsconfig.tsbuildinfo",
 		"dev": "bun run generate:openapi && next dev",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
 		"typecheck": "bun run generate:openapi && next typegen && fumadocs-mdx && tsc --noEmit",
 		"postinstall": "fumadocs-mdx"
 	},
@@ -40,6 +42,8 @@
 		"@types/react": "19.3.0",
 		"@types/react-dom": "19.3.0",
 		"postcss": "8.5.32",
+		"prettier": "3.9.10",
+		"prettier-plugin-tailwindcss": "0.8.1",
 		"tailwindcss": "4.3.5",
 		"typescript": "6.0.3",
 		"wrangler": "4.156.0",
