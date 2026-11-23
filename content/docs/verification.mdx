@@ -109,4 +109,6 @@ Search with each key that was in use during the period you want to check.
 - Rekor's search index is best effort. An empty result does not prove that an entry does not exist.
 - A search result does not prove that we signed the document. Check the document's
   signature and its digest against the log entry.
+- A search can return two entries for one document. Anyone can log the second form of an ECDSA
+  signature, which the SDK rejects.
 - A submission key cannot approve anything on its own. The SDK also requires our signature.
