@@ -16,7 +16,7 @@ clock, so a wrong clock makes verification fail.
 | Key manifest, signed by our root key                                  | Which online signing keys we have authorized                                              |
 | Evidence document, signed by an online key                            | Which gateway releases, catalogs and hardware policies are approved                       |
 | Rekor inclusion proofs for the key manifest and the evidence document | Both are in the public [Sigstore Rekor](https://docs.sigstore.dev/logging/overview/) log  |
-| Sigstore's current keys, signed by Sigstore's root keys               | Which Rekor keys check the inclusion proofs                                               |
+| Sigstore's current keys, signed by Sigstore's root keys               | Which Rekor and timestamp keys check the inclusion proofs                                 |
 | GitHub and GitLab build proofs in the evidence document               | Each approved release was [built from its public source](/docs/reproducible-builds)       |
 | AMD certificate chain and revocation list                             | The hardware report comes from a genuine AMD chip that AMD has not revoked                |
 | SEV-SNP hardware report                                               | The VM booted an approved release, with debugging and migration off, on approved firmware |
@@ -84,31 +84,38 @@ with the same verifier.
   it, and the hardware policy at each revision that changed it, including a change back to an
   earlier policy.
 - Past boots stay checkable after keys rotate or AMD lists expire, because we keep the original
-  evidence and the verifier checks it as of the time Rekor logged the boot. New connections always
-  need current evidence.
+  evidence and the verifier checks it as of the time in the boot's signed timestamp. New
+  connections always need current evidence.
 - A saved receipt or a request record's proof is checked against the boot that signed it. See
   [Check in the Trust Center](/docs/receipts#check-in-the-trust-center).
 
-## Search Rekor yourself
-
-Every key manifest, evidence revision and boot record is in the public Rekor log. Our root's Rekor
-submission key logs key manifests, and the SDK has it built in with the root key. Each online
-signing key has its own submission key, listed in the verified key manifest, which logs evidence
-revisions and boot records. The SDK rejects an entry that any other key submitted, so a search with
-these keys covers every entry it accepts. Save a submission public key as
-`stogas-rekor-public.pem`, then use [rekor-cli](https://docs.sigstore.dev/logging/cli/):
+## Monitor our Rekor entries
 
 ```console
-rekor-cli search --rekor_server https://rekor.sigstore.dev \
-  --pki-format x509 --public-key stogas-rekor-public.pem
-rekor-cli get --rekor_server https://rekor.sigstore.dev --uuid <entry-uuid>
+printf '%s' '<rekor_public_key>' | base64 -d | sha256sum
+rekor_monitor --once=false --url https://<log> --config 'monitoredValues:
+  fingerprints:
+    - <SHA-256 from the first command>'
 ```
 
-Search with each key that was in use during the period you want to check.
+Every key manifest, evidence revision and boot record is in a public Rekor v2 log, which has no
+search. Sigstore's [rekor-monitor](https://github.com/sigstore/rekor-monitor) reads every new
+entry of the log and reports the entries of the keys that you give it. Our root's Rekor
+submission key logs key manifests, and the SDK has it built in with the root key. Each online
+signing key has its own submission key, listed as `rekor_public_key` in the verified key manifest,
+which logs evidence revisions and boot records. The SDK rejects an entry that any other key
+submitted, so the entries of these keys are all the entries it accepts.
 
-- Rekor's search index is best effort. An empty result does not prove that an entry does not exist.
-- A search result does not prove that we signed the document. Check the document's
-  signature and its digest against the log entry.
-- A search can return two entries for one document. Anyone can log the second form of an ECDSA
-  signature, which the SDK rejects.
+Give the monitor the fingerprint of each key that was in use during the period you want to check.
+The first line of the checkpoint in any of our Rekor entries names the log, which `--url` takes.
+The monitor starts at the log's newest entry, so set `startIndex` and `endIndex` in its
+configuration to check earlier entries.
+
+- A monitor result does not prove that we signed the document. Check the document's signature and
+  its digest against the log entry.
+- One document can have more than one entry. A retry can log the same entry again, and anyone can
+  log the second form of an ECDSA signature, which the SDK rejects.
+- An entry can have no published document when we gave up its publication after a lost reply.
+  `https://evidence.stogas.ai/ledger/rekor/<leaf>.json` says what each entry that we made is, where
+  `<leaf>` is the entry's RFC 6962 leaf hash in hex.
 - A submission key cannot approve anything on its own. The SDK also requires our signature.
