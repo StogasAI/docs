@@ -331,7 +331,8 @@ top, and the address with any memo and a QR code. Bitcoin and Monero go to a
 picks a network for a coin that has several, by its code, its name or the name that exchanges give
 it, such as `TRC20`. For `card`, the CLI prints a link to Stripe's payment
 page and its QR code, so you can pay in any browser or on your phone, within 31 minutes. The CLI
-then waits until the payment is credited.
+then waits until the payment is credited. It stops earlier, with an error, when the payment is under
+review, its credit is pending under the prepaid limits, or it adds no credit.
 
 Without `--organization`, the credit goes to your personal organization. If the organization has no
 billing country, state and ZIP code yet, the CLI asks for them.
