@@ -4754,14 +4754,25 @@
 				"properties": {
 					"request_id": {
 						"type": "string",
-						"minLength": 1,
-						"maxLength": 128
+						"format": "uuid",
+						"pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+						"description": "The request ID."
 					},
 					"created_at": {
 						"type": "string",
-						"pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
 						"format": "date-time",
-						"description": "When the gateway handled the request, by its own clock."
+						"pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+						"description": "When the gateway authorized the request, by its own clock."
+					},
+					"transport": {
+						"default": "https",
+						"description": "The client's [connection mode](/docs/connection-modes).",
+						"type": "string",
+						"enum": [
+							"https",
+							"attested_tls",
+							"e2ee"
+						]
 					},
 					"node_id": {
 						"anyOf": [
@@ -4776,59 +4787,6 @@
 							}
 						],
 						"description": "The gateway VM that handled the request."
-					},
-					"catalog": {
-						"type": "object",
-						"properties": {
-							"chain_hash": {
-								"type": "string",
-								"pattern": "^sha256:[0-9a-f]{64}$"
-							},
-							"version": {
-								"type": "integer",
-								"minimum": 1,
-								"maximum": 9007199254740991
-							},
-							"selection_ids": {
-								"type": "array",
-								"prefixItems": [
-									{
-										"type": "string",
-										"pattern": "^author:[a-z0-9][a-z0-9._-]{0,127}$"
-									},
-									{
-										"type": "string",
-										"pattern": "^model:[a-z0-9][a-z0-9._-]{0,127}$"
-									},
-									{
-										"type": "string",
-										"pattern": "^deployment:[a-z0-9][a-z0-9._-]{0,127}$"
-									},
-									{
-										"type": "string",
-										"pattern": "^route:[a-z0-9][a-z0-9._-]{0,127}$"
-									},
-									{
-										"type": "string",
-										"pattern": "^provider:[a-z0-9][a-z0-9._-]{0,127}$"
-									}
-								],
-								"items": false,
-								"minItems": 5,
-								"maxItems": 5
-							}
-						},
-						"required": [
-							"chain_hash",
-							"version",
-							"selection_ids"
-						],
-						"additionalProperties": false
-					},
-					"policy_versions_sha512": {
-						"description": "The SHA-512 of the request record's `policy_versions`, when the record has them.",
-						"type": "string",
-						"pattern": "^[0-9a-f]{128}$"
 					},
 					"performance": {
 						"type": "object",
@@ -4871,23 +4829,16 @@
 									}
 								],
 								"description": "When the gateway passed the first generated output of a stream on to the client, such as text, reasoning, a tool call, audio or an image. `null` for requests that are not streamed."
-							},
-							"provider_ms": {
-								"type": "integer",
-								"minimum": 0,
-								"maximum": 4294967295,
-								"description": "From the start of the first provider call to the end of the last."
 							}
 						},
 						"required": [
 							"total_ms",
 							"rate_limit_wait_ms",
 							"first_output_ms",
-							"ttft_ms",
-							"provider_ms"
+							"ttft_ms"
 						],
 						"additionalProperties": false,
-						"description": "The request record's [times](/docs/request-records#timing), and `provider_ms`, which the record's provider attempts give."
+						"description": "The request record's [times](/docs/request-records#timing)."
 					},
 					"usage": {
 						"type": "object",
@@ -4989,15 +4940,140 @@
 							"meters"
 						],
 						"additionalProperties": false,
-						"description": "The request record's [usage](/docs/usage)."
+						"description": "[Meters, standard text tokens and cost](/docs/usage)."
 					},
-					"provider": {
-						"description": "Provider details, such as the provider request ID. The receipt covers them.",
-						"type": "object",
-						"propertyNames": {
-							"type": "string"
+					"gateway_version": {
+						"anyOf": [
+							{
+								"type": "string",
+								"const": "dev"
+							},
+							{
+								"type": "string",
+								"pattern": "^v\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$"
+							}
+						],
+						"description": "The gateway release that handled the request."
+					},
+					"catalog_version": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991,
+						"description": "The approved catalog that routed the request."
+					},
+					"policy_versions_sha512": {
+						"description": "The SHA-512 of the request record's `policy_versions`, when the record has them.",
+						"type": "string",
+						"pattern": "^[0-9a-f]{128}$"
+					},
+					"provider_attempts": {
+						"minItems": 1,
+						"type": "array",
+						"items": {
+							"type": "object",
+							"properties": {
+								"resolved_catalog_chain_hash": {
+									"description": "The chain that the request resolved to, when the provider served another offering, such as another service tier. Omitted when both are the same.",
+									"type": "string",
+									"pattern": "^sha256:[a-f0-9]{64}$"
+								},
+								"catalog_chain_hash": {
+									"type": "string",
+									"pattern": "^sha256:[a-f0-9]{64}$",
+									"description": "The [catalog chain](/docs/request-records#catalog-history) that the call used: its author, model, deployment, route and provider settings."
+								},
+								"provider": {
+									"type": "string",
+									"description": "The provider, such as `openai`."
+								},
+								"status": {
+									"type": "string",
+									"description": "The [result](/docs/request-records#provider-results)."
+								},
+								"status_code": {
+									"anyOf": [
+										{
+											"type": "integer",
+											"minimum": -9007199254740991,
+											"maximum": 9007199254740991
+										},
+										{
+											"type": "null"
+										}
+									],
+									"description": "The provider's HTTP status. `null` when there was none, such as after a lost connection."
+								},
+								"error_code": {
+									"description": "The code in the provider's error reply, such as `invalid_prompt` or `ValidationException`, which `status` can generalize. Absent when the call succeeded or the reply had no code.",
+									"type": "string",
+									"pattern": "^[A-Za-z][\\w.-]{0,47}$"
+								},
+								"start_ms": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 4294967295,
+									"description": "When the call started, on the request clock."
+								},
+								"latency_ms": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 4294967295,
+									"description": "How long the call took."
+								},
+								"output_observed": {
+									"default": false,
+									"description": "Whether output from this call reached the request. Only the last call can have `true`.",
+									"type": "boolean"
+								},
+								"provider_request_id": {
+									"type": "string",
+									"description": "The provider's ID for the call, from its response headers, which its support asks for. Empty when the provider sent none."
+								},
+								"provider_response_id": {
+									"default": "",
+									"description": "The ID of the provider's reply, such as `chatcmpl-…`, `resp_…` or `msg_…`. It is the `id` that you received. Empty when no reply arrived.",
+									"type": "string"
+								},
+								"provider_model": {
+									"default": "",
+									"description": "The model that the provider reported serving, such as `gpt-5.5-2026-04-23`. Empty when the provider did not say.",
+									"type": "string"
+								},
+								"provider_instance_id": {
+									"description": "The [Chutes](/docs/providers/chutes) instance that ran the call. Absent for other providers.",
+									"type": "string"
+								},
+								"provider_encryption_key_sha256": {
+									"description": "The SHA-256 of that instance's attested key, which the gateway encrypted the call to. Absent for other providers.",
+									"type": "string",
+									"pattern": "^[a-f0-9]{64}$"
+								},
+								"provider_measurement_sha256": {
+									"description": "The SHA-256 of the registers of the published measurement that the instance's attestation matched. Absent for other providers.",
+									"type": "string",
+									"pattern": "^[a-f0-9]{64}$"
+								},
+								"finish_reason": {
+									"type": "string",
+									"description": "Why the model stopped, such as `stop` or `length`. Empty when the provider did not say."
+								}
+							},
+							"required": [
+								"catalog_chain_hash",
+								"provider",
+								"status",
+								"status_code",
+								"start_ms",
+								"latency_ms",
+								"output_observed",
+								"provider_request_id",
+								"provider_response_id",
+								"provider_model",
+								"finish_reason"
+							],
+							"additionalProperties": false
 						},
-						"additionalProperties": {}
+						"description": "The request record's [provider calls](/docs/request-records#provider-attempts), in call order, without their credential and account options. The last call served the response."
 					},
 					"receipt": {
 						"type": "object",
@@ -5056,15 +5132,18 @@
 				"required": [
 					"request_id",
 					"created_at",
+					"transport",
 					"node_id",
-					"catalog",
 					"performance",
 					"usage",
+					"gateway_version",
+					"catalog_version",
+					"provider_attempts",
 					"receipt",
 					"salts"
 				],
 				"additionalProperties": false,
-				"description": "Added to the response when the request sends `Stogas-Metadata: v2`. The receipt signs a commitment to the request, a commitment to the response and the rest of this object without its `salts`. See [Receipts](/docs/receipts)."
+				"description": "Added to the response when the request sends `Stogas-Metadata: v2`. Every field except `policy_versions_sha512`, `receipt` and `salts` is the [request record](/docs/request-records)'s field of that name. The receipt signs a commitment to the request, a commitment to the response and the rest of this object without its `salts`. See [Receipts](/docs/receipts)."
 			},
 			"ChatInputMessageContent": {
 				"description": "Text, or a list of content blocks. See [Images and files](/docs/input-files).",

@@ -1,9 +1,10 @@
 ---
-title: Prove a request log
-description: Returns the log of requestId exactly as its gateway signed it,
-  with the signed batch that holds it and the hashes that join the log to the
+title: Prove a request record
+description: Returns the record of requestId exactly as its gateway signed it,
+  with the signed batch that holds it and the hashes that join the record to the
   batch. Run stogas proof --proof <file> to check the proof against the
-  evidence of the boot that signed the batch. A batch reaches analytics a few
+  evidence of the boot that signed the batch, or stogas proof --request-id
+  <requestId> to read and check it in one step. A batch reaches analytics a few
   minutes after its requests end.
 full: true
 _openapi:
@@ -15,11 +16,12 @@ _openapi:
   structuredData:
     headings: []
     contents:
-      - content: Returns the log of `requestId` exactly as its gateway signed it, with
-          the signed batch that holds it and the hashes that join the log to the
-          batch. Run `stogas proof --proof <file>` to check the proof against
-          the evidence of the boot that signed the batch. A batch reaches
-          analytics a few minutes after its requests end.
+      - content: Returns the record of `requestId` exactly as its gateway signed it,
+          with the signed batch that holds it and the hashes that join the
+          record to the batch. Run `stogas proof --proof <file>` to check the
+          proof against the evidence of the boot that signed the batch, or
+          `stogas proof --request-id <requestId>` to read and check it in one
+          step. A batch reaches analytics a few minutes after its requests end.
 ---
 
 export default function Layout(props) {

@@ -203,16 +203,16 @@ Each record is the request record with these fields added:
 	"request": { "model": "...", "input": "..." }, // Your request after redaction and policy changes.
 	"response": { "id": "resp_...", "output": [ ... ] }, // A buffered request.
 	"events": [ ... ], // A stream. Replaces "response".
-	"stogas": { ... } // Usage, routing, gateway and provider details, and the receipt if requested.
+	"stogas": { ... } // The response's signed metadata, when the request asked for a receipt.
 }
 ```
 
-| Field      | Content                                                                                                                                                |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if the request was rejected.                |
-| `response` | The response of a buffered request, or the error that ended it.                                                                                        |
-| `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.                              |
-| `stogas`   | The object that [`Stogas-Metadata: v2`](/docs/receipts) returns, without its `salts`. Every record has it, whether or not the request sent the header. |
+| Field      | Content                                                                                                                                       |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `request`  | The request after redaction and other changes, without policies, encryption keys or removed fields. `null` if the request was rejected.       |
+| `response` | The response of a buffered request, or the error that ended it.                                                                               |
+| `events`   | Each JSON event of a stream, in order, including the error that ended it. Comments, keepalives and `[DONE]` are left out.                     |
+| `stogas`   | The object that [`Stogas-Metadata: v2`](/docs/receipts) returned, without its `salts`. Only the record of a request that received one has it. |
 
 - A record without bodies has no `request`, `response` or `events`.
 
@@ -244,8 +244,8 @@ Each record is the request record with these fields added:
   `response`. Repeated rejections are exported as their
   [request records](/docs/request-records#grouped-rejections) are kept: the first five in a group
   each at once, and the rest in one record with their `request_count` when the minute ends. That
-  record has the `response` and `stogas` object of the first rejection that it counts, and goes to
-  that rejection's destinations.
+  record has the `response` of the first rejection that it counts, and goes to that rejection's
+  destinations.
 - If the client disconnects, the provider still finishes, and the record has the whole output and
   final usage.[^chutes]
 - The record never contains API keys, provider credentials or webhook headers. Your prompt text is

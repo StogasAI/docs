@@ -16240,6 +16240,16 @@
 																},
 																"finish_reason": {
 																	"type": "string",
+																"provider_encryption_key_sha256": {
+																	"description": "The SHA-256 of that instance's attested key, which the gateway encrypted the call to. Absent for other providers.",
+																	"type": "string",
+																	"pattern": "^[a-f0-9]{64}$"
+																},
+																"provider_measurement_sha256": {
+																	"description": "The SHA-256 of the registers of the published measurement that the instance's attestation matched. Absent for other providers.",
+																	"type": "string",
+																	"pattern": "^[a-f0-9]{64}$"
+																},
 																	"description": "Why the model stopped, such as `stop` or `length`. Empty when the provider did not say."
 																},
 																"byok": {
@@ -16833,7 +16843,7 @@
 													},
 													"log_batch": {
 														"default": null,
-														"description": "Its place in the gateway's [signed batch](/docs/receipts#prove-a-request-log), or `null`.",
+														"description": "The [signed batch](/docs/receipts#prove-a-request-record) that holds this record and the record's leaf index in it, or `null`.",
 														"anyOf": [
 															{
 																"type": "object",
@@ -17227,8 +17237,8 @@
 				"tags": [
 					"Analytics"
 				],
-				"summary": "Prove a request log",
-				"description": "Returns the log of `requestId` exactly as its gateway signed it, with the signed batch that holds it and the hashes that join the log to the batch. Run `stogas proof --proof <file>` to check the proof against the evidence of the boot that signed the batch. A batch reaches analytics a few minutes after its requests end.",
+				"summary": "Prove a request record",
+				"description": "Returns the record of `requestId` exactly as its gateway signed it, with the signed batch that holds it and the hashes that join the record to the batch. Run `stogas proof --proof <file>` to check the proof against the evidence of the boot that signed the batch, or `stogas proof --request-id <requestId>` to read and check it in one step. A batch reaches analytics a few minutes after its requests end.",
 				"security": [
 					{
 						"accessToken": []

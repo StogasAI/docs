@@ -72,6 +72,9 @@ gh attestation verify stogas-cli-v<version>-linux-amd64.tar.gz --repo StogasAI/s
 The same command checks the container image as `oci://ghcr.io/stogasai/stogas:<version>`. The
 release notes name the image's digest, so you can pull exactly that image.
 
+[Verify an SDK download](/docs/reproducible-builds#verify-an-sdk-download) also checks the second
+builder's proof and our signature, and covers every SDK package.
+
 </Step>
 <Step>
 
@@ -249,12 +252,13 @@ These commands make no network requests unless a description says so.
 
 `proof` also takes these flags. Without `--request`, the request stays unchecked.
 
-| Flag                                | Use                                                                                                         |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `--stream`                          | Check an SSE response.                                                                                      |
-| `--proof <file>`                    | Read a `stogas` object saved on its own, or a [request record's proof](/docs/receipts#prove-a-request-log). |
-| `--share <dir>`                     | Write a proof that someone else can check.                                                                  |
-| `--hide request`, `--hide response` | Leave that side out of a shared proof.                                                                      |
+| Flag                                | Use                                                                                                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--stream`                          | Check an SSE response.                                                                                                                               |
+| `--proof <file>`                    | Read a `stogas` object saved on its own, or a [request record's proof](/docs/receipts#prove-a-request-record).                                       |
+| `--request-id <id>`                 | Read and check the proof of a request's record, which needs you signed in. `--organization <id>` names an organization other than your personal one. |
+| `--share <dir>`                     | Write a proof that someone else can check.                                                                                                           |
+| `--hide request`, `--hide response` | Leave that side out of a shared proof.                                                                                                               |
 
 See
 [Share a proof](/docs/receipts#share-a-proof).

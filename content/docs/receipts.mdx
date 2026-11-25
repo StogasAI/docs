@@ -16,8 +16,9 @@ Send this header with an inference request:
 Stogas-Metadata: v2
 ```
 
-The response then ends with a `stogas` object. It has usage, routing and provider details, a
-compact receipt and two salts:
+The response then ends with a `stogas` object. It has the parts of the
+[request record](/docs/request-records) that describe how the request ran, a compact receipt and two
+salts:
 
 ```jsonc
 {
@@ -25,10 +26,18 @@ compact receipt and two salts:
 	"choices": [ ... ],
 	"usage": { ... }, // The standard usage field does not change.
 	"stogas": {
-		"request_id": "req_...",
-		"usage": { "billed_cost_usd": "0.022952", "meters": { ... } }, // The request record's usage.
-		"performance": { "total_ms": 1975, "provider_ms": 1944, ... }, // The request record's times.
-		"catalog": { ... }, // The deployment that answered.
+		"request_id": "019a3a6b-6b2e-7c4d-8a1b-2c3d4e5f6a7b",
+		"created_at": "2026-11-01T12:00:03.123Z",
+		"transport": "https", // The connection mode.
+		"node_id": "quiet-heron-...", // The gateway VM.
+		"gateway_version": "v1.2.3",
+		"catalog_version": 81,
+		"provider_attempts": [
+			// Each provider call, in call order. The last one served the response.
+			{ "provider": "openai", "catalog_chain_hash": "sha256:9d9d...", "status": "success", ... }
+		],
+		"performance": { "total_ms": 1975, "ttft_ms": null, ... },
+		"usage": { "billed_cost_usd": "0.022952", "meters": { ... } },
 		"policy_versions_sha512": "6a0f...", // The policies that applied.
 		"receipt": {
 			"schema": "stogas.receipt.v2",
@@ -45,9 +54,13 @@ compact receipt and two salts:
 A stream sends the `stogas` object in a `: stogas {...}` SSE comment before the last event.
 Ordinary SSE parsers ignore it.
 
-`usage` and `performance` have the values and names of the
-[request record](/docs/request-records), so one parser reads both. `provider_ms` is the
-[provider time](/docs/request-records#timing) that the record's attempts give.
+Every field above `policy_versions_sha512` is the request record's field of that name with the
+same value, so one parser reads both. Two fields are shorter than the record's: an entry of
+`provider_attempts` has no `byok` and no `account_options`, and `performance` has only `total_ms`,
+`rate_limit_wait_ms`, `first_output_ms` and `ttft_ms`. The record's other fields, such as its
+policies, credentials, members and your own request settings, are not in the object.
+
+An error response has no `stogas` object.
 
 The [SDK](/docs/sdk-overview) and [CLI](/docs/cli) check the receipt before they report that the
 request completed. Streamed output arrives before that check.
@@ -149,25 +162,34 @@ The SDKs offer the same offline check, for example `verify_receipt_archive` in
 [JavaScript](/docs/javascript#check-receipts-and-records-offline), `verify_receipt` in
 [Python](/docs/python) and `VerifyReceipt` in [Go](/docs/go).
 
-## Prove a request log
+## Prove a request record
+
+```console
+stogas proof --request-id <request_id> --organization <organization_id>
+```
 
 Each gateway boot also signs its [request records](/docs/request-records) with its receipt key. It
-signs them in batches, one batch a minute, and each record names its place in a batch in
+signs them in batches, one batch a minute, and each record names its batch and its leaf index in
 `log_batch`. A proof of a record shows that the attested gateway wrote exactly that record, and
 that it has not changed since.
 
-To get a proof, open the request in [Analytics](/docs/analytics) and choose **Download proof**, or
-call `GET /api/{orgId}/analytics/proof?requestId=<request_id>` with an
-[access token](/docs/reference/dashboard#access-tokens). Then run:
+The command reads the proof of a request that you can read in [Analytics](/docs/analytics), which
+needs [`stogas login`](/docs/cli#use-your-account). It checks that the record belongs to its batch,
+downloads the boot record that the batch names and its evidence, and checks the batch's signature
+against them. It prints the record's batch and leaf index, and when the batch was open. Without
+`--organization`, the request is in your personal organization.
+
+Add `--share <dir>` to save the proof as `request-<request_id>-proof.json`. Anyone can check that
+file without an account:
 
 ```console
 stogas proof --proof request-<request_id>-proof.json
 ```
 
-The command checks that the record belongs to its batch, downloads the boot record that the batch
-names and its evidence, and checks the batch's signature against them. It prints the record's batch
-and index, and when the batch was open. Add `--boot` and `--evidence` to check it without network
-access, as for a receipt.
+The request's page in Analytics downloads the same file, and so does
+`GET /api/{orgId}/analytics/proof?requestId=<request_id>` with an
+[access token](/docs/reference/dashboard#access-tokens). Add `--boot` and `--evidence` to check a
+saved proof without network access, as for a receipt.
 
 When the request asked for a receipt, the record's `receipt_commitments` are the receipt's
 `request_commitment` and `response_commitment`. So a proof of the record also ties it to the request
@@ -196,8 +218,8 @@ browser, with the verifier that the CLI uses. Your files are not uploaded.
 Choose the files of one request together. When they hold both a receipt and a record's proof, the
 check also compares the record's `receipt_commitments` with the receipt.
 
-Members who can read an organization's [Analytics](/docs/analytics) can enter a request ID instead,
-which checks that request's record.
+Enter a request ID instead to check the record of a request that you can read in
+[Analytics](/docs/analytics).
 
 We serve the page that runs this check. To check a proof without relying on a page from us, use
 the [CLI](/docs/cli) or an [SDK](/docs/sdk-overview).
@@ -205,7 +227,9 @@ the [CLI](/docs/cli) or an [SDK](/docs/sdk-overview).
 ## What a receipt does not prove
 
 - When the request ran.
-- That the client used a verified confidential connection. Receipts work with ordinary HTTPS too.
+- That the client verified the gateway before it sent the request. `transport` is the
+  [connection mode](/docs/connection-modes) that the gateway received the request in, and receipts
+  work with ordinary HTTPS too.
 - That the provider ran the model in a TEE.
 - That a new connection can trust the same gateway. A new connection needs fresh evidence.
 

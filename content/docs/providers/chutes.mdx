@@ -39,7 +39,12 @@ ML-KEM key.
 
 The gateway encrypts the request to that key with ML-KEM-768 and ChaCha20-Poly1305. The instance
 encrypts its response, including usage, with a fresh key. The gateway accepts only authenticated
-output and usage.
+output and usage. The call's entry in the request record's
+[`provider_attempts`](/docs/request-records#provider-attempts) names the instance in
+`provider_instance_id`, the SHA-256 of that key in `provider_encryption_key_sha256`, and the
+measurement that the instance matched in `provider_measurement_sha256`: the SHA-256 of the 240
+bytes of `mrtd` and `rtmr0` to `rtmr3`, in that order, of one entry in Chutes'
+[published measurements](https://api.chutes.ai/servers/tdx/measurements).
 
 </Step>
 </Steps>
