@@ -164,7 +164,7 @@ access to someone else.
 | `analytics.read_all`             | Analytics → Read all               | Read every request in the organization.                                                                                                           |
 | `api_keys.read_all`              | API keys → Read all                | Read every API key, grant and folder, every policy except credential policies, and every request.                                                 |
 | `api_keys.use_all`               | API keys → Use all                 | Reveal every service-key secret, and create your own keys from any grant.                                                                         |
-| `api_keys.manage_all`            | API keys → Manage all              | Create, edit and delete every API key, grant and folder, and edit every policy except credential policies.                                        |
+| `api_keys.manage_all`            | API keys → Manage all              | Create, edit and delete every API key, grant and folder, and edit their policies and the organization's and members' policies.                    |
 | `api_keys.manage_access`         | API keys → Admin all               | Use and manage every API key, grant and folder, and give others access to them.                                                                   |
 | `billing.read`                   | Billing → Read                     | Read the balance, payments, invoices, receipts and billing details.                                                                               |
 | `billing.manage`                 | Billing → Manage                   | Save billing details, and get the payment addresses that add credit.                                                                              |
@@ -177,7 +177,7 @@ access to someone else.
 | `organization.skip_sso`          | Organization → Skip single sign-on | Open the organization without single sign-on when it is required.                                                                                 |
 | `organization.use_access_tokens` | Organization → Use access tokens   | Use access tokens in the organization while it accepts them only from [chosen roles](#choose-whose-access-tokens-work).                           |
 | `organization.manage`            | Organization → Manage              | Change the organization's name, picture and settings, and set up single sign-on.                                                                  |
-| `roles.manage`                   | Roles → Manage                     | Create, edit and delete roles, including roles with permissions you do not hold. With `members.manage`, assign any role.                          |
+| `roles.manage`                   | Roles → Manage                     | Create, edit and delete roles, including roles with permissions you do not hold, and edit their policies. With `members.manage`, assign any role. |
 
 A role also gets the permissions that its permissions include. In API keys and BYOK, Admin all
 includes Use all and Manage all, and each of those includes Read all. Billing → Manage includes
