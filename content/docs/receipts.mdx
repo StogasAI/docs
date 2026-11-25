@@ -186,10 +186,12 @@ file without an account:
 stogas proof --proof request-<request_id>-proof.json
 ```
 
-The request's page in Analytics downloads the same file, and so does
-`GET /api/{orgId}/analytics/proof?requestId=<request_id>` with an
+`GET /api/{orgId}/analytics/proof?requestId=<request_id>` returns the same file with an
 [access token](/docs/reference/dashboard#access-tokens). Add `--boot` and `--evidence` to check a
 saved proof without network access, as for a receipt.
+
+A request's page in [Analytics](/docs/analytics) runs the same check in your browser when you open
+it, and shows the result.
 
 When the request asked for a receipt, the record's `receipt_commitments` are the receipt's
 `request_commitment` and `response_commitment`. So a proof of the record also ties it to the request
@@ -206,20 +208,18 @@ and response that you saved.
 ## Check in the Trust Center
 
 The dashboard's [Trust Center](/docs/verification#trust-center) checks the same proofs in your
-browser, with the verifier that the CLI uses. Your files are not uploaded.
+browser, with the verifier that the CLI uses. Paste each part or choose its file. Nothing is
+uploaded.
 
-| You choose                                                             | It checks                                        |
+| You add                                                                | It checks                                        |
 | ---------------------------------------------------------------------- | ------------------------------------------------ |
 | A saved response with its `stogas` object, or a complete saved stream  | The receipt, the metadata and the response       |
 | A `stogas` object on its own, such as a shared proof's `metadata.json` | The receipt and the metadata                     |
 | A request or a response, together with either of the above             | That side, when the `stogas` object has its salt |
 | A request record's proof                                               | The record and its batch                         |
 
-Choose the files of one request together. When they hold both a receipt and a record's proof, the
-check also compares the record's `receipt_commitments` with the receipt.
-
-Enter a request ID instead to check the record of a request that you can read in
-[Analytics](/docs/analytics).
+Add the parts of one request. When they hold both a receipt and a record's proof, the check also
+compares the record's `receipt_commitments` with the receipt.
 
 We serve the page that runs this check. To check a proof without relying on a page from us, use
 the [CLI](/docs/cli) or an [SDK](/docs/sdk-overview).

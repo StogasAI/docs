@@ -375,6 +375,28 @@ organization.
   Repeat the option with a new key first to move the values of the other keys to it, which saves
   even when you close the file unchanged.
 
+### Read and save a policy without an editor
+
+```console
+stogas policy get key <key-id> > policy.json
+stogas policy set key <key-id> --file policy.json --revision 7
+stogas policy get folder <folder-id> --key-file prod.key | jq '.limits.rpm = 60' \
+  | stogas policy set folder <folder-id> --key-file prod.key
+```
+
+`policy get` prints the policy that `policy edit` would open, and its revision on standard error.
+`policy set` saves a policy from `--file` or from standard input and asks nothing, so scripts and
+agents can use both.
+
+| Flag                  | Use                                                                                                                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--revision <n>`      | Fail when the saved policy has another revision. Without it, `policy set` replaces whichever revision is saved.     |
+| `--dry-run`           | List the values that saving would encrypt, and save nothing.                                                        |
+| `--key-file`, `--key` | Read and write encrypted values as `{ "encrypt": value }`, as `policy edit` does. `policy get` then prints secrets. |
+| `--organization <id>` | Name an organization other than your personal one.                                                                  |
+
+A refused policy exits with status 1 and the dashboard's reason.
+
 ### Check a credential
 
 ```console
