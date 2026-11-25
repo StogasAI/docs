@@ -37,9 +37,9 @@ key where your applications read their secrets, and keep a backup, because we ca
 key. To save the key in your system keychain instead, pass `--organization` and `--label` in place
 of `--output`, as [the CLI](/docs/cli#encrypt-secrets) shows.
 
-Settings can also generate a key in your browser and register it. That trusts the page that we
-serve when you open it, while the CLI is a release that you install once and
-[can verify](/docs/cli#verify-it).
+Only the CLI and the SDKs handle a key or a value that it encrypts. The dashboard takes key IDs and
+encrypted values, so no page that we serve ever holds either. The CLI is a release that you install
+once and [can verify](/docs/cli#verify-it).
 
 </Step>
 <Step>
@@ -87,8 +87,17 @@ stogas policy edit organization --organization YOUR_ORGANIZATION_ID --key-file p
 }
 ```
 
-When you close the file, the CLI encrypts each marked value and saves the policy. Each value becomes
-an envelope in its place, and the rest stays as you wrote it:
+When you close the file, the CLI lists the values that saving encrypts and asks you to confirm:
+
+```console
+Saving encrypts these values:
+  /plugins/export/destinations/0
+  /plugins/redaction/literals
+Every other value is saved in plain text.
+Save? [Y/n]
+```
+
+Each listed value becomes an envelope in its place, and the rest stays as you wrote it:
 
 ```jsonc title="The saved policy (placeholders)"
 {
