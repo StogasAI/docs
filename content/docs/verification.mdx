@@ -91,25 +91,19 @@ with the same verifier.
 
 ## Monitor our Rekor entries
 
-```console
-printf '%s' '<rekor_public_key>' | base64 -d | sha256sum
-rekor_monitor --once=false --url https://<log> --config 'monitoredValues:
-  fingerprints:
-    - <SHA-256 from the first command>'
-```
+| Submission key            | Logs                                | Where to find it                                |
+| ------------------------- | ----------------------------------- | ----------------------------------------------- |
+| Our root's                | Key manifests                       | Built into the SDK with our root key            |
+| Each online signing key's | Evidence revisions and boot records | `rekor_public_key` in the verified key manifest |
 
-Every key manifest, evidence revision and boot record is in a public Rekor v2 log, which has no
-search. Sigstore's [rekor-monitor](https://github.com/sigstore/rekor-monitor) reads every new
-entry of the log and reports the entries of the keys that you give it. Our root's Rekor
-submission key logs key manifests, and the SDK has it built in with the root key. Each online
-signing key has its own submission key, listed as `rekor_public_key` in the verified key manifest,
-which logs evidence revisions and boot records. The SDK rejects an entry that any other key
-submitted, so the entries of these keys are all the entries it accepts.
+Every key manifest, evidence revision and boot record is a `hashedrekord` entry in a public Rekor
+v2 log, signed by one of these keys. The SDK rejects an entry that any other key submitted, so the
+entries of these keys are all the entries it accepts. The first line of the checkpoint in any of
+our entries names the log.
 
-Give the monitor the fingerprint of each key that was in use during the period you want to check.
-The first line of the checkpoint in any of our Rekor entries names the log, which `--url` takes.
-The monitor starts at the log's newest entry, so set `startIndex` and `endIndex` in its
-configuration to check earlier entries.
+Rekor v2 has no search, so finding every entry of a key means reading every entry of the log, as
+Sigstore's guide to [monitoring Rekor v2](https://github.com/sigstore/rekor-tiles/blob/main/CLIENTS.md#monitoringauditing)
+describes. An entry is ours when the public key in its body is one of these keys.
 
 - A monitor result does not prove that we signed the document. Check the document's signature and
   its digest against the log entry.
