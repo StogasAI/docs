@@ -187,7 +187,9 @@ cosign verify-blob-attestation catalog.json --bundle gitlab-attestation.jsonl \
 ## Verify an SDK download
 
 Each [SDK release](https://github.com/StogasAI/stogas/releases) lists every file with its SHA-256
-in `release-manifest.json`. Build proofs from GitHub and GitLab cover each file, and our signature covers the manifest.
+in `release-manifest.json`. GitHub's build proof covers each file. A full release also has GitLab's
+build proof of each file and our signature of the manifest. A preview, such as an alpha version, has
+no signature, and it has GitLab's proof only when the release lists `gitlab-attestation.jsonl`.
 npm, PyPI, crates.io, RubyGems and Maven Central serve the same bytes as the release. NuGet adds its
 own repository signature. Maven Central also serves a Sigstore signature of each file,
 `<file>.sigstore.json`, which
@@ -206,7 +208,7 @@ gh attestation verify <file> --repo StogasAI/stogas \
   --source-ref refs/tags/v<version> --deny-self-hosted-runners
 ```
 
-GitLab.com's hosted runners also build every release from its tag, and
+GitLab.com's hosted runners also build every full release from its tag, and
 `gitlab-attestation.jsonl` holds their proof for every file. Check it with
 [cosign](https://github.com/sigstore/cosign):
 
@@ -216,8 +218,8 @@ cosign verify-blob-attestation <file> --bundle gitlab-attestation.jsonl \
   --certificate-identity https://gitlab.com/stogasai/stogas//.gitlab-ci.yml@refs/tags/v<version>
 ```
 
-To check both build proofs and our signature at once, put these release files in a directory with
-the files you want to check: `release-manifest.json`, `qualification.json`,
+To check both build proofs and our signature of a full release at once, put these release files in
+a directory with the files you want to check: `release-manifest.json`, `qualification.json`,
 `github-attestation.jsonl`, `gitlab-attestation.jsonl` and `stogas-signature.json`. Then run:
 
 ```console
