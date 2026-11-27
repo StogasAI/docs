@@ -6,9 +6,9 @@ icon: Shield
 
 Gateways run inside AMD SEV-SNP confidential VMs. The processor encrypts the VM's memory, so
 the host, the cloud operator and our staff cannot read your API key, prompts or responses while
-the gateway handles them. Before your client sends anything, the SDK checks hardware evidence that
-the gateway runs an approved release built [reproducibly](/docs/reproducible-builds) from public
-source.
+the gateway handles them. Before your client sends anything, the SDK
+[checks hardware evidence](/docs/verification) that the gateway runs an approved release built
+[reproducibly](/docs/reproducible-builds) from public source.
 
 ## How a request is protected
 
@@ -43,17 +43,18 @@ read the request.
   check yourself, such as our decision to approve a release or start a gateway, so a false claim
   stays on record.
 - **Everything you trust is in a public log.** Signing keys, evidence revisions, gateway and SDK
-  releases, catalogs, hardware policy and gateway boots are in the append-only Rekor log. The SDK
-  rejects evidence and boot records that are not in it.
+  releases, catalogs, hardware policy and gateway boots are in the append-only
+  [Rekor log](/docs/verification#rekor-entries). The SDK rejects evidence and boot records that are
+  not in it.
 - **All software we release is reproducible.** Gateway images and SDK packages
   [rebuild](/docs/reproducible-builds) from public source to the same bytes.
 - **We don't trust our own infrastructure.** Any of our servers, our database, our hosting
   providers, GitHub, GitLab, Sigstore, Rekor or the evidence hosts can be compromised. None of them alone
   can read your data or get a gateway approved that differs from its public source. The evidence
   hosts can delay an update but cannot change it.
-- **Strict hardware settings.** Each release fixes the VM's policy, such as debugging and migration
-  off, and the hardware policy sets each chip's minimum firmware. The SDK checks both in every
-  hardware report, and a gateway serves you only after its boot is in the public log.
+- **Strict hardware settings.** The SDK checks every hardware report against the release's VM
+  settings, such as debugging and migration off, and the
+  [hardware policy](/docs/verification#hardware-policy).
 - **Defense in depth.** E2EE adds forward secrecy and post-compromise security to memory
   encryption.
 - **Post-quantum.** Attested TLS, E2EE and our signatures use
@@ -73,64 +74,6 @@ read the request.
   and cache timing, and steer branch prediction, while a gateway runs. Published attacks have used
   such access to recover keys from protected VMs.
 - **Bugs.** Evidence proves which code runs, not that it is correct.
-
-## Chain of trust
-
-The SDK has our root key, Sigstore's root keys and AMD's root certificates built in.
-
-<Steps>
-<Step>
-
-### Root key
-
-Our root signs a key manifest that authorizes the online signing key and logs it to Rekor with the
-root's own submission key. The key manifest expires 24 hours after signing, and we renew it several
-times a day. Only the root can authorize or retire a signing key.
-
-</Step>
-<Step>
-
-### Evidence
-
-The online key signs one evidence document that holds the key manifest, the approved gateway
-releases, catalogs and hardware policies, Sigstore's keys and AMD's certificates and revocation
-lists. Each change gets the next revision number, and we log every revision to Rekor, so every
-version that a client could have received is public. The evidence expires with the key manifest
-it contains. The online key cannot authorize itself or another key. Gateways recheck the evidence
-every two minutes and stop accepting new requests when their release is withdrawn, so your client
-does not need to poll for changes.
-
-</Step>
-<Step>
-
-### Build proofs
-
-GitHub Actions and GitLab.com's hosted runners each build every gateway release and catalog from
-its public source tag and sign a build proof for its files. We approve a release only when both
-proofs name the same files. The SDK requires both proofs and our approval, so none of GitHub,
-GitLab and us alone can get an image approved that differs from its public source.
-
-</Step>
-<Step>
-
-### Hardware evidence
-
-AMD's signed report shows the VM's launch measurement, the chip, its firmware versions and the keys
-that the gateway generated.
-
-</Step>
-<Step>
-
-### Fresh connection
-
-A random challenge from your client goes into a new report, which binds this connection to the
-hardware evidence and to the gateway's logged boot record.
-
-</Step>
-</Steps>
-
-[Gateway verification](/docs/verification) lists each check and shows how to inspect the evidence
-yourself.
 
 ## Post-quantum protection
 

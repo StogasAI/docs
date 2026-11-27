@@ -124,8 +124,8 @@ authority.
 With `--service-key`, the endpoint sends a [workload's access token](#use-a-service-key-without-its-secret)
 with every request in place of the API key that your client sends.
 
-The CLI loads evidence when a session starts, and again only when a session needs newer evidence.
-A `POST` to the separately printed refresh URL loads it now.
+A `POST` to the separately printed refresh URL loads new
+[evidence](/docs/verification#evidence-updates) at once.
 
 Ctrl+C or SIGTERM stops new work and allows active streams and sessions up to five seconds to
 close. A cancelled request may have run, so do not send it again automatically.
@@ -283,12 +283,15 @@ that `--key-file` names. `delete` removes a saved key, and `logout` keeps them a
 `encrypt` uses the key file that `--key-file` names, or the key saved under `--key`, and prints the
 result, or writes it to the new file that `--output` names.
 
-- With `--policy`, it encrypts parts of the policy in that file. Each `--path` is a JSON Pointer to
-  an export or redaction plugin, or to a value inside one. Without `--path`, it encrypts every
-  export and redaction plugin in the policy. Before it encrypts them, a gateway checks the plugins
-  that hold the parts, which needs you signed in.
-  [Encrypt a policy file](/docs/customer-encryption#encrypt-a-policy-file) gives the rules. For a
-  policy that the dashboard stores, [`policy edit --key-file`](#edit-a-policy) encrypts as it saves.
+- With `--policy`, it encrypts parts of the policy in that file. Each `--path` is a
+  [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) to an export or redaction plugin, or to a
+  value inside one, in the policy or in a rule, such as `/rules/night/plugins/export`. Repeat it for
+  more parts. A path above a plugin, such as `/rules/night`, encrypts each export and redaction
+  plugin under it, and without `--path` the command encrypts every one in the policy. Before it
+  encrypts them, a gateway checks the plugins that hold the parts, which needs you signed in. The
+  check needs all of a plugin, so the command refuses a plugin that already holds encrypted values.
+  For a policy that the dashboard stores,
+  [`policy edit --key-file`](#edit-a-policy) encrypts as it saves.
 - With `--credential`, it encrypts a [provider credential](/docs/byok#customer-encryption) of
   `openai`, `anthropic`, `chutes`, `aws`, `azure` or `google-cloud`, without connecting anywhere.
   It reads the file that `--input` names or what you pipe in, and without either asks for an API

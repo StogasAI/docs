@@ -32,10 +32,9 @@ what they do.
 stogas encryption-key create --output providers.key
 ```
 
-The command writes the key to a new file that only you can read, and prints the key's ID. Keep the
-key where your applications read their secrets, and keep a backup, because we cannot recover a lost
-key. To save the key in your system keychain instead, pass `--organization` and `--label` in place
-of `--output`, as [the CLI](/docs/cli#encrypt-secrets) shows.
+The command prints the key's ID. Keep the key where your applications read their secrets, and keep
+a backup, because we cannot recover a lost key. [The CLI](/docs/cli#encrypt-secrets) can also keep
+it in your system keychain.
 
 Only the CLI and the SDKs handle a key or a value that it encrypts. The dashboard takes key IDs and
 encrypted values, so no page that we serve ever holds either. The CLI is a release that you install
@@ -145,15 +144,10 @@ stogas encrypt --key-file providers.key --organization YOUR_ORGANIZATION_ID --po
   --output policy.encrypted.json
 ```
 
-- `--path` takes a [JSON Pointer](https://www.rfc-editor.org/rfc/rfc6901) to the `export` or
-  `redaction` plugin, or to any value inside one, in the policy or in a rule, such as
-  `/rules/night/plugins/export`. Repeat it for more parts. A path above a plugin, such as
-  `/rules/night`, encrypts each export and redaction plugin under it, and without `--path` the
-  command encrypts every one in the policy.
-- The gateway checks the plugins first, as it does for `policy edit`. The check needs you signed in
-  with `stogas login` or `STOGAS_TOKEN`.
-- Keep the file without encryption, and encrypt from it whenever you change it. The command
-  refuses a plugin that already holds encrypted values, because the check needs all of it.
+Each `--path` names a part to encrypt, and a gateway checks the plugins first, as
+[`stogas encrypt`](/docs/cli#encrypt-secrets) describes. Keep the file without encryption, and
+encrypt from it whenever you change it, because the command refuses a plugin that already holds
+encrypted values.
 
 [Policy size limits](/docs/policies/editing#document-rules) count encrypted parts at their
 decrypted size. Anyone who can read the policy still sees:

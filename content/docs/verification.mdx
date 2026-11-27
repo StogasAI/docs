@@ -24,8 +24,10 @@ clock, so a wrong clock makes verification fail.
 | The gateway's boot record and its Rekor inclusion                     | The gateway's boot is in the public log                                                   |
 
 The SDK has our root key, Sigstore's root keys and AMD's root certificates built in. Downloaded
-evidence cannot replace them. The evidence document names the exact Sigstore keys, so the SDK
-keeps working when Sigstore changes its keys.
+evidence cannot replace them. Only the root key can authorize or retire an online signing key. It
+does so in the key manifest, which expires 24 hours after signing, and we renew it several times a
+day. The evidence expires with the key manifest that it holds. The evidence document names the
+exact Sigstore keys, so the SDK keeps working when Sigstore changes its keys.
 
 The gateway's TLS, E2EE and receipt-signing keys are generated inside the VM and never leave it. A
 public boot record alone does not prove that a connection reaches that gateway. Only the fresh
@@ -55,8 +57,9 @@ The SDK loads evidence when it starts, and once more if a connection needs newer
 not poll in the background. Evidence comes from `evidence.stogas.ai`, with an independent copy at another cloud provider
 as a fallback. The SDK checks everything it downloads, so a server cannot make it trust invalid
 evidence. Each change to the evidence gets the next revision number. Under one key manifest, the
-SDK rejects evidence older than the newest revision it has seen. Call `refreshEvidence`
-(`refresh_evidence` in Rust and Python, `RefreshEvidence` in Go) to load new evidence now.
+SDK rejects evidence older than the newest revision it has seen. The
+[SDK](/docs/sdk-overview#options) and the [CLI](/docs/cli#serve) can also load new evidence on
+request.
 
 Gateways check the evidence about every two minutes. When we withdraw a release, or required
 evidence expires, the gateway stops accepting new requests. Requests that are running finish.
@@ -72,10 +75,6 @@ copy of the evidence cannot undo it.
 The dashboard's Trust Center shows the current evidence and its history, checked in your browser
 with the same verifier.
 
-- Staging releases are built without GitHub and GitLab, so a build placeholder lists their files
-  instead. We approve a release only when GitHub's proof and GitLab's name the same files. To
-  check a release yourself, see
-  [Reproducible builds](/docs/reproducible-builds).
 - History lists each release, catalog and key manifest at the evidence revision that first listed
   it, and the hardware policy at each revision that changed it, including a change back to an
   earlier policy.

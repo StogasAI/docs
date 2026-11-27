@@ -4,8 +4,8 @@ description: Verify the gateway and encrypt the connection, with the OpenAI clie
 ---
 
 The SDK works with the OpenAI client you already use. Before it sends your API key or a prompt, it
-checks on your device that the gateway runs an approved release on confidential hardware. Then it
-opens a connection that ends inside that gateway.
+[checks on your device](/docs/verification) that the gateway runs an approved release on
+confidential hardware. Then it opens a connection that ends inside that gateway.
 
 Published packages trust production gateways only. Native packages need a 64-bit x86-64 or ARM64
 processor. Where an install command shows `<version>`, use the newest
@@ -49,8 +49,8 @@ JavaScript always uses E2EE. Its `baseURL` ends in `/v1`, and these options repl
 | `onMetadata` | Receives each response's `stogas` object after its [receipt](/docs/receipts) passes the check                                                                 |
 | `proxied`    | `true` when `fetch` uses a proxy, such as Tor, so that every time limit is four times as long. It is `true` by default on a page served from an onion address |
 
-The transport loads evidence when it starts, and again only when a session needs newer evidence.
-To load it now, call the transport's refresh method, such as `refresh_evidence()` in Python.
+To load new [evidence](/docs/verification#evidence-updates) at once, call the transport's refresh
+method, such as `refresh_evidence()` in Python.
 
 ### Limits
 
