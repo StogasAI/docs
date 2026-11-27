@@ -72,14 +72,10 @@ copy of the evidence cannot undo it.
 The dashboard's Trust Center shows the current evidence and its history, checked in your browser
 with the same verifier.
 
-- Rekor logs the hash of the whole signed evidence document, so one entry covers every catalog,
-  gateway release, hardware policy and Sigstore key in it. The key manifest and each build proof
-  have their own entries.
 - Staging releases are built without GitHub and GitLab, so a build placeholder lists their files
   instead. We approve a release only when GitHub's proof and GitLab's name the same files. To
   check a release yourself, see
   [Reproducible builds](/docs/reproducible-builds).
-- AMD signs its own certificates and revocation lists, so they need no Rekor entry.
 - History lists each release, catalog and key manifest at the evidence revision that first listed
   it, and the hardware policy at each revision that changed it, including a change back to an
   earlier policy.
@@ -89,7 +85,7 @@ with the same verifier.
 - A saved receipt or a request record's proof is checked against the boot that signed it. See
   [Check in the Trust Center](/docs/receipts#check-in-the-trust-center).
 
-## Monitor our Rekor entries
+## Rekor entries
 
 | Submission key            | Logs                                | Where to find it                                |
 | ------------------------- | ----------------------------------- | ----------------------------------------------- |
@@ -100,6 +96,13 @@ Every key manifest, evidence revision and boot record is a `hashedrekord` entry 
 v2 log, signed by one of these keys. The SDK rejects an entry that any other key submitted, so the
 entries of these keys are all the entries it accepts. The first line of the checkpoint in any of
 our entries names the log.
+
+An entry logs the hash of a whole signed document, so the entry of an evidence revision covers
+every catalog, gateway release, hardware policy and Sigstore key in it. GitHub and GitLab log
+their build proofs themselves. AMD signs its own certificates and revocation lists, so they need
+no entry.
+
+### Monitor our entries
 
 Rekor v2 has no search, so finding every entry of a key means reading every entry of the log, as
 Sigstore's guide to [monitoring Rekor v2](https://github.com/sigstore/rekor-tiles/blob/main/CLIENTS.md#monitoringauditing)
