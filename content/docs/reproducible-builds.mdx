@@ -62,6 +62,17 @@ measurement.
 
 Your own build is a third, independent check.
 
+## Check a release tag
+
+```console
+echo 'stogas namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBH+b8GrnWCtsR9Xi2JLB8qR5jefZxpYazKtJUE9wuEr' > stogas-signers
+git -c gpg.ssh.allowedSignersFile=stogas-signers verify-tag v<version>
+```
+
+We sign each release tag of the gateway, the catalog and the SDK, and the commit it names, with
+this SSH key. Git answers `Good "git" signature for stogas` when the tag in your clone is ours,
+whichever server you cloned it from. A tag without a signature is older than our signing.
+
 ## Rebuild a release
 
 You need an x86_64 Linux machine with Git, Node.js, curl and a working Guix daemon.
