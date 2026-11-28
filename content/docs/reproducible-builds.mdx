@@ -71,7 +71,9 @@ git -c gpg.ssh.allowedSignersFile=stogas-signers verify-tag v<version>
 
 We sign each release tag of the gateway, the catalog and the SDK, and the commit it names, with
 this SSH key. Git answers `Good "git" signature for stogas` when the tag in your clone is ours,
-whichever server you cloned it from. A tag without a signature is older than our signing.
+whichever server you cloned it from. A tag without a signature is older than our signing. The Go
+module's `go/v<version>` tags carry no signature, because the publish workflow makes each one from a
+release archive that the build proofs cover.
 
 ## Rebuild a release
 
@@ -161,7 +163,9 @@ cosign verify-blob-attestation gateway.igvm --bundle gitlab-attestation.jsonl \
   --certificate-identity https://gitlab.com/stogasai/gateway//.gitlab-ci.yml@refs/tags/v<version>
 ```
 
-The SDK checks both proofs, and our approval, before it [trusts a gateway](/docs/verification).
+The SDK checks both proofs, and our approval, before it [trusts a gateway](/docs/verification). In
+GitLab's proof it also requires a runner that GitLab hosts and the commit of the tag, which cosign
+does not read.
 
 ## Rebuild a catalog
 
